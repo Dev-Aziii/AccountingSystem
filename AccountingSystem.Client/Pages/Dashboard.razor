@@ -1,0 +1,115 @@
+﻿@page "/dashboard"
+@using AccountingSystem.Shared.DTOs
+@using AccountingSystem.Client.Services
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+@inject ReportService ReportService
+
+<PageTitle>Financial Dashboard</PageTitle>
+
+<div class="container-fluid mt-3">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="text-primary fw-bold">Financial Overview</h2>
+        <button class="btn btn-outline-primary btn-sm" @onclick="LoadData">
+            <i class="bi bi-arrow-clockwise"></i> Refresh Data
+        </button>
+    </div>
+
+    @if (isLoading)
+    {
+        <div class="d-flex justify-content-center align-items-center" style="height: 200px;">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    }
+    else if (trialBalance != null)
+    {
+        <!-- KPI Cards -->
+        <div class="row mb-4">
+            <div class="col-md-6 col-lg-3">
+                <div class="card shadow-sm border-start border-4 border-success h-100">
+                    <div class="card-body">
+                        <div class="text-uppercase text-muted small fw-bold">Total Debits</div>
+                        <div class="h3 mb-0 text-success">@trialBalance.TotalDebit.ToString("C0")</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="card shadow-sm border-start border-4 border-info h-100">
+                    <div class="card-body">
+                        <div class="text-uppercase text-muted small fw-bold">Total Credits</div>
+                        <div class="h3 mb-0 text-info">@trialBalance.TotalCredit.ToString("C0")</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activity Table (Trial Balance Preview) -->
+        <div class="card shadow border-0">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0 fw-bold">Current Trial Balance</h5>
+                <small class="text-muted">As of @trialBalance.GeneratedAt.ToLocalTime()</small>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Code</th>
+                            <th>Account Name</th>
+                            <th class="text-end">Debit</th>
+                            <th class="text-end">Credit</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var account in trialBalance.Accounts.Take(10)) 
+                        {
+                            <tr>
+                                <td class="fw-bold text-muted">@account.AccountCode</td>
+                                <td>@account.AccountName</td>
+                                <td class="text-end text-success">
+                                    @(account.Debit > 0 ? account.Debit.ToString("N2") : "-")
+                                </td>
+                                <td class="text-end text-info">
+                                    @(account.Credit > 0 ? account.Credit.ToString("N2") : "-")
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            @if (trialBalance.Accounts.Count > 10)
+            {
+                <div class="card-footer bg-white text-center">
+                    <a href="reports/financials" class="text-decoration-none">View Full Report</a>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private TrialBalanceDTO? trialBalance;
+    private bool isLoading = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        isLoading = true;
+        try
+        {
+            trialBalance = await ReportService.GetTrialBalance();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error fetching data: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}

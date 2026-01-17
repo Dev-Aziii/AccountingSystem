@@ -1,0 +1,17 @@
+﻿@inject NavigationManager NavManager
+@using Microsoft.AspNetCore.Components.Authorization
+@code {
+    [CascadingParameter]
+    private Task<AuthenticationState> AuthState { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthState;
+
+        // Double check: Only redirect if truly not authenticated
+        if (authState?.User?.Identity is null || !authState.User.Identity.IsAuthenticated)
+        {
+            NavManager.NavigateTo("/");
+        }
+    }
+}

@@ -1,0 +1,275 @@
+﻿@page "/reports/financials"
+@using AccountingSystem.Shared.DTOs
+@using AccountingSystem.Client.Services
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+@inject ReportService ReportService
+@inject LedgerService LedgerService
+@inject IJSRuntime JS
+
+<PageTitle>Financial Reports</PageTitle>
+
+<div class="container-fluid mt-3" id="printable-area">
+    <!-- Header / Actions -->
+    <div class="d-flex justify-content-between align-items-center mb-4 no-print">
+        <div>
+            <h2 class="text-primary fw-bold mb-0">Financial Statements</h2>
+            <p class="text-muted small mb-0">Real-time financial position</p>
+        </div>
+        <div class="btn-group">
+            <button class="btn btn-outline-secondary" @onclick="LoadData">
+                <i class="bi bi-arrow-clockwise"></i> Refresh
+            </button>
+            <button class="btn btn-primary" @onclick="PrintReport">
+                <i class="bi bi-printer"></i> Print / Save PDF
+            </button>
+        </div>
+    </div>
+
+    @if (isLoading)
+    {
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p class="mt-2 text-muted">Consolidating Ledger Data...</p>
+        </div>
+    }
+    else if (trialBalance != null && accountTypes != null)
+    {
+        <!-- Report Tabs -->
+        <ul class="nav nav-tabs mb-4 no-print">
+            <li class="nav-item">
+                <button class="nav-link @(activeTab == "TB" ? "active fw-bold" : "")" @onclick='() => activeTab = "TB"'>Trial Balance</button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link @(activeTab == "IS" ? "active fw-bold" : "")" @onclick='() => activeTab = "IS"'>Income Statement</button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link @(activeTab == "BS" ? "active fw-bold" : "")" @onclick='() => activeTab = "BS"'>Balance Sheet</button>
+            </li>
+        </ul>
+
+        <div class="card shadow-sm border-0 report-paper">
+            <div class="card-body p-5">
+                
+                <!-- Print Header -->
+                <div class="text-center mb-5">
+                    <h3 class="fw-bold">My Company Inc.</h3>
+                    <h4 class="text-uppercase text-muted">
+                        @(activeTab == "TB" ? "Trial Balance" : activeTab == "IS" ? "Income Statement" : "Balance Sheet")
+                    </h4>
+                    <p class="small text-muted">As of @DateTime.Now.ToString("MMMM dd, yyyy")</p>
+                </div>
+
+                <!-- 1. TRIAL BALANCE -->
+                @if (activeTab == "TB")
+                {
+                    <table class="table table-striped table-hover report-table">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Code</th>
+                                <th>Account</th>
+                                <th class="text-end">Debit</th>
+                                <th class="text-end">Credit</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var line in trialBalance.Accounts.OrderBy(a => a.AccountCode))
+                            {
+                                <tr>
+                                    <td>@line.AccountCode</td>
+                                    <td>@line.AccountName</td>
+                                    <td class="text-end">@(line.Debit != 0 ? line.Debit.ToString("N2") : "-")</td>
+                                    <td class="text-end">@(line.Credit != 0 ? line.Credit.ToString("N2") : "-")</td>
+                                </tr>
+                            }
+                        </tbody>
+                        <tfoot class="fw-bold border-top-double">
+                            <tr>
+                                <td colspan="2" class="text-end">TOTALS</td>
+                                <td class="text-end">@trialBalance.TotalDebit.ToString("N2")</td>
+                                <td class="text-end">@trialBalance.TotalCredit.ToString("N2")</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                }
+
+                <!-- 2. INCOME STATEMENT -->
+                @if (activeTab == "IS")
+                {
+                    <table class="table report-table">
+                        <tbody>
+                            <!-- Revenue -->
+                            <tr class="table-light"><td colspan="2" class="fw-bold text-uppercase">Revenue</td></tr>
+                            @foreach (var line in GetAccountsByType("Revenue"))
+                            {
+                                <tr>
+                                    <td class="ps-4">@line.AccountName</td>
+                                    <td class="text-end">@line.Credit.ToString("N2")</td>
+                                </tr>
+                            }
+                            <tr class="fw-bold">
+                                <td class="text-end">Total Revenue</td>
+                                <td class="text-end border-top">@TotalRevenue.ToString("N2")</td>
+                            </tr>
+
+                            <!-- Expenses -->
+                            <tr class="table-light"><td colspan="2" class="fw-bold text-uppercase mt-3">Operating Expenses</td></tr>
+                            @foreach (var line in GetAccountsByType("Expense"))
+                            {
+                                <tr>
+                                    <td class="ps-4">@line.AccountName</td>
+                                    <td class="text-end">@line.Debit.ToString("N2")</td>
+                                </tr>
+                            }
+                            <tr class="fw-bold">
+                                <td class="text-end">Total Expenses</td>
+                                <td class="text-end border-top">(@TotalExpense.ToString("N2"))</td>
+                            </tr>
+
+                            <!-- Net Income -->
+                            <tr class="bg-primary text-white fs-5">
+                                <td class="fw-bold ps-3 py-3">NET INCOME</td>
+                                <td class="text-end fw-bold pe-3 py-3">@NetIncome.ToString("N2")</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                }
+
+                <!-- 3. BALANCE SHEET -->
+                @if (activeTab == "BS")
+                {
+                    <table class="table report-table">
+                        <tbody>
+                            <!-- Assets -->
+                            <tr class="table-light"><td colspan="2" class="fw-bold text-uppercase">Assets</td></tr>
+                            @foreach (var line in GetAccountsByType("Asset"))
+                            {
+                                <tr>
+                                    <td class="ps-4">@line.AccountName</td>
+                                    <td class="text-end">@((line.Debit - line.Credit).ToString("N2"))</td>
+                                </tr>
+                            }
+                            <tr class="fw-bold fs-5">
+                                <td class="text-end">TOTAL ASSETS</td>
+                                <td class="text-end border-top border-dark">@TotalAssets.ToString("N2")</td>
+                            </tr>
+
+                            <!-- Liabilities -->
+                            <tr class="table-light"><td colspan="2" class="fw-bold text-uppercase mt-4">Liabilities</td></tr>
+                            @foreach (var line in GetAccountsByType("Liability"))
+                            {
+                                <tr>
+                                    <td class="ps-4">@line.AccountName</td>
+                                    <td class="text-end">@((line.Credit - line.Debit).ToString("N2"))</td>
+                                </tr>
+                            }
+                            <tr class="fw-bold">
+                                <td class="text-end">Total Liabilities</td>
+                                <td class="text-end border-top">@TotalLiabilities.ToString("N2")</td>
+                            </tr>
+
+                            <!-- Equity -->
+                            <tr class="table-light"><td colspan="2" class="fw-bold text-uppercase mt-4">Equity</td></tr>
+                            @foreach (var line in GetAccountsByType("Equity"))
+                            {
+                                <tr>
+                                    <td class="ps-4">@line.AccountName</td>
+                                    <td class="text-end">@((line.Credit - line.Debit).ToString("N2"))</td>
+                                </tr>
+                            }
+                            <!-- Calculated Retained Earnings -->
+                            <tr>
+                                <td class="ps-4 fst-italic">Net Income (Current Period)</td>
+                                <td class="text-end">@NetIncome.ToString("N2")</td>
+                            </tr>
+                             <tr class="fw-bold">
+                                <td class="text-end">Total Equity</td>
+                                <td class="text-end border-top">@TotalEquity.ToString("N2")</td>
+                            </tr>
+
+                            <tr class="bg-secondary text-white fs-5">
+                                <td class="fw-bold ps-3 py-3">TOTAL LIABILITIES & EQUITY</td>
+                                <td class="text-end fw-bold pe-3 py-3">@((TotalLiabilities + TotalEquity).ToString("N2"))</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+<style>
+    .border-top-double { border-top: 3px double #000 !important; }
+    /* Print Styles */
+    @@media print {
+        .no-print { display: none !important; }
+        .sidebar { display: none !important; }
+        .content { margin: 0 !important; padding: 0 !important; }
+        .card { border: none !important; box-shadow: none !important; }
+    }
+</style>
+
+@code {
+    private TrialBalanceDTO? trialBalance;
+    private Dictionary<string, string> accountTypes; // Code -> Type
+    private bool isLoading = false;
+    private string activeTab = "TB";
+
+    // --- Computed Financials ---
+    
+    // Income Statement
+    private decimal TotalRevenue => GetAccountsByType("Revenue").Sum(a => a.Credit - a.Debit);
+    private decimal TotalExpense => GetAccountsByType("Expense").Sum(a => a.Debit - a.Credit);
+    private decimal NetIncome => TotalRevenue - TotalExpense;
+
+    // Balance Sheet
+    private decimal TotalAssets => GetAccountsByType("Asset").Sum(a => a.Debit - a.Credit);
+    private decimal TotalLiabilities => GetAccountsByType("Liability").Sum(a => a.Credit - a.Debit);
+    private decimal TotalEquity => GetAccountsByType("Equity").Sum(a => a.Credit - a.Debit) + NetIncome;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        isLoading = true;
+        try
+        {
+            // Fetch both TB (numbers) and Chart of Accounts (types) in parallel
+            var tbTask = ReportService.GetTrialBalance();
+            var accountsTask = LedgerService.GetAccountsAsync();
+
+            await Task.WhenAll(tbTask, accountsTask);
+
+            trialBalance = tbTask.Result;
+            
+            // Create a lookup for Account Type based on Code
+            // This is necessary because the TB DTO might not strictly contain the "Type" string depending on Step 2.5
+            accountTypes = accountsTask.Result.ToDictionary(a => a.Code, a => a.Type);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private IEnumerable<AccountBalanceDTO> GetAccountsByType(string type)
+    {
+        if (trialBalance == null) return Enumerable.Empty<AccountBalanceDTO>();
+        
+        return trialBalance.Accounts
+            .Where(a => accountTypes.ContainsKey(a.AccountCode) && accountTypes[a.AccountCode] == type);
+    }
+
+    private async Task PrintReport()
+    {
+        await JS.InvokeVoidAsync("print");
+    }
+}

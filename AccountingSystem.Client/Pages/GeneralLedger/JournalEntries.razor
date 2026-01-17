@@ -1,0 +1,219 @@
+﻿@page "/gl/journal"
+@using AccountingSystem.Shared.DTOs
+@using AccountingSystem.Client.Services
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+@inject LedgerService LedgerService
+@inject NavigationManager NavManager
+
+<PageTitle>Journal Entries</PageTitle>
+
+<div class="container-fluid mt-3">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card shadow border-0">
+                <div class="card-header bg-primary text-white py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-journal-plus me-2"></i>New Journal Entry</h5>
+                </div>
+                <div class="card-body p-4">
+                    
+                    @if (!string.IsNullOrEmpty(errorMessage))
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show">
+                            @errorMessage
+                            <button type="button" class="btn-close" @onclick="() => errorMessage = null"></button>
+                        </div>
+                    }
+
+                    <EditForm Model="@entry" OnValidSubmit="HandleSubmit">
+                        
+                        <!-- Header Fields -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-3">
+                                <label class="form-label small text-muted text-uppercase fw-bold">Date</label>
+                                <InputDate @bind-Value="entry.Date" class="form-control" />
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small text-muted text-uppercase fw-bold">Reference #</label>
+                                <InputText @bind-Value="entry.Reference" class="form-control" placeholder="e.g. JE-2023-001" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small text-muted text-uppercase fw-bold">Description</label>
+                                <InputText @bind-Value="entry.Description" class="form-control" placeholder="Brief description of the transaction" />
+                            </div>
+                        </div>
+
+                        <!-- Lines Table -->
+                        <div class="table-responsive mb-4 border rounded">
+                            <table class="table table-borderless mb-0">
+                                <thead class="bg-light border-bottom">
+                                    <tr>
+                                        <th style="width: 40%" class="ps-3">Account</th>
+                                        <th style="width: 25%">Debit</th>
+                                        <th style="width: 25%">Credit</th>
+                                        <th style="width: 10%" class="text-center">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var line in entry.Lines)
+                                    {
+                                        <tr class="border-bottom">
+                                            <td class="ps-3">
+                                                <InputSelect @bind-Value="line.AccountId" class="form-select">
+                                                    <option value="0" class="text-muted">Select Account...</option>
+                                                    @if (accounts != null)
+                                                    {
+                                                        foreach (var acct in accounts)
+                                                        {
+                                                            <option value="@acct.Id">@acct.Code - @acct.Name</option>
+                                                        }
+                                                    }
+                                                </InputSelect>
+                                            </td>
+                                            <td>
+                                                <div class="input-group">
+                                                    <span class="input-group-text bg-white border-end-0">₱</span>
+                                                    <InputNumber @bind-Value="line.Debit" class="form-control border-start-0 text-end" @oninput="StateHasChanged" />
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="input-group">
+                                                    <span class="input-group-text bg-white border-end-0">₱</span>
+                                                    <InputNumber @bind-Value="line.Credit" class="form-control border-start-0 text-end" @oninput="StateHasChanged" />
+                                                </div>
+                                            </td>
+                                            <td class="text-center align-middle">
+                                                <button type="button" class="btn btn-outline-danger btn-sm rounded-circle" 
+                                                        @onclick="() => RemoveLine(line)" 
+                                                        disabled="@(entry.Lines.Count <= 2)">
+                                                    <i class="bi bi-x"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                                <tfoot class="bg-light border-top">
+                                    <tr>
+                                        <td class="ps-3">
+                                            <button type="button" class="btn btn-link text-decoration-none p-0" @onclick="AddLine">
+                                                <i class="bi bi-plus-circle me-1"></i> Add Line Item
+                                            </button>
+                                        </td>
+                                        <td class="text-end pe-3 pt-3">
+                                            <span class="text-muted small me-2">TOTAL DEBIT</span>
+                                            <span class="fw-bold @(IsBalanced ? "text-success" : "text-danger")">
+                                                @TotalDebit.ToString("N2")
+                                            </span>
+                                        </td>
+                                        <td class="text-end pe-3 pt-3">
+                                            <span class="text-muted small me-2">TOTAL CREDIT</span>
+                                            <span class="fw-bold @(IsBalanced ? "text-success" : "text-danger")">
+                                                @TotalCredit.ToString("N2")
+                                            </span>
+                                        </td>
+                                        <td></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+
+                        <!-- Footer Actions -->
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                @if (!IsBalanced)
+                                {
+                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-3 py-2">
+                                        <i class="bi bi-exclamation-triangle me-1"></i> Entries must balance
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2">
+                                        <i class="bi bi-check-circle me-1"></i> Balanced
+                                    </span>
+                                }
+                            </div>
+                            <button type="submit" class="btn btn-primary px-5 py-2 fw-bold shadow-sm" disabled="@(!IsBalanced || isSubmitting)">
+                                @if (isSubmitting)
+                                {
+                                    <span class="spinner-border spinner-border-sm me-2"></span> <span>Saving...</span>
+                                }
+                                else
+                                {
+                                    <span>Post Entry</span>
+                                }
+                            </button>
+                        </div>
+
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private JournalEntryDTO entry = new JournalEntryDTO 
+    { 
+        Date = DateTime.Today,
+        Lines = new List<JournalEntryLineDTO> 
+        { 
+            new JournalEntryLineDTO(), 
+            new JournalEntryLineDTO() 
+        } 
+    };
+
+    private List<AccountDTO> accounts;
+    private string errorMessage;
+    private bool isSubmitting = false;
+
+    private decimal TotalDebit => entry.Lines.Sum(l => l.Debit);
+    private decimal TotalCredit => entry.Lines.Sum(l => l.Credit);
+    private bool IsBalanced => TotalDebit == TotalCredit && TotalDebit > 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try 
+        {
+            accounts = await LedgerService.GetAccountsAsync();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "Failed to load Chart of Accounts. " + ex.Message;
+        }
+    }
+
+    private void AddLine()
+    {
+        entry.Lines.Add(new JournalEntryLineDTO());
+    }
+
+    private void RemoveLine(JournalEntryLineDTO line)
+    {
+        if (entry.Lines.Count > 2)
+        {
+            entry.Lines.Remove(line);
+        }
+    }
+
+    private async Task HandleSubmit()
+    {
+        if (!IsBalanced) return;
+
+        isSubmitting = true;
+        errorMessage = null;
+
+        try
+        {
+            await LedgerService.PostJournalEntryAsync(entry);
+            NavManager.NavigateTo("/");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "Error posting entry: " + ex.Message;
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+}

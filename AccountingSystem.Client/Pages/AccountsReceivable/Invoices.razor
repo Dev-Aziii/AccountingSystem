@@ -1,0 +1,116 @@
+﻿@page "/ar/invoices"
+@using AccountingSystem.Shared.DTOs
+@using AccountingSystem.Client.Services
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+@inject ReceivableService ReceivableService
+@inject LedgerService LedgerService
+@inject NavigationManager NavManager
+
+<PageTitle>Create Invoice</PageTitle>
+
+<div class="container mt-4" style="max-width: 800px;">
+    <div class="card shadow border-0">
+        <div class="card-header bg-info text-white d-flex align-items-center">
+            <h4 class="mb-0"><i class="bi bi-file-earmark-text me-2"></i>New Customer Invoice</h4>
+        </div>
+        <div class="card-body p-4">
+
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <div class="alert alert-danger">@errorMessage</div>
+            }
+
+            <EditForm Model="@invoice" OnValidSubmit="HandleSubmit">
+                <DataAnnotationsValidator />
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Customer ID</label>
+                        <InputNumber @bind-Value="invoice.CustomerId" class="form-control" placeholder="Enter Customer ID" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Due Date</label>
+                        <InputDate @bind-Value="invoice.DueDate" class="form-control" />
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Total Amount</label>
+                        <div class="input-group">
+                            <span class="input-group-text">₱</span>
+                            <InputNumber @bind-Value="invoice.Amount" class="form-control text-end" />
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Revenue Account</label>
+                        <InputSelect @bind-Value="invoice.RevenueAccountId" class="form-select">
+                            <option value="0">Select Revenue...</option>
+                            @if (accounts != null)
+                            {
+                                foreach (var acct in accounts)
+                                {
+                                    <option value="@acct.Id">@acct.Code - @acct.Name</option>
+                                }
+                            }
+                        </InputSelect>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label fw-bold">Description</label>
+                    <InputTextArea @bind-Value="invoice.Description" class="form-control" rows="2" />
+                </div>
+
+                <div class="d-flex justify-content-end">
+                    <button type="submit" class="btn btn-info text-white px-5 fw-bold" disabled="@isSubmitting">
+                        @if (isSubmitting)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2"></span>
+                        }
+                        Save Invoice
+                    </button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+</div>
+
+@code {
+    private CreateInvoiceDTO invoice = new CreateInvoiceDTO { DueDate = DateTime.Today.AddDays(15) };
+    private List<AccountDTO> accounts;
+    private string errorMessage;
+    private bool isSubmitting = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            accounts = await LedgerService.GetAccountsAsync();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "Failed to load accounts: " + ex.Message;
+        }
+    }
+
+    private async Task HandleSubmit()
+    {
+        isSubmitting = true;
+        errorMessage = null;
+
+        try
+        {
+            await ReceivableService.CreateInvoiceAsync(invoice);
+            NavManager.NavigateTo("/");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+}

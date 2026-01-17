@@ -1,0 +1,85 @@
+﻿@page "/ar/receive-payment"
+@using AccountingSystem.Shared.DTOs
+@using AccountingSystem.Client.Services
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+@inject IPaymentClientService PaymentService
+@inject NavigationManager NavManager
+
+<PageTitle>Process Payment</PageTitle>
+
+<div class="container mt-5" style="max-width: 500px;">
+    <div class="card shadow border-0">
+        <div class="card-header bg-success text-white">
+            <h4 class="mb-0"><i class="bi bi-credit-card me-2"></i>Receive Payment</h4>
+        </div>
+        <div class="card-body p-4">
+
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <div class="alert alert-danger">@errorMessage</div>
+            }
+
+            <EditForm Model="@paymentRequest" OnValidSubmit="HandlePayment">
+                <DataAnnotationsValidator />
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Description / Invoice #</label>
+                    <InputText @bind-Value="paymentRequest.Description" class="form-control" placeholder="e.g. Invoice-1001" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Amount (PHP)</label>
+                    <div class="input-group">
+                        <span class="input-group-text">₱</span>
+                        <InputNumber @bind-Value="paymentRequest.Amount" class="form-control text-end" step="0.01" />
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label fw-bold">Remarks</label>
+                    <InputTextArea @bind-Value="paymentRequest.Remarks" class="form-control" rows="2" />
+                </div>
+
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-success btn-lg shadow-sm" disabled="@isProcessing">
+                        @if (isProcessing)
+                        {
+                            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                            <span> Processing...</span>
+                        }
+                        else
+                        {
+                            <span><i class="bi bi-wallet2 me-2"></i>Pay via GCash</span>
+                        }
+                    </button>
+                </div>
+            </EditForm>
+        </div>
+        <div class="card-footer bg-light text-center small text-muted">
+            Secure payment processing via PayMongo
+        </div>
+    </div>
+</div>
+
+@code {
+    private CreateSourceDTO paymentRequest = new CreateSourceDTO { Amount = 100.00M };
+    private string errorMessage;
+    private bool isProcessing = false;
+
+    private async Task HandlePayment()
+    {
+        isProcessing = true;
+        errorMessage = null;
+
+        try
+        {
+            var checkoutUrl = await PaymentService.CreatePaymentLinkAsync(paymentRequest);
+            NavManager.NavigateTo(checkoutUrl, forceLoad: true);
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+            isProcessing = false;
+        }
+    }
+}
