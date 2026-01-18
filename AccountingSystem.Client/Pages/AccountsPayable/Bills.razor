@@ -1,7 +1,8 @@
 ﻿@page "/ap/bills"
 @using AccountingSystem.Shared.DTOs
 @using AccountingSystem.Client.Services
-@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Admin,Accounting")]
 @inject PayableService PayableService
 @inject LedgerService LedgerService
 @inject NavigationManager NavManager
@@ -90,7 +91,6 @@
     {
         try
         {
-            // Filter accounts to show only Expenses? For now fetch all.
             accounts = await LedgerService.GetAccountsAsync();
         }
         catch (Exception ex)

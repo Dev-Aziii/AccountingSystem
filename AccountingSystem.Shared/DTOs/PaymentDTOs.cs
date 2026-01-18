@@ -11,8 +11,6 @@ namespace AccountingSystem.Shared.DTOs
     }
 
     // --- PAYMONGO API MODELS ---
-    // These map to the external API JSON structure
-
     public class PayMongoSourceRequest
     {
         [JsonPropertyName("data")]
@@ -50,6 +48,10 @@ namespace AccountingSystem.Shared.DTOs
 
         [JsonPropertyName("failed")]
         public string Failed { get; set; }
+
+        // FIX: Added checkout_url mapping
+        [JsonPropertyName("checkout_url")]
+        public string CheckoutUrl { get; set; }
     }
 
     public class BillingInfo
@@ -98,7 +100,7 @@ namespace AccountingSystem.Shared.DTOs
         public string Id { get; set; }
 
         [JsonPropertyName("type")]
-        public string Type { get; set; } // e.g., "source.chargeable"
+        public string Type { get; set; }
 
         [JsonPropertyName("attributes")]
         public WebhookAttributes Attributes { get; set; }
@@ -110,6 +112,6 @@ namespace AccountingSystem.Shared.DTOs
         public string Type { get; set; }
 
         [JsonPropertyName("data")]
-        public ResponseData Data { get; set; } // Nested source object
+        public ResponseData Data { get; set; }
     }
 }

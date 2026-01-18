@@ -1,7 +1,8 @@
 ﻿using AccountingSystem.API.Data;
-using AccountingSystem.Shared.DTOs;
 using AccountingSystem.API.Models;
 using AccountingSystem.API.Services.Interfaces;
+using AccountingSystem.Shared.DTOs;
+using Microsoft.EntityFrameworkCore;
 
 namespace AccountingSystem.API.Services
 {
@@ -28,8 +29,11 @@ namespace AccountingSystem.API.Services
             };
             _context.Bills.Add(bill);
 
-            // 2. Post to GL: Dr Expense, Cr Accounts Payable (2000 - Placeholder ID)
-            // Note: In real app, fetch AP Account ID from settings
+            // 2. Fetch the correct AP Account ID (Code: "2000")
+            var apAccount = await _context.Accounts.FirstOrDefaultAsync(a => a.Code == "2000");
+            if (apAccount == null) throw new Exception("Critical Error: Accounts Payable (2000) account not found in Ledger.");
+
+            // 3. Post to GL: Dr Expense, Cr Accounts Payable
             var entry = new JournalEntryDTO
             {
                 Date = DateTime.UtcNow,
@@ -38,7 +42,7 @@ namespace AccountingSystem.API.Services
                 Lines = new List<JournalEntryLineDTO>
                 {
                     new JournalEntryLineDTO { AccountId = billDto.ExpenseAccountId, Debit = billDto.Amount, Credit = 0 },
-                    new JournalEntryLineDTO { AccountId = 2000, Debit = 0, Credit = billDto.Amount } // 2000 = AP
+                    new JournalEntryLineDTO { AccountId = apAccount.Id, Debit = 0, Credit = billDto.Amount } // Use fetched ID
                 }
             };
 
@@ -68,7 +72,14 @@ namespace AccountingSystem.API.Services
             };
             _context.Payments.Add(payment);
 
-            // 2. Post to GL: Dr Accounts Payable, Cr Cash/Bank
+            // 2. Fetch Accounts (AP: 2000, Cash: 1000)
+            var apAccount = await _context.Accounts.FirstOrDefaultAsync(a => a.Code == "2000");
+            var cashAccount = await _context.Accounts.FirstOrDefaultAsync(a => a.Code == "1000");
+
+            if (apAccount == null || cashAccount == null)
+                throw new Exception("Critical Error: Default AP (2000) or Cash (1000) accounts missing.");
+
+            // 3. Post to GL: Dr Accounts Payable, Cr Cash/Bank
             var entry = new JournalEntryDTO
             {
                 Date = DateTime.UtcNow,
@@ -76,8 +87,8 @@ namespace AccountingSystem.API.Services
                 Reference = $"PAY-{payment.Id}",
                 Lines = new List<JournalEntryLineDTO>
                 {
-                    new JournalEntryLineDTO { AccountId = 2000, Debit = amount, Credit = 0 }, // Dr AP
-                    new JournalEntryLineDTO { AccountId = 1000, Debit = 0, Credit = amount }  // Cr Cash (Placeholder 1000)
+                    new JournalEntryLineDTO { AccountId = apAccount.Id, Debit = amount, Credit = 0 },
+                    new JournalEntryLineDTO { AccountId = cashAccount.Id, Debit = 0, Credit = amount }
                 }
             };
 
@@ -108,7 +119,11 @@ namespace AccountingSystem.API.Services
             };
             _context.Invoices.Add(invoice);
 
-            // GL: Dr Accounts Receivable (1100), Cr Revenue
+            // Fetch AR Account (Code: "1100")
+            var arAccount = await _context.Accounts.FirstOrDefaultAsync(a => a.Code == "1100");
+            if (arAccount == null) throw new Exception("Critical Error: Accounts Receivable (1100) account not found.");
+
+            // GL: Dr Accounts Receivable, Cr Revenue
             var entry = new JournalEntryDTO
             {
                 Date = DateTime.UtcNow,
@@ -116,7 +131,7 @@ namespace AccountingSystem.API.Services
                 Reference = invoice.Id.ToString(),
                 Lines = new List<JournalEntryLineDTO>
                 {
-                    new JournalEntryLineDTO { AccountId = 1100, Debit = invoiceDto.Amount, Credit = 0 }, // Dr AR
+                    new JournalEntryLineDTO { AccountId = arAccount.Id, Debit = invoiceDto.Amount, Credit = 0 }, // Use fetched ID
                     new JournalEntryLineDTO { AccountId = invoiceDto.RevenueAccountId, Debit = 0, Credit = invoiceDto.Amount } // Cr Revenue
                 }
             };
@@ -144,7 +159,14 @@ namespace AccountingSystem.API.Services
             };
             _context.Payments.Add(payment);
 
-            // GL: Dr Cash (1000), Cr Accounts Receivable (1100)
+            // Fetch Accounts (Cash: 1000, AR: 1100)
+            var cashAccount = await _context.Accounts.FirstOrDefaultAsync(a => a.Code == "1000");
+            var arAccount = await _context.Accounts.FirstOrDefaultAsync(a => a.Code == "1100");
+
+            if (arAccount == null || cashAccount == null)
+                throw new Exception("Critical Error: Default AR (1100) or Cash (1000) accounts missing.");
+
+            // GL: Dr Cash, Cr Accounts Receivable
             var entry = new JournalEntryDTO
             {
                 Date = DateTime.UtcNow,
@@ -152,8 +174,8 @@ namespace AccountingSystem.API.Services
                 Reference = $"REC-{payment.Id}",
                 Lines = new List<JournalEntryLineDTO>
                 {
-                    new JournalEntryLineDTO { AccountId = 1000, Debit = amount, Credit = 0 }, // Dr Cash
-                    new JournalEntryLineDTO { AccountId = 1100, Debit = 0, Credit = amount }  // Cr AR
+                    new JournalEntryLineDTO { AccountId = cashAccount.Id, Debit = amount, Credit = 0 },
+                    new JournalEntryLineDTO { AccountId = arAccount.Id, Debit = 0, Credit = amount }
                 }
             };
 

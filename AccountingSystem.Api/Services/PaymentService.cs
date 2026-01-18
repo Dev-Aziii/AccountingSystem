@@ -1,7 +1,5 @@
-﻿using AccountingSystem.Shared.DTOs;
-using AccountingSystem.API.Services.Interfaces;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
-using System.Reflection;
+﻿using AccountingSystem.API.Services.Interfaces;
+using AccountingSystem.Shared.DTOs;
 using System.Text;
 using System.Text.Json;
 
@@ -17,7 +15,7 @@ namespace AccountingSystem.API.Services
             _configuration = configuration;
             _httpClient = new HttpClient();
 
-            // Set Base URL and Auth Headers
+            // Set Base URL
             _httpClient.BaseAddress = new Uri("https://api.paymongo.com/v1/");
 
             var secretKey = _configuration["PayMongo:SecretKey"];
@@ -39,8 +37,8 @@ namespace AccountingSystem.API.Services
                         Type = "gcash",
                         Redirect = new RedirectUrls
                         {
-                            Success = "https://localhost:7000/success", // Frontend URL
-                            Failed = "https://localhost:7000/failed"
+                            Success = "https://localhost:7150/ar/receive-payment", // Frontend Redirect
+                            Failed = "https://localhost:7150/ar/receive-payment"
                         },
                         Billing = new BillingInfo
                         {
@@ -65,14 +63,13 @@ namespace AccountingSystem.API.Services
 
             // 3. Extract Checkout URL
             var result = JsonSerializer.Deserialize<PayMongoSourceResponse>(responseString);
-            return result.Data.Attributes.Redirect.Success; // Usually returns checkout_url, mapping simply here
+
+            return result.Data.Attributes.Redirect.CheckoutUrl;
         }
 
         public bool VerifyWebhookSignature(string signature, string payload)
         {
-            // Actual implementation requires HMAC-SHA256 hashing of the payload 
-            // with the webhook secret and comparing it to the signature header.
-            // For development/demo, we return true.
+            // In production, implement HMAC verification here
             return true;
         }
     }

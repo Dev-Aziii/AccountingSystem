@@ -1,7 +1,8 @@
 ﻿@page "/gl/journal"
 @using AccountingSystem.Shared.DTOs
 @using AccountingSystem.Client.Services
-@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Admin,Accounting")]
 @inject LedgerService LedgerService
 @inject NavigationManager NavManager
 

@@ -1,6 +1,5 @@
-﻿using AccountingSystem.API.DTOs;
-using AccountingSystem.API.Services.Interfaces;
-using AccountingSystem.Shared.DTOs; // Updated to use Shared
+﻿using AccountingSystem.API.Services.Interfaces;
+using AccountingSystem.Shared.DTOs; 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

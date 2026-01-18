@@ -23,13 +23,17 @@ namespace AccountingSystem.Client.Auth
                 return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
             }
 
-            return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity(ParseClaimsFromJwt(token), "jwt")));
+            // FIX: Explicitly tell ClaimsIdentity that the "role" key represents roles
+            var identity = new ClaimsIdentity(ParseClaimsFromJwt(token), "jwt", "name", "role");
+
+            return new AuthenticationState(new ClaimsPrincipal(identity));
         }
 
         public void NotifyUserAuthentication(string token)
         {
-            var authenticatedUser = new ClaimsPrincipal(new ClaimsIdentity(ParseClaimsFromJwt(token), "jwt"));
-            var authState = Task.FromResult(new AuthenticationState(authenticatedUser));
+            // FIX: Apply the same mapping here
+            var identity = new ClaimsIdentity(ParseClaimsFromJwt(token), "jwt", "name", "role");
+            var authState = Task.FromResult(new AuthenticationState(new ClaimsPrincipal(identity)));
             NotifyAuthenticationStateChanged(authState);
         }
 
@@ -41,11 +45,28 @@ namespace AccountingSystem.Client.Auth
 
         private IEnumerable<Claim> ParseClaimsFromJwt(string jwt)
         {
+            var claims = new List<Claim>();
             var payload = jwt.Split('.')[1];
             var jsonBytes = ParseBase64WithoutPadding(payload);
             var keyValuePairs = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonBytes);
 
-            return keyValuePairs.Select(kvp => new Claim(kvp.Key, kvp.Value.ToString()));
+            foreach (var kvp in keyValuePairs)
+            {
+                // Handle "role" claim specifically (it might be an array of roles)
+                if (kvp.Value is JsonElement element && element.ValueKind == JsonValueKind.Array)
+                {
+                    foreach (var item in element.EnumerateArray())
+                    {
+                        claims.Add(new Claim(kvp.Key, item.ToString()));
+                    }
+                }
+                else
+                {
+                    claims.Add(new Claim(kvp.Key, kvp.Value.ToString()));
+                }
+            }
+
+            return claims;
         }
 
         private byte[] ParseBase64WithoutPadding(string base64)
