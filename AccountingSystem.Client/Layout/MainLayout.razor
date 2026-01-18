@@ -1,6 +1,7 @@
 ﻿@inherits LayoutComponentBase
 @using AccountingSystem.Client.Services
 @using Microsoft.AspNetCore.Components.Authorization
+@using AccountingSystem.Client.Shared.Components
 @inject AuthService AuthService
 @inject NavigationManager NavManager
 
@@ -19,7 +20,7 @@
                     </button>
                 </Authorized>
                 <NotAuthorized>
-                    <a href="/" class="btn btn-outline-primary btn-sm">Login</a>
+                    <a href="login" class="btn btn-outline-primary btn-sm">Login</a>
                 </NotAuthorized>
             </AuthorizeView>
         </div>
@@ -27,6 +28,9 @@
         <article class="content px-4">
             @Body
         </article>
+
+        <!-- Toast Container added here to be visible on all pages -->
+        <ToastContainer />
     </main>
 </div>
 
@@ -34,7 +38,6 @@
     private async Task Logout()
     {
         await AuthService.Logout();
-        // Redirect to Root (Login Page) after logout
         NavManager.NavigateTo("/");
     }
 }

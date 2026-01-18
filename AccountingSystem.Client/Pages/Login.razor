@@ -2,20 +2,20 @@
 @layout LoginLayout
 @using AccountingSystem.Shared.DTOs
 @using AccountingSystem.Client.Services
+@using AccountingSystem.Client.Shared.Components
 @using Microsoft.AspNetCore.Components.Authorization
 @inject AuthService AuthService
 @inject NavigationManager NavManager
 @inject AuthenticationStateProvider AuthStateProvider
+@inject ToastService ToastService
 
 <div class="d-flex justify-content-center align-items-center vh-100 bg-light">
+    <!-- Login needs its own ToastContainer because it doesn't use MainLayout -->
+    <ToastContainer />
+
     <div class="card shadow border-0" style="width: 400px;">
         <div class="card-body p-5">
             <h3 class="text-center mb-4 text-primary fw-bold">Accounting System</h3>
-
-            @if (!string.IsNullOrEmpty(errorMessage))
-            {
-                <div class="alert alert-danger text-center">@errorMessage</div>
-            }
 
             <EditForm Model="@loginModel" OnValidSubmit="HandleLogin">
                 <DataAnnotationsValidator />
@@ -46,16 +46,13 @@
 
 @code {
     private LoginDTO loginModel = new LoginDTO();
-    private string errorMessage;
     private bool isLoading = false;
 
     protected override async Task OnInitializedAsync()
     {
-        // Check if user is already logged in
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         if (authState.User.Identity != null && authState.User.Identity.IsAuthenticated)
         {
-            // Redirect logged-in users to Dashboard instead of showing login form
             NavManager.NavigateTo("/dashboard");
         }
     }
@@ -63,17 +60,19 @@
     private async Task HandleLogin()
     {
         isLoading = true;
-        errorMessage = null;
 
         try
         {
             await AuthService.Login(loginModel);
-            // Successful login -> Go to Dashboard
+            ToastService.ShowSuccess("Login successful! Redirecting...");
+            // Small delay to let user see the success message
+            await Task.Delay(1000);
             NavManager.NavigateTo("/dashboard");
         }
         catch (Exception ex)
         {
-            errorMessage = "Invalid credentials. Please try again.";
+            // Use Toast instead of static string
+            ToastService.ShowError("Invalid credentials. Please try again.");
             Console.WriteLine(ex.Message);
         }
         finally

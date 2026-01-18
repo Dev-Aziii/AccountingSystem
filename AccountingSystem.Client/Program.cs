@@ -14,6 +14,7 @@ builder.RootComponents.Add<HeadOutlet>("head::after");
 builder.Services.AddBlazoredLocalStorage();
 builder.Services.AddScoped<TokenStorageService>();
 builder.Services.AddScoped<ApiService>();
+builder.Services.AddScoped<ToastService>();
 
 // 2. Authentication Services
 builder.Services.AddAuthorizationCore();
