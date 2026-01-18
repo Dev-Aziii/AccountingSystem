@@ -1,11 +1,14 @@
-﻿using AccountingSystem.Shared.DTOs;
-using AccountingSystem.API.Services.Interfaces;
+﻿using AccountingSystem.API.Services.Interfaces;
+using AccountingSystem.Shared.DTOs; 
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AccountingSystem.API.Controllers
 {
+    // --- ACCOUNTS PAYABLE ---
     [ApiController]
     [Route("api/payables")]
+    [Authorize(Roles = "Admin,Accounting")] // Management cannot access AP
     public class AccountsPayableController : ControllerBase
     {
         private readonly IPayableService _payableService;
@@ -27,7 +30,8 @@ namespace AccountingSystem.API.Controllers
         {
             try
             {
-                var payment = await _payableService.PayBillAsync(id, paymentDto.Amount, paymentDto.PaymentMethod, "Admin");
+                var userId = User.Identity?.Name ?? "Admin";
+                var payment = await _payableService.PayBillAsync(id, paymentDto.Amount, paymentDto.PaymentMethod, userId);
                 return Ok(payment);
             }
             catch (Exception ex)
@@ -37,8 +41,10 @@ namespace AccountingSystem.API.Controllers
         }
     }
 
+    // --- ACCOUNTS RECEIVABLE ---
     [ApiController]
     [Route("api/receivables")]
+    [Authorize(Roles = "Admin,Accounting")] // Management cannot access AR
     public class AccountsReceivableController : ControllerBase
     {
         private readonly IReceivableService _receivableService;
@@ -60,7 +66,8 @@ namespace AccountingSystem.API.Controllers
         {
             try
             {
-                var payment = await _receivableService.ReceivePaymentAsync(id, paymentDto.Amount, paymentDto.PaymentMethod, "Admin");
+                var userId = User.Identity?.Name ?? "Admin";
+                var payment = await _receivableService.ReceivePaymentAsync(id, paymentDto.Amount, paymentDto.PaymentMethod, userId);
                 return Ok(payment);
             }
             catch (Exception ex)
