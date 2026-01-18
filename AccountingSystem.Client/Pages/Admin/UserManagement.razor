@@ -1,0 +1,205 @@
+﻿@page "/admin/users"
+@using AccountingSystem.Shared.DTOs
+@using AccountingSystem.Client.Services
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Admin")]
+@inject UserService UserService
+
+<PageTitle>User Management</PageTitle>
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="text-primary fw-bold mb-0">User Management</h2>
+            <p class="text-muted small">Manage system access and roles</p>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger alert-dismissible fade show">
+            @errorMessage
+            <button type="button" class="btn-close" @onclick="() => errorMessage = null"></button>
+        </div>
+    }
+
+    <div class="row">
+        <!-- LEFT: User List -->
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0 fw-bold text-primary">Current Users</h5>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Username</th>
+                                <th>Full Name</th>
+                                <th>Role</th>
+                                <th class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (users == null)
+                            {
+                                <tr><td colspan="4" class="text-center py-4">Loading users...</td></tr>
+                            }
+                            else if (!users.Any())
+                            {
+                                <tr><td colspan="4" class="text-center py-4">No users found.</td></tr>
+                            }
+                            else
+                            {
+                                @foreach (var user in users)
+                                {
+                                    <tr>
+                                        <td class="fw-bold">@user.Username</td>
+                                        <td>@user.FullName</td>
+                                        <td>
+                                            @if (user.RoleName == "Admin")
+                                            {
+                                                <span class="badge bg-danger">Admin</span>
+                                            }
+                                            else if (user.RoleName == "Accounting")
+                                            {
+                                                <span class="badge bg-primary">Accounting</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-secondary">Management</span>
+                                            }
+                                        </td>
+                                        <td class="text-end">
+                                            @if (user.Username != "admin") // Prevent deleting default admin
+                                            {
+                                                <button class="btn btn-outline-danger btn-sm" @onclick="() => ConfirmDelete(user.Id)">
+                                                    <i class="bi bi-trash"></i> Delete
+                                                </button>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT: Create User Form -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm border-0 bg-light">
+                <div class="card-header bg-primary text-white py-3">
+                    <h5 class="mb-0 fw-bold"><i class="bi bi-person-plus me-2"></i>Create New User</h5>
+                </div>
+                <div class="card-body p-4">
+                    <EditForm Model="@newUser" OnValidSubmit="HandleCreateUser">
+                        <DataAnnotationsValidator />
+
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-uppercase">Username</label>
+                            <InputText @bind-Value="newUser.Username" class="form-control" placeholder="jdoe" />
+                            <ValidationMessage For="@(() => newUser.Username)" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-uppercase">Full Name</label>
+                            <InputText @bind-Value="newUser.FullName" class="form-control" placeholder="John Doe" />
+                            <ValidationMessage For="@(() => newUser.FullName)" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-uppercase">Role</label>
+                            <InputSelect @bind-Value="newUser.RoleName" class="form-select">
+                                <option value="">Select Role...</option>
+                                <option value="Admin">Admin</option>
+                                <option value="Accounting">Accounting</option>
+                                <option value="Management">Management</option>
+                            </InputSelect>
+                            <ValidationMessage For="@(() => newUser.RoleName)" />
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label small fw-bold text-uppercase">Password</label>
+                            <InputText @bind-Value="newUser.Password" type="password" class="form-control" />
+                            <ValidationMessage For="@(() => newUser.Password)" />
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100 fw-bold" disabled="@isSubmitting">
+                            @if (isSubmitting)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2"></span>
+                            }
+                            Create Account
+                        </button>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<UserDTO> users;
+    private RegisterDTO newUser = new RegisterDTO();
+    private string errorMessage;
+    private bool isSubmitting = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadUsers();
+    }
+
+    private async Task LoadUsers()
+    {
+        try
+        {
+            users = await UserService.GetAllUsersAsync();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "Failed to load users: " + ex.Message;
+        }
+    }
+
+    private async Task HandleCreateUser()
+    {
+        isSubmitting = true;
+        errorMessage = null;
+
+        try
+        {
+            await UserService.CreateUserAsync(newUser);
+            // Reset form
+            newUser = new RegisterDTO();
+            // Reload list
+            await LoadUsers();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    private async Task ConfirmDelete(int id)
+    {
+        bool confirmed = await Task.FromResult(true); // In a real app, use JS Interop for confirm() dialog
+        if (confirmed)
+        {
+            try
+            {
+                await UserService.DeleteUserAsync(id);
+                await LoadUsers();
+            }
+            catch (Exception ex)
+            {
+                errorMessage = "Failed to delete user: " + ex.Message;
+            }
+        }
+    }
+}
