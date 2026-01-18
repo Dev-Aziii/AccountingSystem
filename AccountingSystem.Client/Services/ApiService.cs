@@ -40,5 +40,11 @@ namespace AccountingSystem.Client.Services
             await AddAuthHeader();
             return await _httpClient.PutAsJsonAsync(uri, data);
         }
+
+        public async Task<HttpResponseMessage> DeleteAsync(string uri)
+        {
+            await AddAuthHeader();
+            return await _httpClient.DeleteAsync(uri);
+        }
     }
 }

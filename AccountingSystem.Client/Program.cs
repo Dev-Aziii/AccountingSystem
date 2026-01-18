@@ -25,6 +25,7 @@ builder.Services.AddScoped<ReportService>();
 builder.Services.AddScoped<LedgerService>();
 builder.Services.AddScoped<PayableService>();
 builder.Services.AddScoped<ReceivableService>();
+builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<IPaymentClientService, PaymentClientService>();
 
 // 4. HTTP Configuration
