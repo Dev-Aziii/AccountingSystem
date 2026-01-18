@@ -62,9 +62,3 @@ namespace AccountingSystem.Shared.DTOs
         public string PaymentMethod { get; set; } // "Cash", "Bank"
     }
 }
-namespace AccountingSystem.Api.DTOs
-{
-    public class CoreDTOs
-    {
-    }
-}
