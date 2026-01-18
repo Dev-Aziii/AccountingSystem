@@ -1,23 +1,28 @@
 ﻿@using AccountingSystem.Shared.DTOs
 @using AccountingSystem.Client.Services
 @using AccountingSystem.Client.Shared.Dialogs
+@using MudBlazor
 @inject LedgerService LedgerService
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
 
 <Microsoft.AspNetCore.Components.Authorization.AuthorizeView Roles="Admin,Accounting">
-    <MudSelect T="int" Label="Account" Value="SelectedAccountId" ValueChanged="OnValueChanged"
-               Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Add" OnAdornmentClick="OpenAddDialog"
-               Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter">
-        <MudSelectItem Value="0">-- Select Account --</MudSelectItem>
-        @if (accounts != null)
-        {
-            foreach (var a in accounts)
-            {
-                <MudSelectItem Value="@a.Id">@a.Code - @a.Name (@a.Type)</MudSelectItem>
-            }
-        }
-    </MudSelect>
+    <MudAutocomplete T="AccountDTO"
+                     Label="Account"
+                     Value="_selectedAccount"
+                     ValueChanged="OnValueChanged"
+                     SearchFunc="@SearchAccounts"
+                     ToStringFunc="@(a => a == null ? null : $"{a.Code} - {a.Name} ({a.Type})")"
+                     Adornment="Adornment.End"
+                     AdornmentIcon="@Icons.Material.Filled.Add"
+                     OnAdornmentClick="OpenAddDialog"
+                     Variant="Variant.Outlined"
+                     Dense="true"
+                     Disabled="@(accounts == null)"
+                     Clearable="true"
+                     ResetValueOnEmptyText="true"
+                     CoerceText="true"
+                     CoerceValue="true" />
 </Microsoft.AspNetCore.Components.Authorization.AuthorizeView>
 
 @code {
@@ -26,8 +31,24 @@
     [Parameter] public string? TypeFilter { get; set; }
 
     private List<AccountDTO> accounts;
+    private AccountDTO _selectedAccount;
 
     protected override async Task OnInitializedAsync() => await LoadAccounts();
+
+    protected override void OnParametersSet()
+    {
+        if (accounts != null)
+        {
+            if (SelectedAccountId == 0)
+            {
+                _selectedAccount = null;
+            }
+            else if (_selectedAccount?.Id != SelectedAccountId)
+            {
+                _selectedAccount = accounts.FirstOrDefault(a => a.Id == SelectedAccountId);
+            }
+        }
+    }
 
     private async Task LoadAccounts()
     {
@@ -37,20 +58,37 @@
             accounts = string.IsNullOrEmpty(TypeFilter)
                 ? all
                 : all.Where(a => a.Type.Equals(TypeFilter, StringComparison.OrdinalIgnoreCase)).ToList();
+
+            if (SelectedAccountId != 0 && accounts != null)
+            {
+                _selectedAccount = accounts.FirstOrDefault(a => a.Id == SelectedAccountId);
+            }
         }
         catch (Exception ex) { Console.WriteLine(ex.Message); }
     }
 
-    private async Task OnValueChanged(int id)
+    private async Task OnValueChanged(AccountDTO value)
     {
-        SelectedAccountId = id;
-        await SelectedAccountIdChanged.InvokeAsync(id);
+        _selectedAccount = value;
+        SelectedAccountId = value?.Id ?? 0;
+        await SelectedAccountIdChanged.InvokeAsync(SelectedAccountId);
+    }
+
+    private async Task<IEnumerable<AccountDTO>> SearchAccounts(string value, CancellationToken token)
+    {
+        if (accounts == null) return new List<AccountDTO>();
+        if (string.IsNullOrEmpty(value)) return accounts;
+
+        return accounts.Where(x =>
+            x.Name.Contains(value, StringComparison.InvariantCultureIgnoreCase) ||
+            x.Code.Contains(value, StringComparison.InvariantCultureIgnoreCase)
+        );
     }
 
     private async Task OpenAddDialog()
     {
         var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true };
-        var dialog = DialogService.Show<AccountDialog>("Add New Account", options);
+        var dialog = await DialogService.ShowAsync<AccountDialog>("Add New Account", options);
         var result = await dialog.Result;
 
         if (!result.Canceled)

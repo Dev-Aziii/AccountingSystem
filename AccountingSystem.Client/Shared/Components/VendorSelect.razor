@@ -1,23 +1,28 @@
 ﻿@using AccountingSystem.Shared.DTOs
 @using AccountingSystem.Client.Services
 @using AccountingSystem.Client.Shared.Dialogs
+@using MudBlazor
 @inject PayableService PayableService
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
 
 <Microsoft.AspNetCore.Components.Authorization.AuthorizeView Roles="Admin,Accounting">
-    <MudSelect T="int" Label="Vendor" Value="SelectedVendorId" ValueChanged="OnValueChanged"
-               Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Add" OnAdornmentClick="OpenAddDialog"
-               Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter">
-        <MudSelectItem Value="0">-- Select Vendor --</MudSelectItem>
-        @if (vendors != null)
-        {
-            foreach (var v in vendors)
-            {
-                <MudSelectItem Value="@v.Id">@v.Name</MudSelectItem>
-            }
-        }
-    </MudSelect>
+    <MudAutocomplete T="VendorDTO"
+                     Label="Vendor"
+                     Value="_selectedVendor"
+                     ValueChanged="OnValueChanged"
+                     SearchFunc="@SearchVendors"
+                     ToStringFunc="@(v => v == null ? null : v.Name)"
+                     Adornment="Adornment.End"
+                     AdornmentIcon="@Icons.Material.Filled.Add"
+                     OnAdornmentClick="OpenAddDialog"
+                     Variant="Variant.Outlined"
+                     Dense="true"
+                     Disabled="@(vendors == null)"
+                     Clearable="true"
+                     ResetValueOnEmptyText="true"
+                     CoerceText="true"
+                     CoerceValue="true" />
 </Microsoft.AspNetCore.Components.Authorization.AuthorizeView>
 
 @code {
@@ -25,32 +30,66 @@
     [Parameter] public EventCallback<int> SelectedVendorIdChanged { get; set; }
 
     private List<VendorDTO> vendors;
+    private VendorDTO _selectedVendor;
 
     protected override async Task OnInitializedAsync() => await LoadVendors();
 
+    protected override void OnParametersSet()
+    {
+        // Sync the integer ID from parameter with the Object for Autocomplete
+        if (vendors != null)
+        {
+            if (SelectedVendorId == 0)
+            {
+                _selectedVendor = null;
+            }
+            else if (_selectedVendor?.Id != SelectedVendorId)
+            {
+                _selectedVendor = vendors.FirstOrDefault(v => v.Id == SelectedVendorId);
+            }
+        }
+    }
+
     private async Task LoadVendors()
     {
-        try { vendors = await PayableService.GetVendorsAsync(); }
+        try
+        {
+            vendors = await PayableService.GetVendorsAsync();
+            // Sync initial state if parameter was passed before load
+            if (SelectedVendorId != 0 && vendors != null)
+            {
+                _selectedVendor = vendors.FirstOrDefault(v => v.Id == SelectedVendorId);
+            }
+        }
         catch (Exception ex) { Console.WriteLine(ex.Message); }
     }
 
-    private async Task OnValueChanged(int id)
+    private async Task OnValueChanged(VendorDTO value)
     {
-        SelectedVendorId = id;
-        await SelectedVendorIdChanged.InvokeAsync(id);
+        _selectedVendor = value;
+        SelectedVendorId = value?.Id ?? 0;
+        await SelectedVendorIdChanged.InvokeAsync(SelectedVendorId);
+    }
+
+    private async Task<IEnumerable<VendorDTO>> SearchVendors(string value, CancellationToken token)
+    {
+        if (vendors == null) return new List<VendorDTO>();
+
+        if (string.IsNullOrEmpty(value))
+            return vendors;
+
+        return vendors.Where(x => x.Name.Contains(value, StringComparison.InvariantCultureIgnoreCase));
     }
 
     private async Task OpenAddDialog()
     {
         var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true };
-        var dialog = DialogService.Show<VendorDialog>("Add New Vendor", options);
+        var dialog = await DialogService.ShowAsync<VendorDialog>("Add New Vendor", options);
         var result = await dialog.Result;
 
         if (!result.Canceled)
         {
             await LoadVendors();
-            // The dialog returns true if saved, we assume the last added is the one we want or just let user pick
-            // To be precise, we could make the dialog return the ID, but for now we refresh list.
             Snackbar.Add("Vendor list refreshed.", Severity.Info);
         }
     }

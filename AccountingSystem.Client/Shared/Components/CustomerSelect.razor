@@ -1,23 +1,28 @@
 ﻿@using AccountingSystem.Shared.DTOs
 @using AccountingSystem.Client.Services
 @using AccountingSystem.Client.Shared.Dialogs
+@using MudBlazor
 @inject ReceivableService ReceivableService
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
 
 <Microsoft.AspNetCore.Components.Authorization.AuthorizeView Roles="Admin,Accounting,Management">
-    <MudSelect T="int" Label="Customer" Value="SelectedCustomerId" ValueChanged="OnValueChanged"
-               Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Add" OnAdornmentClick="OpenAddDialog"
-               Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter">
-        <MudSelectItem Value="0">-- Select Customer --</MudSelectItem>
-        @if (customers != null)
-        {
-            foreach (var c in customers)
-            {
-                <MudSelectItem Value="@c.Id">@c.Name</MudSelectItem>
-            }
-        }
-    </MudSelect>
+    <MudAutocomplete T="CustomerDTO"
+                     Label="Customer"
+                     Value="_selectedCustomer"
+                     ValueChanged="OnValueChanged"
+                     SearchFunc="@SearchCustomers"
+                     ToStringFunc="@(c => c == null ? null : c.Name)"
+                     Adornment="Adornment.End"
+                     AdornmentIcon="@Icons.Material.Filled.Add"
+                     OnAdornmentClick="OpenAddDialog"
+                     Variant="Variant.Outlined"
+                     Dense="true"
+                     Disabled="@(customers == null)"
+                     Clearable="true"
+                     ResetValueOnEmptyText="true"
+                     CoerceText="true"
+                     CoerceValue="true" />
 </Microsoft.AspNetCore.Components.Authorization.AuthorizeView>
 
 @code {
@@ -25,25 +30,56 @@
     [Parameter] public EventCallback<int> SelectedCustomerIdChanged { get; set; }
 
     private List<CustomerDTO> customers;
+    private CustomerDTO _selectedCustomer;
 
     protected override async Task OnInitializedAsync() => await LoadCustomers();
 
+    protected override void OnParametersSet()
+    {
+        if (customers != null)
+        {
+            if (SelectedCustomerId == 0)
+            {
+                _selectedCustomer = null;
+            }
+            else if (_selectedCustomer?.Id != SelectedCustomerId)
+            {
+                _selectedCustomer = customers.FirstOrDefault(c => c.Id == SelectedCustomerId);
+            }
+        }
+    }
+
     private async Task LoadCustomers()
     {
-        try { customers = await ReceivableService.GetCustomersAsync(); }
+        try
+        {
+            customers = await ReceivableService.GetCustomersAsync();
+            if (SelectedCustomerId != 0 && customers != null)
+            {
+                _selectedCustomer = customers.FirstOrDefault(c => c.Id == SelectedCustomerId);
+            }
+        }
         catch (Exception ex) { Console.WriteLine(ex.Message); }
     }
 
-    private async Task OnValueChanged(int id)
+    private async Task OnValueChanged(CustomerDTO value)
     {
-        SelectedCustomerId = id;
-        await SelectedCustomerIdChanged.InvokeAsync(id);
+        _selectedCustomer = value;
+        SelectedCustomerId = value?.Id ?? 0;
+        await SelectedCustomerIdChanged.InvokeAsync(SelectedCustomerId);
+    }
+
+    private async Task<IEnumerable<CustomerDTO>> SearchCustomers(string value, CancellationToken token)
+    {
+        if (customers == null) return new List<CustomerDTO>();
+        if (string.IsNullOrEmpty(value)) return customers;
+        return customers.Where(x => x.Name.Contains(value, StringComparison.InvariantCultureIgnoreCase));
     }
 
     private async Task OpenAddDialog()
     {
         var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true };
-        var dialog = DialogService.Show<CustomerDialog>("Add New Customer", options);
+        var dialog = await DialogService.ShowAsync<CustomerDialog>("Add New Customer", options);
         var result = await dialog.Result;
 
         if (!result.Canceled)
