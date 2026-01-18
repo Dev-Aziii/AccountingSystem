@@ -3,6 +3,7 @@
 @using AccountingSystem.Client.Services
 @using AccountingSystem.Client.Shared.Components
 @using Microsoft.AspNetCore.Authorization
+@using MudBlazor
 @attribute [Authorize(Roles = "Admin,Accounting")]
 @inject ReceivableService ReceivableService
 @inject NavigationManager NavManager
@@ -11,36 +12,60 @@
 <PageTitle>Create Invoice</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.Medium">
-    <MudText Typo="Typo.h4" Color="Color.Info" Class="mb-4">New Customer Invoice</MudText>
+    <MudText Typo="Typo.h4" Color="Color.Info" Class="mb-4">
+        New Customer Invoice
+    </MudText>
 
     <EditForm Model="@invoice" OnValidSubmit="HandleSubmit">
         <DataAnnotationsValidator />
+
         <MudCard>
             <MudCardContent>
                 <MudGrid>
+
                     <MudItem xs="12" sm="6">
                         <CustomerSelect @bind-SelectedCustomerId="invoice.CustomerId" />
                         <ValidationMessage For="@(() => invoice.CustomerId)" />
                     </MudItem>
+
                     <MudItem xs="12" sm="6">
-                        <MudDatePicker Label="Due Date" @bind-Date="invoiceDate" Variant="Variant.Outlined" />
+                        <MudDatePicker Label="Due Date"
+                                       @bind-Date="invoiceDate"
+                                       Variant="Variant.Outlined" />
                     </MudItem>
 
                     <MudItem xs="12" sm="6">
-                        <MudNumericField Label="Total Amount" @bind-Value="invoice.Amount" Format="N2" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.AttachMoney" Variant="Variant.Outlined" />
+                        <MudNumericField Label="Total Amount (₱)"
+                                         @bind-Value="invoice.Amount"
+                                         Format="N2"
+                                         Adornment="Adornment.Start"
+                                         AdornmentText="₱"
+                                         HideSpinButtons="true"
+                                         Variant="Variant.Outlined" />
                     </MudItem>
+
                     <MudItem xs="12" sm="6">
-                        <AccountSelect @bind-SelectedAccountId="invoice.RevenueAccountId" TypeFilter="Revenue" />
+                        <AccountSelect @bind-SelectedAccountId="invoice.RevenueAccountId"
+                                       TypeFilter="Revenue" />
                         <ValidationMessage For="@(() => invoice.RevenueAccountId)" />
                     </MudItem>
 
                     <MudItem xs="12">
-                        <MudTextField Label="Description" @bind-Value="invoice.Description" Lines="3" Variant="Variant.Outlined" />
+                        <MudTextField Label="Description"
+                                      @bind-Value="invoice.Description"
+                                      Lines="3"
+                                      Variant="Variant.Outlined" />
                     </MudItem>
+
                 </MudGrid>
             </MudCardContent>
+
             <MudCardActions Class="d-flex justify-end">
-                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Info" Disabled="@isSubmitting" StartIcon="@Icons.Material.Filled.Save">
+                <MudButton ButtonType="ButtonType.Submit"
+                           Variant="Variant.Filled"
+                           Color="Color.Info"
+                           Disabled="@isSubmitting"
+                           StartIcon="@Icons.Material.Filled.Save">
                     @(isSubmitting ? "Saving..." : "Save Invoice")
                 </MudButton>
             </MudCardActions>
@@ -49,14 +74,32 @@
 </MudContainer>
 
 @code {
-    private CreateInvoiceDTO invoice = new CreateInvoiceDTO { DueDate = DateTime.Today.AddDays(15) };
-    private DateTime? invoiceDate { get => invoice.DueDate; set => invoice.DueDate = value ?? DateTime.Today; }
+    private CreateInvoiceDTO invoice = new()
+    {
+        DueDate = DateTime.Today.AddDays(15)
+    };
+
+    private DateTime? invoiceDate
+    {
+        get => invoice.DueDate;
+        set => invoice.DueDate = value ?? DateTime.Today;
+    }
+
     private bool isSubmitting = false;
 
     private async Task HandleSubmit()
     {
-        if (invoice.CustomerId == 0) { Snackbar.Add("Please select a customer.", Severity.Warning); return; }
-        if (invoice.RevenueAccountId == 0) { Snackbar.Add("Please select a revenue account.", Severity.Warning); return; }
+        if (invoice.CustomerId == 0)
+        {
+            Snackbar.Add("Please select a customer.", Severity.Warning);
+            return;
+        }
+
+        if (invoice.RevenueAccountId == 0)
+        {
+            Snackbar.Add("Please select a revenue account.", Severity.Warning);
+            return;
+        }
 
         isSubmitting = true;
         try

@@ -3,6 +3,8 @@
 @using AccountingSystem.Client.Services
 @using AccountingSystem.Client.Shared.Components
 @using Microsoft.AspNetCore.Authorization
+@using MudBlazor
+@using System.Globalization
 @attribute [Authorize(Roles = "Admin,Accounting")]
 @inject PayableService PayableService
 @inject NavigationManager NavManager
@@ -11,40 +13,67 @@
 <PageTitle>Create Bill</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.Medium">
-    <MudText Typo="Typo.h4" Color="Color.Primary" Class="mb-4">New Vendor Bill</MudText>
+    <MudText Typo="Typo.h4" Color="Color.Primary" Class="mb-4">
+        New Vendor Bill
+    </MudText>
 
     <EditForm Model="@bill" OnValidSubmit="HandleSubmit">
         <DataAnnotationsValidator />
+
         <MudCard>
             <MudCardContent>
                 <MudGrid>
+
                     <MudItem xs="12" sm="6">
                         <VendorSelect @bind-SelectedVendorId="bill.VendorId" />
                         <ValidationMessage For="@(() => bill.VendorId)" />
                     </MudItem>
+
                     <MudItem xs="12" sm="6">
-                        <MudTextField Label="Reference Number" @bind-Value="bill.ReferenceNumber" Variant="Variant.Outlined" />
+                        <MudTextField Label="Reference Number"
+                                      @bind-Value="bill.ReferenceNumber"
+                                      Variant="Variant.Outlined" />
                         <ValidationMessage For="@(() => bill.ReferenceNumber)" />
                     </MudItem>
 
                     <MudItem xs="12" sm="4">
-                        <MudDatePicker Label="Due Date" @bind-Date="billDate" Variant="Variant.Outlined" />
+                        <MudDatePicker Label="Due Date"
+                                       @bind-Date="billDate"
+                                       Variant="Variant.Outlined" />
                     </MudItem>
+
                     <MudItem xs="12" sm="4">
-                        <MudNumericField Label="Amount" @bind-Value="bill.Amount" Format="N2" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.AttachMoney" Variant="Variant.Outlined" />
+                        <MudNumericField Label="Amount (₱)"
+                                         @bind-Value="bill.Amount"
+                                         Format="N2"
+                                         Adornment="Adornment.Start"
+                                         AdornmentText="₱"
+                                         HideSpinButtons="true"
+                                         Variant="Variant.Outlined" />
                     </MudItem>
+
                     <MudItem xs="12" sm="4">
-                        <AccountSelect @bind-SelectedAccountId="bill.ExpenseAccountId" TypeFilter="Expense" />
+                        <AccountSelect @bind-SelectedAccountId="bill.ExpenseAccountId"
+                                       TypeFilter="Expense" />
                         <ValidationMessage For="@(() => bill.ExpenseAccountId)" />
                     </MudItem>
 
                     <MudItem xs="12">
-                        <MudTextField Label="Description" @bind-Value="bill.Description" Lines="3" Variant="Variant.Outlined" />
+                        <MudTextField Label="Description"
+                                      @bind-Value="bill.Description"
+                                      Lines="3"
+                                      Variant="Variant.Outlined" />
                     </MudItem>
+
                 </MudGrid>
             </MudCardContent>
+
             <MudCardActions Class="d-flex justify-end">
-                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Warning" Disabled="@isSubmitting" StartIcon="@Icons.Material.Filled.Save">
+                <MudButton ButtonType="ButtonType.Submit"
+                           Variant="Variant.Filled"
+                           Color="Color.Warning"
+                           Disabled="@isSubmitting"
+                           StartIcon="@Icons.Material.Filled.Save">
                     @(isSubmitting ? "Saving..." : "Save Bill")
                 </MudButton>
             </MudCardActions>
@@ -53,21 +82,42 @@
 </MudContainer>
 
 @code {
-    private CreateBillDTO bill = new CreateBillDTO { DueDate = DateTime.Today.AddDays(30) };
-    private DateTime? billDate { get => bill.DueDate; set => bill.DueDate = value ?? DateTime.Today; } // Wrapper for MudDatePicker
+    // Optional: culture if you later display totals or previews
+    private readonly CultureInfo phCulture = new("en-PH");
+
+    private CreateBillDTO bill = new()
+    {
+        DueDate = DateTime.Today.AddDays(30)
+    };
+
+    private DateTime? billDate
+    {
+        get => bill.DueDate;
+        set => bill.DueDate = value ?? DateTime.Today;
+    }
+
     private bool isSubmitting = false;
 
     private async Task HandleSubmit()
     {
-        if (bill.VendorId == 0) { Snackbar.Add("Please select a vendor.", Severity.Warning); return; }
-        if (bill.ExpenseAccountId == 0) { Snackbar.Add("Please select an expense account.", Severity.Warning); return; }
+        if (bill.VendorId == 0)
+        {
+            Snackbar.Add("Please select a vendor.", Severity.Warning);
+            return;
+        }
+
+        if (bill.ExpenseAccountId == 0)
+        {
+            Snackbar.Add("Please select an expense account.", Severity.Warning);
+            return;
+        }
 
         isSubmitting = true;
         try
         {
             await PayableService.CreateBillAsync(bill);
             Snackbar.Add("Bill created successfully.", Severity.Success);
-            NavManager.NavigateTo("/ap/bills", forceLoad: true); // Reload to clear form or nav to list
+            NavManager.NavigateTo("/ap/bills", forceLoad: true);
         }
         catch (Exception ex)
         {

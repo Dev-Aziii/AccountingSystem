@@ -2,6 +2,7 @@
 @using AccountingSystem.Shared.DTOs
 @using AccountingSystem.Client.Services
 @using MudBlazor
+@using System.Globalization
 @attribute [Microsoft.AspNetCore.Authorization.Authorize]
 @inject ReportService ReportService
 @inject LedgerService LedgerService
@@ -9,162 +10,373 @@
 
 <PageTitle>Financial Reports</PageTitle>
 
-<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4" ID="printable-area">
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4 mb-8" ID="printable-area">
 
-    <!-- No Print Actions -->
-    <div class="d-flex justify-content-between align-items-center mb-4 no-print">
-        <MudText Typo="Typo.h4" Color="Color.Primary">Financial Statements</MudText>
+    <!-- ================= ACTION BAR ================= -->
+    <div class="d-flex justify-space-between align-center mb-6 no-print">
         <div>
-            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Refresh" OnClick="LoadData" Class="mr-2">Refresh</MudButton>
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Print" OnClick="PrintReport">Print / PDF</MudButton>
+            <MudText Typo="Typo.h4" Color="Color.Primary" Class="mb-1"><b>Financial Statements</b></MudText>
+            <MudText Typo="Typo.body2" Class="mud-text-secondary">Real-time financial position and performance</MudText>
+        </div>
+        <div>
+            <MudButton Variant="Variant.Outlined"
+                       Color="Color.Primary"
+                       StartIcon="@Icons.Material.Filled.Refresh"
+                       OnClick="LoadData"
+                       Class="mr-2">
+                Refresh
+            </MudButton>
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       StartIcon="@Icons.Material.Filled.Print"
+                       OnClick="PrintReport">
+                Print / PDF
+            </MudButton>
         </div>
     </div>
 
     @if (isLoading)
     {
-        <div class="d-flex justify-center my-8">
-            <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+        <div class="d-flex justify-center my-16">
+            <MudProgressCircular Color="Color.Primary" Size="Size.Large" Indeterminate="true" />
         </div>
     }
     else if (trialBalance != null)
     {
-        <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-6" ActivePanelIndexChanged="OnTabChanged">
+        <MudTabs Elevation="0"
+                 Rounded="true"
+                 ApplyEffectsToContainer="true"
+                 PanelClass="mt-4"
+                 Color="Color.Transparent"
+                 SliderColor="Color.Primary"
+                 Centered="true">
 
-            <!-- TRIAL BALANCE -->
+            <!-- ================= TRIAL BALANCE ================= -->
             <MudTabPanel Text="Trial Balance">
-                <div class="report-header text-center mb-6">
-                    <MudText Typo="Typo.h5" Align="Align.Center"><b>My Company Inc.</b></MudText>
-                    <MudText Typo="Typo.h6" Align="Align.Center" Color="Color.Secondary">Trial Balance</MudText>
-                    <MudText Typo="Typo.subtitle1" Align="Align.Center">As of @DateTime.Now.ToString("MMMM dd, yyyy")</MudText>
-                </div>
+                <MudPaper Elevation="4" Class="pa-8 report-paper">
 
-                <MudTable Items="@trialBalance.Accounts.OrderBy(a => a.AccountCode)" Hover="true" Dense="true" Striped="true" Breakpoint="Breakpoint.None">
-                    <HeaderContent>
-                        <MudTh>Code</MudTh>
-                        <MudTh>Account</MudTh>
-                        <MudTh Style="text-align:right">Debit</MudTh>
-                        <MudTh Style="text-align:right">Credit</MudTh>
-                    </HeaderContent>
-                    <RowTemplate>
-                        <MudTd DataLabel="Code">@context.AccountCode</MudTd>
-                        <MudTd DataLabel="Account">@context.AccountName</MudTd>
-                        <MudTd DataLabel="Debit" Style="text-align:right">@(context.Debit != 0 ? context.Debit.ToString("N2") : "-")</MudTd>
-                        <MudTd DataLabel="Credit" Style="text-align:right">@(context.Credit != 0 ? context.Credit.ToString("N2") : "-")</MudTd>
-                    </RowTemplate>
-                    <FooterContent>
-                        <MudTd ColSpan="2" Style="text-align:right; font-weight:bold;">TOTALS:</MudTd>
-                        <MudTd Style="text-align:right; font-weight:bold;">@trialBalance.TotalDebit.ToString("N2")</MudTd>
-                        <MudTd Style="text-align:right; font-weight:bold;">@trialBalance.TotalCredit.ToString("N2")</MudTd>
-                    </FooterContent>
-                </MudTable>
+                    <div class="report-header text-center mb-8">
+                        <MudText Typo="Typo.h4" Align="Align.Center" Class="mb-1">
+                            <b>My Company Inc.</b>
+                        </MudText>
+                        <MudText Typo="Typo.h5" Align="Align.Center" Class="mud-text-secondary mb-1">
+                            Trial Balance
+                        </MudText>
+                        <MudText Typo="Typo.subtitle1" Align="Align.Center">
+                            As of @DateTime.Now.ToString("MMMM dd, yyyy")
+                        </MudText>
+                        <MudDivider Class="mt-4 mb-4 mx-auto" Style="width:50%;" />
+                    </div>
+
+                    <MudSimpleTable Class="financial-table" Hover="true" Dense="true" Elevation="0">
+                        <colgroup>
+                            <col style="width:15%;" />
+                            <col style="width:45%;" />
+                            <col style="width:20%;" />
+                            <col style="width:20%;" />
+                        </colgroup>
+                        <thead>
+                            <tr>
+                                <th class="th-left">ACCOUNT CODE</th>
+                                <th class="th-left">ACCOUNT NAME</th>
+                                <th class="th-right">DEBIT</th>
+                                <th class="th-right">CREDIT</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var line in trialBalance.Accounts.OrderBy(a => a.AccountCode))
+                            {
+                                <tr>
+                                    <td class="td-left mud-text-secondary">@line.AccountCode</td>
+                                    <td class="td-left">@line.AccountName</td>
+                                    <td class="td-right">
+                                        @(line.Debit != 0 ? line.Debit.ToString("C2", _phCulture) : "-")
+                                    </td>
+                                    <td class="td-right">
+                                        @(line.Credit != 0 ? line.Credit.ToString("C2", _phCulture) : "-")
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                        <tfoot>
+                            <tr class="total-row">
+                                <td colspan="2" class="td-right"><b>TOTALS</b></td>
+                                <td class="td-right double-underline">
+                                    <b>@trialBalance.TotalDebit.ToString("C2", _phCulture)</b>
+                                </td>
+                                <td class="td-right double-underline">
+                                    <b>@trialBalance.TotalCredit.ToString("C2", _phCulture)</b>
+                                </td>
+                            </tr>
+                        </tfoot>
+                    </MudSimpleTable>
+                </MudPaper>
             </MudTabPanel>
 
-            <!-- INCOME STATEMENT -->
+            <!-- ================= INCOME STATEMENT ================= -->
             <MudTabPanel Text="Income Statement">
-                <div class="report-header text-center mb-6">
-                    <MudText Typo="Typo.h5" Align="Align.Center"><b>My Company Inc.</b></MudText>
-                    <MudText Typo="Typo.h6" Align="Align.Center" Color="Color.Secondary">Income Statement</MudText>
-                    <MudText Typo="Typo.subtitle1" Align="Align.Center">For the period ending @DateTime.Now.ToString("MMMM dd, yyyy")</MudText>
-                </div>
+                <MudPaper Elevation="4" Class="pa-8 report-paper">
 
-                <MudSimpleTable Style="overflow-x: auto;">
-                    <tbody>
-                        <!-- Revenue -->
-                        <tr class="mud-table-row" style="background-color:#f5f5f5"><td colspan="2"><b>REVENUE</b></td></tr>
-                        @foreach (var line in GetAccountsByType("Revenue"))
-                        {
-                            <tr><td class="pl-8">@line.AccountName</td><td style="text-align:right">@line.Credit.ToString("N2")</td></tr>
-                        }
-                        <tr style="border-top:2px solid #ccc"><td style="text-align:right"><b>Total Revenue</b></td><td style="text-align:right"><b>@TotalRevenue.ToString("N2")</b></td></tr>
+                    <div class="report-header text-center mb-8">
+                        <MudText Typo="Typo.h4" Align="Align.Center"><b>My Company Inc.</b></MudText>
+                        <MudText Typo="Typo.h5" Align="Align.Center" Class="mud-text-secondary mb-1">
+                            Income Statement
+                        </MudText>
+                        <MudText Typo="Typo.subtitle1" Align="Align.Center">
+                            For the period ending @DateTime.Now.ToString("MMMM dd, yyyy")
+                        </MudText>
+                        <MudDivider Class="mt-4 mb-4 mx-auto" Style="width:50%;" />
+                    </div>
 
-                        <!-- Expenses -->
-                        <tr class="mud-table-row" style="background-color:#f5f5f5"><td colspan="2"><b>OPERATING EXPENSES</b></td></tr>
-                        @foreach (var line in GetAccountsByType("Expense"))
-                        {
-                            <tr><td class="pl-8">@line.AccountName</td><td style="text-align:right">@line.Debit.ToString("N2")</td></tr>
-                        }
-                        <tr style="border-top:2px solid #ccc"><td style="text-align:right"><b>Total Expenses</b></td><td style="text-align:right"><b>(@TotalExpense.ToString("N2"))</b></td></tr>
+                    <MudSimpleTable Class="financial-table" Dense="true" Elevation="0">
+                        <colgroup>
+                            <col style="width:70%;" />
+                            <col style="width:30%;" />
+                        </colgroup>
+                        <tbody>
+                            <tr class="section-row">
+                                <td colspan="2">REVENUE</td>
+                            </tr>
+                            @foreach (var line in GetAccountsByType("Revenue"))
+                            {
+                                <tr>
+                                    <td class="td-left indent">@line.AccountName</td>
+                                    <td class="td-right">@line.Credit.ToString("C2", _phCulture)</td>
+                                </tr>
+                            }
+                            <tr class="total-row">
+                                <td class="td-right"><b>Total Revenue</b></td>
+                                <td class="td-right double-underline">
+                                    <b>@TotalRevenue.ToString("C2", _phCulture)</b>
+                                </td>
+                            </tr>
 
-                        <!-- Net Income -->
-                        <tr style="background-color:#e3f2fd; font-size:1.2em">
-                            <td class="py-4"><b>NET INCOME</b></td>
-                            <td class="py-4" style="text-align:right"><b>@NetIncome.ToString("N2")</b></td>
-                        </tr>
-                    </tbody>
-                </MudSimpleTable>
+                            <tr><td colspan="2" class="spacer-row"></td></tr>
+
+                            <tr class="section-row">
+                                <td colspan="2">OPERATING EXPENSES</td>
+                            </tr>
+                            @foreach (var line in GetAccountsByType("Expense"))
+                            {
+                                <tr>
+                                    <td class="td-left indent">@line.AccountName</td>
+                                    <td class="td-right">@line.Debit.ToString("C2", _phCulture)</td>
+                                </tr>
+                            }
+                            <tr class="total-row">
+                                <td class="td-right"><b>Total Expenses</b></td>
+                                <td class="td-right double-underline">
+                                    <b>(@TotalExpense.ToString("C2", _phCulture))</b>
+                                </td>
+                            </tr>
+
+                            <tr class="net-income-row">
+                                <td><b>NET INCOME</b></td>
+                                <td class="td-right double-underline">
+                                    <b>@NetIncome.ToString("C2", _phCulture)</b>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </MudSimpleTable>
+                </MudPaper>
             </MudTabPanel>
 
-            <!-- BALANCE SHEET -->
+            <!-- ================= BALANCE SHEET ================= -->
             <MudTabPanel Text="Balance Sheet">
-                <div class="report-header text-center mb-6">
-                    <MudText Typo="Typo.h5" Align="Align.Center"><b>My Company Inc.</b></MudText>
-                    <MudText Typo="Typo.h6" Align="Align.Center" Color="Color.Secondary">Balance Sheet</MudText>
-                    <MudText Typo="Typo.subtitle1" Align="Align.Center">As of @DateTime.Now.ToString("MMMM dd, yyyy")</MudText>
-                </div>
+                <MudPaper Elevation="4" Class="pa-8 report-paper">
 
-                <MudSimpleTable>
-                    <tbody>
-                        <!-- Assets -->
-                        <tr class="mud-table-row" style="background-color:#f5f5f5"><td colspan="2"><b>ASSETS</b></td></tr>
-                        @foreach (var line in GetAccountsByType("Asset"))
-                        {
-                            <tr><td class="pl-8">@line.AccountName</td><td style="text-align:right">@((line.Debit - line.Credit).ToString("N2"))</td></tr>
-                        }
-                        <tr style="border-top:2px solid #ccc"><td style="text-align:right"><b>TOTAL ASSETS</b></td><td style="text-align:right; border-bottom: 3px double black;"><b>@TotalAssets.ToString("N2")</b></td></tr>
+                    <div class="report-header text-center mb-8">
+                        <MudText Typo="Typo.h4" Align="Align.Center"><b>My Company Inc.</b></MudText>
+                        <MudText Typo="Typo.h5" Align="Align.Center" Class="mud-text-secondary mb-1">
+                            Balance Sheet
+                        </MudText>
+                        <MudText Typo="Typo.subtitle1" Align="Align.Center">
+                            As of @DateTime.Now.ToString("MMMM dd, yyyy")
+                        </MudText>
+                        <MudDivider Class="mt-4 mb-4 mx-auto" Style="width:50%;" />
+                    </div>
 
-                        <!-- Liabilities -->
-                        <tr><td colspan="2" class="pt-4"></td></tr>
-                        <tr class="mud-table-row" style="background-color:#f5f5f5"><td colspan="2"><b>LIABILITIES</b></td></tr>
-                        @foreach (var line in GetAccountsByType("Liability"))
-                        {
-                            <tr><td class="pl-8">@line.AccountName</td><td style="text-align:right">@((line.Credit - line.Debit).ToString("N2"))</td></tr>
-                        }
-                        <tr style="border-top:2px solid #ccc"><td style="text-align:right"><b>Total Liabilities</b></td><td style="text-align:right"><b>@TotalLiabilities.ToString("N2")</b></td></tr>
+                    <MudSimpleTable Class="financial-table" Dense="true" Elevation="0">
+                        <colgroup>
+                            <col style="width:70%;" />
+                            <col style="width:30%;" />
+                        </colgroup>
+                        <tbody>
+                            <tr class="section-row">
+                                <td colspan="2">ASSETS</td>
+                            </tr>
+                            @foreach (var line in GetAccountsByType("Asset"))
+                            {
+                                <tr>
+                                    <td class="td-left indent">@line.AccountName</td>
+                                    <td class="td-right">@((line.Debit - line.Credit).ToString("C2", _phCulture))</td>
+                                </tr>
+                            }
+                            <tr class="total-row">
+                                <td class="td-right"><b>Total Assets</b></td>
+                                <td class="td-right double-underline">
+                                    <b>@TotalAssets.ToString("C2", _phCulture)</b>
+                                </td>
+                            </tr>
 
-                        <!-- Equity -->
-                        <tr class="mud-table-row" style="background-color:#f5f5f5"><td colspan="2"><b>EQUITY</b></td></tr>
-                        @foreach (var line in GetAccountsByType("Equity"))
-                        {
-                            <tr><td class="pl-8">@line.AccountName</td><td style="text-align:right">@((line.Credit - line.Debit).ToString("N2"))</td></tr>
-                        }
-                        <tr><td class="pl-8 text-muted"><i>Net Income (Current Period)</i></td><td style="text-align:right">@NetIncome.ToString("N2")</td></tr>
-                        <tr style="border-top:2px solid #ccc"><td style="text-align:right"><b>Total Equity</b></td><td style="text-align:right"><b>@TotalEquity.ToString("N2")</b></td></tr>
+                            <tr><td colspan="2" class="spacer-row"></td></tr>
 
-                        <!-- Total L&E -->
-                        <tr style="background-color:#e8f5e9; font-size:1.1em">
-                            <td class="py-4"><b>TOTAL LIABILITIES & EQUITY</b></td>
-                            <td class="py-4" style="text-align:right; border-bottom: 3px double black;"><b>@((TotalLiabilities + TotalEquity).ToString("N2"))</b></td>
-                        </tr>
-                    </tbody>
-                </MudSimpleTable>
+                            <tr class="section-row">
+                                <td colspan="2">LIABILITIES</td>
+                            </tr>
+                            @foreach (var line in GetAccountsByType("Liability"))
+                            {
+                                <tr>
+                                    <td class="td-left indent">@line.AccountName</td>
+                                    <td class="td-right">@((line.Credit - line.Debit).ToString("C2", _phCulture))</td>
+                                </tr>
+                            }
+                            <tr class="total-row">
+                                <td class="td-right"><b>Total Liabilities</b></td>
+                                <td class="td-right">
+                                    <b>@TotalLiabilities.ToString("C2", _phCulture)</b>
+                                </td>
+                            </tr>
+
+                            <tr><td colspan="2" class="spacer-row"></td></tr>
+
+                            <tr class="section-row">
+                                <td colspan="2">EQUITY</td>
+                            </tr>
+                            @foreach (var line in GetAccountsByType("Equity"))
+                            {
+                                <tr>
+                                    <td class="td-left indent">@line.AccountName</td>
+                                    <td class="td-right">@((line.Credit - line.Debit).ToString("C2", _phCulture))</td>
+                                </tr>
+                            }
+                            <tr>
+                                <td class="td-left indent mud-text-secondary"><i>Net Income (Current Period)</i></td>
+                                <td class="td-right">@NetIncome.ToString("C2", _phCulture)</td>
+                            </tr>
+                            <tr class="total-row">
+                                <td class="td-right"><b>Total Equity</b></td>
+                                <td class="td-right">
+                                    <b>@TotalEquity.ToString("C2", _phCulture)</b>
+                                </td>
+                            </tr>
+
+                            <tr class="net-income-row">
+                                <td><b>TOTAL LIABILITIES & EQUITY</b></td>
+                                <td class="td-right double-underline">
+                                    <b>@((TotalLiabilities + TotalEquity).ToString("C2", _phCulture))</b>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </MudSimpleTable>
+                </MudPaper>
             </MudTabPanel>
         </MudTabs>
     }
 </MudContainer>
 
+<!-- ================= STYLES ================= -->
 <style>
+    .financial-table {
+        width: 100%;
+        table-layout: fixed;
+        border-collapse: collapse;
+    }
+
+    .th-left {
+        text-align: left;
+        padding: 8px;
+        font-weight: bold;
+        font-size: 0.85rem;
+        border-bottom: 2px solid #ccc;
+    }
+
+    .th-right {
+        text-align: right;
+        padding: 8px;
+        font-weight: bold;
+        font-size: 0.85rem;
+        border-bottom: 2px solid #ccc;
+    }
+
+    .td-left {
+        text-align: left;
+        padding: 6px 8px;
+    }
+
+    .td-right {
+        text-align: right;
+        padding: 6px 8px;
+        font-family: monospace;
+    }
+
+    .indent {
+        padding-left: 32px;
+    }
+
+    .section-row td {
+        background-color: #f0f2f5;
+        font-weight: bold;
+        padding: 8px;
+    }
+
+    .total-row td {
+        border-top: 2px solid #ccc;
+        padding-top: 8px;
+        font-weight: bold;
+    }
+
+    .net-income-row td {
+        background-color: #e3f2fd;
+        font-weight: bold;
+        font-size: 1.05rem;
+        padding: 10px;
+    }
+
+    .double-underline {
+        border-bottom: 3px double black;
+    }
+
+    .spacer-row td {
+        height: 16px;
+    }
+
+    /* ================= PRINT ================= */
     @@media print {
-        .no-print, .mud-appbar, .mud-drawer, .mud-tabs-toolbar {
+        body {
+            background-color: white !important;
+        }
+
+        .no-print,
+        .mud-appbar,
+        .mud-drawer,
+        .mud-drawer-overlay,
+        .mud-tabs-toolbar {
             display: none !important;
         }
 
-        .mud-main-content {
+        .mud-main-content,
+        .mud-container {
             padding: 0 !important;
             margin: 0 !important;
+            max-width: 100% !important;
         }
 
-        .mud-tabs-panels {
+        .report-paper {
             box-shadow: none !important;
+            border: none !important;
+            padding: 0 !important;
         }
     }
 </style>
 
 @code {
     private TrialBalanceDTO? trialBalance;
-    private Dictionary<string, string> accountTypes;
-    private bool isLoading = false;
+    private Dictionary<string, string> accountTypes = new();
+    private bool isLoading;
 
-    // Computed Properties
+    private readonly CultureInfo _phCulture = CultureInfo.GetCultureInfo("en-PH");
+
     private decimal TotalRevenue => GetAccountsByType("Revenue").Sum(a => a.Credit - a.Debit);
     private decimal TotalExpense => GetAccountsByType("Expense").Sum(a => a.Debit - a.Credit);
     private decimal NetIncome => TotalRevenue - TotalExpense;
@@ -180,22 +392,24 @@
         try
         {
             var tbTask = ReportService.GetTrialBalance();
-            var accountsTask = LedgerService.GetAccountsAsync();
-            await Task.WhenAll(tbTask, accountsTask);
+            var accTask = LedgerService.GetAccountsAsync();
+            await Task.WhenAll(tbTask, accTask);
 
             trialBalance = tbTask.Result;
-            accountTypes = accountsTask.Result.ToDictionary(a => a.Code, a => a.Type);
+            accountTypes = accTask.Result.ToDictionary(a => a.Code, a => a.Type);
         }
-        catch (Exception ex) { Console.WriteLine(ex.Message); }
-        finally { isLoading = false; }
+        finally
+        {
+            isLoading = false;
+        }
     }
 
-    private IEnumerable<AccountBalanceDTO> GetAccountsByType(string type)
-    {
-        if (trialBalance == null) return Enumerable.Empty<AccountBalanceDTO>();
-        return trialBalance.Accounts.Where(a => accountTypes.ContainsKey(a.AccountCode) && accountTypes[a.AccountCode] == type);
-    }
+    private IEnumerable<AccountBalanceDTO> GetAccountsByType(string type) =>
+        trialBalance?.Accounts.Where(a =>
+            accountTypes.ContainsKey(a.AccountCode) &&
+            accountTypes[a.AccountCode] == type)
+        ?? Enumerable.Empty<AccountBalanceDTO>();
 
-    private async Task PrintReport() => await JS.InvokeVoidAsync("print");
-    private void OnTabChanged(int index) { /* Optional logic when tab changes */ }
+    private async Task PrintReport() =>
+        await JS.InvokeVoidAsync("print");
 }

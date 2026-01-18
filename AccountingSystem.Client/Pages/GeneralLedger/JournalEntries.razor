@@ -4,6 +4,7 @@
 @using AccountingSystem.Client.Shared.Components
 @using Microsoft.AspNetCore.Authorization
 @using MudBlazor
+@using System.Globalization
 @attribute [Authorize(Roles = "Admin,Accounting")]
 @inject LedgerService LedgerService
 @inject NavigationManager NavManager
@@ -12,74 +13,124 @@
 <PageTitle>Journal Entries</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.Large">
-    <MudText Typo="Typo.h4" Color="Color.Primary" Class="mb-4">New Journal Entry</MudText>
+    <MudText Typo="Typo.h4" Color="Color.Primary" Class="mb-4">
+        New Journal Entry
+    </MudText>
 
     <EditForm Model="@entry" OnValidSubmit="HandleSubmit">
         <MudCard Class="mb-4">
             <MudCardContent>
                 <MudGrid>
                     <MudItem xs="12" sm="3">
-                        <MudDatePicker Label="Date" @bind-Date="entryDate" Variant="Variant.Outlined" />
+                        <MudDatePicker Label="Date"
+                                       @bind-Date="entryDate"
+                                       Variant="Variant.Outlined" />
                     </MudItem>
+
                     <MudItem xs="12" sm="3">
-                        <MudTextField Label="Reference #" @bind-Value="entry.Reference" Variant="Variant.Outlined" />
+                        <MudTextField Label="Reference #"
+                                      @bind-Value="entry.Reference"
+                                      Variant="Variant.Outlined" />
                     </MudItem>
+
                     <MudItem xs="12" sm="6">
-                        <MudTextField Label="Description" @bind-Value="entry.Description" Variant="Variant.Outlined" />
+                        <MudTextField Label="Description"
+                                      @bind-Value="entry.Description"
+                                      Variant="Variant.Outlined" />
                     </MudItem>
                 </MudGrid>
             </MudCardContent>
         </MudCard>
 
-        <!-- Lines Table -->
-        <MudTable Items="@entry.Lines" Hover="true" Breakpoint="Breakpoint.Sm" Elevation="4">
+        <!-- Journal Lines -->
+        <MudTable Items="@entry.Lines"
+                  Hover="true"
+                  Breakpoint="Breakpoint.Sm"
+                  Elevation="4">
+
             <HeaderContent>
                 <MudTh>Account</MudTh>
-                <MudTh>Debit</MudTh>
-                <MudTh>Credit</MudTh>
+                <MudTh>Debit (₱)</MudTh>
+                <MudTh>Credit (₱)</MudTh>
                 <MudTh>Action</MudTh>
             </HeaderContent>
-            <!-- FIX: Renamed Context to "lineContext" to avoid collision with EditForm's context -->
+
             <RowTemplate Context="lineContext">
                 <MudTd DataLabel="Account">
                     <AccountSelect @bind-SelectedAccountId="lineContext.AccountId" />
                 </MudTd>
+
                 <MudTd DataLabel="Debit">
-                    <MudNumericField @bind-Value="lineContext.Debit" Format="N2" HideSpinButtons="true" Variant="Variant.Text" />
+                    <MudNumericField @bind-Value="lineContext.Debit"
+                                     Format="N2"
+                                     HideSpinButtons="true"
+                                     Variant="Variant.Text" />
                 </MudTd>
+
                 <MudTd DataLabel="Credit">
-                    <MudNumericField @bind-Value="lineContext.Credit" Format="N2" HideSpinButtons="true" Variant="Variant.Text" />
+                    <MudNumericField @bind-Value="lineContext.Credit"
+                                     Format="N2"
+                                     HideSpinButtons="true"
+                                     Variant="Variant.Text" />
                 </MudTd>
+
                 <MudTd>
-                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="@(() => RemoveLine(lineContext))" Disabled="@(entry.Lines.Count <= 2)" />
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                   Color="Color.Error"
+                                   OnClick="@(() => RemoveLine(lineContext))"
+                                   Disabled="@(entry.Lines.Count <= 2)" />
                 </MudTd>
             </RowTemplate>
+
+            <!-- Totals -->
             <FooterContent>
                 <MudTd>
-                    <MudButton StartIcon="@Icons.Material.Filled.Add" OnClick="AddLine" Variant="Variant.Text" Color="Color.Primary">Add Line</MudButton>
+                    <MudButton StartIcon="@Icons.Material.Filled.Add"
+                               OnClick="AddLine"
+                               Variant="Variant.Text"
+                               Color="Color.Primary">
+                        Add Line
+                    </MudButton>
                 </MudTd>
+
                 <MudTd>
-                    <MudText Typo="Typo.subtitle1" Color="@(IsBalanced? Color.Success: Color.Error)">@TotalDebit.ToString("N2")</MudText>
+                    <MudText Typo="Typo.subtitle1"
+                             Color="@(IsBalanced ? Color.Success : Color.Error)">
+                        @TotalDebit.ToString("C2", phCulture)
+                    </MudText>
                 </MudTd>
+
                 <MudTd>
-                    <MudText Typo="Typo.subtitle1" Color="@(IsBalanced? Color.Success: Color.Error)">@TotalCredit.ToString("N2")</MudText>
+                    <MudText Typo="Typo.subtitle1"
+                             Color="@(IsBalanced ? Color.Success : Color.Error)">
+                        @TotalCredit.ToString("C2", phCulture)
+                    </MudText>
                 </MudTd>
+
                 <MudTd>
                     @if (IsBalanced)
                     {
-                        <MudChip T="string" Color="Color.Success" Size="Size.Small">Balanced</MudChip>
+                        <MudChip T="string" Color="Color.Success" Size="Size.Small">
+                            Balanced
+                        </MudChip>
                     }
                     else
                     {
-
-                        <MudChip T="string" Color="Color.Error" Size="Size.Small">Imbalanced</MudChip>
+                        <MudChip T="string" Color="Color.Error" Size="Size.Small">
+                            Imbalanced
+                        </MudChip>
                     }
                 </MudTd>
             </FooterContent>
         </MudTable>
 
         <div class="d-flex justify-end mt-4">
-            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Disabled="@(!IsBalanced || isSubmitting)" Size="Size.Large" StartIcon="@Icons.Material.Filled.Check">
+            <MudButton ButtonType="ButtonType.Submit"
+                       Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       Disabled="@(!IsBalanced || isSubmitting)"
+                       Size="Size.Large"
+                       StartIcon="@Icons.Material.Filled.Check">
                 @(isSubmitting ? "Posting..." : "Post Entry")
             </MudButton>
         </div>
@@ -87,24 +138,46 @@
 </MudContainer>
 
 @code {
+    // Philippine Peso Culture
+    private readonly CultureInfo phCulture = new("en-PH");
+
     private JournalEntryDTO entry = new JournalEntryDTO
     {
         Date = DateTime.Today,
-        Lines = new List<JournalEntryLineDTO> { new JournalEntryLineDTO(), new JournalEntryLineDTO() }
+        Lines = new List<JournalEntryLineDTO>
+        {
+            new JournalEntryLineDTO(),
+            new JournalEntryLineDTO()
+        }
     };
-    private DateTime? entryDate { get => entry.Date; set => entry.Date = value ?? DateTime.Today; }
+
+    private DateTime? entryDate
+    {
+        get => entry.Date;
+        set => entry.Date = value ?? DateTime.Today;
+    }
+
     private bool isSubmitting = false;
 
     private decimal TotalDebit => entry.Lines.Sum(l => l.Debit);
     private decimal TotalCredit => entry.Lines.Sum(l => l.Credit);
-    private bool IsBalanced => TotalDebit == TotalCredit && TotalDebit > 0;
 
-    private void AddLine() => entry.Lines.Add(new JournalEntryLineDTO());
-    private void RemoveLine(JournalEntryLineDTO line) { if (entry.Lines.Count > 2) entry.Lines.Remove(line); }
+    private bool IsBalanced =>
+        TotalDebit == TotalCredit && TotalDebit > 0;
+
+    private void AddLine()
+        => entry.Lines.Add(new JournalEntryLineDTO());
+
+    private void RemoveLine(JournalEntryLineDTO line)
+    {
+        if (entry.Lines.Count > 2)
+            entry.Lines.Remove(line);
+    }
 
     private async Task HandleSubmit()
     {
         if (!IsBalanced) return;
+
         isSubmitting = true;
         try
         {
@@ -112,7 +185,13 @@
             Snackbar.Add("Journal Entry posted.", Severity.Success);
             NavManager.NavigateTo("/gl/journal", forceLoad: true);
         }
-        catch (Exception ex) { Snackbar.Add(ex.Message, Severity.Error); }
-        finally { isSubmitting = false; }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
     }
 }

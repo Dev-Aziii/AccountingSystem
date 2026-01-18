@@ -2,6 +2,7 @@
 @using AccountingSystem.Shared.DTOs
 @using AccountingSystem.Client.Services
 @using MudBlazor
+@using System.Globalization
 @attribute [Microsoft.AspNetCore.Authorization.Authorize]
 @inject ReportService ReportService
 
@@ -10,7 +11,9 @@
 <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
     <div class="d-flex justify-space-between align-center mb-4">
         <MudText Typo="Typo.h4" Color="Color.Primary">Financial Overview</MudText>
-        <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Refresh" OnClick="LoadData">
+        <MudButton Variant="Variant.Outlined" Color="Color.Primary"
+                   StartIcon="@Icons.Material.Filled.Refresh"
+                   OnClick="LoadData">
             Refresh Data
         </MudButton>
     </div>
@@ -26,50 +29,83 @@
         <!-- KPI Cards -->
         <MudGrid Class="mb-4">
             <MudItem xs="12" sm="6" md="3">
-                <MudPaper Elevation="2" Class="pa-4 rounded-lg" Style="border-left: 6px solid var(--mud-palette-success);">
-                    <MudText Typo="Typo.subtitle2" Class="mud-text-secondary text-uppercase">Total Debits</MudText>
-                    <MudText Typo="Typo.h4" Color="Color.Success">@trialBalance.TotalDebit.ToString("C0")</MudText>
+                <MudPaper Elevation="2" Class="pa-4 rounded-lg"
+                          Style="border-left: 6px solid var(--mud-palette-success);">
+                    <MudText Typo="Typo.subtitle2" Class="mud-text-secondary text-uppercase">
+                        Total Debits
+                    </MudText>
+                    <MudText Typo="Typo.h4" Color="Color.Success">
+                        @trialBalance.TotalDebit.ToString("C0", phCulture)
+                    </MudText>
                 </MudPaper>
             </MudItem>
+
             <MudItem xs="12" sm="6" md="3">
-                <MudPaper Elevation="2" Class="pa-4 rounded-lg" Style="border-left: 6px solid var(--mud-palette-info);">
-                    <MudText Typo="Typo.subtitle2" Class="mud-text-secondary text-uppercase">Total Credits</MudText>
-                    <MudText Typo="Typo.h4" Color="Color.Info">@trialBalance.TotalCredit.ToString("C0")</MudText>
+                <MudPaper Elevation="2" Class="pa-4 rounded-lg"
+                          Style="border-left: 6px solid var(--mud-palette-info);">
+                    <MudText Typo="Typo.subtitle2" Class="mud-text-secondary text-uppercase">
+                        Total Credits
+                    </MudText>
+                    <MudText Typo="Typo.h4" Color="Color.Info">
+                        @trialBalance.TotalCredit.ToString("C0", phCulture)
+                    </MudText>
                 </MudPaper>
             </MudItem>
         </MudGrid>
 
-        <!-- Recent Activity Table (Trial Balance Preview) -->
+        <!-- Trial Balance Preview -->
         <MudPaper Elevation="2" Class="pa-4">
             <div class="d-flex justify-space-between align-center mb-2">
                 <div>
                     <MudText Typo="Typo.h6">Current Trial Balance</MudText>
-                    <MudText Typo="Typo.caption" Class="mud-text-secondary">As of @trialBalance.GeneratedAt.ToLocalTime()</MudText>
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                        As of @trialBalance.GeneratedAt.ToLocalTime()
+                    </MudText>
                 </div>
                 @if (trialBalance.Accounts.Count > 10)
                 {
-                    <MudLink Href="reports/financials" Underline="Underline.None" Color="Color.Primary">View Full Report</MudLink>
+                    <MudLink Href="reports/financials"
+                             Underline="Underline.None"
+                             Color="Color.Primary">
+                        View Full Report
+                    </MudLink>
                 }
             </div>
 
-            <MudTable Items="@trialBalance.Accounts.Take(10)" Hover="true" Breakpoint="Breakpoint.None" Dense="true" Elevation="0">
+            <MudTable Items="@trialBalance.Accounts.Take(10)"
+                      Hover="true"
+                      Dense="true"
+                      Breakpoint="Breakpoint.None"
+                      Elevation="0">
                 <HeaderContent>
                     <MudTh>Code</MudTh>
                     <MudTh>Account Name</MudTh>
                     <MudTh Style="text-align:right">Debit</MudTh>
                     <MudTh Style="text-align:right">Credit</MudTh>
                 </HeaderContent>
+
                 <RowTemplate>
-                    <MudTd DataLabel="Code"><b>@context.AccountCode</b></MudTd>
-                    <MudTd DataLabel="Account Name">@context.AccountName</MudTd>
+                    <MudTd DataLabel="Code">
+                        <b>@context.AccountCode</b>
+                    </MudTd>
+
+                    <MudTd DataLabel="Account Name">
+                        @context.AccountName
+                    </MudTd>
+
                     <MudTd DataLabel="Debit" Style="text-align:right">
                         <MudText Color="@(context.Debit > 0 ? Color.Success : Color.Default)">
-                            @(context.Debit > 0 ? context.Debit.ToString("N2") : "-")
+                            @(context.Debit > 0
+                                ? context.Debit.ToString("C2", phCulture)
+                                : "-")
                         </MudText>
                     </MudTd>
+
                     <MudTd DataLabel="Credit" Style="text-align:right">
                         <MudText Color="@(context.Credit > 0 ? Color.Info : Color.Default)">
-                            @(context.Credit > 0 ? context.Credit.ToString("N2") : "-")
+                            @(context.Credit > 0
+                                ? context.Credit.ToString("C2", phCulture)
+                                : "-")
                         </MudText>
                     </MudTd>
                 </RowTemplate>
@@ -81,6 +117,9 @@
 @code {
     private TrialBalanceDTO? trialBalance;
     private bool isLoading = false;
+
+    // Philippine Peso Culture
+    private readonly CultureInfo phCulture = new("en-PH");
 
     protected override async Task OnInitializedAsync()
     {

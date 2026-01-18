@@ -2,6 +2,7 @@
 @using AccountingSystem.Shared.DTOs
 @using AccountingSystem.Client.Services
 @using Microsoft.AspNetCore.Authorization
+@using MudBlazor
 @attribute [Authorize(Roles = "Admin,Accounting")]
 @inject IPaymentClientService PaymentService
 @inject NavigationManager NavManager
@@ -10,32 +11,66 @@
 <PageTitle>Receive Payment</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.Small">
-    <MudText Typo="Typo.h4" Color="Color.Success" Class="mb-4">Receive Payment</MudText>
+    <MudText Typo="Typo.h4" Color="Color.Success" Class="mb-4">
+        Receive Payment
+    </MudText>
 
     <EditForm Model="@paymentRequest" OnValidSubmit="HandlePayment">
         <DataAnnotationsValidator />
+
         <MudCard>
             <MudCardContent>
-                <MudTextField Label="Description / Invoice #" @bind-Value="paymentRequest.Description" Variant="Variant.Outlined" Class="mb-3" />
-                
-                <MudNumericField Label="Amount" @bind-Value="paymentRequest.Amount" Format="N2" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.AttachMoney" Variant="Variant.Outlined" Class="mb-3" />
-                
-                <MudTextField Label="Remarks" @bind-Value="paymentRequest.Remarks" Lines="2" Variant="Variant.Outlined" />
+
+                <MudTextField Label="Description / Invoice #"
+                              @bind-Value="paymentRequest.Description"
+                              Variant="Variant.Outlined"
+                              Class="mb-3" />
+
+                <MudNumericField Label="Amount (₱)"
+                                 @bind-Value="paymentRequest.Amount"
+                                 Format="N2"
+                                 Adornment="Adornment.Start"
+                                 AdornmentText="₱"
+                                 HideSpinButtons="true"
+                                 Variant="Variant.Outlined"
+                                 Class="mb-3" />
+
+                <MudTextField Label="Remarks"
+                              @bind-Value="paymentRequest.Remarks"
+                              Lines="2"
+                              Variant="Variant.Outlined" />
+
             </MudCardContent>
+
             <MudCardActions Class="d-flex justify-center pb-4">
-                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Success" Size="Size.Large" Disabled="@isProcessing" StartIcon="@Icons.Material.Filled.Payment">
+                <MudButton ButtonType="ButtonType.Submit"
+                           Variant="Variant.Filled"
+                           Color="Color.Success"
+                           Size="Size.Large"
+                           Disabled="@isProcessing"
+                           StartIcon="@Icons.Material.Filled.Payment">
                     @(isProcessing ? "Processing..." : "Pay via PayMongo")
                 </MudButton>
             </MudCardActions>
+
             <MudCardContent Class="pt-0">
-                <MudText Typo="Typo.caption" Align="Align.Center" Color="Color.Secondary" Class="d-block">Secure payment processing via PayMongo</MudText>
+                <MudText Typo="Typo.caption"
+                         Align="Align.Center"
+                         Color="Color.Secondary"
+                         Class="d-block">
+                    Secure payment processing via PayMongo
+                </MudText>
             </MudCardContent>
         </MudCard>
     </EditForm>
 </MudContainer>
 
 @code {
-    private CreateSourceDTO paymentRequest = new CreateSourceDTO { Amount = 100.00M };
+    private CreateSourceDTO paymentRequest = new()
+    {
+        Amount = 100.00M
+    };
+
     private bool isProcessing = false;
 
     private async Task HandlePayment()
@@ -43,7 +78,9 @@
         isProcessing = true;
         try
         {
-            var checkoutUrl = await PaymentService.CreatePaymentLinkAsync(paymentRequest);
+            var checkoutUrl =
+                await PaymentService.CreatePaymentLinkAsync(paymentRequest);
+
             NavManager.NavigateTo(checkoutUrl, forceLoad: true);
         }
         catch (Exception ex)
