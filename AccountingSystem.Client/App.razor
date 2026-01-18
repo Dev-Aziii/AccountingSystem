@@ -1,5 +1,11 @@
 ﻿@using Microsoft.AspNetCore.Components.Authorization
 @using AccountingSystem.Client.Shared
+@using MudBlazor
+
+<!-- Global Providers: Must be here to work in both MainLayout and LoginLayout -->
+<MudThemeProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
 
 <CascadingAuthenticationState>
     <Router AppAssembly="@typeof(App).Assembly">

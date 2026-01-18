@@ -1,109 +1,96 @@
 ﻿@page "/ap/vendors"
 @using AccountingSystem.Shared.DTOs
 @using AccountingSystem.Client.Services
-@using AccountingSystem.Client.Shared.Components
+@using AccountingSystem.Client.Shared.Dialogs
 @using Microsoft.AspNetCore.Authorization
+@using MudBlazor
 @attribute [Authorize(Roles = "Admin,Accounting")]
 @inject PayableService PayableService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
 
 <PageTitle>Vendor Management</PageTitle>
 
-<div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="text-primary fw-bold">Vendor Management</h2>
-        <button class="btn btn-primary" @onclick="() => modal.OpenCreate()">
-            <i class="bi bi-plus-circle me-2"></i>Add New Vendor
-        </button>
-    </div>
-
-    @if (!string.IsNullOrEmpty(errorMessage))
-    {
-        <div class="alert alert-danger">@errorMessage</div>
-    }
-
-    <div class="card shadow-sm border-0">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="table-light">
-                    <tr>
-                        <th>ID</th>
-                        <th>Name</th>
-                        <th>Email</th>
-                        <th>Contact Person</th>
-                        <th class="text-end">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @if (vendors == null)
-                    {
-                        <tr><td colspan="5" class="text-center py-4">Loading...</td></tr>
-                    }
-                    else if (!vendors.Any())
-                    {
-                        <tr><td colspan="5" class="text-center py-4">No vendors found.</td></tr>
-                    }
-                    else
-                    {
-                        @foreach (var v in vendors)
-                        {
-                            <tr>
-                                <td>@v.Id</td>
-                                <td class="fw-bold">@v.Name</td>
-                                <td>@v.Email</td>
-                                <td>@v.ContactPerson</td>
-                                <td class="text-end">
-                                    <button class="btn btn-outline-secondary btn-sm me-1" @onclick="() => modal.OpenEdit(v)">
-                                        <i class="bi bi-pencil"></i>
-                                    </button>
-                                    <button class="btn btn-outline-danger btn-sm" @onclick="() => ConfirmDelete(v.Id)">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
-                                </td>
-                            </tr>
-                        }
-                    }
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
-
-<!-- Reusing the same modal component -->
-<VendorModal @ref="modal" OnSaved="ReloadList" />
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
+    <MudTable Items="@vendors" Dense="true" Hover="true" Bordered="true" Striped="true"
+              Filter="new Func<VendorDTO, bool>(FilterFunc)" Loading="@_loading">
+        <ToolBarContent>
+            <MudText Typo="Typo.h6">Vendor Management</MudText>
+            <MudSpacer />
+            <MudTextField @bind-Value="searchString" Placeholder="Search vendors..." Adornment="Adornment.Start"
+                          AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenAddDialog" Class="ml-3">
+                Add Vendor
+            </MudButton>
+        </ToolBarContent>
+        <HeaderContent>
+            <MudTh>ID</MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<VendorDTO, object>(x => x.Name)">Name</MudTableSortLabel></MudTh>
+            <MudTh>Email</MudTh>
+            <MudTh>Contact Person</MudTh>
+            <MudTh Style="text-align:right">Actions</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="ID">@context.Id</MudTd>
+            <MudTd DataLabel="Name" Style="font-weight:bold">@context.Name</MudTd>
+            <MudTd DataLabel="Email">@context.Email</MudTd>
+            <MudTd DataLabel="Contact">@context.ContactPerson</MudTd>
+            <MudTd DataLabel="Actions" Style="text-align:right">
+                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Secondary" OnClick="() => OpenEditDialog(context)" />
+                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="() => ConfirmDelete(context.Id)" />
+            </MudTd>
+        </RowTemplate>
+        <PagerContent>
+            <MudTablePager />
+        </PagerContent>
+    </MudTable>
+</MudContainer>
 
 @code {
-    private List<VendorDTO> vendors;
-    private VendorModal modal;
-    private string errorMessage;
+    private List<VendorDTO> vendors = new List<VendorDTO>();
+    private string searchString = "";
+    private bool _loading = true;
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnInitializedAsync() => await LoadList();
+
+    private async Task LoadList()
     {
-        await ReloadList();
+        _loading = true;
+        try { vendors = await PayableService.GetVendorsAsync(); }
+        catch (Exception ex) { Snackbar.Add(ex.Message, Severity.Error); }
+        finally { _loading = false; }
     }
 
-    private async Task ReloadList(VendorDTO ignored = null)
+    private bool FilterFunc(VendorDTO element)
     {
-        try
-        {
-            vendors = await PayableService.GetVendorsAsync();
-        }
-        catch (Exception ex)
-        {
-            errorMessage = ex.Message;
-        }
+        if (string.IsNullOrWhiteSpace(searchString)) return true;
+        if (element.Name.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
+        if (element.ContactPerson?.Contains(searchString, StringComparison.OrdinalIgnoreCase) == true) return true;
+        return false;
+    }
+
+    private async Task OpenAddDialog()
+    {
+        var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<VendorDialog>("Add Vendor", options);
+        if (!(await dialog.Result).Canceled) await LoadList();
+    }
+
+    private async Task OpenEditDialog(VendorDTO vendor)
+    {
+        var parameters = new DialogParameters { ["Vendor"] = vendor };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<VendorDialog>("Edit Vendor", parameters, options);
+        if (!(await dialog.Result).Canceled) await LoadList();
     }
 
     private async Task ConfirmDelete(int id)
     {
-        // Simple confirm for now. In production, use JS Interop
-        try
+        bool? result = await DialogService.ShowMessageBox("Delete", "Delete this vendor?", yesText: "Delete", cancelText: "Cancel");
+        if (result == true)
         {
-            await PayableService.DeleteVendorAsync(id);
-            await ReloadList();
-        }
-        catch (Exception ex)
-        {
-            errorMessage = "Cannot delete: " + ex.Message;
+            try { await PayableService.DeleteVendorAsync(id); await LoadList(); }
+            catch (Exception ex) { Snackbar.Add(ex.Message, Severity.Error); }
         }
     }
 }

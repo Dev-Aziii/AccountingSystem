@@ -1,110 +1,36 @@
 ﻿@using Microsoft.AspNetCore.Components.Authorization
-<div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="">Accounting System</a>
-        <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-    </div>
-</div>
+@using MudBlazor
 
-<div class="@NavMenuCssClass" @onclick="ToggleNavMenu">
-    <nav class="flex-column">
-        <!-- Dashboard: Visible to all Authenticated Users -->
-        <AuthorizeView>
-            <Authorized>
-                <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="dashboard" Match="NavLinkMatch.All">
-                        <span class="bi bi-speedometer2" aria-hidden="true"></span> Dashboard
-                    </NavLink>
-                </div>
-            </Authorized>
-        </AuthorizeView>
+<MudNavMenu>
+    <MudNavLink Href="dashboard" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Dashboard">Dashboard</MudNavLink>
 
-        <!-- ADMIN ONLY: User Management -->
-        <AuthorizeView Roles="Admin">
-            <div class="nav-item px-3 mt-3">
-                <span class="text-white-50 small text-uppercase fw-bold ps-3" style="letter-spacing: 1px;">Administration</span>
-            </div>
-            <div class="nav-item px-3">
-                <NavLink class="nav-link" href="admin/users">
-                    <span class="bi bi-people" aria-hidden="true"></span> User Management
-                </NavLink>
-            </div>
-        </AuthorizeView>
+    <AuthorizeView Roles="Admin">
+        <MudNavGroup Title="Administration" Icon="@Icons.Material.Filled.AdminPanelSettings" Expanded="true">
+            <MudNavLink Href="admin/users" Icon="@Icons.Material.Filled.People">User Management</MudNavLink>
+        </MudNavGroup>
+    </AuthorizeView>
 
-        <!-- OPERATIONS: Admin & Accounting Only -->
-        <AuthorizeView Roles="Admin,Accounting">
-            <!-- General Ledger Module -->
-            <div class="nav-item px-3 mt-3">
-                <span class="text-white-50 small text-uppercase fw-bold ps-3" style="letter-spacing: 1px;">General Ledger</span>
-            </div>
-            <div class="nav-item px-3">
-                <NavLink class="nav-link" href="gl/journal">
-                    <span class="bi bi-journal-text" aria-hidden="true"></span> Journal Entries
-                </NavLink>
-            </div>
-            <!-- NEW: Chart of Accounts Link -->
-            <div class="nav-item px-3">
-                <NavLink class="nav-link" href="gl/accounts">
-                    <span class="bi bi-list-columns-reverse" aria-hidden="true"></span> Chart of Accounts
-                </NavLink>
-            </div>
+    <AuthorizeView Roles="Admin,Accounting">
+        <MudNavGroup Title="General Ledger" Icon="@Icons.Material.Filled.AccountBalance" Expanded="true">
+            <MudNavLink Href="gl/journal" Icon="@Icons.Material.Filled.EditNote">Journal Entries</MudNavLink>
+            <MudNavLink Href="gl/accounts" Icon="@Icons.Material.Filled.ListAlt">Chart of Accounts</MudNavLink>
+        </MudNavGroup>
 
-            <!-- Accounts Payable Module -->
-            <div class="nav-item px-3 mt-3">
-                <span class="text-white-50 small text-uppercase fw-bold ps-3" style="letter-spacing: 1px;">Accounts Payable</span>
-            </div>
-            <div class="nav-item px-3">
-                <NavLink class="nav-link" href="ap/bills">
-                    <span class="bi bi-receipt" aria-hidden="true"></span> Vendor Bills
-                </NavLink>
-            </div>
-            <!-- NEW: Vendors Link -->
-            <div class="nav-item px-3">
-                <NavLink class="nav-link" href="ap/vendors">
-                    <span class="bi bi-truck" aria-hidden="true"></span> Vendors
-                </NavLink>
-            </div>
+        <MudNavGroup Title="Accounts Payable" Icon="@Icons.Material.Filled.ShoppingCart" Expanded="true">
+            <MudNavLink Href="ap/bills" Icon="@Icons.Material.Filled.ReceiptLong">Vendor Bills</MudNavLink>
+            <MudNavLink Href="ap/vendors" Icon="@Icons.Material.Filled.Store">Vendors</MudNavLink>
+        </MudNavGroup>
 
-            <!-- Accounts Receivable Module -->
-            <div class="nav-item px-3 mt-3">
-                <span class="text-white-50 small text-uppercase fw-bold ps-3" style="letter-spacing: 1px;">Accounts Receivable</span>
-            </div>
-            <div class="nav-item px-3">
-                <NavLink class="nav-link" href="ar/invoices">
-                    <span class="bi bi-file-earmark-text" aria-hidden="true"></span> Create Invoice
-                </NavLink>
-            </div>
-            <!-- NEW: Customers Link -->
-            <div class="nav-item px-3">
-                <NavLink class="nav-link" href="ar/customers">
-                    <span class="bi bi-people" aria-hidden="true"></span> Customers
-                </NavLink>
-            </div>
-            <div class="nav-item px-3">
-                <NavLink class="nav-link" href="ar/receive-payment">
-                    <span class="bi bi-wallet2" aria-hidden="true"></span> Receive Payment
-                </NavLink>
-            </div>
-        </AuthorizeView>
+        <MudNavGroup Title="Accounts Receivable" Icon="@Icons.Material.Filled.Sell" Expanded="true">
+            <MudNavLink Href="ar/invoices" Icon="@Icons.Material.Filled.Description">Create Invoice</MudNavLink>
+            <MudNavLink Href="ar/customers" Icon="@Icons.Material.Filled.Groups">Customers</MudNavLink>
+            <MudNavLink Href="ar/receive-payment" Icon="@Icons.Material.Filled.Payment">Receive Payment</MudNavLink>
+        </MudNavGroup>
+    </AuthorizeView>
 
-        <!-- REPORTS -->
-        <AuthorizeView Roles="Admin,Accounting,Management">
-            <div class="nav-item px-3 mt-3">
-                <span class="text-white-50 small text-uppercase fw-bold ps-3" style="letter-spacing: 1px;">Reporting</span>
-            </div>
-            <div class="nav-item px-3">
-                <NavLink class="nav-link" href="reports/financials">
-                    <span class="bi bi-bar-chart-line" aria-hidden="true"></span> Financial Statements
-                </NavLink>
-            </div>
-        </AuthorizeView>
-    </nav>
-</div>
-
-@code {
-    private bool collapseNavMenu = true;
-    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
-    private void ToggleNavMenu() => collapseNavMenu = !collapseNavMenu;
-}
+    <AuthorizeView Roles="Admin,Accounting,Management">
+        <MudNavGroup Title="Reporting" Icon="@Icons.Material.Filled.Assessment" Expanded="true">
+            <MudNavLink Href="reports/financials" Icon="@Icons.Material.Filled.Analytics">Financial Statements</MudNavLink>
+        </MudNavGroup>
+    </AuthorizeView>
+</MudNavMenu>

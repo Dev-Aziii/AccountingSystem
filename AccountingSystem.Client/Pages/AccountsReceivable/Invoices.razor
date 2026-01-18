@@ -6,91 +6,68 @@
 @attribute [Authorize(Roles = "Admin,Accounting")]
 @inject ReceivableService ReceivableService
 @inject NavigationManager NavManager
+@inject ISnackbar Snackbar
 
 <PageTitle>Create Invoice</PageTitle>
 
-<div class="container mt-4" style="max-width: 800px;">
-    <div class="card shadow border-0">
-        <div class="card-header bg-info text-white d-flex align-items-center">
-            <h4 class="mb-0"><i class="bi bi-file-earmark-text me-2"></i>New Customer Invoice</h4>
-        </div>
-        <div class="card-body p-4">
+<MudContainer MaxWidth="MaxWidth.Medium">
+    <MudText Typo="Typo.h4" Color="Color.Info" Class="mb-4">New Customer Invoice</MudText>
 
-            @if (!string.IsNullOrEmpty(errorMessage))
-            {
-                <div class="alert alert-danger">@errorMessage</div>
-            }
-
-            <EditForm Model="@invoice" OnValidSubmit="HandleSubmit">
-                <DataAnnotationsValidator />
-
-                <div class="row g-3 mb-3">
-                    <div class="col-md-6">
-                        <label class="form-label fw-bold">Customer</label>
+    <EditForm Model="@invoice" OnValidSubmit="HandleSubmit">
+        <DataAnnotationsValidator />
+        <MudCard>
+            <MudCardContent>
+                <MudGrid>
+                    <MudItem xs="12" sm="6">
                         <CustomerSelect @bind-SelectedCustomerId="invoice.CustomerId" />
                         <ValidationMessage For="@(() => invoice.CustomerId)" />
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label fw-bold">Due Date</label>
-                        <InputDate @bind-Value="invoice.DueDate" class="form-control" />
-                    </div>
-                </div>
+                    </MudItem>
+                    <MudItem xs="12" sm="6">
+                        <MudDatePicker Label="Due Date" @bind-Date="invoiceDate" Variant="Variant.Outlined" />
+                    </MudItem>
 
-                <div class="row g-3 mb-3">
-                    <div class="col-md-6">
-                        <label class="form-label fw-bold">Total Amount</label>
-                        <div class="input-group">
-                            <span class="input-group-text">₱</span>
-                            <InputNumber @bind-Value="invoice.Amount" class="form-control text-end" />
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label fw-bold">Revenue Account</label>
+                    <MudItem xs="12" sm="6">
+                        <MudNumericField Label="Total Amount" @bind-Value="invoice.Amount" Format="N2" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.AttachMoney" Variant="Variant.Outlined" />
+                    </MudItem>
+                    <MudItem xs="12" sm="6">
                         <AccountSelect @bind-SelectedAccountId="invoice.RevenueAccountId" TypeFilter="Revenue" />
                         <ValidationMessage For="@(() => invoice.RevenueAccountId)" />
-                    </div>
-                </div>
+                    </MudItem>
 
-                <div class="mb-4">
-                    <label class="form-label fw-bold">Description</label>
-                    <InputTextArea @bind-Value="invoice.Description" class="form-control" rows="2" />
-                </div>
-
-                <div class="d-flex justify-content-end">
-                    <button type="submit" class="btn btn-info text-white px-5 fw-bold" disabled="@isSubmitting">
-                        @if (isSubmitting)
-                        {
-                            <span class="spinner-border spinner-border-sm me-2"></span>
-                        }
-                        Save Invoice
-                    </button>
-                </div>
-            </EditForm>
-        </div>
-    </div>
-</div>
+                    <MudItem xs="12">
+                        <MudTextField Label="Description" @bind-Value="invoice.Description" Lines="3" Variant="Variant.Outlined" />
+                    </MudItem>
+                </MudGrid>
+            </MudCardContent>
+            <MudCardActions Class="d-flex justify-end">
+                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Info" Disabled="@isSubmitting" StartIcon="@Icons.Material.Filled.Save">
+                    @(isSubmitting ? "Saving..." : "Save Invoice")
+                </MudButton>
+            </MudCardActions>
+        </MudCard>
+    </EditForm>
+</MudContainer>
 
 @code {
     private CreateInvoiceDTO invoice = new CreateInvoiceDTO { DueDate = DateTime.Today.AddDays(15) };
-    private string errorMessage;
+    private DateTime? invoiceDate { get => invoice.DueDate; set => invoice.DueDate = value ?? DateTime.Today; }
     private bool isSubmitting = false;
 
     private async Task HandleSubmit()
     {
-        if (invoice.CustomerId == 0) { errorMessage = "Please select a customer."; return; }
-        if (invoice.RevenueAccountId == 0) { errorMessage = "Please select a revenue account."; return; }
+        if (invoice.CustomerId == 0) { Snackbar.Add("Please select a customer.", Severity.Warning); return; }
+        if (invoice.RevenueAccountId == 0) { Snackbar.Add("Please select a revenue account.", Severity.Warning); return; }
 
         isSubmitting = true;
-        errorMessage = null;
-
         try
         {
             await ReceivableService.CreateInvoiceAsync(invoice);
-            NavManager.NavigateTo("/");
+            Snackbar.Add("Invoice created successfully.", Severity.Success);
+            NavManager.NavigateTo("/ar/invoices", forceLoad: true);
         }
         catch (Exception ex)
         {
-            errorMessage = ex.Message;
+            Snackbar.Add(ex.Message, Severity.Error);
         }
         finally
         {

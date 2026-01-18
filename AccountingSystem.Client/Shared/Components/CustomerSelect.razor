@@ -1,72 +1,55 @@
 ﻿@using AccountingSystem.Shared.DTOs
 @using AccountingSystem.Client.Services
+@using AccountingSystem.Client.Shared.Dialogs
 @inject ReceivableService ReceivableService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
 
 <Microsoft.AspNetCore.Components.Authorization.AuthorizeView Roles="Admin,Accounting,Management">
-    <div class="input-group">
-        <select class="form-select" value="@SelectedCustomerId" @onchange="OnValueChanged">
-            <option value="0">-- Select Customer --</option>
-            @if (customers != null)
+    <MudSelect T="int" Label="Customer" Value="SelectedCustomerId" ValueChanged="OnValueChanged"
+               Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Add" OnAdornmentClick="OpenAddDialog"
+               Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter">
+        <MudSelectItem Value="0">-- Select Customer --</MudSelectItem>
+        @if (customers != null)
+        {
+            foreach (var c in customers)
             {
-                foreach (var c in customers)
-                {
-                    <option value="@c.Id">@c.Name</option>
-                }
+                <MudSelectItem Value="@c.Id">@c.Name</MudSelectItem>
             }
-        </select>
-        <!-- Only allow creating new customers if not Management -->
-        <Microsoft.AspNetCore.Components.Authorization.AuthorizeView Roles="Admin,Accounting" Context="innerContext">
-            <button class="btn btn-outline-info" type="button" @onclick="OpenAddModal" title="Add New Customer">
-                <i class="bi bi-plus-lg"></i>
-            </button>
-        </Microsoft.AspNetCore.Components.Authorization.AuthorizeView>
-    </div>
+        }
+    </MudSelect>
 </Microsoft.AspNetCore.Components.Authorization.AuthorizeView>
-
-<CustomerModal @ref="modal" OnSaved="HandleCustomerSaved" />
 
 @code {
     [Parameter] public int SelectedCustomerId { get; set; }
     [Parameter] public EventCallback<int> SelectedCustomerIdChanged { get; set; }
 
     private List<CustomerDTO> customers;
-    private CustomerModal modal;
 
-    protected override async Task OnInitializedAsync()
-    {
-        await LoadCustomers();
-    }
+    protected override async Task OnInitializedAsync() => await LoadCustomers();
 
     private async Task LoadCustomers()
     {
-        try
-        {
-            customers = await ReceivableService.GetCustomersAsync();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error loading customers: {ex.Message}");
-        }
+        try { customers = await ReceivableService.GetCustomersAsync(); }
+        catch (Exception ex) { Console.WriteLine(ex.Message); }
     }
 
-    private async Task OnValueChanged(ChangeEventArgs e)
+    private async Task OnValueChanged(int id)
     {
-        if (int.TryParse(e.Value.ToString(), out int id))
+        SelectedCustomerId = id;
+        await SelectedCustomerIdChanged.InvokeAsync(id);
+    }
+
+    private async Task OpenAddDialog()
+    {
+        var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true };
+        var dialog = DialogService.Show<CustomerDialog>("Add New Customer", options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
         {
-            SelectedCustomerId = id;
-            await SelectedCustomerIdChanged.InvokeAsync(id);
+            await LoadCustomers();
+            Snackbar.Add("Customer list refreshed.", Severity.Info);
         }
-    }
-
-    private void OpenAddModal()
-    {
-        modal.OpenCreate();
-    }
-
-    private async Task HandleCustomerSaved(CustomerDTO newCustomer)
-    {
-        await LoadCustomers();
-        SelectedCustomerId = newCustomer.Id;
-        await SelectedCustomerIdChanged.InvokeAsync(newCustomer.Id);
     }
 }

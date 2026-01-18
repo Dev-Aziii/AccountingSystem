@@ -1,122 +1,111 @@
 ﻿@page "/gl/accounts"
 @using AccountingSystem.Shared.DTOs
 @using AccountingSystem.Client.Services
-@using AccountingSystem.Client.Shared.Components
+@using AccountingSystem.Client.Shared.Dialogs
 @using Microsoft.AspNetCore.Authorization
+@using MudBlazor
 @attribute [Authorize(Roles = "Admin,Accounting,Management")]
 @inject LedgerService LedgerService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
 
 <PageTitle>Chart of Accounts</PageTitle>
 
-<div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="text-primary fw-bold">Chart of Accounts</h2>
-        
-        <AuthorizeView Roles="Admin,Accounting">
-            <button class="btn btn-success" @onclick="() => modal.OpenCreate()">
-                <i class="bi bi-plus-circle me-2"></i>Add New Account
-            </button>
-        </AuthorizeView>
-    </div>
-
-    @if (!string.IsNullOrEmpty(errorMessage))
-    {
-        <div class="alert alert-danger">@errorMessage</div>
-    }
-
-    <div class="card shadow-sm border-0">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="table-light">
-                    <tr>
-                        <th>Code</th>
-                        <th>Name</th>
-                        <th>Type</th>
-                        <AuthorizeView Roles="Admin,Accounting">
-                            <th class="text-end">Actions</th>
-                        </AuthorizeView>
-                    </tr>
-                </thead>
-                <tbody>
-                    @if (accounts == null)
-                    {
-                        <tr><td colspan="4" class="text-center py-4">Loading...</td></tr>
-                    }
-                    else if (!accounts.Any())
-                    {
-                        <tr><td colspan="4" class="text-center py-4">No accounts found.</td></tr>
-                    }
-                    else
-                    {
-                        @foreach (var a in accounts)
-                        {
-                            <tr>
-                                <td class="fw-bold text-muted">@a.Code</td>
-                                <td class="fw-bold">@a.Name</td>
-                                <td>
-                                    @switch (a.Type)
-                                    {
-                                        case "Asset": <span class="badge bg-primary">Asset</span>; break;
-                                        case "Liability": <span class="badge bg-danger">Liability</span>; break;
-                                        case "Equity": <span class="badge bg-info">Equity</span>; break;
-                                        case "Revenue": <span class="badge bg-success">Revenue</span>; break;
-                                        case "Expense": <span class="badge bg-warning text-dark">Expense</span>; break;
-                                        default: <span class="badge bg-secondary">@a.Type</span>; break;
-                                    }
-                                </td>
-                                <AuthorizeView Roles="Admin,Accounting">
-                                    <td class="text-end">
-                                        <button class="btn btn-outline-secondary btn-sm me-1" @onclick="() => modal.OpenEdit(a)">
-                                            <i class="bi bi-pencil"></i>
-                                        </button>
-                                        <button class="btn btn-outline-danger btn-sm" @onclick="() => ConfirmDelete(a.Id)">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                    </td>
-                                </AuthorizeView>
-                            </tr>
-                        }
-                    }
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
-
-<AccountModal @ref="modal" OnSaved="ReloadList" />
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
+    <MudTable Items="@accounts" Dense="true" Hover="true" Bordered="true" Striped="true" 
+              Filter="new Func<AccountDTO,bool>(FilterFunc)" Loading="@_loading">
+        <ToolBarContent>
+            <MudText Typo="Typo.h6">Chart of Accounts</MudText>
+            <MudSpacer />
+            <MudTextField @bind-Value="searchString" Placeholder="Search accounts..." Adornment="Adornment.Start" 
+                          AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+            <AuthorizeView Roles="Admin,Accounting">
+                <MudButton Variant="Variant.Filled" Color="Color.Success" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenAddDialog" Class="ml-3">
+                    Add Account
+                </MudButton>
+            </AuthorizeView>
+        </ToolBarContent>
+        <HeaderContent>
+            <MudTh><MudTableSortLabel SortBy="new Func<AccountDTO, object>(x=>x.Code)">Code</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<AccountDTO, object>(x=>x.Name)">Name</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<AccountDTO, object>(x=>x.Type)">Type</MudTableSortLabel></MudTh>
+            <AuthorizeView Roles="Admin,Accounting">
+                <MudTh Style="text-align:right">Actions</MudTh>
+            </AuthorizeView>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Code">@context.Code</MudTd>
+            <MudTd DataLabel="Name">@context.Name</MudTd>
+            <MudTd DataLabel="Type">
+                @switch (context.Type)
+                {
+                    case "Asset": <MudChip T="string" Color="Color.Primary" Size="Size.Small" Variant="Variant.Text">Asset</MudChip>; break;
+                    case "Liability": <MudChip T="string" Color="Color.Error" Size="Size.Small" Variant="Variant.Text">Liability</MudChip>; break;
+                    case "Equity": <MudChip T="string" Color="Color.Info" Size="Size.Small" Variant="Variant.Text">Equity</MudChip>; break;
+                    case "Revenue": <MudChip T="string" Color="Color.Success" Size="Size.Small" Variant="Variant.Text">Revenue</MudChip>; break;
+                    case "Expense": <MudChip T="string" Color="Color.Warning" Size="Size.Small" Variant="Variant.Text">Expense</MudChip>; break;
+                    default: <MudChip T="string" Size="Size.Small">@context.Type</MudChip>; break;
+                }
+            </MudTd>
+            <AuthorizeView Roles="Admin,Accounting">
+                <MudTd DataLabel="Actions" Style="text-align:right">
+                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Secondary" OnClick="() => OpenEditDialog(context)" />
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="() => ConfirmDelete(context.Id)" />
+                </MudTd>
+            </AuthorizeView>
+        </RowTemplate>
+        <PagerContent>
+            <MudTablePager />
+        </PagerContent>
+    </MudTable>
+</MudContainer>
 
 @code {
-    private List<AccountDTO> accounts;
-    private AccountModal modal;
-    private string errorMessage;
+    private List<AccountDTO> accounts = new List<AccountDTO>();
+    private string searchString = "";
+    private bool _loading = true;
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnInitializedAsync() => await LoadList();
+
+    private async Task LoadList()
     {
-        await ReloadList();
+        _loading = true;
+        try { accounts = await LedgerService.GetAccountsAsync(); }
+        catch (Exception ex) { Snackbar.Add(ex.Message, Severity.Error); }
+        finally { _loading = false; }
     }
 
-    private async Task ReloadList(AccountDTO ignored = null)
+    private bool FilterFunc(AccountDTO element)
     {
-        try
-        {
-            accounts = await LedgerService.GetAccountsAsync();
-        }
-        catch (Exception ex)
-        {
-            errorMessage = ex.Message;
-        }
+        if (string.IsNullOrWhiteSpace(searchString)) return true;
+        if (element.Code.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
+        if (element.Name.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
+        if (element.Type.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
+        return false;
+    }
+
+    private async Task OpenAddDialog()
+    {
+        var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<AccountDialog>("Add Account", options);
+        if (!(await dialog.Result).Canceled) await LoadList();
+    }
+
+    private async Task OpenEditDialog(AccountDTO account)
+    {
+        var parameters = new DialogParameters { ["Account"] = account };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<AccountDialog>("Edit Account", parameters, options);
+        if (!(await dialog.Result).Canceled) await LoadList();
     }
 
     private async Task ConfirmDelete(int id)
     {
-        try
+        bool? result = await DialogService.ShowMessageBox("Delete", "Delete this account?", yesText: "Delete", cancelText: "Cancel");
+        if (result == true)
         {
-            await LedgerService.DeleteAccountAsync(id);
-            await ReloadList();
-        }
-        catch (Exception ex)
-        {
-            errorMessage = "Cannot delete: " + ex.Message;
+            try { await LedgerService.DeleteAccountAsync(id); await LoadList(); }
+            catch (Exception ex) { Snackbar.Add(ex.Message, Severity.Error); }
         }
     }
 }

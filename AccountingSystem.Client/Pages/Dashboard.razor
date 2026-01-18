@@ -1,91 +1,82 @@
 ﻿@page "/dashboard"
 @using AccountingSystem.Shared.DTOs
 @using AccountingSystem.Client.Services
+@using MudBlazor
 @attribute [Microsoft.AspNetCore.Authorization.Authorize]
 @inject ReportService ReportService
 
 <PageTitle>Financial Dashboard</PageTitle>
 
-<div class="container-fluid mt-3">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="text-primary fw-bold">Financial Overview</h2>
-        <button class="btn btn-outline-primary btn-sm" @onclick="LoadData">
-            <i class="bi bi-arrow-clockwise"></i> Refresh Data
-        </button>
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
+    <div class="d-flex justify-space-between align-center mb-4">
+        <MudText Typo="Typo.h4" Color="Color.Primary">Financial Overview</MudText>
+        <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Refresh" OnClick="LoadData">
+            Refresh Data
+        </MudButton>
     </div>
 
     @if (isLoading)
     {
-        <div class="d-flex justify-content-center align-items-center" style="height: 200px;">
-            <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Loading...</span>
-            </div>
+        <div class="d-flex justify-center align-center" style="height: 200px;">
+            <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
         </div>
     }
     else if (trialBalance != null)
     {
         <!-- KPI Cards -->
-        <div class="row mb-4">
-            <div class="col-md-6 col-lg-3">
-                <div class="card shadow-sm border-start border-4 border-success h-100">
-                    <div class="card-body">
-                        <div class="text-uppercase text-muted small fw-bold">Total Debits</div>
-                        <div class="h3 mb-0 text-success">@trialBalance.TotalDebit.ToString("C0")</div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6 col-lg-3">
-                <div class="card shadow-sm border-start border-4 border-info h-100">
-                    <div class="card-body">
-                        <div class="text-uppercase text-muted small fw-bold">Total Credits</div>
-                        <div class="h3 mb-0 text-info">@trialBalance.TotalCredit.ToString("C0")</div>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <MudGrid Class="mb-4">
+            <MudItem xs="12" sm="6" md="3">
+                <MudPaper Elevation="2" Class="pa-4 rounded-lg" Style="border-left: 6px solid var(--mud-palette-success);">
+                    <MudText Typo="Typo.subtitle2" Class="mud-text-secondary text-uppercase">Total Debits</MudText>
+                    <MudText Typo="Typo.h4" Color="Color.Success">@trialBalance.TotalDebit.ToString("C0")</MudText>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudPaper Elevation="2" Class="pa-4 rounded-lg" Style="border-left: 6px solid var(--mud-palette-info);">
+                    <MudText Typo="Typo.subtitle2" Class="mud-text-secondary text-uppercase">Total Credits</MudText>
+                    <MudText Typo="Typo.h4" Color="Color.Info">@trialBalance.TotalCredit.ToString("C0")</MudText>
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
 
         <!-- Recent Activity Table (Trial Balance Preview) -->
-        <div class="card shadow border-0">
-            <div class="card-header bg-white py-3">
-                <h5 class="mb-0 fw-bold">Current Trial Balance</h5>
-                <small class="text-muted">As of @trialBalance.GeneratedAt.ToLocalTime()</small>
-            </div>
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Code</th>
-                            <th>Account Name</th>
-                            <th class="text-end">Debit</th>
-                            <th class="text-end">Credit</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var account in trialBalance.Accounts.Take(10)) 
-                        {
-                            <tr>
-                                <td class="fw-bold text-muted">@account.AccountCode</td>
-                                <td>@account.AccountName</td>
-                                <td class="text-end text-success">
-                                    @(account.Debit > 0 ? account.Debit.ToString("N2") : "-")
-                                </td>
-                                <td class="text-end text-info">
-                                    @(account.Credit > 0 ? account.Credit.ToString("N2") : "-")
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-            @if (trialBalance.Accounts.Count > 10)
-            {
-                <div class="card-footer bg-white text-center">
-                    <a href="reports/financials" class="text-decoration-none">View Full Report</a>
+        <MudPaper Elevation="2" Class="pa-4">
+            <div class="d-flex justify-space-between align-center mb-2">
+                <div>
+                    <MudText Typo="Typo.h6">Current Trial Balance</MudText>
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary">As of @trialBalance.GeneratedAt.ToLocalTime()</MudText>
                 </div>
-            }
-        </div>
+                @if (trialBalance.Accounts.Count > 10)
+                {
+                    <MudLink Href="reports/financials" Underline="Underline.None" Color="Color.Primary">View Full Report</MudLink>
+                }
+            </div>
+
+            <MudTable Items="@trialBalance.Accounts.Take(10)" Hover="true" Breakpoint="Breakpoint.None" Dense="true" Elevation="0">
+                <HeaderContent>
+                    <MudTh>Code</MudTh>
+                    <MudTh>Account Name</MudTh>
+                    <MudTh Style="text-align:right">Debit</MudTh>
+                    <MudTh Style="text-align:right">Credit</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Code"><b>@context.AccountCode</b></MudTd>
+                    <MudTd DataLabel="Account Name">@context.AccountName</MudTd>
+                    <MudTd DataLabel="Debit" Style="text-align:right">
+                        <MudText Color="@(context.Debit > 0 ? Color.Success : Color.Default)">
+                            @(context.Debit > 0 ? context.Debit.ToString("N2") : "-")
+                        </MudText>
+                    </MudTd>
+                    <MudTd DataLabel="Credit" Style="text-align:right">
+                        <MudText Color="@(context.Credit > 0 ? Color.Info : Color.Default)">
+                            @(context.Credit > 0 ? context.Credit.ToString("N2") : "-")
+                        </MudText>
+                    </MudTd>
+                </RowTemplate>
+            </MudTable>
+        </MudPaper>
     }
-</div>
+</MudContainer>
 
 @code {
     private TrialBalanceDTO? trialBalance;

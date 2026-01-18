@@ -1,0 +1,80 @@
+﻿@using AccountingSystem.Shared.DTOs
+@using AccountingSystem.Client.Services
+@using MudBlazor
+@inject LedgerService LedgerService
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        <MudForm @ref="form" @bind-IsValid="@success">
+            <MudTextField T="string" Label="Code" Required="true" @bind-Value="model.Code" MaxLength="10" />
+            <MudTextField T="string" Label="Name" Required="true" @bind-Value="model.Name" />
+            <MudSelect T="string" Label="Type" Required="true" @bind-Value="model.Type" AnchorOrigin="Origin.BottomCenter">
+                <MudSelectItem Value="@("Asset")" />
+                <MudSelectItem Value="@("Liability")" />
+                <MudSelectItem Value="@("Equity")" />
+                <MudSelectItem Value="@("Revenue")" />
+                <MudSelectItem Value="@("Expense")" />
+            </MudSelect>
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Success" OnClick="Submit">@((Account?.Id > 0) ? "Update" : "Create")</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; }
+
+    [Parameter] public AccountDTO Account { get; set; }
+
+    private CreateAccountDTO model = new CreateAccountDTO();
+    private bool success;
+    private MudForm form;
+
+    protected override void OnInitialized()
+    {
+        if (Account != null)
+        {
+            model.Code = Account.Code;
+            model.Name = Account.Name;
+            model.Type = Account.Type;
+        }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private async Task Submit()
+    {
+        await form.Validate();
+        if (!form.IsValid) return;
+
+        try
+        {
+            if (Account != null && Account.Id > 0)
+            {
+                var updateDto = new UpdateAccountDTO
+                {
+                    Id = Account.Id,
+                    Code = model.Code,
+                    Name = model.Name,
+                    Type = model.Type
+                };
+                await LedgerService.UpdateAccountAsync(updateDto);
+                Snackbar.Add("Account updated.", Severity.Success);
+            }
+            else
+            {
+                await LedgerService.CreateAccountAsync(model);
+                Snackbar.Add("Account created.", Severity.Success);
+            }
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+    }
+}

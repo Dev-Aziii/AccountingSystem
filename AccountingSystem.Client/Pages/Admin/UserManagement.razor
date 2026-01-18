@@ -2,148 +2,99 @@
 @using AccountingSystem.Shared.DTOs
 @using AccountingSystem.Client.Services
 @using Microsoft.AspNetCore.Authorization
+@using MudBlazor
 @attribute [Authorize(Roles = "Admin")]
 @inject UserService UserService
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
 
 <PageTitle>User Management</PageTitle>
 
-<div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h2 class="text-primary fw-bold mb-0">User Management</h2>
-            <p class="text-muted small">Manage system access and roles</p>
-        </div>
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
+    <div class="mb-4">
+        <MudText Typo="Typo.h4" Color="Color.Primary">User Management</MudText>
+        <MudText Typo="Typo.body2" Class="mud-text-secondary">Manage system access and roles</MudText>
     </div>
 
-    @if (!string.IsNullOrEmpty(errorMessage))
-    {
-        <div class="alert alert-danger alert-dismissible fade show">
-            @errorMessage
-            <button type="button" class="btn-close" @onclick="() => errorMessage = null"></button>
-        </div>
-    }
-
-    <div class="row">
+    <MudGrid>
         <!-- LEFT: User List -->
-        <div class="col-lg-8">
-            <div class="card shadow-sm border-0 mb-4">
-                <div class="card-header bg-white py-3">
-                    <h5 class="mb-0 fw-bold text-primary">Current Users</h5>
-                </div>
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
-                        <thead class="table-light">
-                            <tr>
-                                <th>Username</th>
-                                <th>Full Name</th>
-                                <th>Role</th>
-                                <th class="text-end">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @if (users == null)
-                            {
-                                <tr><td colspan="4" class="text-center py-4">Loading users...</td></tr>
-                            }
-                            else if (!users.Any())
-                            {
-                                <tr><td colspan="4" class="text-center py-4">No users found.</td></tr>
-                            }
-                            else
-                            {
-                                @foreach (var user in users)
-                                {
-                                    <tr>
-                                        <td class="fw-bold">@user.Username</td>
-                                        <td>@user.FullName</td>
-                                        <td>
-                                            @if (user.RoleName == "Admin")
-                                            {
-                                                <span class="badge bg-danger">Admin</span>
-                                            }
-                                            else if (user.RoleName == "Accounting")
-                                            {
-                                                <span class="badge bg-primary">Accounting</span>
-                                            }
-                                            else
-                                            {
-                                                <span class="badge bg-secondary">Management</span>
-                                            }
-                                        </td>
-                                        <td class="text-end">
-                                            @if (user.Username != "admin") // Prevent deleting default admin
-                                            {
-                                                <button class="btn btn-outline-danger btn-sm" @onclick="() => ConfirmDelete(user.Id)">
-                                                    <i class="bi bi-trash"></i> Delete
-                                                </button>
-                                            }
-                                        </td>
-                                    </tr>
-                                }
-                            }
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
+        <MudItem xs="12" md="8">
+            <MudTable Items="@users" Hover="true" Breakpoint="Breakpoint.Sm" Loading="@(users == null)" LoadingProgressColor="Color.Info" Elevation="3">
+                <ToolBarContent>
+                    <MudText Typo="Typo.h6" Color="Color.Primary">Current Users</MudText>
+                </ToolBarContent>
+                <HeaderContent>
+                    <MudTh>Username</MudTh>
+                    <MudTh>Full Name</MudTh>
+                    <MudTh>Role</MudTh>
+                    <MudTh Style="text-align:right">Actions</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Username"><b>@context.Username</b></MudTd>
+                    <MudTd DataLabel="Full Name">@context.FullName</MudTd>
+                    <MudTd DataLabel="Role">
+                        @if (context.RoleName == "Admin")
+                        {
+                            <MudChip T="string" Color="Color.Error" Size="Size.Small">Admin</MudChip>
+                        }
+                        else if (context.RoleName == "Accounting")
+                        {
+                            <MudChip T="string" Color="Color.Primary" Size="Size.Small">Accounting</MudChip>
+                        }
+                        else
+                        {
+                            <MudChip T="string" Color="Color.Secondary" Size="Size.Small">Management</MudChip>
+                        }
+                    </MudTd>
+                    <MudTd DataLabel="Actions" Style="text-align:right">
+                        @if (context.Username != "admin")
+                        {
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="() => ConfirmDelete(context.Id)" />
+                        }
+                    </MudTd>
+                </RowTemplate>
+                <PagerContent>
+                    <MudTablePager />
+                </PagerContent>
+            </MudTable>
+        </MudItem>
 
         <!-- RIGHT: Create User Form -->
-        <div class="col-lg-4">
-            <div class="card shadow-sm border-0 bg-light">
-                <div class="card-header bg-primary text-white py-3">
-                    <h5 class="mb-0 fw-bold"><i class="bi bi-person-plus me-2"></i>Create New User</h5>
-                </div>
-                <div class="card-body p-4">
-                    <EditForm Model="@newUser" OnValidSubmit="HandleCreateUser">
-                        <DataAnnotationsValidator />
+        <MudItem xs="12" md="4">
+            <EditForm Model="@newUser" OnValidSubmit="HandleCreateUser">
+                <DataAnnotationsValidator />
+                <MudCard Elevation="3">
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.h6">Create New User</MudText>
+                        </CardHeaderContent>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudTextField Label="Username" @bind-Value="newUser.Username" For="@(() => newUser.Username)" Variant="Variant.Outlined" Class="mb-3" />
+                        <MudTextField Label="Full Name" @bind-Value="newUser.FullName" For="@(() => newUser.FullName)" Variant="Variant.Outlined" Class="mb-3" />
 
-                        <div class="mb-3">
-                            <label class="form-label small fw-bold text-uppercase">Username</label>
-                            <InputText @bind-Value="newUser.Username" class="form-control" placeholder="jdoe" />
-                            <ValidationMessage For="@(() => newUser.Username)" />
-                        </div>
+                        <MudSelect Label="Role" @bind-Value="newUser.RoleName" For="@(() => newUser.RoleName)" Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter" Class="mb-3">
+                            <MudSelectItem Value="@("Admin")" />
+                            <MudSelectItem Value="@("Accounting")" />
+                            <MudSelectItem Value="@("Management")" />
+                        </MudSelect>
 
-                        <div class="mb-3">
-                            <label class="form-label small fw-bold text-uppercase">Full Name</label>
-                            <InputText @bind-Value="newUser.FullName" class="form-control" placeholder="John Doe" />
-                            <ValidationMessage For="@(() => newUser.FullName)" />
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label small fw-bold text-uppercase">Role</label>
-                            <InputSelect @bind-Value="newUser.RoleName" class="form-select">
-                                <option value="">Select Role...</option>
-                                <option value="Admin">Admin</option>
-                                <option value="Accounting">Accounting</option>
-                                <option value="Management">Management</option>
-                            </InputSelect>
-                            <ValidationMessage For="@(() => newUser.RoleName)" />
-                        </div>
-
-                        <div class="mb-4">
-                            <label class="form-label small fw-bold text-uppercase">Password</label>
-                            <InputText @bind-Value="newUser.Password" type="password" class="form-control" />
-                            <ValidationMessage For="@(() => newUser.Password)" />
-                        </div>
-
-                        <button type="submit" class="btn btn-primary w-100 fw-bold" disabled="@isSubmitting">
-                            @if (isSubmitting)
-                            {
-                                <span class="spinner-border spinner-border-sm me-2"></span>
-                            }
-                            Create Account
-                        </button>
-                    </EditForm>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+                        <MudTextField Label="Password" @bind-Value="newUser.Password" For="@(() => newUser.Password)" InputType="InputType.Password" Variant="Variant.Outlined" Class="mb-3" />
+                    </MudCardContent>
+                    <MudCardActions>
+                        <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" Disabled="@isSubmitting">
+                            @(isSubmitting ? "Creating..." : "Create Account")
+                        </MudButton>
+                    </MudCardActions>
+                </MudCard>
+            </EditForm>
+        </MudItem>
+    </MudGrid>
+</MudContainer>
 
 @code {
     private List<UserDTO> users;
     private RegisterDTO newUser = new RegisterDTO();
-    private string errorMessage;
     private bool isSubmitting = false;
 
     protected override async Task OnInitializedAsync()
@@ -159,26 +110,23 @@
         }
         catch (Exception ex)
         {
-            errorMessage = "Failed to load users: " + ex.Message;
+            Snackbar.Add(ex.Message, Severity.Error);
         }
     }
 
     private async Task HandleCreateUser()
     {
         isSubmitting = true;
-        errorMessage = null;
-
         try
         {
             await UserService.CreateUserAsync(newUser);
-            // Reset form
-            newUser = new RegisterDTO();
-            // Reload list
+            Snackbar.Add("User created successfully.", Severity.Success);
+            newUser = new RegisterDTO(); // Reset form
             await LoadUsers();
         }
         catch (Exception ex)
         {
-            errorMessage = ex.Message;
+            Snackbar.Add(ex.Message, Severity.Error);
         }
         finally
         {
@@ -188,17 +136,22 @@
 
     private async Task ConfirmDelete(int id)
     {
-        bool confirmed = await Task.FromResult(true); // In a real app, use JS Interop for confirm() dialog
-        if (confirmed)
+        bool? result = await DialogService.ShowMessageBox(
+            "Delete Confirmation",
+            "Are you sure you want to delete this user?",
+            yesText: "Delete", cancelText: "Cancel");
+
+        if (result == true)
         {
             try
             {
                 await UserService.DeleteUserAsync(id);
+                Snackbar.Add("User deleted successfully.", Severity.Success);
                 await LoadUsers();
             }
             catch (Exception ex)
             {
-                errorMessage = "Failed to delete user: " + ex.Message;
+                Snackbar.Add(ex.Message, Severity.Error);
             }
         }
     }

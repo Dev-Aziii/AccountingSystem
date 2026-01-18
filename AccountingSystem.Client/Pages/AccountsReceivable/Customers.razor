@@ -1,114 +1,134 @@
 ﻿@page "/ar/customers"
 @using AccountingSystem.Shared.DTOs
 @using AccountingSystem.Client.Services
-@using AccountingSystem.Client.Shared.Components
+@using AccountingSystem.Client.Shared.Dialogs
 @using Microsoft.AspNetCore.Authorization
+@using MudBlazor
 @attribute [Authorize(Roles = "Admin,Accounting,Management")]
 @inject ReceivableService ReceivableService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
 
 <PageTitle>Customer Management</PageTitle>
 
-<div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="text-primary fw-bold">Customer Management</h2>
-        
-        <AuthorizeView Roles="Admin,Accounting">
-            <button class="btn btn-info text-white" @onclick="() => modal.OpenCreate()">
-                <i class="bi bi-plus-circle me-2"></i>Add New Customer
-            </button>
-        </AuthorizeView>
-    </div>
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
+    <MudTable Items="@customers" Dense="true" Hover="true" Bordered="true" Striped="true" 
+              Filter="new Func<CustomerDTO,bool>(FilterFunc)" Loading="@_loading">
+        <ToolBarContent>
+            <MudText Typo="Typo.h6">Customer Management</MudText>
+            <MudSpacer />
+            <MudTextField @bind-Value="searchString" Placeholder="Search customers..." Adornment="Adornment.Start" 
+                          AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0" />
+            <AuthorizeView Roles="Admin,Accounting">
+                <MudButton Variant="Variant.Filled" Color="Color.Info" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenAddDialog" Class="ml-3">
+                    Add Customer
+                </MudButton>
+            </AuthorizeView>
+        </ToolBarContent>
 
-    @if (!string.IsNullOrEmpty(errorMessage))
-    {
-        <div class="alert alert-danger">@errorMessage</div>
-    }
+        <HeaderContent>
+            <MudTh>ID</MudTh>
+            <MudTh>
+                <MudTableSortLabel SortBy="new Func<CustomerDTO, object>(x => x.Name)">Name</MudTableSortLabel>
+            </MudTh>
+            <MudTh>Email</MudTh>
+            <MudTh>Phone</MudTh>
+            <AuthorizeView Roles="Admin,Accounting">
+                <MudTh Style="text-align:right">Actions</MudTh>
+            </AuthorizeView>
+        </HeaderContent>
 
-    <div class="card shadow-sm border-0">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="table-light">
-                    <tr>
-                        <th>ID</th>
-                        <th>Name</th>
-                        <th>Email</th>
-                        <th>Phone</th>
-                        <AuthorizeView Roles="Admin,Accounting">
-                            <th class="text-end">Actions</th>
-                        </AuthorizeView>
-                    </tr>
-                </thead>
-                <tbody>
-                    @if (customers == null)
-                    {
-                        <tr><td colspan="5" class="text-center py-4">Loading...</td></tr>
-                    }
-                    else if (!customers.Any())
-                    {
-                        <tr><td colspan="5" class="text-center py-4">No customers found.</td></tr>
-                    }
-                    else
-                    {
-                        @foreach (var c in customers)
-                        {
-                            <tr>
-                                <td>@c.Id</td>
-                                <td class="fw-bold">@c.Name</td>
-                                <td>@c.Email</td>
-                                <td>@c.Phone</td>
-                                <AuthorizeView Roles="Admin,Accounting">
-                                    <td class="text-end">
-                                        <button class="btn btn-outline-secondary btn-sm me-1" @onclick="() => modal.OpenEdit(c)">
-                                            <i class="bi bi-pencil"></i>
-                                        </button>
-                                        <button class="btn btn-outline-danger btn-sm" @onclick="() => ConfirmDelete(c.Id)">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                    </td>
-                                </AuthorizeView>
-                            </tr>
-                        }
-                    }
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
+        <RowTemplate>
+            <MudTd DataLabel="ID">@context.Id</MudTd>
+            <MudTd DataLabel="Name" Style="font-weight:bold">@context.Name</MudTd>
+            <MudTd DataLabel="Email">@context.Email</MudTd>
+            <MudTd DataLabel="Phone">@context.Phone</MudTd>
+            <AuthorizeView Roles="Admin,Accounting">
+                <MudTd DataLabel="Actions" Style="text-align:right">
+                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Secondary" OnClick="() => OpenEditDialog(context)" />
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="() => ConfirmDelete(context.Id)" />
+                </MudTd>
+            </AuthorizeView>
+        </RowTemplate>
 
-<CustomerModal @ref="modal" OnSaved="ReloadList" />
+        <PagerContent>
+            <MudTablePager />
+        </PagerContent>
+    </MudTable>
+</MudContainer>
 
 @code {
-    private List<CustomerDTO> customers;
-    private CustomerModal modal;
-    private string errorMessage;
+    private List<CustomerDTO> customers = new();
+    private string searchString = "";
+    private bool _loading = true;
 
-    protected override async Task OnInitializedAsync()
-    {
-        await ReloadList();
-    }
+    protected override async Task OnInitializedAsync() => await LoadList();
 
-    private async Task ReloadList(CustomerDTO ignored = null)
+    private async Task LoadList()
     {
+        _loading = true;
         try
         {
             customers = await ReceivableService.GetCustomersAsync();
         }
         catch (Exception ex)
         {
-            errorMessage = ex.Message;
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private bool FilterFunc(CustomerDTO element)
+    {
+        if (string.IsNullOrWhiteSpace(searchString)) return true;
+        if (element.Name.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
+        if (element.Email?.Contains(searchString, StringComparison.OrdinalIgnoreCase) == true) return true;
+        return false;
+    }
+
+    private async Task OpenAddDialog()
+    {
+        var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true };
+        var dialog = DialogService.Show<CustomerDialog>("Add Customer", options);
+
+        // IMPORTANT: await the result
+        var result = await dialog.Result;
+        if (!result.Canceled)
+        {
+            await LoadList();
+        }
+    }
+
+    private async Task OpenEditDialog(CustomerDTO customer)
+    {
+        var parameters = new DialogParameters { ["Customer"] = customer };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true };
+        var dialog = DialogService.Show<CustomerDialog>("Edit Customer", parameters, options);
+
+        var result = await dialog.Result;
+        if (!result.Canceled)
+        {
+            await LoadList();
         }
     }
 
     private async Task ConfirmDelete(int id)
     {
-        try
+        bool? result = await DialogService.ShowMessageBox("Delete", "Delete this customer?", yesText: "Delete", cancelText: "Cancel");
+        if (result == true)
         {
-            await ReceivableService.DeleteCustomerAsync(id);
-            await ReloadList();
-        }
-        catch (Exception ex)
-        {
-            errorMessage = "Cannot delete: " + ex.Message;
+            try
+            {
+                await ReceivableService.DeleteCustomerAsync(id);
+                await LoadList();
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add(ex.Message, Severity.Error);
+            }
         }
     }
 }

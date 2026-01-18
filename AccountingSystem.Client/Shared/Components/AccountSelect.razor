@@ -1,26 +1,24 @@
 ﻿@using AccountingSystem.Shared.DTOs
 @using AccountingSystem.Client.Services
+@using AccountingSystem.Client.Shared.Dialogs
 @inject LedgerService LedgerService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
 
 <Microsoft.AspNetCore.Components.Authorization.AuthorizeView Roles="Admin,Accounting">
-    <div class="input-group">
-        <select class="form-select" value="@SelectedAccountId" @onchange="OnValueChanged">
-            <option value="0">-- Select Account --</option>
-            @if (accounts != null)
+    <MudSelect T="int" Label="Account" Value="SelectedAccountId" ValueChanged="OnValueChanged"
+               Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Add" OnAdornmentClick="OpenAddDialog"
+               Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter">
+        <MudSelectItem Value="0">-- Select Account --</MudSelectItem>
+        @if (accounts != null)
+        {
+            foreach (var a in accounts)
             {
-                foreach (var a in accounts)
-                {
-                    <option value="@a.Id">@a.Code - @a.Name (@a.Type)</option>
-                }
+                <MudSelectItem Value="@a.Id">@a.Code - @a.Name (@a.Type)</MudSelectItem>
             }
-        </select>
-        <button class="btn btn-outline-success" type="button" @onclick="OpenAddModal" title="Add New Account">
-            <i class="bi bi-plus-lg"></i>
-        </button>
-    </div>
+        }
+    </MudSelect>
 </Microsoft.AspNetCore.Components.Authorization.AuthorizeView>
-
-<AccountModal @ref="modal" OnSaved="HandleAccountSaved" />
 
 @code {
     [Parameter] public int SelectedAccountId { get; set; }
@@ -28,62 +26,37 @@
     [Parameter] public string? TypeFilter { get; set; }
 
     private List<AccountDTO> accounts;
-    private AccountModal modal;
 
-    protected override async Task OnInitializedAsync()
-    {
-        await LoadAccounts();
-    }
+    protected override async Task OnInitializedAsync() => await LoadAccounts();
 
     private async Task LoadAccounts()
     {
         try
         {
-            var allAccounts = await LedgerService.GetAccountsAsync();
-            if (!string.IsNullOrEmpty(TypeFilter))
-            {
-                accounts = allAccounts.Where(a => a.Type.Equals(TypeFilter, StringComparison.OrdinalIgnoreCase)).ToList();
-            }
-            else
-            {
-                accounts = allAccounts;
-            }
+            var all = await LedgerService.GetAccountsAsync();
+            accounts = string.IsNullOrEmpty(TypeFilter)
+                ? all
+                : all.Where(a => a.Type.Equals(TypeFilter, StringComparison.OrdinalIgnoreCase)).ToList();
         }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error loading accounts: {ex.Message}");
-        }
+        catch (Exception ex) { Console.WriteLine(ex.Message); }
     }
 
-    private async Task OnValueChanged(ChangeEventArgs e)
+    private async Task OnValueChanged(int id)
     {
-        if (int.TryParse(e.Value.ToString(), out int id))
-        {
-            SelectedAccountId = id;
-            await SelectedAccountIdChanged.InvokeAsync(id);
-        }
+        SelectedAccountId = id;
+        await SelectedAccountIdChanged.InvokeAsync(id);
     }
 
-    private void OpenAddModal()
+    private async Task OpenAddDialog()
     {
-        modal.OpenCreate();
-    }
+        var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true };
+        var dialog = DialogService.Show<AccountDialog>("Add New Account", options);
+        var result = await dialog.Result;
 
-    private async Task HandleAccountSaved(AccountDTO newAccount)
-    {
-        // If there is a TypeFilter, ensure the new account matches it before reloading
-        if (!string.IsNullOrEmpty(TypeFilter) && !newAccount.Type.Equals(TypeFilter, StringComparison.OrdinalIgnoreCase))
+        if (!result.Canceled)
         {
-            // Optional: alert user that the account was created but isn't visible in this specific dropdown
-        }
-
-        await LoadAccounts();
-
-        // Auto-select if it's in the list
-        if (accounts.Any(a => a.Id == newAccount.Id))
-        {
-            SelectedAccountId = newAccount.Id;
-            await SelectedAccountIdChanged.InvokeAsync(newAccount.Id);
+            await LoadAccounts();
+            Snackbar.Add("Account list refreshed.", Severity.Info);
         }
     }
 }

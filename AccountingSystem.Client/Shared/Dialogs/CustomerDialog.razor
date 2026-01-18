@@ -1,0 +1,81 @@
+﻿@using AccountingSystem.Shared.DTOs
+@using AccountingSystem.Client.Services
+@using MudBlazor
+
+@inject ReceivableService ReceivableService
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        <MudForm @ref="form" @bind-IsValid="success">
+            <MudTextField T="string" Label="Customer Name" Required="true" RequiredError="Name is required!" @bind-Value="model.Name" Variant="Variant.Outlined" Class="mb-3" />
+            <MudTextField T="string" Label="Email" @bind-Value="model.Email" Variant="Variant.Outlined" Class="mb-3" />
+            <MudTextField T="string" Label="Phone" @bind-Value="model.Phone" Variant="Variant.Outlined" />
+        </MudForm>
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton Variant="Variant.Text" OnClick="Cancel">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Info" OnClick="Submit">
+            @((Customer != null && Customer.Id > 0) ? "Update" : "Create")
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    // FIX: The cascading parameter must be of type MudDialogInstance
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; }
+
+    [Parameter] public CustomerDTO? Customer { get; set; }
+
+    private CreateCustomerDTO model = new();
+    private MudForm? form;
+    private bool success;
+
+    protected override void OnInitialized()
+    {
+        if (Customer != null)
+        {
+            model.Name = Customer.Name;
+            model.Email = Customer.Email;
+            model.Phone = Customer.Phone;
+        }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private async Task Submit()
+    {
+        if (form is null) return;
+
+        await form.Validate();
+        if (!form.IsValid) return;
+
+        try
+        {
+            if (Customer != null && Customer.Id > 0)
+            {
+                await ReceivableService.UpdateCustomerAsync(new UpdateCustomerDTO
+                {
+                    Id = Customer.Id,
+                    Name = model.Name,
+                    Email = model.Email,
+                    Phone = model.Phone
+                });
+                Snackbar.Add("Customer updated successfully.", Severity.Success);
+            }
+            else
+            {
+                await ReceivableService.CreateCustomerAsync(model);
+                Snackbar.Add("Customer created successfully.", Severity.Success);
+            }
+
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+    }
+}

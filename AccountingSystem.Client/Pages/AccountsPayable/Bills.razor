@@ -6,93 +6,72 @@
 @attribute [Authorize(Roles = "Admin,Accounting")]
 @inject PayableService PayableService
 @inject NavigationManager NavManager
+@inject ISnackbar Snackbar
 
 <PageTitle>Create Bill</PageTitle>
 
-<div class="container mt-4" style="max-width: 800px;">
-    <div class="card shadow border-0">
-        <div class="card-header bg-warning text-dark d-flex align-items-center">
-            <h4 class="mb-0"><i class="bi bi-receipt me-2"></i>New Vendor Bill</h4>
-        </div>
-        <div class="card-body p-4">
-            
-            @if (!string.IsNullOrEmpty(errorMessage))
-            {
-                <div class="alert alert-danger">@errorMessage</div>
-            }
+<MudContainer MaxWidth="MaxWidth.Medium">
+    <MudText Typo="Typo.h4" Color="Color.Primary" Class="mb-4">New Vendor Bill</MudText>
 
-            <EditForm Model="@bill" OnValidSubmit="HandleSubmit">
-                <DataAnnotationsValidator />
-
-                <div class="row g-3 mb-3">
-                    <div class="col-md-6">
-                        <label class="form-label fw-bold">Vendor</label>
+    <EditForm Model="@bill" OnValidSubmit="HandleSubmit">
+        <DataAnnotationsValidator />
+        <MudCard>
+            <MudCardContent>
+                <MudGrid>
+                    <MudItem xs="12" sm="6">
                         <VendorSelect @bind-SelectedVendorId="bill.VendorId" />
                         <ValidationMessage For="@(() => bill.VendorId)" />
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label fw-bold">Reference Number</label>
-                        <InputText @bind-Value="bill.ReferenceNumber" class="form-control" placeholder="e.g. BILL-9928" />
+                    </MudItem>
+                    <MudItem xs="12" sm="6">
+                        <MudTextField Label="Reference Number" @bind-Value="bill.ReferenceNumber" Variant="Variant.Outlined" />
                         <ValidationMessage For="@(() => bill.ReferenceNumber)" />
-                    </div>
-                </div>
+                    </MudItem>
 
-                <div class="row g-3 mb-3">
-                    <div class="col-md-4">
-                        <label class="form-label fw-bold">Due Date</label>
-                        <InputDate @bind-Value="bill.DueDate" class="form-control" />
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label fw-bold">Amount</label>
-                        <div class="input-group">
-                            <span class="input-group-text">₱</span>
-                            <InputNumber @bind-Value="bill.Amount" class="form-control text-end" />
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label fw-bold">Expense Account</label>
+                    <MudItem xs="12" sm="4">
+                        <MudDatePicker Label="Due Date" @bind-Date="billDate" Variant="Variant.Outlined" />
+                    </MudItem>
+                    <MudItem xs="12" sm="4">
+                        <MudNumericField Label="Amount" @bind-Value="bill.Amount" Format="N2" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.AttachMoney" Variant="Variant.Outlined" />
+                    </MudItem>
+                    <MudItem xs="12" sm="4">
                         <AccountSelect @bind-SelectedAccountId="bill.ExpenseAccountId" TypeFilter="Expense" />
                         <ValidationMessage For="@(() => bill.ExpenseAccountId)" />
-                    </div>
-                </div>
+                    </MudItem>
 
-                <div class="mb-4">
-                    <label class="form-label fw-bold">Description</label>
-                    <InputTextArea @bind-Value="bill.Description" class="form-control" rows="2" />
-                </div>
-
-                <div class="d-flex justify-content-end">
-                    <button type="submit" class="btn btn-warning px-5 fw-bold" disabled="@isSubmitting">
-                        @if (isSubmitting) { <span class="spinner-border spinner-border-sm me-2"></span> }
-                        Save Bill
-                    </button>
-                </div>
-            </EditForm>
-        </div>
-    </div>
-</div>
+                    <MudItem xs="12">
+                        <MudTextField Label="Description" @bind-Value="bill.Description" Lines="3" Variant="Variant.Outlined" />
+                    </MudItem>
+                </MudGrid>
+            </MudCardContent>
+            <MudCardActions Class="d-flex justify-end">
+                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Warning" Disabled="@isSubmitting" StartIcon="@Icons.Material.Filled.Save">
+                    @(isSubmitting ? "Saving..." : "Save Bill")
+                </MudButton>
+            </MudCardActions>
+        </MudCard>
+    </EditForm>
+</MudContainer>
 
 @code {
     private CreateBillDTO bill = new CreateBillDTO { DueDate = DateTime.Today.AddDays(30) };
-    private string errorMessage;
+    private DateTime? billDate { get => bill.DueDate; set => bill.DueDate = value ?? DateTime.Today; } // Wrapper for MudDatePicker
     private bool isSubmitting = false;
 
     private async Task HandleSubmit()
     {
-        if (bill.VendorId == 0) { errorMessage = "Please select a vendor."; return; }
-        if (bill.ExpenseAccountId == 0) { errorMessage = "Please select an expense account."; return; }
+        if (bill.VendorId == 0) { Snackbar.Add("Please select a vendor.", Severity.Warning); return; }
+        if (bill.ExpenseAccountId == 0) { Snackbar.Add("Please select an expense account.", Severity.Warning); return; }
 
         isSubmitting = true;
-        errorMessage = null;
-
         try
         {
             await PayableService.CreateBillAsync(bill);
-            NavManager.NavigateTo("/"); 
+            Snackbar.Add("Bill created successfully.", Severity.Success);
+            NavManager.NavigateTo("/ap/bills", forceLoad: true); // Reload to clear form or nav to list
         }
         catch (Exception ex)
         {
-            errorMessage = ex.Message;
+            Snackbar.Add(ex.Message, Severity.Error);
         }
         finally
         {

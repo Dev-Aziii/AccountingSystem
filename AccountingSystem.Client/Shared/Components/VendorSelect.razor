@@ -1,74 +1,57 @@
 ﻿@using AccountingSystem.Shared.DTOs
 @using AccountingSystem.Client.Services
+@using AccountingSystem.Client.Shared.Dialogs
 @inject PayableService PayableService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
 
 <Microsoft.AspNetCore.Components.Authorization.AuthorizeView Roles="Admin,Accounting">
-    <div class="input-group">
-        <select class="form-select" value="@SelectedVendorId" @onchange="OnValueChanged">
-            <option value="0">-- Select Vendor --</option>
-            @if (vendors != null)
+    <MudSelect T="int" Label="Vendor" Value="SelectedVendorId" ValueChanged="OnValueChanged"
+               Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Add" OnAdornmentClick="OpenAddDialog"
+               Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter">
+        <MudSelectItem Value="0">-- Select Vendor --</MudSelectItem>
+        @if (vendors != null)
+        {
+            foreach (var v in vendors)
             {
-                foreach (var v in vendors)
-                {
-                    <option value="@v.Id">@v.Name</option>
-                }
+                <MudSelectItem Value="@v.Id">@v.Name</MudSelectItem>
             }
-        </select>
-        <button class="btn btn-outline-primary" type="button" @onclick="OpenAddModal" title="Add New Vendor">
-            <i class="bi bi-plus-lg"></i>
-        </button>
-    </div>
+        }
+    </MudSelect>
 </Microsoft.AspNetCore.Components.Authorization.AuthorizeView>
-
-<!-- Embed the Modal -->
-<VendorModal @ref="modal" OnSaved="HandleVendorSaved" />
 
 @code {
     [Parameter] public int SelectedVendorId { get; set; }
     [Parameter] public EventCallback<int> SelectedVendorIdChanged { get; set; }
 
     private List<VendorDTO> vendors;
-    private VendorModal modal; // Reference to the child component
 
-    protected override async Task OnInitializedAsync()
-    {
-        await LoadVendors();
-    }
+    protected override async Task OnInitializedAsync() => await LoadVendors();
 
     private async Task LoadVendors()
     {
-        try
-        {
-            vendors = await PayableService.GetVendorsAsync();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error loading vendors: {ex.Message}");
-        }
+        try { vendors = await PayableService.GetVendorsAsync(); }
+        catch (Exception ex) { Console.WriteLine(ex.Message); }
     }
 
-    private async Task OnValueChanged(ChangeEventArgs e)
+    private async Task OnValueChanged(int id)
     {
-        if (int.TryParse(e.Value.ToString(), out int id))
+        SelectedVendorId = id;
+        await SelectedVendorIdChanged.InvokeAsync(id);
+    }
+
+    private async Task OpenAddDialog()
+    {
+        var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true };
+        var dialog = DialogService.Show<VendorDialog>("Add New Vendor", options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
         {
-            SelectedVendorId = id;
-            await SelectedVendorIdChanged.InvokeAsync(id);
+            await LoadVendors();
+            // The dialog returns true if saved, we assume the last added is the one we want or just let user pick
+            // To be precise, we could make the dialog return the ID, but for now we refresh list.
+            Snackbar.Add("Vendor list refreshed.", Severity.Info);
         }
-    }
-
-    private void OpenAddModal()
-    {
-        modal.OpenCreate();
-    }
-
-    // Callback when a new vendor is created via the modal
-    private async Task HandleVendorSaved(VendorDTO newVendor)
-    {
-        // Refresh list
-        await LoadVendors();
-
-        // Automatically select the new vendor
-        SelectedVendorId = newVendor.Id;
-        await SelectedVendorIdChanged.InvokeAsync(newVendor.Id);
     }
 }

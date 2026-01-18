@@ -1,0 +1,74 @@
+﻿@using AccountingSystem.Shared.DTOs
+@using AccountingSystem.Client.Services
+@using MudBlazor
+@inject PayableService PayableService
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        <MudForm @ref="form" @bind-IsValid="@success">
+            <MudTextField T="string" Label="Vendor Name" Required="true" RequiredError="Name is required!" @bind-Value="model.Name" />
+            <MudTextField T="string" Label="Email" @bind-Value="model.Email" />
+            <MudTextField T="string" Label="Contact Person" @bind-Value="model.ContactPerson" />
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit">@((Vendor?.Id > 0) ? "Update" : "Create")</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; }
+
+    [Parameter] public VendorDTO Vendor { get; set; }
+
+    private CreateVendorDTO model = new CreateVendorDTO();
+    private bool success;
+    private MudForm form;
+
+    protected override void OnInitialized()
+    {
+        if (Vendor != null)
+        {
+            model.Name = Vendor.Name;
+            model.Email = Vendor.Email;
+            model.ContactPerson = Vendor.ContactPerson;
+        }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private async Task Submit()
+    {
+        await form.Validate();
+        if (!form.IsValid) return;
+
+        try
+        {
+            if (Vendor != null && Vendor.Id > 0)
+            {
+                var updateDto = new UpdateVendorDTO
+                {
+                    Id = Vendor.Id,
+                    Name = model.Name,
+                    Email = model.Email,
+                    ContactPerson = model.ContactPerson
+                };
+                await PayableService.UpdateVendorAsync(updateDto);
+                Snackbar.Add("Vendor updated.", Severity.Success);
+            }
+            else
+            {
+                await PayableService.CreateVendorAsync(model);
+                Snackbar.Add("Vendor created.", Severity.Success);
+            }
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+    }
+}

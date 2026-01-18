@@ -5,16 +5,17 @@ using Blazored.LocalStorage;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
+using MudBlazor.Services;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
 // 1. Infrastructure Services
+builder.Services.AddMudServices();
 builder.Services.AddBlazoredLocalStorage();
 builder.Services.AddScoped<TokenStorageService>();
 builder.Services.AddScoped<ApiService>();
-builder.Services.AddScoped<ToastService>();
 
 // 2. Authentication Services
 builder.Services.AddAuthorizationCore();
