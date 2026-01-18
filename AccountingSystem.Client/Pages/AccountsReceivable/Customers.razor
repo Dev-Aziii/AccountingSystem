@@ -1,0 +1,114 @@
+﻿@page "/ar/customers"
+@using AccountingSystem.Shared.DTOs
+@using AccountingSystem.Client.Services
+@using AccountingSystem.Client.Shared.Components
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Admin,Accounting,Management")]
+@inject ReceivableService ReceivableService
+
+<PageTitle>Customer Management</PageTitle>
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="text-primary fw-bold">Customer Management</h2>
+        
+        <AuthorizeView Roles="Admin,Accounting">
+            <button class="btn btn-info text-white" @onclick="() => modal.OpenCreate()">
+                <i class="bi bi-plus-circle me-2"></i>Add New Customer
+            </button>
+        </AuthorizeView>
+    </div>
+
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger">@errorMessage</div>
+    }
+
+    <div class="card shadow-sm border-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <AuthorizeView Roles="Admin,Accounting">
+                            <th class="text-end">Actions</th>
+                        </AuthorizeView>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (customers == null)
+                    {
+                        <tr><td colspan="5" class="text-center py-4">Loading...</td></tr>
+                    }
+                    else if (!customers.Any())
+                    {
+                        <tr><td colspan="5" class="text-center py-4">No customers found.</td></tr>
+                    }
+                    else
+                    {
+                        @foreach (var c in customers)
+                        {
+                            <tr>
+                                <td>@c.Id</td>
+                                <td class="fw-bold">@c.Name</td>
+                                <td>@c.Email</td>
+                                <td>@c.Phone</td>
+                                <AuthorizeView Roles="Admin,Accounting">
+                                    <td class="text-end">
+                                        <button class="btn btn-outline-secondary btn-sm me-1" @onclick="() => modal.OpenEdit(c)">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                        <button class="btn btn-outline-danger btn-sm" @onclick="() => ConfirmDelete(c.Id)">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </td>
+                                </AuthorizeView>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<CustomerModal @ref="modal" OnSaved="ReloadList" />
+
+@code {
+    private List<CustomerDTO> customers;
+    private CustomerModal modal;
+    private string errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await ReloadList();
+    }
+
+    private async Task ReloadList(CustomerDTO ignored = null)
+    {
+        try
+        {
+            customers = await ReceivableService.GetCustomersAsync();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+    }
+
+    private async Task ConfirmDelete(int id)
+    {
+        try
+        {
+            await ReceivableService.DeleteCustomerAsync(id);
+            await ReloadList();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "Cannot delete: " + ex.Message;
+        }
+    }
+}

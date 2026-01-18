@@ -3,25 +3,39 @@
 @inject PayableService PayableService
 
 <Microsoft.AspNetCore.Components.Authorization.AuthorizeView Roles="Admin,Accounting">
-    <select class="form-select" value="@SelectedVendorId" @onchange="OnValueChanged">
-        <option value="0">-- Select Vendor --</option>
-        @if (vendors != null)
-        {
-            foreach (var v in vendors)
+    <div class="input-group">
+        <select class="form-select" value="@SelectedVendorId" @onchange="OnValueChanged">
+            <option value="0">-- Select Vendor --</option>
+            @if (vendors != null)
             {
-                <option value="@v.Id">@v.Name</option>
+                foreach (var v in vendors)
+                {
+                    <option value="@v.Id">@v.Name</option>
+                }
             }
-        }
-    </select>
+        </select>
+        <button class="btn btn-outline-primary" type="button" @onclick="OpenAddModal" title="Add New Vendor">
+            <i class="bi bi-plus-lg"></i>
+        </button>
+    </div>
 </Microsoft.AspNetCore.Components.Authorization.AuthorizeView>
+
+<!-- Embed the Modal -->
+<VendorModal @ref="modal" OnSaved="HandleVendorSaved" />
 
 @code {
     [Parameter] public int SelectedVendorId { get; set; }
     [Parameter] public EventCallback<int> SelectedVendorIdChanged { get; set; }
 
     private List<VendorDTO> vendors;
+    private VendorModal modal; // Reference to the child component
 
     protected override async Task OnInitializedAsync()
+    {
+        await LoadVendors();
+    }
+
+    private async Task LoadVendors()
     {
         try
         {
@@ -40,5 +54,21 @@
             SelectedVendorId = id;
             await SelectedVendorIdChanged.InvokeAsync(id);
         }
+    }
+
+    private void OpenAddModal()
+    {
+        modal.OpenCreate();
+    }
+
+    // Callback when a new vendor is created via the modal
+    private async Task HandleVendorSaved(VendorDTO newVendor)
+    {
+        // Refresh list
+        await LoadVendors();
+
+        // Automatically select the new vendor
+        SelectedVendorId = newVendor.Id;
+        await SelectedVendorIdChanged.InvokeAsync(newVendor.Id);
     }
 }

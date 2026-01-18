@@ -1,4 +1,5 @@
 ﻿using AccountingSystem.Shared.DTOs;
+using System.Net.Http.Json;
 
 namespace AccountingSystem.Client.Services
 {
@@ -15,6 +16,28 @@ namespace AccountingSystem.Client.Services
         {
             return await _api.GetAsync<List<CustomerDTO>>("api/receivables/customers");
         }
+
+        // --- NEW CRUD METHODS ---
+        public async Task<CustomerDTO> CreateCustomerAsync(CreateCustomerDTO customer)
+        {
+            var response = await _api.PostAsync("api/receivables/customers", customer);
+            if (!response.IsSuccessStatusCode) throw new Exception(await response.Content.ReadAsStringAsync());
+
+            return await response.Content.ReadFromJsonAsync<CustomerDTO>();
+        }
+
+        public async Task UpdateCustomerAsync(UpdateCustomerDTO customer)
+        {
+            var response = await _api.PutAsync($"api/receivables/customers/{customer.Id}", customer);
+            if (!response.IsSuccessStatusCode) throw new Exception(await response.Content.ReadAsStringAsync());
+        }
+
+        public async Task DeleteCustomerAsync(int id)
+        {
+            var response = await _api.DeleteAsync($"api/receivables/customers/{id}");
+            if (!response.IsSuccessStatusCode) throw new Exception(await response.Content.ReadAsStringAsync());
+        }
+        // ------------------------
 
         public async Task CreateInvoiceAsync(CreateInvoiceDTO invoiceDto)
         {

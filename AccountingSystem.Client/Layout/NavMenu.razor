@@ -44,6 +44,12 @@
                     <span class="bi bi-journal-text" aria-hidden="true"></span> Journal Entries
                 </NavLink>
             </div>
+            <!-- NEW: Chart of Accounts Link -->
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="gl/accounts">
+                    <span class="bi bi-list-columns-reverse" aria-hidden="true"></span> Chart of Accounts
+                </NavLink>
+            </div>
 
             <!-- Accounts Payable Module -->
             <div class="nav-item px-3 mt-3">
@@ -52,6 +58,12 @@
             <div class="nav-item px-3">
                 <NavLink class="nav-link" href="ap/bills">
                     <span class="bi bi-receipt" aria-hidden="true"></span> Vendor Bills
+                </NavLink>
+            </div>
+            <!-- NEW: Vendors Link -->
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="ap/vendors">
+                    <span class="bi bi-truck" aria-hidden="true"></span> Vendors
                 </NavLink>
             </div>
 
@@ -64,6 +76,12 @@
                     <span class="bi bi-file-earmark-text" aria-hidden="true"></span> Create Invoice
                 </NavLink>
             </div>
+            <!-- NEW: Customers Link -->
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="ar/customers">
+                    <span class="bi bi-people" aria-hidden="true"></span> Customers
+                </NavLink>
+            </div>
             <div class="nav-item px-3">
                 <NavLink class="nav-link" href="ar/receive-payment">
                     <span class="bi bi-wallet2" aria-hidden="true"></span> Receive Payment
@@ -71,7 +89,7 @@
             </div>
         </AuthorizeView>
 
-        <!-- REPORTS: Visible to Admin, Accounting, and Management -->
+        <!-- REPORTS -->
         <AuthorizeView Roles="Admin,Accounting,Management">
             <div class="nav-item px-3 mt-3">
                 <span class="text-white-50 small text-uppercase fw-bold ps-3" style="letter-spacing: 1px;">Reporting</span>
@@ -87,11 +105,6 @@
 
 @code {
     private bool collapseNavMenu = true;
-
     private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
-
-    private void ToggleNavMenu()
-    {
-        collapseNavMenu = !collapseNavMenu;
-    }
+    private void ToggleNavMenu() => collapseNavMenu = !collapseNavMenu;
 }

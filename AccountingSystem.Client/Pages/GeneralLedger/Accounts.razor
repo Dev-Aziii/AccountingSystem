@@ -1,0 +1,122 @@
+﻿@page "/gl/accounts"
+@using AccountingSystem.Shared.DTOs
+@using AccountingSystem.Client.Services
+@using AccountingSystem.Client.Shared.Components
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Admin,Accounting,Management")]
+@inject LedgerService LedgerService
+
+<PageTitle>Chart of Accounts</PageTitle>
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="text-primary fw-bold">Chart of Accounts</h2>
+        
+        <AuthorizeView Roles="Admin,Accounting">
+            <button class="btn btn-success" @onclick="() => modal.OpenCreate()">
+                <i class="bi bi-plus-circle me-2"></i>Add New Account
+            </button>
+        </AuthorizeView>
+    </div>
+
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger">@errorMessage</div>
+    }
+
+    <div class="card shadow-sm border-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Code</th>
+                        <th>Name</th>
+                        <th>Type</th>
+                        <AuthorizeView Roles="Admin,Accounting">
+                            <th class="text-end">Actions</th>
+                        </AuthorizeView>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (accounts == null)
+                    {
+                        <tr><td colspan="4" class="text-center py-4">Loading...</td></tr>
+                    }
+                    else if (!accounts.Any())
+                    {
+                        <tr><td colspan="4" class="text-center py-4">No accounts found.</td></tr>
+                    }
+                    else
+                    {
+                        @foreach (var a in accounts)
+                        {
+                            <tr>
+                                <td class="fw-bold text-muted">@a.Code</td>
+                                <td class="fw-bold">@a.Name</td>
+                                <td>
+                                    @switch (a.Type)
+                                    {
+                                        case "Asset": <span class="badge bg-primary">Asset</span>; break;
+                                        case "Liability": <span class="badge bg-danger">Liability</span>; break;
+                                        case "Equity": <span class="badge bg-info">Equity</span>; break;
+                                        case "Revenue": <span class="badge bg-success">Revenue</span>; break;
+                                        case "Expense": <span class="badge bg-warning text-dark">Expense</span>; break;
+                                        default: <span class="badge bg-secondary">@a.Type</span>; break;
+                                    }
+                                </td>
+                                <AuthorizeView Roles="Admin,Accounting">
+                                    <td class="text-end">
+                                        <button class="btn btn-outline-secondary btn-sm me-1" @onclick="() => modal.OpenEdit(a)">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                        <button class="btn btn-outline-danger btn-sm" @onclick="() => ConfirmDelete(a.Id)">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </td>
+                                </AuthorizeView>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<AccountModal @ref="modal" OnSaved="ReloadList" />
+
+@code {
+    private List<AccountDTO> accounts;
+    private AccountModal modal;
+    private string errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await ReloadList();
+    }
+
+    private async Task ReloadList(AccountDTO ignored = null)
+    {
+        try
+        {
+            accounts = await LedgerService.GetAccountsAsync();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+    }
+
+    private async Task ConfirmDelete(int id)
+    {
+        try
+        {
+            await LedgerService.DeleteAccountAsync(id);
+            await ReloadList();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "Cannot delete: " + ex.Message;
+        }
+    }
+}

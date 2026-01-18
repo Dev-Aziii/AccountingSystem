@@ -1,0 +1,109 @@
+﻿@page "/ap/vendors"
+@using AccountingSystem.Shared.DTOs
+@using AccountingSystem.Client.Services
+@using AccountingSystem.Client.Shared.Components
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Admin,Accounting")]
+@inject PayableService PayableService
+
+<PageTitle>Vendor Management</PageTitle>
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="text-primary fw-bold">Vendor Management</h2>
+        <button class="btn btn-primary" @onclick="() => modal.OpenCreate()">
+            <i class="bi bi-plus-circle me-2"></i>Add New Vendor
+        </button>
+    </div>
+
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger">@errorMessage</div>
+    }
+
+    <div class="card shadow-sm border-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Contact Person</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (vendors == null)
+                    {
+                        <tr><td colspan="5" class="text-center py-4">Loading...</td></tr>
+                    }
+                    else if (!vendors.Any())
+                    {
+                        <tr><td colspan="5" class="text-center py-4">No vendors found.</td></tr>
+                    }
+                    else
+                    {
+                        @foreach (var v in vendors)
+                        {
+                            <tr>
+                                <td>@v.Id</td>
+                                <td class="fw-bold">@v.Name</td>
+                                <td>@v.Email</td>
+                                <td>@v.ContactPerson</td>
+                                <td class="text-end">
+                                    <button class="btn btn-outline-secondary btn-sm me-1" @onclick="() => modal.OpenEdit(v)">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <button class="btn btn-outline-danger btn-sm" @onclick="() => ConfirmDelete(v.Id)">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Reusing the same modal component -->
+<VendorModal @ref="modal" OnSaved="ReloadList" />
+
+@code {
+    private List<VendorDTO> vendors;
+    private VendorModal modal;
+    private string errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await ReloadList();
+    }
+
+    private async Task ReloadList(VendorDTO ignored = null)
+    {
+        try
+        {
+            vendors = await PayableService.GetVendorsAsync();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+    }
+
+    private async Task ConfirmDelete(int id)
+    {
+        // Simple confirm for now. In production, use JS Interop
+        try
+        {
+            await PayableService.DeleteVendorAsync(id);
+            await ReloadList();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "Cannot delete: " + ex.Message;
+        }
+    }
+}

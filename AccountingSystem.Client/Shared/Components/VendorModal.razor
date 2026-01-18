@@ -1,0 +1,132 @@
+﻿@using AccountingSystem.Shared.DTOs
+@using AccountingSystem.Client.Services
+@inject PayableService PayableService
+
+@if (ShowModal)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">@(IsEditMode ? "Edit Vendor" : "Add New Vendor")</h5>
+                    <button type="button" class="btn-close btn-close-white" @onclick="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <EditForm Model="@model" OnValidSubmit="HandleSubmit">
+                        <DataAnnotationsValidator />
+
+                        @if (!string.IsNullOrEmpty(errorMessage))
+                        {
+                            <div class="alert alert-danger">@errorMessage</div>
+                        }
+
+                        <div class="mb-3">
+                            <label class="form-label">Vendor Name</label>
+                            <InputText @bind-Value="model.Name" class="form-control" />
+                            <ValidationMessage For="@(() => model.Name)" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Email</label>
+                            <InputText @bind-Value="model.Email" class="form-control" />
+                            <ValidationMessage For="@(() => model.Email)" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Contact Person</label>
+                            <InputText @bind-Value="model.ContactPerson" class="form-control" />
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2">
+                            <button type="button" class="btn btn-secondary" @onclick="Close">Cancel</button>
+                            <button type="submit" class="btn btn-primary" disabled="@isSubmitting">
+                                @(isSubmitting ? "Saving..." : "Save Vendor")
+                            </button>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public EventCallback<VendorDTO> OnSaved { get; set; }
+
+    private bool ShowModal = false;
+    private bool IsEditMode = false;
+    private CreateVendorDTO model = new CreateVendorDTO();
+    private int editingId = 0;
+    private string errorMessage;
+    private bool isSubmitting = false;
+
+    // Public method to open modal for creation
+    public void OpenCreate()
+    {
+        model = new CreateVendorDTO();
+        IsEditMode = false;
+        errorMessage = null;
+        ShowModal = true;
+        StateHasChanged();
+    }
+
+    // Public method to open modal for editing
+    public void OpenEdit(VendorDTO vendor)
+    {
+        model = new CreateVendorDTO
+        {
+            Name = vendor.Name,
+            Email = vendor.Email,
+            ContactPerson = vendor.ContactPerson
+        };
+        editingId = vendor.Id;
+        IsEditMode = true;
+        errorMessage = null;
+        ShowModal = true;
+        StateHasChanged();
+    }
+
+    private void Close()
+    {
+        ShowModal = false;
+        StateHasChanged();
+    }
+
+    private async Task HandleSubmit()
+    {
+        isSubmitting = true;
+        errorMessage = null;
+
+        try
+        {
+            VendorDTO result;
+            if (IsEditMode)
+            {
+                var updateDto = new UpdateVendorDTO
+                {
+                    Id = editingId,
+                    Name = model.Name,
+                    Email = model.Email,
+                    ContactPerson = model.ContactPerson
+                };
+                await PayableService.UpdateVendorAsync(updateDto);
+                result = new VendorDTO { Id = editingId, Name = model.Name, Email = model.Email, ContactPerson = model.ContactPerson };
+            }
+            else
+            {
+                result = await PayableService.CreateVendorAsync(model);
+            }
+
+            await OnSaved.InvokeAsync(result);
+            Close();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+}

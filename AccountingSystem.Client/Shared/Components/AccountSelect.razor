@@ -3,17 +3,24 @@
 @inject LedgerService LedgerService
 
 <Microsoft.AspNetCore.Components.Authorization.AuthorizeView Roles="Admin,Accounting">
-    <select class="form-select" value="@SelectedAccountId" @onchange="OnValueChanged">
-        <option value="0">-- Select Account --</option>
-        @if (accounts != null)
-        {
-            foreach (var a in accounts)
+    <div class="input-group">
+        <select class="form-select" value="@SelectedAccountId" @onchange="OnValueChanged">
+            <option value="0">-- Select Account --</option>
+            @if (accounts != null)
             {
-                <option value="@a.Id">@a.Code - @a.Name (@a.Type)</option>
+                foreach (var a in accounts)
+                {
+                    <option value="@a.Id">@a.Code - @a.Name (@a.Type)</option>
+                }
             }
-        }
-    </select>
+        </select>
+        <button class="btn btn-outline-success" type="button" @onclick="OpenAddModal" title="Add New Account">
+            <i class="bi bi-plus-lg"></i>
+        </button>
+    </div>
 </Microsoft.AspNetCore.Components.Authorization.AuthorizeView>
+
+<AccountModal @ref="modal" OnSaved="HandleAccountSaved" />
 
 @code {
     [Parameter] public int SelectedAccountId { get; set; }
@@ -21,8 +28,14 @@
     [Parameter] public string? TypeFilter { get; set; }
 
     private List<AccountDTO> accounts;
+    private AccountModal modal;
 
     protected override async Task OnInitializedAsync()
+    {
+        await LoadAccounts();
+    }
+
+    private async Task LoadAccounts()
     {
         try
         {
@@ -48,6 +61,29 @@
         {
             SelectedAccountId = id;
             await SelectedAccountIdChanged.InvokeAsync(id);
+        }
+    }
+
+    private void OpenAddModal()
+    {
+        modal.OpenCreate();
+    }
+
+    private async Task HandleAccountSaved(AccountDTO newAccount)
+    {
+        // If there is a TypeFilter, ensure the new account matches it before reloading
+        if (!string.IsNullOrEmpty(TypeFilter) && !newAccount.Type.Equals(TypeFilter, StringComparison.OrdinalIgnoreCase))
+        {
+            // Optional: alert user that the account was created but isn't visible in this specific dropdown
+        }
+
+        await LoadAccounts();
+
+        // Auto-select if it's in the list
+        if (accounts.Any(a => a.Id == newAccount.Id))
+        {
+            SelectedAccountId = newAccount.Id;
+            await SelectedAccountIdChanged.InvokeAsync(newAccount.Id);
         }
     }
 }

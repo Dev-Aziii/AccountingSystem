@@ -3,25 +3,41 @@
 @inject ReceivableService ReceivableService
 
 <Microsoft.AspNetCore.Components.Authorization.AuthorizeView Roles="Admin,Accounting,Management">
-    <select class="form-select" value="@SelectedCustomerId" @onchange="OnValueChanged">
-        <option value="0">-- Select Customer --</option>
-        @if (customers != null)
-        {
-            foreach (var c in customers)
+    <div class="input-group">
+        <select class="form-select" value="@SelectedCustomerId" @onchange="OnValueChanged">
+            <option value="0">-- Select Customer --</option>
+            @if (customers != null)
             {
-                <option value="@c.Id">@c.Name</option>
+                foreach (var c in customers)
+                {
+                    <option value="@c.Id">@c.Name</option>
+                }
             }
-        }
-    </select>
+        </select>
+        <!-- Only allow creating new customers if not Management -->
+        <Microsoft.AspNetCore.Components.Authorization.AuthorizeView Roles="Admin,Accounting" Context="innerContext">
+            <button class="btn btn-outline-info" type="button" @onclick="OpenAddModal" title="Add New Customer">
+                <i class="bi bi-plus-lg"></i>
+            </button>
+        </Microsoft.AspNetCore.Components.Authorization.AuthorizeView>
+    </div>
 </Microsoft.AspNetCore.Components.Authorization.AuthorizeView>
+
+<CustomerModal @ref="modal" OnSaved="HandleCustomerSaved" />
 
 @code {
     [Parameter] public int SelectedCustomerId { get; set; }
     [Parameter] public EventCallback<int> SelectedCustomerIdChanged { get; set; }
 
     private List<CustomerDTO> customers;
+    private CustomerModal modal;
 
     protected override async Task OnInitializedAsync()
+    {
+        await LoadCustomers();
+    }
+
+    private async Task LoadCustomers()
     {
         try
         {
@@ -40,5 +56,17 @@
             SelectedCustomerId = id;
             await SelectedCustomerIdChanged.InvokeAsync(id);
         }
+    }
+
+    private void OpenAddModal()
+    {
+        modal.OpenCreate();
+    }
+
+    private async Task HandleCustomerSaved(CustomerDTO newCustomer)
+    {
+        await LoadCustomers();
+        SelectedCustomerId = newCustomer.Id;
+        await SelectedCustomerIdChanged.InvokeAsync(newCustomer.Id);
     }
 }

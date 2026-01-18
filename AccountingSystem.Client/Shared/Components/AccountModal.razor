@@ -1,0 +1,138 @@
+﻿@using AccountingSystem.Shared.DTOs
+@using AccountingSystem.Client.Services
+@inject LedgerService LedgerService
+
+@if (ShowModal)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title">@(IsEditMode ? "Edit Account" : "Add New Account")</h5>
+                    <button type="button" class="btn-close btn-close-white" @onclick="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <EditForm Model="@model" OnValidSubmit="HandleSubmit">
+                        <DataAnnotationsValidator />
+
+                        @if (!string.IsNullOrEmpty(errorMessage))
+                        {
+                            <div class="alert alert-danger">@errorMessage</div>
+                        }
+
+                        <div class="mb-3">
+                            <label class="form-label">Account Code</label>
+                            <InputText @bind-Value="model.Code" class="form-control" placeholder="e.g. 1000" />
+                            <ValidationMessage For="@(() => model.Code)" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Account Name</label>
+                            <InputText @bind-Value="model.Name" class="form-control" placeholder="e.g. Cash" />
+                            <ValidationMessage For="@(() => model.Name)" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Account Type</label>
+                            <InputSelect @bind-Value="model.Type" class="form-select">
+                                <option value="">-- Select Type --</option>
+                                <option value="Asset">Asset</option>
+                                <option value="Liability">Liability</option>
+                                <option value="Equity">Equity</option>
+                                <option value="Revenue">Revenue</option>
+                                <option value="Expense">Expense</option>
+                            </InputSelect>
+                            <ValidationMessage For="@(() => model.Type)" />
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2">
+                            <button type="button" class="btn btn-secondary" @onclick="Close">Cancel</button>
+                            <button type="submit" class="btn btn-success" disabled="@isSubmitting">
+                                @(isSubmitting ? "Saving..." : "Save Account")
+                            </button>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public EventCallback<AccountDTO> OnSaved { get; set; }
+
+    private bool ShowModal = false;
+    private bool IsEditMode = false;
+    private CreateAccountDTO model = new CreateAccountDTO();
+    private int editingId = 0;
+    private string errorMessage;
+    private bool isSubmitting = false;
+
+    public void OpenCreate()
+    {
+        model = new CreateAccountDTO();
+        IsEditMode = false;
+        errorMessage = null;
+        ShowModal = true;
+        StateHasChanged();
+    }
+
+    public void OpenEdit(AccountDTO account)
+    {
+        model = new CreateAccountDTO
+        {
+            Code = account.Code,
+            Name = account.Name,
+            Type = account.Type
+        };
+        editingId = account.Id;
+        IsEditMode = true;
+        errorMessage = null;
+        ShowModal = true;
+        StateHasChanged();
+    }
+
+    private void Close()
+    {
+        ShowModal = false;
+        StateHasChanged();
+    }
+
+    private async Task HandleSubmit()
+    {
+        isSubmitting = true;
+        errorMessage = null;
+
+        try
+        {
+            AccountDTO result;
+            if (IsEditMode)
+            {
+                var updateDto = new UpdateAccountDTO
+                {
+                    Id = editingId,
+                    Code = model.Code,
+                    Name = model.Name,
+                    Type = model.Type
+                };
+                await LedgerService.UpdateAccountAsync(updateDto);
+                result = new AccountDTO { Id = editingId, Code = model.Code, Name = model.Name, Type = model.Type };
+            }
+            else
+            {
+                result = await LedgerService.CreateAccountAsync(model);
+            }
+
+            await OnSaved.InvokeAsync(result);
+            Close();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+}
