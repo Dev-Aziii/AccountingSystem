@@ -1,0 +1,53 @@
+﻿@using AccountingSystem.Shared.DTOs
+@using AccountingSystem.Client.Services
+@inject LedgerService LedgerService
+
+<Microsoft.AspNetCore.Components.Authorization.AuthorizeView Roles="Admin,Accounting">
+    <select class="form-select" value="@SelectedAccountId" @onchange="OnValueChanged">
+        <option value="0">-- Select Account --</option>
+        @if (accounts != null)
+        {
+            foreach (var a in accounts)
+            {
+                <option value="@a.Id">@a.Code - @a.Name (@a.Type)</option>
+            }
+        }
+    </select>
+</Microsoft.AspNetCore.Components.Authorization.AuthorizeView>
+
+@code {
+    [Parameter] public int SelectedAccountId { get; set; }
+    [Parameter] public EventCallback<int> SelectedAccountIdChanged { get; set; }
+    [Parameter] public string? TypeFilter { get; set; }
+
+    private List<AccountDTO> accounts;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var allAccounts = await LedgerService.GetAccountsAsync();
+            if (!string.IsNullOrEmpty(TypeFilter))
+            {
+                accounts = allAccounts.Where(a => a.Type.Equals(TypeFilter, StringComparison.OrdinalIgnoreCase)).ToList();
+            }
+            else
+            {
+                accounts = allAccounts;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading accounts: {ex.Message}");
+        }
+    }
+
+    private async Task OnValueChanged(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value.ToString(), out int id))
+        {
+            SelectedAccountId = id;
+            await SelectedAccountIdChanged.InvokeAsync(id);
+        }
+    }
+}

@@ -11,6 +11,11 @@ namespace AccountingSystem.Client.Services
             _api = api;
         }
 
+        public async Task<List<VendorDTO>> GetVendorsAsync()
+        {
+            return await _api.GetAsync<List<VendorDTO>>("api/payables/vendors");
+        }
+
         public async Task CreateBillAsync(CreateBillDTO billDto)
         {
             var response = await _api.PostAsync("api/payables/bill", billDto);

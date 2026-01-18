@@ -1,21 +1,34 @@
-﻿using AccountingSystem.API.Services.Interfaces;
-using AccountingSystem.Shared.DTOs; 
+﻿using AccountingSystem.API.Data;
+using AccountingSystem.API.Services.Interfaces;
+using AccountingSystem.Shared.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace AccountingSystem.API.Controllers
 {
     // --- ACCOUNTS PAYABLE ---
     [ApiController]
     [Route("api/payables")]
-    [Authorize(Roles = "Admin,Accounting")] // Management cannot access AP
+    [Authorize(Roles = "Admin,Accounting")]
     public class AccountsPayableController : ControllerBase
     {
         private readonly IPayableService _payableService;
+        private readonly AccountingDbContext _context; // Inject Context for list lookups
 
-        public AccountsPayableController(IPayableService payableService)
+        public AccountsPayableController(IPayableService payableService, AccountingDbContext context)
         {
             _payableService = payableService;
+            _context = context;
+        }
+
+        [HttpGet("vendors")]
+        public async Task<IActionResult> GetVendors()
+        {
+            var vendors = await _context.Vendors
+                .Select(v => new VendorDTO { Id = v.Id, Name = v.Name })
+                .ToListAsync();
+            return Ok(vendors);
         }
 
         [HttpPost("bill")]
@@ -44,14 +57,25 @@ namespace AccountingSystem.API.Controllers
     // --- ACCOUNTS RECEIVABLE ---
     [ApiController]
     [Route("api/receivables")]
-    [Authorize(Roles = "Admin,Accounting")] // Management cannot access AR
+    [Authorize(Roles = "Admin,Accounting")]
     public class AccountsReceivableController : ControllerBase
     {
         private readonly IReceivableService _receivableService;
+        private readonly AccountingDbContext _context;
 
-        public AccountsReceivableController(IReceivableService receivableService)
+        public AccountsReceivableController(IReceivableService receivableService, AccountingDbContext context)
         {
             _receivableService = receivableService;
+            _context = context;
+        }
+
+        [HttpGet("customers")]
+        public async Task<IActionResult> GetCustomers()
+        {
+            var customers = await _context.Customers
+                .Select(c => new CustomerDTO { Id = c.Id, Name = c.Name })
+                .ToListAsync();
+            return Ok(customers);
         }
 
         [HttpPost("invoice")]

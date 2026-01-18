@@ -11,6 +11,11 @@ namespace AccountingSystem.Client.Services
             _api = api;
         }
 
+        public async Task<List<CustomerDTO>> GetCustomersAsync()
+        {
+            return await _api.GetAsync<List<CustomerDTO>>("api/receivables/customers");
+        }
+
         public async Task CreateInvoiceAsync(CreateInvoiceDTO invoiceDto)
         {
             var response = await _api.PostAsync("api/receivables/invoice", invoiceDto);

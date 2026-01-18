@@ -1,6 +1,7 @@
 ﻿@page "/gl/journal"
 @using AccountingSystem.Shared.DTOs
 @using AccountingSystem.Client.Services
+@using AccountingSystem.Client.Shared.Components
 @using Microsoft.AspNetCore.Authorization
 @attribute [Authorize(Roles = "Admin,Accounting")]
 @inject LedgerService LedgerService
@@ -59,16 +60,7 @@
                                     {
                                         <tr class="border-bottom">
                                             <td class="ps-3">
-                                                <InputSelect @bind-Value="line.AccountId" class="form-select">
-                                                    <option value="0" class="text-muted">Select Account...</option>
-                                                    @if (accounts != null)
-                                                    {
-                                                        foreach (var acct in accounts)
-                                                        {
-                                                            <option value="@acct.Id">@acct.Code - @acct.Name</option>
-                                                        }
-                                                    }
-                                                </InputSelect>
+                                                <AccountSelect @bind-SelectedAccountId="line.AccountId" />
                                             </td>
                                             <td>
                                                 <div class="input-group">
@@ -163,25 +155,12 @@
         } 
     };
 
-    private List<AccountDTO> accounts;
     private string errorMessage;
     private bool isSubmitting = false;
 
     private decimal TotalDebit => entry.Lines.Sum(l => l.Debit);
     private decimal TotalCredit => entry.Lines.Sum(l => l.Credit);
     private bool IsBalanced => TotalDebit == TotalCredit && TotalDebit > 0;
-
-    protected override async Task OnInitializedAsync()
-    {
-        try 
-        {
-            accounts = await LedgerService.GetAccountsAsync();
-        }
-        catch (Exception ex)
-        {
-            errorMessage = "Failed to load Chart of Accounts. " + ex.Message;
-        }
-    }
 
     private void AddLine()
     {

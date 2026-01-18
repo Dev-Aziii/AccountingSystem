@@ -1,10 +1,10 @@
 ﻿@page "/ap/bills"
 @using AccountingSystem.Shared.DTOs
 @using AccountingSystem.Client.Services
+@using AccountingSystem.Client.Shared.Components
 @using Microsoft.AspNetCore.Authorization
 @attribute [Authorize(Roles = "Admin,Accounting")]
 @inject PayableService PayableService
-@inject LedgerService LedgerService
 @inject NavigationManager NavManager
 
 <PageTitle>Create Bill</PageTitle>
@@ -15,7 +15,7 @@
             <h4 class="mb-0"><i class="bi bi-receipt me-2"></i>New Vendor Bill</h4>
         </div>
         <div class="card-body p-4">
-
+            
             @if (!string.IsNullOrEmpty(errorMessage))
             {
                 <div class="alert alert-danger">@errorMessage</div>
@@ -26,12 +26,14 @@
 
                 <div class="row g-3 mb-3">
                     <div class="col-md-6">
-                        <label class="form-label fw-bold">Vendor ID</label>
-                        <InputNumber @bind-Value="bill.VendorId" class="form-control" placeholder="Enter Vendor ID" />
+                        <label class="form-label fw-bold">Vendor</label>
+                        <VendorSelect @bind-SelectedVendorId="bill.VendorId" />
+                        <ValidationMessage For="@(() => bill.VendorId)" />
                     </div>
                     <div class="col-md-6">
                         <label class="form-label fw-bold">Reference Number</label>
                         <InputText @bind-Value="bill.ReferenceNumber" class="form-control" placeholder="e.g. BILL-9928" />
+                        <ValidationMessage For="@(() => bill.ReferenceNumber)" />
                     </div>
                 </div>
 
@@ -49,16 +51,8 @@
                     </div>
                     <div class="col-md-4">
                         <label class="form-label fw-bold">Expense Account</label>
-                        <InputSelect @bind-Value="bill.ExpenseAccountId" class="form-select">
-                            <option value="0">Select Expense...</option>
-                            @if (accounts != null)
-                            {
-                                foreach (var acct in accounts)
-                                {
-                                    <option value="@acct.Id">@acct.Code - @acct.Name</option>
-                                }
-                            }
-                        </InputSelect>
+                        <AccountSelect @bind-SelectedAccountId="bill.ExpenseAccountId" TypeFilter="Expense" />
+                        <ValidationMessage For="@(() => bill.ExpenseAccountId)" />
                     </div>
                 </div>
 
@@ -69,10 +63,7 @@
 
                 <div class="d-flex justify-content-end">
                     <button type="submit" class="btn btn-warning px-5 fw-bold" disabled="@isSubmitting">
-                        @if (isSubmitting)
-                        {
-                            <span class="spinner-border spinner-border-sm me-2"></span>
-                        }
+                        @if (isSubmitting) { <span class="spinner-border spinner-border-sm me-2"></span> }
                         Save Bill
                     </button>
                 </div>
@@ -83,31 +74,21 @@
 
 @code {
     private CreateBillDTO bill = new CreateBillDTO { DueDate = DateTime.Today.AddDays(30) };
-    private List<AccountDTO> accounts;
     private string errorMessage;
     private bool isSubmitting = false;
 
-    protected override async Task OnInitializedAsync()
-    {
-        try
-        {
-            accounts = await LedgerService.GetAccountsAsync();
-        }
-        catch (Exception ex)
-        {
-            errorMessage = "Failed to load accounts: " + ex.Message;
-        }
-    }
-
     private async Task HandleSubmit()
     {
+        if (bill.VendorId == 0) { errorMessage = "Please select a vendor."; return; }
+        if (bill.ExpenseAccountId == 0) { errorMessage = "Please select an expense account."; return; }
+
         isSubmitting = true;
         errorMessage = null;
 
         try
         {
             await PayableService.CreateBillAsync(bill);
-            NavManager.NavigateTo("/"); // Redirect to dashboard or bill list
+            NavManager.NavigateTo("/"); 
         }
         catch (Exception ex)
         {

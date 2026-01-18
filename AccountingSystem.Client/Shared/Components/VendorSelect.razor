@@ -1,0 +1,44 @@
+﻿@using AccountingSystem.Shared.DTOs
+@using AccountingSystem.Client.Services
+@inject PayableService PayableService
+
+<Microsoft.AspNetCore.Components.Authorization.AuthorizeView Roles="Admin,Accounting">
+    <select class="form-select" value="@SelectedVendorId" @onchange="OnValueChanged">
+        <option value="0">-- Select Vendor --</option>
+        @if (vendors != null)
+        {
+            foreach (var v in vendors)
+            {
+                <option value="@v.Id">@v.Name</option>
+            }
+        }
+    </select>
+</Microsoft.AspNetCore.Components.Authorization.AuthorizeView>
+
+@code {
+    [Parameter] public int SelectedVendorId { get; set; }
+    [Parameter] public EventCallback<int> SelectedVendorIdChanged { get; set; }
+
+    private List<VendorDTO> vendors;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            vendors = await PayableService.GetVendorsAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading vendors: {ex.Message}");
+        }
+    }
+
+    private async Task OnValueChanged(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value.ToString(), out int id))
+        {
+            SelectedVendorId = id;
+            await SelectedVendorIdChanged.InvokeAsync(id);
+        }
+    }
+}
