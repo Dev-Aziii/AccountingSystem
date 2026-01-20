@@ -46,14 +46,20 @@ namespace AccountingSystem.API.Middleware
 
                 var jwtToken = (JwtSecurityToken)validatedToken;
 
-                // Attach user info to Items collection for easy access in Controllers/Services
-                context.Items["User"] = jwtToken.Claims.First(x => x.Type == "unique_name").Value; // Default mapping for Name
+                // Existing: Email/Name
+                context.Items["User"] = jwtToken.Claims.First(x => x.Type == "unique_name").Value;
                 context.Items["Role"] = jwtToken.Claims.First(x => x.Type == "role").Value;
+
+                // FIX: Extract UserId (int) so AuditMiddleware can use it
+                var userIdClaim = jwtToken.Claims.FirstOrDefault(x => x.Type == "UserId");
+                if (userIdClaim != null)
+                {
+                    context.Items["UserId"] = userIdClaim.Value;
+                }
             }
             catch
             {
                 // Do nothing if jwt validation fails
-                // User is not attached to context so request will not have access to secure routes
             }
         }
     }

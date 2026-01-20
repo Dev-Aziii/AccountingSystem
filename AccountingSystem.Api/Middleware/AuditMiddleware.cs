@@ -29,40 +29,41 @@ namespace AccountingSystem.API.Middleware
         {
             try
             {
-                // 1. Enable buffering so we can read the body and reset the stream for the Controller
                 context.Request.EnableBuffering();
 
-                // 2. Read Request Body
                 string bodyContent = "";
                 using (var reader = new StreamReader(context.Request.Body, Encoding.UTF8, true, 1024, true))
                 {
                     bodyContent = await reader.ReadToEndAsync();
                 }
 
-                // 3. Reset Stream Position
                 context.Request.Body.Position = 0;
 
-                // 4. Identify User (Attached by JwtMiddleware)
-                var user = context.Items["User"]?.ToString() ?? "Anonymous";
+                // FIX: Retrieve the numeric UserId stored by JwtMiddleware
+                int? userId = null;
+                if (context.Items["UserId"] is string userIdStr && int.TryParse(userIdStr, out int parsedId))
+                {
+                    userId = parsedId;
+                }
 
-                // 5. Create Log Entry
+                // Identify User (Email) for fallback or debugging if needed, but we use ID for FK
+                // var userEmail = context.Items["User"]?.ToString() ?? "Anonymous";
+
                 var auditLog = new AuditLog
                 {
-                    UserId = user,
+                    UserId = userId, // Now assigning int? (Correct type)
                     Action = context.Request.Method,
-                    EntityName = context.Request.Path, // e.g., /api/ledger/journal
-                    EntityId = "N/A", // Can be refined to parse ID from route
+                    EntityName = context.Request.Path,
+                    EntityId = "N/A",
                     Timestamp = DateTime.UtcNow,
-                    Changes = bodyContent.Length > 2000 ? bodyContent.Substring(0, 2000) : bodyContent // Truncate if too long
+                    Changes = bodyContent.Length > 2000 ? bodyContent.Substring(0, 2000) : bodyContent
                 };
 
-                // 6. Save to DB
                 dbContext.AuditLogs.Add(auditLog);
                 await dbContext.SaveChangesAsync();
             }
             catch (Exception ex)
             {
-                // Fail silently: Logging should not break the business flow
                 Console.WriteLine($"Audit Logging Failed: {ex.Message}");
             }
         }

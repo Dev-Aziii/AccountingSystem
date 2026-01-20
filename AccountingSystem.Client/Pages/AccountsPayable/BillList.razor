@@ -2,6 +2,7 @@
 @using AccountingSystem.Shared.DTOs
 @using AccountingSystem.Client.Services
 @using AccountingSystem.Client.Shared.Dialogs
+@using AccountingSystem.Shared.Enums
 @using MudBlazor
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin,Accounting")]
 @inject PayableService PayableService
@@ -34,11 +35,11 @@
             <MudTd DataLabel="Total" Style="text-align:right">@context.Amount.ToString("N2")</MudTd>
             <MudTd DataLabel="Balance" Style="text-align:right; font-weight:bold;">@context.Balance.ToString("N2")</MudTd>
             <MudTd DataLabel="Status">
-                @if (context.Status == "Paid")
+                @if (context.Status == DocumentStatus.Paid)
                 {
                     <MudChip T="string" Size="Size.Small" Color="Color.Success">Paid</MudChip>
                 }
-                else if (context.Status == "Partially Paid")
+                else if (context.Status == DocumentStatus.PartiallyPaid)
                 {
 
                     <MudChip T="string" Size="Size.Small" Color="Color.Warning">Partial</MudChip>

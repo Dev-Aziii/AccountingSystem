@@ -9,7 +9,7 @@ namespace AccountingSystem.API.Controllers
 {
     [ApiController]
     [Route("api/users")]
-    [Authorize(Roles = "Admin")] // STRICTLY ADMIN ONLY
+    [Authorize(Roles = "Admin")]
     public class UsersController : ControllerBase
     {
         private readonly AccountingDbContext _context;
@@ -21,7 +21,6 @@ namespace AccountingSystem.API.Controllers
             _authService = authService;
         }
 
-        // GET: api/users
         [HttpGet]
         public async Task<IActionResult> GetAllUsers()
         {
@@ -30,17 +29,16 @@ namespace AccountingSystem.API.Controllers
                 .Select(u => new UserDTO
                 {
                     Id = u.Id,
-                    Username = u.Username,
+                    Email = u.Email, // Changed from Username to Email
                     FullName = u.FullName,
-                    RoleName = u.Role.Name
+                    RoleName = u.Role.Name,
+                    IsActive = u.IsActive
                 })
                 .ToListAsync();
 
             return Ok(users);
         }
 
-        // POST: api/users (Create new user)
-        // We reuse the existing RegisterDTO and Logic from AuthService
         [HttpPost]
         public async Task<IActionResult> CreateUser([FromBody] RegisterDTO registerDto)
         {
@@ -55,15 +53,14 @@ namespace AccountingSystem.API.Controllers
             }
         }
 
-        // DELETE: api/users/{id}
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteUser(int id)
         {
             var user = await _context.Users.FindAsync(id);
             if (user == null) return NotFound("User not found");
 
-            // Prevent deleting the last Admin (Self-preservation check could be added here)
-            if (user.Username == "admin")
+            // Prevent deleting the default Admin
+            if (user.Email == "admin@company.com")
                 return BadRequest(new { error = "Cannot delete the default System Administrator." });
 
             _context.Users.Remove(user);

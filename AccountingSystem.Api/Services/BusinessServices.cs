@@ -2,6 +2,7 @@
 using AccountingSystem.API.Services.Interfaces;
 using AccountingSystem.Shared.DTOs;
 using AccountingSystem.API.Models;
+using AccountingSystem.Shared.Enums; 
 using Microsoft.EntityFrameworkCore;
 
 namespace AccountingSystem.API.Services
@@ -34,7 +35,7 @@ namespace AccountingSystem.API.Services
                 ReferenceNumber = billDto.ReferenceNumber,
                 Description = billDto.Description,
                 AmountPaid = 0,
-                Status = "Unpaid"
+                Status = DocumentStatus.Unpaid // Enum Assignment
             };
             _context.Bills.Add(bill);
 
@@ -55,7 +56,6 @@ namespace AccountingSystem.API.Services
 
             await _ledgerService.CreateJournalEntryAsync(entry, "System");
             await _context.SaveChangesAsync();
-
             return bill;
         }
 
@@ -65,35 +65,36 @@ namespace AccountingSystem.API.Services
             if (bill == null) throw new Exception("Bill not found");
 
             if (paymentDto.Amount > (bill.Amount - bill.AmountPaid))
-                throw new Exception($"Overpayment detected. Remaining balance is {bill.Amount - bill.AmountPaid:N2}");
+                throw new Exception($"Overpayment detected.");
 
             bill.AmountPaid += paymentDto.Amount;
+
+            // Logic using Enums
             if (bill.AmountPaid >= bill.Amount - 0.01m)
-                bill.Status = "Paid";
+                bill.Status = DocumentStatus.Paid;
             else
-                bill.Status = "Partially Paid";
+                bill.Status = DocumentStatus.PartiallyPaid;
 
             var payment = new Payment
             {
                 BillId = bill.Id,
                 Amount = paymentDto.Amount,
                 Date = paymentDto.PaymentDate,
-                PaymentMethod = paymentDto.PaymentMethod,
+                PaymentMethod = paymentDto.PaymentMethod, // Enum
                 ReferenceNumber = paymentDto.ReferenceNumber,
                 Remarks = paymentDto.Remarks,
-                Type = "Outgoing",
-                AccountId = paymentDto.AssetAccountId
+                Type = PaymentType.Outgoing, // Enum
+                AccountId = paymentDto.AssetAccountId,
+                CreatedById = int.TryParse(userId, out int uid) ? uid : null // Audit
             };
             _context.Payments.Add(payment);
 
             var apAccount = await _context.Accounts.FirstOrDefaultAsync(a => a.Code == "2000");
-            if (apAccount == null) throw new Exception("Critical Error: Accounts Payable (2000) missing.");
-
             var entry = new JournalEntryDTO
             {
                 Date = paymentDto.PaymentDate,
-                Description = $"Payment for Bill #{bill.ReferenceNumber} ({paymentDto.PaymentMethod})",
-                Reference = string.IsNullOrEmpty(paymentDto.ReferenceNumber) ? $"PAY-{payment.Id}" : paymentDto.ReferenceNumber,
+                Description = $"Payment for Bill #{bill.ReferenceNumber}",
+                Reference = paymentDto.ReferenceNumber ?? $"PAY-{payment.Id}",
                 Lines = new List<JournalEntryLineDTO>
                 {
                     new JournalEntryLineDTO { AccountId = apAccount.Id, Debit = paymentDto.Amount, Credit = 0 },
@@ -136,7 +137,7 @@ namespace AccountingSystem.API.Services
                 TotalAmount = invoiceDto.Amount,
                 Description = invoiceDto.Description,
                 PaidAmount = 0,
-                Status = "Unpaid"
+                Status = DocumentStatus.Unpaid // Enum
             };
             _context.Invoices.Add(invoice);
 
@@ -165,34 +166,22 @@ namespace AccountingSystem.API.Services
             var invoice = await _context.Invoices.FindAsync(paymentDto.ReferenceId);
             if (invoice == null) throw new Exception("Invoice not found");
 
-            // --- PAYMONGO CAPTURE LOGIC ---
-            if (paymentDto.PaymentMethod != null && paymentDto.PaymentMethod.Contains("Online") && !string.IsNullOrEmpty(paymentDto.SourceId))
+            // Enum Check
+            if (paymentDto.PaymentMethod == PaymentMethod.Online && !string.IsNullOrEmpty(paymentDto.SourceId))
             {
-                try
-                {
-                    bool captured = await _paymentService.CapturePaymentAsync(
-                        paymentDto.SourceId,
-                        paymentDto.Amount,
-                        $"Payment for Invoice #{invoice.Id}"
-                    );
-
-                    if (!captured) throw new Exception("Failed to capture payment with PayMongo.");
-                }
-                catch (Exception ex)
-                {
-                    throw new Exception($"PayMongo Capture Error: {ex.Message}");
-                }
+                await _paymentService.CapturePaymentAsync(paymentDto.SourceId, paymentDto.Amount, $"Inv #{invoice.Id}");
             }
-            // -----------------------------
 
             if (paymentDto.Amount > (invoice.TotalAmount - invoice.PaidAmount))
-                throw new Exception($"Overpayment detected. Remaining balance is {invoice.TotalAmount - invoice.PaidAmount:N2}");
+                throw new Exception($"Overpayment detected.");
 
             invoice.PaidAmount += paymentDto.Amount;
+
+            // Logic using Enums
             if (invoice.PaidAmount >= invoice.TotalAmount - 0.01m)
-                invoice.Status = "Paid";
+                invoice.Status = DocumentStatus.Paid;
             else
-                invoice.Status = "Partially Paid";
+                invoice.Status = DocumentStatus.PartiallyPaid;
 
             var payment = new Payment
             {
@@ -202,19 +191,18 @@ namespace AccountingSystem.API.Services
                 PaymentMethod = paymentDto.PaymentMethod,
                 ReferenceNumber = paymentDto.ReferenceNumber,
                 Remarks = paymentDto.Remarks,
-                Type = "Incoming",
-                AccountId = paymentDto.AssetAccountId
+                Type = PaymentType.Incoming, // Enum
+                AccountId = paymentDto.AssetAccountId,
+                CreatedById = int.TryParse(userId, out int uid) ? uid : null
             };
             _context.Payments.Add(payment);
 
             var arAccount = await _context.Accounts.FirstOrDefaultAsync(a => a.Code == "1100");
-            if (arAccount == null) throw new Exception("Critical Error: Accounts Receivable (1100) missing.");
-
             var entry = new JournalEntryDTO
             {
                 Date = paymentDto.PaymentDate,
                 Description = $"Payment received for Invoice #{invoice.Id}",
-                Reference = string.IsNullOrEmpty(paymentDto.ReferenceNumber) ? $"REC-{payment.Id}" : paymentDto.ReferenceNumber,
+                Reference = paymentDto.ReferenceNumber ?? $"REC-{payment.Id}",
                 Lines = new List<JournalEntryLineDTO>
                 {
                     new JournalEntryLineDTO { AccountId = paymentDto.AssetAccountId, Debit = paymentDto.Amount, Credit = 0 },

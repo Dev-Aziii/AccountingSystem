@@ -7,22 +7,27 @@ namespace AccountingSystem.API.Models
     {
         public int Id { get; set; }
         [Required]
+        [MaxLength(50)]
         public string Name { get; set; } // Admin, Accounting, Management
     }
 
-    public class User
+    public class User : BaseEntity
     {
-        public int Id { get; set; }
-
         [Required]
-        public string Username { get; set; }
+        [EmailAddress]
+        [MaxLength(100)]
+        public string Email { get; set; } // Replaces Username
 
         [JsonIgnore]
         public string PasswordHash { get; set; }
 
+        [JsonIgnore]
+        public string? PasswordSalt { get; set; } // Added for security
+
+        [MaxLength(100)]
         public string FullName { get; set; }
 
         public int RoleId { get; set; }
-        public Role Role { get; set; }
+        public virtual Role Role { get; set; }
     }
 }

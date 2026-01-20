@@ -1,6 +1,7 @@
 ﻿@using AccountingSystem.Shared.DTOs
 @using AccountingSystem.Client.Services
 @using AccountingSystem.Client.Shared.Components
+@using AccountingSystem.Shared.Enums
 @using MudBlazor
 @inject PayableService PayableService
 @inject ISnackbar Snackbar
@@ -25,10 +26,11 @@
                 </MudItem>
 
                 <MudItem xs="12" sm="6">
-                    <MudSelect T="string" Label="Method" @bind-Value="model.PaymentMethod" Variant="Variant.Outlined" Required="true" AnchorOrigin="Origin.BottomCenter">
-                        <MudSelectItem Value="@("Cash")" />
-                        <MudSelectItem Value="@("Check")" />
-                        <MudSelectItem Value="@("Bank Transfer")" />
+                    <MudSelect T="PaymentMethod" Label="Method" @bind-Value="model.PaymentMethod" Variant="Variant.Outlined" Required="true" AnchorOrigin="Origin.BottomCenter">
+                        <MudSelectItem Value="@PaymentMethod.Cash">Cash</MudSelectItem>
+                        <MudSelectItem Value="@PaymentMethod.Check">Check</MudSelectItem>
+                        <MudSelectItem Value="@PaymentMethod.BankTransfer">Bank Transfer</MudSelectItem>
+                        <MudSelectItem Value="@PaymentMethod.Online">Online</MudSelectItem>
                     </MudSelect>
                 </MudItem>
                 <MudItem xs="12" sm="6">
@@ -62,8 +64,8 @@
     protected override void OnInitialized()
     {
         model.ReferenceId = Bill.Id;
-        model.Amount = Bill.Balance; // Default to full payment
-        model.PaymentMethod = "Cash";
+        model.Amount = Bill.Balance;
+        model.PaymentMethod = PaymentMethod.Cash; // Enum
     }
 
     private void Cancel() => MudDialog.Cancel();
@@ -73,7 +75,6 @@
         await form.Validate();
         if (!form.IsValid) return;
 
-        // Manual validation for Account Select
         if (model.AssetAccountId == 0)
         {
             Snackbar.Add("Please select a Source Account.", Severity.Error);

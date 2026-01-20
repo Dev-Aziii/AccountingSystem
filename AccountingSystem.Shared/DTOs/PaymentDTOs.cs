@@ -1,29 +1,21 @@
-﻿using System.Text.Json.Serialization;
+﻿using AccountingSystem.Shared.Enums;
+using System.Text.Json.Serialization;
 
 namespace AccountingSystem.Shared.DTOs
 {
-    public class PaymentSourceResponseDTO
-    {
-        [JsonPropertyName("sourceId")]
-        public string SourceId { get; set; }
-
-        [JsonPropertyName("checkoutUrl")]
-        public string CheckoutUrl { get; set; }
-    }
     // --- INTERNAL PAYMENT RECORDING ---
     public class RecordPaymentDTO
     {
         public int ReferenceId { get; set; } // InvoiceId or BillId
         public decimal Amount { get; set; }
         public DateTime PaymentDate { get; set; } = DateTime.Now;
-        public string PaymentMethod { get; set; } = string.Empty;
 
-        // FIX: Made nullable to prevent "Field is Required" validation errors on empty inputs
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public PaymentMethod PaymentMethod { get; set; } // Enum
+
         public string? ReferenceNumber { get; set; }
         public int AssetAccountId { get; set; }
         public string? Remarks { get; set; }
-
-        // FIX: Made nullable because Cash/Check payments won't have a PayMongo SourceId
         public string? SourceId { get; set; }
     }
 
@@ -32,12 +24,18 @@ namespace AccountingSystem.Shared.DTOs
         public int Id { get; set; }
         public DateTime Date { get; set; }
         public decimal Amount { get; set; }
-        public string Method { get; set; }
+        public PaymentMethod Method { get; set; } // Enum
         public string? ReferenceNumber { get; set; }
         public string AccountName { get; set; }
     }
 
-    // --- REQUESTS ---
+    // --- REQUESTS (PayMongo DTOs kept as is for API compatibility) ---
+    public class PaymentSourceResponseDTO
+    {
+        public string SourceId { get; set; }
+        public string CheckoutUrl { get; set; }
+    }
+
     public class CreateSourceDTO
     {
         public decimal Amount { get; set; }

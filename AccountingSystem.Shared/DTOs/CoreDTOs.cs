@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using AccountingSystem.Shared.Enums;
+using System.ComponentModel.DataAnnotations;
 
 namespace AccountingSystem.Shared.DTOs
 {
@@ -35,7 +36,6 @@ namespace AccountingSystem.Shared.DTOs
     }
 
     // --- PAYABLES ---
-
     public class BillDTO
     {
         public int Id { get; set; }
@@ -46,17 +46,18 @@ namespace AccountingSystem.Shared.DTOs
         public string ReferenceNumber { get; set; }
         public string Description { get; set; }
         public decimal AmountPaid { get; set; }
-        public string Status { get; set; }
+        public DocumentStatus Status { get; set; } // Enum
         public decimal Balance => Amount - AmountPaid;
     }
+
     public class CreateBillDTO
     {
         public int VendorId { get; set; }
         public DateTime DueDate { get; set; }
         public decimal Amount { get; set; }
         public string ReferenceNumber { get; set; }
-        public string Description { get; set; } // For GL
-        public int ExpenseAccountId { get; set; } // Where to debit expense
+        public string Description { get; set; }
+        public int ExpenseAccountId { get; set; }
     }
 
     // --- RECEIVABLES ---
@@ -69,22 +70,16 @@ namespace AccountingSystem.Shared.DTOs
         public decimal TotalAmount { get; set; }
         public string Description { get; set; }
         public decimal PaidAmount { get; set; }
-        public string Status { get; set; }
+        public DocumentStatus Status { get; set; } // Enum
         public decimal Balance => TotalAmount - PaidAmount;
     }
+
     public class CreateInvoiceDTO
     {
         public int CustomerId { get; set; }
         public DateTime DueDate { get; set; }
         public decimal Amount { get; set; }
         public string Description { get; set; }
-        public int RevenueAccountId { get; set; } // Where to credit income
-    }
-
-    // --- PAYMENTS ---
-    public class ProcessPaymentDTO
-    {
-        public decimal Amount { get; set; }
-        public string PaymentMethod { get; set; } // "Cash", "Bank"
+        public int RevenueAccountId { get; set; }
     }
 }

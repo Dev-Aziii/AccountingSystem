@@ -1,10 +1,11 @@
 ﻿@using AccountingSystem.Shared.DTOs
 @using AccountingSystem.Client.Services
 @using AccountingSystem.Client.Shared.Components
+@using AccountingSystem.Shared.Enums
 @using MudBlazor
 @using Blazored.LocalStorage
 @inject ReceivableService ReceivableService
-@inject PaymentClientService PaymentService 
+@inject PaymentClientService PaymentService
 @inject ISnackbar Snackbar
 @inject NavigationManager NavManager
 @inject ILocalStorageService LocalStorage
@@ -17,10 +18,11 @@
         <MudForm @ref="form" @bind-IsValid="@success">
             <MudGrid>
                 <MudItem xs="12" sm="6">
-                    <MudSelect T="string" Label="Method" @bind-Value="model.PaymentMethod" Variant="Variant.Outlined" Required="true" AnchorOrigin="Origin.BottomCenter">
-                        <MudSelectItem Value="@("Cash")" />
-                        <MudSelectItem Value="@("Check")" />
-                        <MudSelectItem Value="@("Online")">Online (PayMongo)</MudSelectItem>
+                    <MudSelect T="PaymentMethod" Label="Method" @bind-Value="model.PaymentMethod" Variant="Variant.Outlined" Required="true" AnchorOrigin="Origin.BottomCenter">
+                        <MudSelectItem Value="@PaymentMethod.Cash">Cash</MudSelectItem>
+                        <MudSelectItem Value="@PaymentMethod.Check">Check</MudSelectItem>
+                        <MudSelectItem Value="@PaymentMethod.Online">Online (PayMongo)</MudSelectItem>
+                        <MudSelectItem Value="@PaymentMethod.BankTransfer">Bank Transfer</MudSelectItem>
                     </MudSelect>
                 </MudItem>
 
@@ -31,11 +33,11 @@
                 <MudItem xs="12">
                     <AccountSelect @bind-SelectedAccountId="model.AssetAccountId" TypeFilter="Asset" />
                     <MudText Typo="Typo.caption" Color="Color.Info">
-                        @(model.PaymentMethod == "Online" ? "Where should the online payment settle?" : "Destination Account")
+                        @(model.PaymentMethod == PaymentMethod.Online ? "Where should the online payment settle?" : "Select the Cash/Bank account to deposit funds into.")
                     </MudText>
                 </MudItem>
 
-                @if (model.PaymentMethod != "Online")
+                @if (model.PaymentMethod != PaymentMethod.Online)
                 {
                     <MudItem xs="12" sm="6">
                         <MudDatePicker Label="Payment Date" @bind-Date="date" Variant="Variant.Outlined" Required="true" />
@@ -50,7 +52,7 @@
                 </MudItem>
             </MudGrid>
         </MudForm>
-    </DialogContent>    
+    </DialogContent>
     <DialogActions>
         <MudButton OnClick="Cancel">Cancel</MudButton>
         <MudButton Color="Color.Success" Variant="Variant.Filled" OnClick="Submit" Disabled="@(!success || isSubmitting)">
@@ -58,7 +60,7 @@
             {
                 @("Processing...")
             }
-            else if (model.PaymentMethod == "Online")
+            else if (model.PaymentMethod == PaymentMethod.Online)
             {
                 @("Generate Payment Link")
             }
@@ -84,7 +86,7 @@
     {
         model.ReferenceId = Invoice.Id;
         model.Amount = Invoice.Balance;
-        model.PaymentMethod = "Cash";
+        model.PaymentMethod = PaymentMethod.Cash;
     }
 
     private void Cancel() => MudDialog.Cancel();
@@ -104,10 +106,8 @@
 
         try
         {
-            if (model.PaymentMethod == "Online")
+            if (model.PaymentMethod == PaymentMethod.Online)
             {
-                // 1. Construct URL
-                // We DON'T pass source_id here (it doesn't exist yet). We only pass context data.
                 var callbackUrl = NavManager.BaseUri + $"payment-callback?invoiceId={Invoice.Id}&accountId={model.AssetAccountId}&amount={model.Amount}";
 
                 var sourceDto = new CreateSourceDTO
@@ -119,14 +119,10 @@
                     FailedUrl = callbackUrl
                 };
 
-                // 2. Call API to get URL AND ID
                 var result = await PaymentService.CreatePaymentSourceFullAsync(sourceDto);
 
-                // 3. FIX: Save the SourceID to LocalStorage!
-                // When user returns, we will read this.
                 await LocalStorage.SetItemAsync("pending_payment_source_id", result.SourceId);
 
-                // 4. Redirect
                 NavManager.NavigateTo(result.CheckoutUrl, forceLoad: true);
                 MudDialog.Close(DialogResult.Ok(true));
             }

@@ -24,13 +24,14 @@
                     <MudText Typo="Typo.h6" Color="Color.Primary">Current Users</MudText>
                 </ToolBarContent>
                 <HeaderContent>
-                    <MudTh>Username</MudTh>
+                    <MudTh>Email</MudTh>
                     <MudTh>Full Name</MudTh>
                     <MudTh>Role</MudTh>
                     <MudTh Style="text-align:right">Actions</MudTh>
                 </HeaderContent>
                 <RowTemplate>
-                    <MudTd DataLabel="Username"><b>@context.Username</b></MudTd>
+                    <!-- FIX: Bind to Email instead of Username -->
+                    <MudTd DataLabel="Email"><b>@context.Email</b></MudTd>
                     <MudTd DataLabel="Full Name">@context.FullName</MudTd>
                     <MudTd DataLabel="Role">
                         @if (context.RoleName == "Admin")
@@ -47,7 +48,7 @@
                         }
                     </MudTd>
                     <MudTd DataLabel="Actions" Style="text-align:right">
-                        @if (context.Username != "admin")
+                        @if (!context.Email.StartsWith("admin"))
                         {
                             <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="() => ConfirmDelete(context.Id)" />
                         }
@@ -70,7 +71,8 @@
                         </CardHeaderContent>
                     </MudCardHeader>
                     <MudCardContent>
-                        <MudTextField Label="Username" @bind-Value="newUser.Username" For="@(() => newUser.Username)" Variant="Variant.Outlined" Class="mb-3" />
+                        <!-- FIX: Bind to Email -->
+                        <MudTextField Label="Email" @bind-Value="newUser.Email" For="@(() => newUser.Email)" Variant="Variant.Outlined" Class="mb-3" />
                         <MudTextField Label="Full Name" @bind-Value="newUser.FullName" For="@(() => newUser.FullName)" Variant="Variant.Outlined" Class="mb-3" />
 
                         <MudSelect Label="Role" @bind-Value="newUser.RoleName" For="@(() => newUser.RoleName)" Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter" Class="mb-3">

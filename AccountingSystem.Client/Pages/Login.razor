@@ -21,9 +21,10 @@
             <EditForm Model="@loginModel" OnValidSubmit="HandleLogin">
                 <DataAnnotationsValidator />
 
-                <MudTextField Label="Username"
-                              @bind-Value="loginModel.Username"
-                              For="@(() => loginModel.Username)"
+                <!-- FIX: Bind to Email -->
+                <MudTextField Label="Email"
+                              @bind-Value="loginModel.Email"
+                              For="@(() => loginModel.Email)"
                               Variant="Variant.Outlined"
                               Class="mb-4" />
 
