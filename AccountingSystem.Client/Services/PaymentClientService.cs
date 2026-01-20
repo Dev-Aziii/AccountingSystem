@@ -1,4 +1,5 @@
-﻿using AccountingSystem.Shared.DTOs;
+﻿using AccountingSystem.Client.Services;
+using AccountingSystem.Shared.DTOs;
 using System.Net.Http.Json;
 using System.Text.Json;
 
@@ -7,15 +8,18 @@ namespace AccountingSystem.Client.Services
     public class PaymentClientService : IPaymentClientService
     {
         private readonly HttpClient _http;
+        private readonly ApiService _api; // Use ApiService for consistent auth headers
 
-        public PaymentClientService(HttpClient http)
+        public PaymentClientService(HttpClient http, ApiService api)
         {
             _http = http;
+            _api = api;
         }
 
         public async Task<string> CreatePaymentLinkAsync(CreateSourceDTO sourceDto)
         {
-            var response = await _http.PostAsJsonAsync("api/payments/paymongo-source", sourceDto);
+            // We use PostAsync from ApiService to ensure Auth headers are present
+            var response = await _api.PostAsync("api/payments/paymongo-source", sourceDto);
 
             if (!response.IsSuccessStatusCode)
             {
@@ -23,16 +27,22 @@ namespace AccountingSystem.Client.Services
                 throw new Exception($"Payment initialization failed: {error}");
             }
 
-            // The API returns an anonymous object { checkoutUrl = "..." }
-            // We parse it manually or use a specific DTO if preferred.
-            var result = await response.Content.ReadFromJsonAsync<JsonElement>();
+            // Deserialize the new DTO
+            var result = await response.Content.ReadFromJsonAsync<PaymentSourceResponseDTO>();
 
-            if (result.TryGetProperty("checkoutUrl", out var urlProperty))
-            {
-                return urlProperty.GetString();
-            }
+            // IMPORTANT: Return both ID and URL (we will need to change interface return type or handle storage here)
+            // Ideally, we return the object. For now, let's store the ID in LocalStorage via the Component to keep service simple
+            // We'll hack the return to just be the URL for now, but we need that ID.
 
-            throw new Exception("Invalid response from payment server.");
+            return result.CheckoutUrl;
+        }
+
+        // NEW Method to get full object
+        public async Task<PaymentSourceResponseDTO> CreatePaymentSourceFullAsync(CreateSourceDTO sourceDto)
+        {
+            var response = await _api.PostAsync("api/payments/paymongo-source", sourceDto);
+            if (!response.IsSuccessStatusCode) throw new Exception(await response.Content.ReadAsStringAsync());
+            return await response.Content.ReadFromJsonAsync<PaymentSourceResponseDTO>();
         }
     }
 }

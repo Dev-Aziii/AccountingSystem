@@ -2,9 +2,11 @@
 @using AccountingSystem.Shared.DTOs
 @using AccountingSystem.Client.Services
 @using MudBlazor
+@using Blazored.LocalStorage
 @inject ReceivableService ReceivableService
 @inject NavigationManager NavManager
 @inject ISnackbar Snackbar
+@inject ILocalStorageService LocalStorage
 
 <MudContainer MaxWidth="MaxWidth.Small" Class="mt-16 text-center">
     @if (isVerifying)
@@ -33,7 +35,9 @@
     [SupplyParameterFromQuery] public int InvoiceId { get; set; }
     [SupplyParameterFromQuery] public int AccountId { get; set; }
     [SupplyParameterFromQuery] public decimal Amount { get; set; }
-    [SupplyParameterFromQuery(Name = "source_id")] public string SourceId { get; set; } // Passed by PayMongo
+
+    // PayMongo sometimes sends 'source_id', sometimes not. We rely on LocalStorage mainly.
+    [SupplyParameterFromQuery(Name = "source_id")] public string? UrlSourceId { get; set; }
 
     private bool isVerifying = true;
     private bool isSuccess = false;
@@ -41,28 +45,40 @@
 
     protected override async Task OnInitializedAsync()
     {
-        if (string.IsNullOrEmpty(SourceId))
+        // 1. Try get ID from URL, if not, get from Storage
+        string sourceId = UrlSourceId;
+
+        if (string.IsNullOrEmpty(sourceId))
+        {
+            sourceId = await LocalStorage.GetItemAsync<string>("pending_payment_source_id");
+        }
+
+        if (string.IsNullOrEmpty(sourceId))
         {
             isVerifying = false;
-            errorMessage = "Invalid Payment Reference.";
+            errorMessage = "Lost payment reference. Please contact support.";
             return;
         }
 
         try
         {
-            // Call API to Verify and Record
+            // 2. Call API to Verify and Record
             var paymentDto = new RecordPaymentDTO
             {
                 ReferenceId = InvoiceId,
                 AssetAccountId = AccountId,
                 Amount = Amount,
                 PaymentMethod = "Online (PayMongo)",
-                ReferenceNumber = SourceId,
+                ReferenceNumber = sourceId, // Save the PayMongo ID for reference
                 PaymentDate = DateTime.Now,
-                SourceId = SourceId // Send this for backend verification/tracking
+                SourceId = sourceId,
+                Remarks = "Online Payment verified via Callback"
             };
 
             await ReceivableService.ReceivePaymentAsync(paymentDto);
+
+            // Cleanup
+            await LocalStorage.RemoveItemAsync("pending_payment_source_id");
 
             isSuccess = true;
             Snackbar.Add("Payment Verified & Recorded!", Severity.Success);

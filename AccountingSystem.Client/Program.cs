@@ -28,7 +28,8 @@ builder.Services.AddScoped<LedgerService>();
 builder.Services.AddScoped<PayableService>();
 builder.Services.AddScoped<ReceivableService>();
 builder.Services.AddScoped<UserService>();
-builder.Services.AddScoped<IPaymentClientService, PaymentClientService>();
+builder.Services.AddScoped<PaymentClientService>();
+builder.Services.AddScoped<IPaymentClientService>(sp => sp.GetRequiredService<PaymentClientService>());
 
 // 4. HTTP Configuration
 builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("https://localhost:7273") });

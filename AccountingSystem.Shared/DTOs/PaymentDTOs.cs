@@ -2,6 +2,14 @@
 
 namespace AccountingSystem.Shared.DTOs
 {
+    public class PaymentSourceResponseDTO
+    {
+        [JsonPropertyName("sourceId")]
+        public string SourceId { get; set; }
+
+        [JsonPropertyName("checkoutUrl")]
+        public string CheckoutUrl { get; set; }
+    }
     // --- INTERNAL PAYMENT RECORDING ---
     public class RecordPaymentDTO
     {

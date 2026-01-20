@@ -2,10 +2,12 @@
 @using AccountingSystem.Client.Services
 @using AccountingSystem.Client.Shared.Components
 @using MudBlazor
+@using Blazored.LocalStorage
 @inject ReceivableService ReceivableService
-@inject IPaymentClientService PaymentService
+@inject PaymentClientService PaymentService 
 @inject ISnackbar Snackbar
 @inject NavigationManager NavManager
+@inject ILocalStorageService LocalStorage
 
 <MudDialog>
     <DialogContent>
@@ -14,7 +16,6 @@
 
         <MudForm @ref="form" @bind-IsValid="@success">
             <MudGrid>
-                <!-- Method Selection First to toggle logic -->
                 <MudItem xs="12" sm="6">
                     <MudSelect T="string" Label="Method" @bind-Value="model.PaymentMethod" Variant="Variant.Outlined" Required="true" AnchorOrigin="Origin.BottomCenter">
                         <MudSelectItem Value="@("Cash")" />
@@ -28,19 +29,10 @@
                 </MudItem>
 
                 <MudItem xs="12">
-                    <!-- Note: TypeFilter="Asset" ensures we only see Cash/Bank accounts -->
                     <AccountSelect @bind-SelectedAccountId="model.AssetAccountId" TypeFilter="Asset" />
-
-                    @if (model.AssetAccountId == 0)
-                    {
-                        <MudText Typo="Typo.caption" Color="Color.Error">Required</MudText>
-                    }
-                    else
-                    {
-                        <MudText Typo="Typo.caption" Color="Color.Info">
-                            @(model.PaymentMethod == "Online" ? "Account for PayMongo settlement" : "Destination Account (Cash/Bank)")
-                        </MudText>
-                    }
+                    <MudText Typo="Typo.caption" Color="Color.Info">
+                        @(model.PaymentMethod == "Online" ? "Where should the online payment settle?" : "Destination Account")
+                    </MudText>
                 </MudItem>
 
                 @if (model.PaymentMethod != "Online")
@@ -58,10 +50,10 @@
                 </MudItem>
             </MudGrid>
         </MudForm>
-    </DialogContent>
+    </DialogContent>    
     <DialogActions>
         <MudButton OnClick="Cancel">Cancel</MudButton>
-        <MudButton Color="Color.Success" Variant="Variant.Filled" OnClick="Submit" Disabled="@(isSubmitting)">
+        <MudButton Color="Color.Success" Variant="Variant.Filled" OnClick="Submit" Disabled="@(!success || isSubmitting)">
             @if (isSubmitting)
             {
                 @("Processing...")
@@ -102,7 +94,6 @@
         await form.Validate();
         if (!form.IsValid) return;
 
-        // Manual Check for Account Select
         if (model.AssetAccountId == 0)
         {
             Snackbar.Add("Please select a Destination Account.", Severity.Error);
@@ -115,7 +106,8 @@
         {
             if (model.PaymentMethod == "Online")
             {
-                // Construct Return URL with context (InvoiceId, AccountId)
+                // 1. Construct URL
+                // We DON'T pass source_id here (it doesn't exist yet). We only pass context data.
                 var callbackUrl = NavManager.BaseUri + $"payment-callback?invoiceId={Invoice.Id}&accountId={model.AssetAccountId}&amount={model.Amount}";
 
                 var sourceDto = new CreateSourceDTO
@@ -127,9 +119,15 @@
                     FailedUrl = callbackUrl
                 };
 
-                var checkoutUrl = await PaymentService.CreatePaymentLinkAsync(sourceDto);
+                // 2. Call API to get URL AND ID
+                var result = await PaymentService.CreatePaymentSourceFullAsync(sourceDto);
 
-                NavManager.NavigateTo(checkoutUrl, forceLoad: true);
+                // 3. FIX: Save the SourceID to LocalStorage!
+                // When user returns, we will read this.
+                await LocalStorage.SetItemAsync("pending_payment_source_id", result.SourceId);
+
+                // 4. Redirect
+                NavManager.NavigateTo(result.CheckoutUrl, forceLoad: true);
                 MudDialog.Close(DialogResult.Ok(true));
             }
             else

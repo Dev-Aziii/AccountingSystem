@@ -1,6 +1,6 @@
 ﻿using AccountingSystem.API.Data;
 using AccountingSystem.API.Services.Interfaces;
-using AccountingSystem.Shared.DTOs; // Use Shared DTOs
+using AccountingSystem.Shared.DTOs;
 using AccountingSystem.API.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -38,11 +38,9 @@ namespace AccountingSystem.API.Services
             };
             _context.Bills.Add(bill);
 
-            // Fetch AP Account (2000)
             var apAccount = await _context.Accounts.FirstOrDefaultAsync(a => a.Code == "2000");
             if (apAccount == null) throw new Exception("Critical Error: Accounts Payable (2000) account not found.");
 
-            // Post to GL: Dr Expense, Cr AP
             var entry = new JournalEntryDTO
             {
                 Date = DateTime.UtcNow,
@@ -66,18 +64,15 @@ namespace AccountingSystem.API.Services
             var bill = await _context.Bills.FindAsync(paymentDto.ReferenceId);
             if (bill == null) throw new Exception("Bill not found");
 
-            // 1. Validation
             if (paymentDto.Amount > (bill.Amount - bill.AmountPaid))
                 throw new Exception($"Overpayment detected. Remaining balance is {bill.Amount - bill.AmountPaid:N2}");
 
-            // 2. Update Bill Status
             bill.AmountPaid += paymentDto.Amount;
-            if (bill.AmountPaid >= bill.Amount - 0.01m) // Tolerance for rounding
+            if (bill.AmountPaid >= bill.Amount - 0.01m)
                 bill.Status = "Paid";
             else
                 bill.Status = "Partially Paid";
 
-            // 3. Create Payment Record
             var payment = new Payment
             {
                 BillId = bill.Id,
@@ -87,17 +82,13 @@ namespace AccountingSystem.API.Services
                 ReferenceNumber = paymentDto.ReferenceNumber,
                 Remarks = paymentDto.Remarks,
                 Type = "Outgoing",
-                AccountId = paymentDto.AssetAccountId // The Source Account (e.g., Bank)
+                AccountId = paymentDto.AssetAccountId
             };
             _context.Payments.Add(payment);
 
-            // 4. Fetch GL Accounts
-            // Debit: Accounts Payable (Liability Decreases)
-            // Credit: Asset Account (Asset Decreases)
             var apAccount = await _context.Accounts.FirstOrDefaultAsync(a => a.Code == "2000");
             if (apAccount == null) throw new Exception("Critical Error: Accounts Payable (2000) missing.");
 
-            // 5. Post to GL
             var entry = new JournalEntryDTO
             {
                 Date = paymentDto.PaymentDate,
@@ -105,8 +96,8 @@ namespace AccountingSystem.API.Services
                 Reference = string.IsNullOrEmpty(paymentDto.ReferenceNumber) ? $"PAY-{payment.Id}" : paymentDto.ReferenceNumber,
                 Lines = new List<JournalEntryLineDTO>
                 {
-                    new JournalEntryLineDTO { AccountId = apAccount.Id, Debit = paymentDto.Amount, Credit = 0 }, // Dr AP
-                    new JournalEntryLineDTO { AccountId = paymentDto.AssetAccountId, Debit = 0, Credit = paymentDto.Amount }  // Cr Asset
+                    new JournalEntryLineDTO { AccountId = apAccount.Id, Debit = paymentDto.Amount, Credit = 0 },
+                    new JournalEntryLineDTO { AccountId = paymentDto.AssetAccountId, Debit = 0, Credit = paymentDto.Amount }
                 }
             };
 
@@ -120,11 +111,13 @@ namespace AccountingSystem.API.Services
     {
         private readonly AccountingDbContext _context;
         private readonly ILedgerService _ledgerService;
+        private readonly IPaymentService _paymentService;
 
-        public ReceivableService(AccountingDbContext context, ILedgerService ledgerService)
+        public ReceivableService(AccountingDbContext context, ILedgerService ledgerService, IPaymentService paymentService)
         {
             _context = context;
             _ledgerService = ledgerService;
+            _paymentService = paymentService;
         }
 
         public async Task<List<CustomerDTO>> GetCustomersAsync()
@@ -147,11 +140,9 @@ namespace AccountingSystem.API.Services
             };
             _context.Invoices.Add(invoice);
 
-            // Fetch AR Account (1100)
             var arAccount = await _context.Accounts.FirstOrDefaultAsync(a => a.Code == "1100");
             if (arAccount == null) throw new Exception("Critical Error: Accounts Receivable (1100) missing.");
 
-            // GL: Dr AR, Cr Revenue
             var entry = new JournalEntryDTO
             {
                 Date = DateTime.UtcNow,
@@ -174,18 +165,35 @@ namespace AccountingSystem.API.Services
             var invoice = await _context.Invoices.FindAsync(paymentDto.ReferenceId);
             if (invoice == null) throw new Exception("Invoice not found");
 
-            // 1. Validation
+            // --- PAYMONGO CAPTURE LOGIC ---
+            if (paymentDto.PaymentMethod != null && paymentDto.PaymentMethod.Contains("Online") && !string.IsNullOrEmpty(paymentDto.SourceId))
+            {
+                try
+                {
+                    bool captured = await _paymentService.CapturePaymentAsync(
+                        paymentDto.SourceId,
+                        paymentDto.Amount,
+                        $"Payment for Invoice #{invoice.Id}"
+                    );
+
+                    if (!captured) throw new Exception("Failed to capture payment with PayMongo.");
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception($"PayMongo Capture Error: {ex.Message}");
+                }
+            }
+            // -----------------------------
+
             if (paymentDto.Amount > (invoice.TotalAmount - invoice.PaidAmount))
                 throw new Exception($"Overpayment detected. Remaining balance is {invoice.TotalAmount - invoice.PaidAmount:N2}");
 
-            // 2. Update Invoice Status
             invoice.PaidAmount += paymentDto.Amount;
             if (invoice.PaidAmount >= invoice.TotalAmount - 0.01m)
                 invoice.Status = "Paid";
             else
                 invoice.Status = "Partially Paid";
 
-            // 3. Create Payment Record
             var payment = new Payment
             {
                 InvoiceId = invoice.Id,
@@ -195,17 +203,13 @@ namespace AccountingSystem.API.Services
                 ReferenceNumber = paymentDto.ReferenceNumber,
                 Remarks = paymentDto.Remarks,
                 Type = "Incoming",
-                AccountId = paymentDto.AssetAccountId // The Receiving Account
+                AccountId = paymentDto.AssetAccountId
             };
             _context.Payments.Add(payment);
 
-            // 4. Fetch GL Accounts
-            // Debit: Asset Account (Asset Increases)
-            // Credit: Accounts Receivable (Asset Decreases)
             var arAccount = await _context.Accounts.FirstOrDefaultAsync(a => a.Code == "1100");
             if (arAccount == null) throw new Exception("Critical Error: Accounts Receivable (1100) missing.");
 
-            // 5. Post to GL
             var entry = new JournalEntryDTO
             {
                 Date = paymentDto.PaymentDate,
@@ -213,8 +217,8 @@ namespace AccountingSystem.API.Services
                 Reference = string.IsNullOrEmpty(paymentDto.ReferenceNumber) ? $"REC-{payment.Id}" : paymentDto.ReferenceNumber,
                 Lines = new List<JournalEntryLineDTO>
                 {
-                    new JournalEntryLineDTO { AccountId = paymentDto.AssetAccountId, Debit = paymentDto.Amount, Credit = 0 }, // Dr Asset
-                    new JournalEntryLineDTO { AccountId = arAccount.Id, Debit = 0, Credit = paymentDto.Amount }  // Cr AR
+                    new JournalEntryLineDTO { AccountId = paymentDto.AssetAccountId, Debit = paymentDto.Amount, Credit = 0 },
+                    new JournalEntryLineDTO { AccountId = arAccount.Id, Debit = 0, Credit = paymentDto.Amount }
                 }
             };
 

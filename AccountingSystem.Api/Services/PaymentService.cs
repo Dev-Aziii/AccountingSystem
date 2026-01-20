@@ -23,36 +23,23 @@ namespace AccountingSystem.API.Services
                 new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", authHeader);
         }
 
-        // Implementation of the original interface method (kept for backward compatibility if needed)
-        public async Task<string> CreatePaymentSourceAsync(decimal amount, string description, string remarks)
+        public async Task<PaymentSourceResponseDTO> CreatePaymentSourceAsync(CreateSourceDTO dto)
         {
-            // Forward to the new method with default/dummy URLs if called directly
-            return await CreatePaymentSourceAsync(new CreateSourceDTO
+            var request = new
             {
-                Amount = amount,
-                Description = description,
-                Remarks = remarks
-            });
-        }
-
-        // Overload to accept DTO with dynamic URLs
-        public async Task<string> CreatePaymentSourceAsync(CreateSourceDTO dto)
-        {
-            var request = new PayMongoSourceRequest
-            {
-                Data = new SourceData
+                data = new
                 {
-                    Attributes = new SourceAttributes
+                    attributes = new
                     {
-                        Amount = (int)(dto.Amount * 100),
-                        Type = "gcash",
-                        Redirect = new RedirectUrls
+                        amount = (int)(dto.Amount * 100),
+                        type = "gcash",
+                        currency = "PHP", 
+                        redirect = new
                         {
-                            // Use Client-provided URL or Fallback
-                            Success = dto.SuccessUrl ?? "https://localhost:7150/success",
-                            Failed = dto.FailedUrl ?? "https://localhost:7150/failed"
+                            success = dto.SuccessUrl ?? "https://localhost:7150/success",
+                            failed = dto.FailedUrl ?? "https://localhost:7150/failed"
                         },
-                        Billing = new BillingInfo { Name = "System User", Email = "user@example.com" }
+                        billing = new { name = "System User", email = "user@example.com" }
                     }
                 }
             };
@@ -63,10 +50,56 @@ namespace AccountingSystem.API.Services
             var response = await _httpClient.PostAsync("sources", content);
             var responseString = await response.Content.ReadAsStringAsync();
 
-            if (!response.IsSuccessStatusCode) throw new Exception($"PayMongo API Error: {responseString}");
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new Exception($"PayMongo API Error: {responseString}");
+            }
 
-            var result = JsonSerializer.Deserialize<PayMongoSourceResponse>(responseString);
-            return result.Data.Attributes.Redirect.CheckoutUrl;
+            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            var result = JsonSerializer.Deserialize<PayMongoSourceResponse>(responseString, options);
+
+            return new PaymentSourceResponseDTO
+            {
+                SourceId = result.Data.Id,
+                CheckoutUrl = result.Data.Attributes.Redirect.CheckoutUrl
+            };
+        }
+
+        public async Task<string> CreatePaymentSourceAsync(decimal amount, string description, string remarks)
+        {
+            var result = await CreatePaymentSourceAsync(new CreateSourceDTO { Amount = amount, Description = description, Remarks = remarks });
+            return result.CheckoutUrl;
+        }
+
+        public async Task<bool> CapturePaymentAsync(string sourceId, decimal amount, string description)
+        {
+            var request = new
+            {
+                data = new
+                {
+                    attributes = new
+                    {
+                        amount = (int)(amount * 100),
+                        source = new { id = sourceId, type = "source" },
+                        currency = "PHP",
+                        description = description
+                    }
+                }
+            };
+
+            var json = JsonSerializer.Serialize(request);
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+            var response = await _httpClient.PostAsync("payments", content);
+
+            // Logging failure if capture fails could be helpful
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                throw new Exception($"PayMongo Capture Failed: {error}");
+            }
+
+            return response.IsSuccessStatusCode;
         }
 
         public bool VerifyWebhookSignature(string signature, string payload) => true;
