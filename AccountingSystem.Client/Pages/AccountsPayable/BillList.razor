@@ -1,0 +1,91 @@
+﻿@page "/ap/bills/list"
+@using AccountingSystem.Shared.DTOs
+@using AccountingSystem.Client.Services
+@using AccountingSystem.Client.Shared.Dialogs
+@using MudBlazor
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin,Accounting")]
+@inject PayableService PayableService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+<PageTitle>Vendor Bills</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
+    <MudTable Items="@bills" Dense="true" Hover="true" Bordered="true" Striped="true" Filter="new Func<BillDTO, bool>(FilterFunc)" Loading="@_loading">
+        <ToolBarContent>
+            <MudText Typo="Typo.h6">Vendor Bills</MudText>
+            <MudSpacer />
+            <MudTextField @bind-Value="searchString" Placeholder="Search bills..." Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" Href="/ap/bills" Class="ml-3">Create Bill</MudButton>
+        </ToolBarContent>
+        <HeaderContent>
+            <MudTh>Ref #</MudTh>
+            <MudTh>Vendor</MudTh>
+            <MudTh>Due Date</MudTh>
+            <MudTh Style="text-align:right">Total</MudTh>
+            <MudTh Style="text-align:right">Balance</MudTh>
+            <MudTh>Status</MudTh>
+            <MudTh>Action</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Ref">@context.ReferenceNumber</MudTd>
+            <MudTd DataLabel="Vendor">@context.VendorName</MudTd>
+            <MudTd DataLabel="Due Date">@context.DueDate.ToShortDateString()</MudTd>
+            <MudTd DataLabel="Total" Style="text-align:right">@context.Amount.ToString("N2")</MudTd>
+            <MudTd DataLabel="Balance" Style="text-align:right; font-weight:bold;">@context.Balance.ToString("N2")</MudTd>
+            <MudTd DataLabel="Status">
+                @if (context.Status == "Paid")
+                {
+                    <MudChip T="string" Size="Size.Small" Color="Color.Success">Paid</MudChip>
+                }
+                else if (context.Status == "Partially Paid")
+                {
+
+                    <MudChip T="string" Size="Size.Small" Color="Color.Warning">Partial</MudChip>
+                }
+                else
+                {
+
+                    <MudChip T="string" Size="Size.Small" Color="Color.Error">Unpaid</MudChip>
+                }
+            </MudTd>
+            <MudTd>
+                @if (context.Balance > 0)
+                {
+                    <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Warning" OnClick="@(() => OpenPayDialog(context))">Pay</MudButton>
+                }
+            </MudTd>
+        </RowTemplate>
+        <PagerContent><MudTablePager /></PagerContent>
+    </MudTable>
+</MudContainer>
+
+@code {
+    private List<BillDTO> bills = new List<BillDTO>();
+    private string searchString = "";
+    private bool _loading = true;
+
+    protected override async Task OnInitializedAsync() => await LoadData();
+
+    private async Task LoadData()
+    {
+        _loading = true;
+        try { bills = await PayableService.GetBillsAsync(); }
+        catch (Exception ex) { Snackbar.Add(ex.Message, Severity.Error); }
+        finally { _loading = false; }
+    }
+
+    private async Task OpenPayDialog(BillDTO bill)
+    {
+        var parameters = new DialogParameters { ["Bill"] = bill };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<PayBillDialog>("Record Payment", parameters, options);
+        var result = await dialog.Result;
+        if (!result.Canceled) await LoadData();
+    }
+
+    private bool FilterFunc(BillDTO element) =>
+        string.IsNullOrWhiteSpace(searchString) ||
+        element.ReferenceNumber.Contains(searchString, StringComparison.OrdinalIgnoreCase) ||
+        element.VendorName.Contains(searchString, StringComparison.OrdinalIgnoreCase);
+}

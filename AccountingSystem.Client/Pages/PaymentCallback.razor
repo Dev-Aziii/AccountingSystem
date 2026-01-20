@@ -1,0 +1,80 @@
+﻿@page "/payment-callback"
+@using AccountingSystem.Shared.DTOs
+@using AccountingSystem.Client.Services
+@using MudBlazor
+@inject ReceivableService ReceivableService
+@inject NavigationManager NavManager
+@inject ISnackbar Snackbar
+
+<MudContainer MaxWidth="MaxWidth.Small" Class="mt-16 text-center">
+    @if (isVerifying)
+    {
+        <MudProgressCircular Color="Color.Primary" Size="Size.Large" Indeterminate="true" Class="mb-4" />
+        <MudText Typo="Typo.h5">Verifying Payment...</MudText>
+        <MudText>Please wait while we confirm with PayMongo.</MudText>
+    }
+    else if (isSuccess)
+    {
+        <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" Style="font-size: 5rem;" Class="mb-4" />
+        <MudText Typo="Typo.h4" Color="Color.Success">Payment Successful!</MudText>
+        <MudText Class="mb-4">Your payment has been recorded.</MudText>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="/ar/invoices/list">Return to Invoices</MudButton>
+    }
+    else
+    {
+        <MudIcon Icon="@Icons.Material.Filled.Error" Color="Color.Error" Style="font-size: 5rem;" Class="mb-4" />
+        <MudText Typo="Typo.h4" Color="Color.Error">Payment Failed</MudText>
+        <MudText Class="mb-4">@errorMessage</MudText>
+        <MudButton Variant="Variant.Filled" Color="Color.Secondary" Href="/ar/invoices/list">Back to List</MudButton>
+    }
+</MudContainer>
+
+@code {
+    [SupplyParameterFromQuery] public int InvoiceId { get; set; }
+    [SupplyParameterFromQuery] public int AccountId { get; set; }
+    [SupplyParameterFromQuery] public decimal Amount { get; set; }
+    [SupplyParameterFromQuery(Name = "source_id")] public string SourceId { get; set; } // Passed by PayMongo
+
+    private bool isVerifying = true;
+    private bool isSuccess = false;
+    private string errorMessage = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (string.IsNullOrEmpty(SourceId))
+        {
+            isVerifying = false;
+            errorMessage = "Invalid Payment Reference.";
+            return;
+        }
+
+        try
+        {
+            // Call API to Verify and Record
+            var paymentDto = new RecordPaymentDTO
+            {
+                ReferenceId = InvoiceId,
+                AssetAccountId = AccountId,
+                Amount = Amount,
+                PaymentMethod = "Online (PayMongo)",
+                ReferenceNumber = SourceId,
+                PaymentDate = DateTime.Now,
+                SourceId = SourceId // Send this for backend verification/tracking
+            };
+
+            await ReceivableService.ReceivePaymentAsync(paymentDto);
+
+            isSuccess = true;
+            Snackbar.Add("Payment Verified & Recorded!", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "Verification Failed: " + ex.Message;
+            Snackbar.Add(errorMessage, Severity.Error);
+        }
+        finally
+        {
+            isVerifying = false;
+        }
+    }
+}

@@ -1,5 +1,5 @@
-﻿using AccountingSystem.Shared.DTOs;
-using AccountingSystem.API.Models;
+﻿using AccountingSystem.API.Models;
+using AccountingSystem.Shared.DTOs;
 
 namespace AccountingSystem.API.Services.Interfaces
 {
@@ -12,13 +12,15 @@ namespace AccountingSystem.API.Services.Interfaces
 
     public interface IPayableService
     {
+        Task<List<VendorDTO>> GetVendorsAsync();
         Task<Bill> CreateBillAsync(CreateBillDTO billDto);
-        Task<Payment> PayBillAsync(int billId, decimal amount, string paymentMethod, string userId);
+        Task<Payment> PayBillAsync(RecordPaymentDTO paymentDto, string userId);
     }
 
     public interface IReceivableService
     {
+        Task<List<CustomerDTO>> GetCustomersAsync();
         Task<Invoice> CreateInvoiceAsync(CreateInvoiceDTO invoiceDto);
-        Task<Payment> ReceivePaymentAsync(int invoiceId, decimal amount, string paymentMethod, string userId);
+        Task<Payment> ReceivePaymentAsync(RecordPaymentDTO paymentDto, string userId);
     }
 }

@@ -86,7 +86,30 @@ namespace AccountingSystem.API.Controllers
             return Ok(new { message = "Vendor deleted" });
         }
 
-        // ... Keep existing Bill endpoints (CreateBill, PayBill) ...
+        // Bill Endpoits
+        [HttpGet("bills")]
+        public async Task<IActionResult> GetBills()
+        {
+            var bills = await _context.Bills
+                .Include(b => b.Vendor)
+                .Select(b => new BillDTO
+                {
+                    Id = b.Id,
+                    VendorId = b.VendorId,
+                    VendorName = b.Vendor.Name,
+                    DueDate = b.DueDate,
+                    Amount = b.Amount,
+                    ReferenceNumber = b.ReferenceNumber,
+                    Description = b.Description,
+                    AmountPaid = b.AmountPaid,
+                    Status = b.Status
+                })
+                .OrderByDescending(b => b.DueDate)
+                .ToListAsync();
+
+            return Ok(bills);
+        }
+
         [HttpPost("bill")]
         public async Task<IActionResult> CreateBill([FromBody] CreateBillDTO billDto)
         {
@@ -95,12 +118,15 @@ namespace AccountingSystem.API.Controllers
         }
 
         [HttpPost("bill/{id}/pay")]
-        public async Task<IActionResult> PayBill(int id, [FromBody] ProcessPaymentDTO paymentDto)
+        public async Task<IActionResult> PayBill(int id, [FromBody] RecordPaymentDTO paymentDto)
         {
             try
             {
+                // Ensure the route ID matches the DTO ID for safety
+                if (id != paymentDto.ReferenceId) return BadRequest(new { error = "Mismatched Bill ID." });
+
                 var userId = User.Identity?.Name ?? "Admin";
-                var payment = await _payableService.PayBillAsync(id, paymentDto.Amount, paymentDto.PaymentMethod, userId);
+                var payment = await _payableService.PayBillAsync(paymentDto, userId);
                 return Ok(payment);
             }
             catch (Exception ex)
@@ -192,7 +218,28 @@ namespace AccountingSystem.API.Controllers
             return Ok(new { message = "Customer deleted" });
         }
 
-        // ... Existing Invoice Endpoints ...
+        //  Invoice Endpoints ...
+        [HttpGet("invoices")]
+        public async Task<IActionResult> GetInvoices()
+        {
+            var invoices = await _context.Invoices
+                .Include(i => i.Customer)
+                .Select(i => new InvoiceDTO
+                {
+                    Id = i.Id,
+                    CustomerId = i.CustomerId,
+                    CustomerName = i.Customer.Name,
+                    DueDate = i.DueDate,
+                    TotalAmount = i.TotalAmount,
+                    Description = i.Description,
+                    PaidAmount = i.PaidAmount,
+                    Status = i.Status
+                })
+                .OrderByDescending(i => i.DueDate)
+                .ToListAsync();
+
+            return Ok(invoices);
+        }
         [HttpPost("invoice")]
         public async Task<IActionResult> CreateInvoice([FromBody] CreateInvoiceDTO invoiceDto)
         {
@@ -201,12 +248,14 @@ namespace AccountingSystem.API.Controllers
         }
 
         [HttpPost("invoice/{id}/receive")]
-        public async Task<IActionResult> ReceivePayment(int id, [FromBody] ProcessPaymentDTO paymentDto)
+        public async Task<IActionResult> ReceivePayment(int id, [FromBody] RecordPaymentDTO paymentDto)
         {
             try
             {
+                if (id != paymentDto.ReferenceId) return BadRequest(new { error = "Mismatched Invoice ID." });
+
                 var userId = User.Identity?.Name ?? "Admin";
-                var payment = await _receivableService.ReceivePaymentAsync(id, paymentDto.Amount, paymentDto.PaymentMethod, userId);
+                var payment = await _receivableService.ReceivePaymentAsync(paymentDto, userId);
                 return Ok(payment);
             }
             catch (Exception ex)

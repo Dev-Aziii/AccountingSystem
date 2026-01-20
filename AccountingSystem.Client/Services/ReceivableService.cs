@@ -17,27 +17,11 @@ namespace AccountingSystem.Client.Services
             return await _api.GetAsync<List<CustomerDTO>>("api/receivables/customers");
         }
 
-        // --- NEW CRUD METHODS ---
-        public async Task<CustomerDTO> CreateCustomerAsync(CreateCustomerDTO customer)
+        // Fetch list of invoices
+        public async Task<List<InvoiceDTO>> GetInvoicesAsync()
         {
-            var response = await _api.PostAsync("api/receivables/customers", customer);
-            if (!response.IsSuccessStatusCode) throw new Exception(await response.Content.ReadAsStringAsync());
-
-            return await response.Content.ReadFromJsonAsync<CustomerDTO>();
+            return await _api.GetAsync<List<InvoiceDTO>>("api/receivables/invoices");
         }
-
-        public async Task UpdateCustomerAsync(UpdateCustomerDTO customer)
-        {
-            var response = await _api.PutAsync($"api/receivables/customers/{customer.Id}", customer);
-            if (!response.IsSuccessStatusCode) throw new Exception(await response.Content.ReadAsStringAsync());
-        }
-
-        public async Task DeleteCustomerAsync(int id)
-        {
-            var response = await _api.DeleteAsync($"api/receivables/customers/{id}");
-            if (!response.IsSuccessStatusCode) throw new Exception(await response.Content.ReadAsStringAsync());
-        }
-        // ------------------------
 
         public async Task CreateInvoiceAsync(CreateInvoiceDTO invoiceDto)
         {
@@ -49,14 +33,33 @@ namespace AccountingSystem.Client.Services
             }
         }
 
-        public async Task ReceivePaymentAsync(int invoiceId, ProcessPaymentDTO paymentDto)
+        // RecordPaymentDTO
+        public async Task ReceivePaymentAsync(RecordPaymentDTO paymentDto)
         {
-            var response = await _api.PostAsync($"api/receivables/invoice/{invoiceId}/receive", paymentDto);
+            var response = await _api.PostAsync($"api/receivables/invoice/{paymentDto.ReferenceId}/receive", paymentDto);
             if (!response.IsSuccessStatusCode)
             {
                 var error = await response.Content.ReadAsStringAsync();
                 throw new Exception(error);
             }
+        }
+
+        // CRUD for Customers
+        public async Task<CustomerDTO> CreateCustomerAsync(CreateCustomerDTO customer)
+        {
+            var response = await _api.PostAsync("api/receivables/customers", customer);
+            if (!response.IsSuccessStatusCode) throw new Exception(await response.Content.ReadAsStringAsync());
+            return await response.Content.ReadFromJsonAsync<CustomerDTO>();
+        }
+        public async Task UpdateCustomerAsync(UpdateCustomerDTO customer)
+        {
+            var response = await _api.PutAsync($"api/receivables/customers/{customer.Id}", customer);
+            if (!response.IsSuccessStatusCode) throw new Exception(await response.Content.ReadAsStringAsync());
+        }
+        public async Task DeleteCustomerAsync(int id)
+        {
+            var response = await _api.DeleteAsync($"api/receivables/customers/{id}");
+            if (!response.IsSuccessStatusCode) throw new Exception(await response.Content.ReadAsStringAsync());
         }
     }
 }

@@ -1,0 +1,90 @@
+﻿@page "/ar/invoices/list"
+@using AccountingSystem.Shared.DTOs
+@using AccountingSystem.Client.Services
+@using AccountingSystem.Client.Shared.Dialogs
+@using MudBlazor
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin,Accounting")]
+@inject ReceivableService ReceivableService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+<PageTitle>Customer Invoices</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
+    <MudTable Items="@invoices" Dense="true" Hover="true" Bordered="true" Striped="true" Filter="new Func<InvoiceDTO, bool>(FilterFunc)" Loading="@_loading">
+        <ToolBarContent>
+            <MudText Typo="Typo.h6">Customer Invoices</MudText>
+            <MudSpacer />
+            <MudTextField @bind-Value="searchString" Placeholder="Search invoices..." Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+            <MudButton Variant="Variant.Filled" Color="Color.Info" StartIcon="@Icons.Material.Filled.Add" Href="/ar/invoices" Class="ml-3">Create Invoice</MudButton>
+        </ToolBarContent>
+        <HeaderContent>
+            <MudTh>ID</MudTh>
+            <MudTh>Customer</MudTh>
+            <MudTh>Due Date</MudTh>
+            <MudTh Style="text-align:right">Total</MudTh>
+            <MudTh Style="text-align:right">Balance</MudTh>
+            <MudTh>Status</MudTh>
+            <MudTh>Action</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="ID">@context.Id</MudTd>
+            <MudTd DataLabel="Customer">@context.CustomerName</MudTd>
+            <MudTd DataLabel="Due Date">@context.DueDate.ToShortDateString()</MudTd>
+            <MudTd DataLabel="Total" Style="text-align:right">@context.TotalAmount.ToString("N2")</MudTd>
+            <MudTd DataLabel="Balance" Style="text-align:right; font-weight:bold;">@context.Balance.ToString("N2")</MudTd>
+            <MudTd DataLabel="Status">
+                @if (context.Status == "Paid")
+                {
+                    <MudChip T="string" Size="Size.Small" Color="Color.Success">Paid</MudChip>
+                }
+                else if (context.Status == "Partially Paid")
+                {
+
+                    <MudChip T="string" Size="Size.Small" Color="Color.Warning">Partial</MudChip>
+                }
+                else
+                {
+
+                    <MudChip T="string" Size="Size.Small" Color="Color.Error">Unpaid</MudChip>
+                }
+            </MudTd>
+            <MudTd>
+                @if (context.Balance > 0)
+                {
+                    <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Success" OnClick="@(() => OpenReceiveDialog(context))">Receive</MudButton>
+                }
+            </MudTd>
+        </RowTemplate>
+        <PagerContent><MudTablePager /></PagerContent>
+    </MudTable>
+</MudContainer>
+
+@code {
+    private List<InvoiceDTO> invoices = new List<InvoiceDTO>();
+    private string searchString = "";
+    private bool _loading = true;
+
+    protected override async Task OnInitializedAsync() => await LoadData();
+
+    private async Task LoadData()
+    {
+        _loading = true;
+        try { invoices = await ReceivableService.GetInvoicesAsync(); }
+        catch (Exception ex) { Snackbar.Add(ex.Message, Severity.Error); }
+        finally { _loading = false; }
+    }
+
+    private async Task OpenReceiveDialog(InvoiceDTO invoice)
+    {
+        var parameters = new DialogParameters { ["Invoice"] = invoice };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<ReceivePaymentDialog>("Receive Payment", parameters, options);
+        var result = await dialog.Result;
+        if (!result.Canceled) await LoadData();
+    }
+
+    private bool FilterFunc(InvoiceDTO element) =>
+        string.IsNullOrWhiteSpace(searchString) ||
+        element.CustomerName.Contains(searchString, StringComparison.OrdinalIgnoreCase);
+}

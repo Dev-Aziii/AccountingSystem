@@ -2,12 +2,41 @@
 
 namespace AccountingSystem.Shared.DTOs
 {
+    // --- INTERNAL PAYMENT RECORDING ---
+    public class RecordPaymentDTO
+    {
+        public int ReferenceId { get; set; } // InvoiceId or BillId
+        public decimal Amount { get; set; }
+        public DateTime PaymentDate { get; set; } = DateTime.Now;
+        public string PaymentMethod { get; set; } = string.Empty;
+
+        // FIX: Made nullable to prevent "Field is Required" validation errors on empty inputs
+        public string? ReferenceNumber { get; set; }
+        public int AssetAccountId { get; set; }
+        public string? Remarks { get; set; }
+
+        // FIX: Made nullable because Cash/Check payments won't have a PayMongo SourceId
+        public string? SourceId { get; set; }
+    }
+
+    public class PaymentHistoryDTO
+    {
+        public int Id { get; set; }
+        public DateTime Date { get; set; }
+        public decimal Amount { get; set; }
+        public string Method { get; set; }
+        public string? ReferenceNumber { get; set; }
+        public string AccountName { get; set; }
+    }
+
     // --- REQUESTS ---
     public class CreateSourceDTO
     {
-        public decimal Amount { get; set; } // In Pesos (e.g. 100.00)
-        public string Description { get; set; } // e.g., "Invoice #1001"
-        public string Remarks { get; set; } // Internal Ref ID
+        public decimal Amount { get; set; }
+        public string Description { get; set; }
+        public string? Remarks { get; set; }
+        public string? SuccessUrl { get; set; }
+        public string? FailedUrl { get; set; }
     }
 
     // --- PAYMONGO API MODELS ---
@@ -26,10 +55,10 @@ namespace AccountingSystem.Shared.DTOs
     public class SourceAttributes
     {
         [JsonPropertyName("amount")]
-        public int Amount { get; set; } // In Cents (e.g. 10000)
+        public int Amount { get; set; }
 
         [JsonPropertyName("type")]
-        public string Type { get; set; } = "gcash"; // Defaulting to GCash for demo
+        public string Type { get; set; } = "gcash";
 
         [JsonPropertyName("currency")]
         public string Currency { get; set; } = "PHP";
@@ -49,7 +78,6 @@ namespace AccountingSystem.Shared.DTOs
         [JsonPropertyName("failed")]
         public string Failed { get; set; }
 
-        // FIX: Added checkout_url mapping
         [JsonPropertyName("checkout_url")]
         public string CheckoutUrl { get; set; }
     }

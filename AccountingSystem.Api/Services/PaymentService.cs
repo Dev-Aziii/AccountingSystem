@@ -15,7 +15,6 @@ namespace AccountingSystem.API.Services
             _configuration = configuration;
             _httpClient = new HttpClient();
 
-            // Set Base URL
             _httpClient.BaseAddress = new Uri("https://api.paymongo.com/v1/");
 
             var secretKey = _configuration["PayMongo:SecretKey"];
@@ -24,27 +23,36 @@ namespace AccountingSystem.API.Services
                 new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", authHeader);
         }
 
+        // Implementation of the original interface method (kept for backward compatibility if needed)
         public async Task<string> CreatePaymentSourceAsync(decimal amount, string description, string remarks)
         {
-            // 1. Build Payload
+            // Forward to the new method with default/dummy URLs if called directly
+            return await CreatePaymentSourceAsync(new CreateSourceDTO
+            {
+                Amount = amount,
+                Description = description,
+                Remarks = remarks
+            });
+        }
+
+        // Overload to accept DTO with dynamic URLs
+        public async Task<string> CreatePaymentSourceAsync(CreateSourceDTO dto)
+        {
             var request = new PayMongoSourceRequest
             {
                 Data = new SourceData
                 {
                     Attributes = new SourceAttributes
                     {
-                        Amount = (int)(amount * 100), // Convert to cents
+                        Amount = (int)(dto.Amount * 100),
                         Type = "gcash",
                         Redirect = new RedirectUrls
                         {
-                            Success = "https://localhost:7150/ar/receive-payment", // Frontend Redirect
-                            Failed = "https://localhost:7150/ar/receive-payment"
+                            // Use Client-provided URL or Fallback
+                            Success = dto.SuccessUrl ?? "https://localhost:7150/success",
+                            Failed = dto.FailedUrl ?? "https://localhost:7150/failed"
                         },
-                        Billing = new BillingInfo
-                        {
-                            Name = "System User",
-                            Email = "user@example.com"
-                        }
+                        Billing = new BillingInfo { Name = "System User", Email = "user@example.com" }
                     }
                 }
             };
@@ -52,25 +60,15 @@ namespace AccountingSystem.API.Services
             var json = JsonSerializer.Serialize(request);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-            // 2. Call PayMongo API
             var response = await _httpClient.PostAsync("sources", content);
             var responseString = await response.Content.ReadAsStringAsync();
 
-            if (!response.IsSuccessStatusCode)
-            {
-                throw new Exception($"PayMongo API Error: {responseString}");
-            }
+            if (!response.IsSuccessStatusCode) throw new Exception($"PayMongo API Error: {responseString}");
 
-            // 3. Extract Checkout URL
             var result = JsonSerializer.Deserialize<PayMongoSourceResponse>(responseString);
-
             return result.Data.Attributes.Redirect.CheckoutUrl;
         }
 
-        public bool VerifyWebhookSignature(string signature, string payload)
-        {
-            // In production, implement HMAC verification here
-            return true;
-        }
+        public bool VerifyWebhookSignature(string signature, string payload) => true;
     }
 }

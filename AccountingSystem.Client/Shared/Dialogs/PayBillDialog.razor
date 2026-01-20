@@ -1,0 +1,101 @@
+﻿@using AccountingSystem.Shared.DTOs
+@using AccountingSystem.Client.Services
+@using AccountingSystem.Client.Shared.Components
+@using MudBlazor
+@inject PayableService PayableService
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        <MudText Typo="Typo.subtitle1" Class="mb-2"><b>Ref:</b> @Bill.ReferenceNumber</MudText>
+        <MudText Typo="Typo.body2" Class="mb-4">Current Balance: <b>@Bill.Balance.ToString("N2")</b></MudText>
+
+        <MudForm @ref="form" @bind-IsValid="@success">
+            <MudGrid>
+                <MudItem xs="12" sm="6">
+                    <MudDatePicker Label="Payment Date" @bind-Date="date" Variant="Variant.Outlined" Required="true" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudNumericField Label="Amount to Pay" @bind-Value="model.Amount" Format="N2" Variant="Variant.Outlined" Min="0.01M" Max="@Bill.Balance" Required="true" />
+                </MudItem>
+
+                <MudItem xs="12">
+                    <AccountSelect @bind-SelectedAccountId="model.AssetAccountId" TypeFilter="Asset" />
+                    <MudText Typo="Typo.caption" Color="Color.Info">Select the Cash/Bank account to withdraw funds from.</MudText>
+                </MudItem>
+
+                <MudItem xs="12" sm="6">
+                    <MudSelect T="string" Label="Method" @bind-Value="model.PaymentMethod" Variant="Variant.Outlined" Required="true" AnchorOrigin="Origin.BottomCenter">
+                        <MudSelectItem Value="@("Cash")" />
+                        <MudSelectItem Value="@("Check")" />
+                        <MudSelectItem Value="@("Bank Transfer")" />
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudTextField Label="Reference #" @bind-Value="model.ReferenceNumber" Variant="Variant.Outlined" Placeholder="Check No. / Trans ID" />
+                </MudItem>
+
+                <MudItem xs="12">
+                    <MudTextField Label="Remarks" @bind-Value="model.Remarks" Variant="Variant.Outlined" Lines="2" />
+                </MudItem>
+            </MudGrid>
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Warning" Variant="Variant.Filled" OnClick="Submit" Disabled="@(!success || isSubmitting)">
+            @(isSubmitting ? "Processing..." : "Pay Bill")
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; }
+    [Parameter] public BillDTO Bill { get; set; }
+
+    private RecordPaymentDTO model = new RecordPaymentDTO();
+    private DateTime? date = DateTime.Today;
+    private MudForm form;
+    private bool success;
+    private bool isSubmitting;
+
+    protected override void OnInitialized()
+    {
+        model.ReferenceId = Bill.Id;
+        model.Amount = Bill.Balance; // Default to full payment
+        model.PaymentMethod = "Cash";
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private async Task Submit()
+    {
+        await form.Validate();
+        if (!form.IsValid) return;
+
+        // Manual validation for Account Select
+        if (model.AssetAccountId == 0)
+        {
+            Snackbar.Add("Please select a Source Account.", Severity.Error);
+            return;
+        }
+
+        isSubmitting = true;
+        model.PaymentDate = date ?? DateTime.Today;
+
+        try
+        {
+            await PayableService.PayBillAsync(model);
+            Snackbar.Add("Payment recorded successfully.", Severity.Success);
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+}

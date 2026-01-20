@@ -35,6 +35,20 @@ namespace AccountingSystem.Shared.DTOs
     }
 
     // --- PAYABLES ---
+
+    public class BillDTO
+    {
+        public int Id { get; set; }
+        public int VendorId { get; set; }
+        public string VendorName { get; set; }
+        public DateTime DueDate { get; set; }
+        public decimal Amount { get; set; }
+        public string ReferenceNumber { get; set; }
+        public string Description { get; set; }
+        public decimal AmountPaid { get; set; }
+        public string Status { get; set; }
+        public decimal Balance => Amount - AmountPaid;
+    }
     public class CreateBillDTO
     {
         public int VendorId { get; set; }
@@ -46,6 +60,18 @@ namespace AccountingSystem.Shared.DTOs
     }
 
     // --- RECEIVABLES ---
+    public class InvoiceDTO
+    {
+        public int Id { get; set; }
+        public int CustomerId { get; set; }
+        public string CustomerName { get; set; }
+        public DateTime DueDate { get; set; }
+        public decimal TotalAmount { get; set; }
+        public string Description { get; set; }
+        public decimal PaidAmount { get; set; }
+        public string Status { get; set; }
+        public decimal Balance => TotalAmount - PaidAmount;
+    }
     public class CreateInvoiceDTO
     {
         public int CustomerId { get; set; }

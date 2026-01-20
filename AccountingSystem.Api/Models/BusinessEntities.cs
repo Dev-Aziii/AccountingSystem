@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace AccountingSystem.API.Models
 {
@@ -27,10 +28,19 @@ namespace AccountingSystem.API.Models
         public Vendor Vendor { get; set; }
 
         public DateTime DueDate { get; set; }
-        public decimal Amount { get; set; }
-        public decimal AmountPaid { get; set; }
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal Amount { get; set; } // Original Total
+
         public string ReferenceNumber { get; set; }
-        public bool IsPaid { get; set; } = false;
+        public string Description { get; set; }
+
+        // Payment Tracking
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal AmountPaid { get; set; } = 0;
+        public string Status { get; set; } = "Unpaid"; // Unpaid, Partial, Paid
+
+        [NotMapped]
+        public decimal Balance => Amount - AmountPaid;
     }
 
     // --- ACCOUNTS RECEIVABLE ---
@@ -41,9 +51,18 @@ namespace AccountingSystem.API.Models
         public Customer Customer { get; set; }
 
         public DateTime DueDate { get; set; }
-        public decimal TotalAmount { get; set; }
-        public decimal PaidAmount { get; set; }
-        public string Status { get; set; } = "Unpaid"; // Unpaid, Paid, Overdue
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal TotalAmount { get; set; } // Original Total
+
+        public string Description { get; set; }
+
+        // Payment Tracking
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal PaidAmount { get; set; } = 0;
+        public string Status { get; set; } = "Unpaid"; // Unpaid, Partial, Paid
+
+        [NotMapped]
+        public decimal Balance => TotalAmount - PaidAmount;
     }
 
     // --- TRANSACTIONS ---
@@ -51,14 +70,25 @@ namespace AccountingSystem.API.Models
     {
         public int Id { get; set; }
         public DateTime Date { get; set; }
+        [Column(TypeName = "decimal(18,2)")]
         public decimal Amount { get; set; }
 
-        public string PaymentMethod { get; set; } // Cash, Bank, PayMongo
-        public string ReferenceId { get; set; } // PayMongo ID
-        public string Type { get; set; } // Incoming (AR), Outgoing (AP)
+        public string PaymentMethod { get; set; } // Cash, Check, Online
+        public string ReferenceNumber { get; set; } // Check # or PayMongo Ref
+        public string Remarks { get; set; }
 
-        public int? InvoiceId { get; set; } // Linked AR
-        public int? BillId { get; set; }    // Linked AP
+        public string Type { get; set; } // "Incoming" (AR) or "Outgoing" (AP)
+
+        // GL Integration: Which Asset Account was hit? (e.g., Cash on Hand)
+        public int? AccountId { get; set; }
+        public Account Account { get; set; }
+
+        // Links
+        public int? InvoiceId { get; set; } // For AR
+        public Invoice Invoice { get; set; }
+
+        public int? BillId { get; set; }    // For AP
+        public Bill Bill { get; set; }
     }
 
     // --- SECURITY ---
@@ -66,10 +96,10 @@ namespace AccountingSystem.API.Models
     {
         public int Id { get; set; }
         public string UserId { get; set; }
-        public string Action { get; set; } // POST, PUT, DELETE
-        public string EntityName { get; set; } // JournalEntry, Invoice
+        public string Action { get; set; }
+        public string EntityName { get; set; }
         public string EntityId { get; set; }
         public DateTime Timestamp { get; set; } = DateTime.UtcNow;
-        public string Changes { get; set; } // JSON Payload
+        public string Changes { get; set; }
     }
 }

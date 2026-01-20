@@ -1,0 +1,149 @@
+﻿@using AccountingSystem.Shared.DTOs
+@using AccountingSystem.Client.Services
+@using AccountingSystem.Client.Shared.Components
+@using MudBlazor
+@inject ReceivableService ReceivableService
+@inject IPaymentClientService PaymentService
+@inject ISnackbar Snackbar
+@inject NavigationManager NavManager
+
+<MudDialog>
+    <DialogContent>
+        <MudText Typo="Typo.subtitle1" Class="mb-2"><b>Customer:</b> @Invoice.CustomerName</MudText>
+        <MudText Typo="Typo.body2" Class="mb-4">Invoice Balance: <b>@Invoice.Balance.ToString("N2")</b></MudText>
+
+        <MudForm @ref="form" @bind-IsValid="@success">
+            <MudGrid>
+                <!-- Method Selection First to toggle logic -->
+                <MudItem xs="12" sm="6">
+                    <MudSelect T="string" Label="Method" @bind-Value="model.PaymentMethod" Variant="Variant.Outlined" Required="true" AnchorOrigin="Origin.BottomCenter">
+                        <MudSelectItem Value="@("Cash")" />
+                        <MudSelectItem Value="@("Check")" />
+                        <MudSelectItem Value="@("Online")">Online (PayMongo)</MudSelectItem>
+                    </MudSelect>
+                </MudItem>
+
+                <MudItem xs="12" sm="6">
+                    <MudNumericField Label="Amount Received" @bind-Value="model.Amount" Format="N2" Variant="Variant.Outlined" Min="0.01M" Max="@Invoice.Balance" Required="true" />
+                </MudItem>
+
+                <MudItem xs="12">
+                    <!-- Note: TypeFilter="Asset" ensures we only see Cash/Bank accounts -->
+                    <AccountSelect @bind-SelectedAccountId="model.AssetAccountId" TypeFilter="Asset" />
+
+                    @if (model.AssetAccountId == 0)
+                    {
+                        <MudText Typo="Typo.caption" Color="Color.Error">Required</MudText>
+                    }
+                    else
+                    {
+                        <MudText Typo="Typo.caption" Color="Color.Info">
+                            @(model.PaymentMethod == "Online" ? "Account for PayMongo settlement" : "Destination Account (Cash/Bank)")
+                        </MudText>
+                    }
+                </MudItem>
+
+                @if (model.PaymentMethod != "Online")
+                {
+                    <MudItem xs="12" sm="6">
+                        <MudDatePicker Label="Payment Date" @bind-Date="date" Variant="Variant.Outlined" Required="true" />
+                    </MudItem>
+                    <MudItem xs="12" sm="6">
+                        <MudTextField Label="Reference #" @bind-Value="model.ReferenceNumber" Variant="Variant.Outlined" Placeholder="Check No." />
+                    </MudItem>
+                }
+
+                <MudItem xs="12">
+                    <MudTextField Label="Remarks" @bind-Value="model.Remarks" Variant="Variant.Outlined" Lines="2" />
+                </MudItem>
+            </MudGrid>
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Success" Variant="Variant.Filled" OnClick="Submit" Disabled="@(isSubmitting)">
+            @if (isSubmitting)
+            {
+                @("Processing...")
+            }
+            else if (model.PaymentMethod == "Online")
+            {
+                @("Generate Payment Link")
+            }
+            else
+            {
+                @("Receive Payment")
+            }
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; }
+    [Parameter] public InvoiceDTO Invoice { get; set; }
+
+    private RecordPaymentDTO model = new RecordPaymentDTO();
+    private DateTime? date = DateTime.Today;
+    private MudForm form;
+    private bool success;
+    private bool isSubmitting;
+
+    protected override void OnInitialized()
+    {
+        model.ReferenceId = Invoice.Id;
+        model.Amount = Invoice.Balance;
+        model.PaymentMethod = "Cash";
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private async Task Submit()
+    {
+        await form.Validate();
+        if (!form.IsValid) return;
+
+        // Manual Check for Account Select
+        if (model.AssetAccountId == 0)
+        {
+            Snackbar.Add("Please select a Destination Account.", Severity.Error);
+            return;
+        }
+
+        isSubmitting = true;
+
+        try
+        {
+            if (model.PaymentMethod == "Online")
+            {
+                // Construct Return URL with context (InvoiceId, AccountId)
+                var callbackUrl = NavManager.BaseUri + $"payment-callback?invoiceId={Invoice.Id}&accountId={model.AssetAccountId}&amount={model.Amount}";
+
+                var sourceDto = new CreateSourceDTO
+                {
+                    Amount = model.Amount,
+                    Description = $"Invoice #{Invoice.Id}",
+                    Remarks = model.Remarks,
+                    SuccessUrl = callbackUrl,
+                    FailedUrl = callbackUrl
+                };
+
+                var checkoutUrl = await PaymentService.CreatePaymentLinkAsync(sourceDto);
+
+                NavManager.NavigateTo(checkoutUrl, forceLoad: true);
+                MudDialog.Close(DialogResult.Ok(true));
+            }
+            else
+            {
+                model.PaymentDate = date ?? DateTime.Today;
+                await ReceivableService.ReceivePaymentAsync(model);
+                Snackbar.Add("Payment received successfully.", Severity.Success);
+                MudDialog.Close(DialogResult.Ok(true));
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+            isSubmitting = false;
+        }
+    }
+}

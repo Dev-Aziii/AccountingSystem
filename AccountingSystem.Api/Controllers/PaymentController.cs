@@ -2,6 +2,7 @@
 using AccountingSystem.Shared.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using AccountingSystem.API.Services; // Needed to cast to concrete class if interface isn't updated
 
 namespace AccountingSystem.API.Controllers
 {
@@ -12,23 +13,29 @@ namespace AccountingSystem.API.Controllers
         private readonly IPaymentService _paymentService;
         private readonly ILogger<PaymentController> _logger;
 
-        public PaymentController(
-            IPaymentService paymentService,
-            ILogger<PaymentController> logger)
+        public PaymentController(IPaymentService paymentService, ILogger<PaymentController> logger)
         {
             _paymentService = paymentService;
             _logger = logger;
         }
 
-        // INITIATE PAYMENT: Internal users only
         [HttpPost("paymongo-source")]
         [Authorize(Roles = "Admin,Accounting")]
         public async Task<IActionResult> CreateSource([FromBody] CreateSourceDTO request)
         {
             try
             {
-                var checkoutUrl = await _paymentService.CreatePaymentSourceAsync(request.Amount, request.Description, request.Remarks);
-                return Ok(new { checkoutUrl });
+                // Cast to concrete PaymentService to access the overload that takes DTO
+                // Ideally, update IPaymentService interface to include this method
+                if (_paymentService is PaymentService concreteService)
+                {
+                    var checkoutUrl = await concreteService.CreatePaymentSourceAsync(request);
+                    return Ok(new { checkoutUrl });
+                }
+
+                // Fallback if casting fails (shouldn't happen with standard DI)
+                var url = await _paymentService.CreatePaymentSourceAsync(request.Amount, request.Description, request.Remarks);
+                return Ok(new { checkoutUrl = url });
             }
             catch (Exception ex)
             {
@@ -36,8 +43,6 @@ namespace AccountingSystem.API.Controllers
             }
         }
 
-        // WEBHOOK: MUST BE PUBLIC (AllowAnonymous)
-        // PayMongo servers call this, and they do not have our JWT.
         [HttpPost("webhook")]
         [AllowAnonymous]
         public async Task<IActionResult> HandleWebhook()
@@ -54,7 +59,6 @@ namespace AccountingSystem.API.Controllers
             try
             {
                 _logger.LogInformation("Received Webhook from PayMongo");
-                // Webhook logic (Step 8 Phase 2)
                 return Ok();
             }
             catch (Exception ex)

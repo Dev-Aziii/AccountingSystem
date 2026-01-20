@@ -7,22 +7,21 @@
 @inject ISnackbar Snackbar
 
 <Microsoft.AspNetCore.Components.Authorization.AuthorizeView Roles="Admin,Accounting">
-    <MudAutocomplete T="AccountDTO"
-                     Label="Account"
-                     Value="_selectedAccount"
-                     ValueChanged="OnValueChanged"
-                     SearchFunc="@SearchAccounts"
-                     ToStringFunc="@(a => a == null ? null : $"{a.Code} - {a.Name} ({a.Type})")"
-                     Adornment="Adornment.End"
-                     AdornmentIcon="@Icons.Material.Filled.Add"
-                     OnAdornmentClick="OpenAddDialog"
-                     Variant="Variant.Outlined"
-                     Dense="true"
-                     Disabled="@(accounts == null)"
-                     Clearable="true"
-                     ResetValueOnEmptyText="true"
-                     CoerceText="true"
-                     CoerceValue="true" />
+    <MudSelect T="int" Label="Account" @bind-Value="InternalAccountId"
+               Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Add" OnAdornmentClick="OpenAddDialog"
+               Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter"
+               Dense="true" Disabled="@(accounts == null)" Clearable="true">
+
+        <MudSelectItem Value="0" Disabled="true">-- Select Account --</MudSelectItem>
+
+        @if (accounts != null)
+        {
+            foreach (var a in accounts)
+            {
+                <MudSelectItem Value="@a.Id">@a.Code - @a.Name (@a.Type)</MudSelectItem>
+            }
+        }
+    </MudSelect>
 </Microsoft.AspNetCore.Components.Authorization.AuthorizeView>
 
 @code {
@@ -31,58 +30,34 @@
     [Parameter] public string? TypeFilter { get; set; }
 
     private List<AccountDTO> accounts;
-    private AccountDTO _selectedAccount;
 
-    protected override async Task OnInitializedAsync() => await LoadAccounts();
-
-    protected override void OnParametersSet()
+    // Proxy property to handle binding reliably
+    private int InternalAccountId
     {
-        if (accounts != null)
+        get => SelectedAccountId;
+        set
         {
-            if (SelectedAccountId == 0)
+            if (SelectedAccountId != value)
             {
-                _selectedAccount = null;
-            }
-            else if (_selectedAccount?.Id != SelectedAccountId)
-            {
-                _selectedAccount = accounts.FirstOrDefault(a => a.Id == SelectedAccountId);
+                SelectedAccountId = value;
+                SelectedAccountIdChanged.InvokeAsync(value);
             }
         }
     }
+
+    protected override async Task OnInitializedAsync() => await LoadAccounts();
 
     private async Task LoadAccounts()
     {
         try
         {
             var all = await LedgerService.GetAccountsAsync();
+            // Filter accounts if TypeFilter is provided (e.g., only "Asset" accounts for payments)
             accounts = string.IsNullOrEmpty(TypeFilter)
                 ? all
                 : all.Where(a => a.Type.Equals(TypeFilter, StringComparison.OrdinalIgnoreCase)).ToList();
-
-            if (SelectedAccountId != 0 && accounts != null)
-            {
-                _selectedAccount = accounts.FirstOrDefault(a => a.Id == SelectedAccountId);
-            }
         }
         catch (Exception ex) { Console.WriteLine(ex.Message); }
-    }
-
-    private async Task OnValueChanged(AccountDTO value)
-    {
-        _selectedAccount = value;
-        SelectedAccountId = value?.Id ?? 0;
-        await SelectedAccountIdChanged.InvokeAsync(SelectedAccountId);
-    }
-
-    private async Task<IEnumerable<AccountDTO>> SearchAccounts(string value, CancellationToken token)
-    {
-        if (accounts == null) return new List<AccountDTO>();
-        if (string.IsNullOrEmpty(value)) return accounts;
-
-        return accounts.Where(x =>
-            x.Name.Contains(value, StringComparison.InvariantCultureIgnoreCase) ||
-            x.Code.Contains(value, StringComparison.InvariantCultureIgnoreCase)
-        );
     }
 
     private async Task OpenAddDialog()
