@@ -77,7 +77,7 @@ namespace AccountingSystem.API.Data
             context.Vendors.AddRange(
                 new Vendor { Name = "Meralco", Email = "bills@meralco.com.ph", ContactPerson = "Billing Dept" },
                 new Vendor { Name = "PLDT", Email = "help@pldt.com", ContactPerson = "Enterprise Support" },
-                new Vendor { Name = "Office Warehouse", Email = "sales@officewarehouse.com", ContactPerson = "Sales Rep" }
+                new Vendor { Name = "Water District", Email = "bills@water.com.ph", ContactPerson = "Sales Rep" }
             );
 
             context.Customers.AddRange(
@@ -86,7 +86,7 @@ namespace AccountingSystem.API.Data
                 new Customer { Name = "Juan Dela Cruz", Email = "juan@gmail.com", Phone = "0919-444-5555" }
             );
 
-            // 4. Initial Opening Balance (Optional)
+            /* 4. Initial Opening Balance (Optional)
             // Simple Journal Entry to start with some Cash and Equity
             var openingEntry = new JournalEntry
             {
@@ -102,6 +102,7 @@ namespace AccountingSystem.API.Data
                 }
             };
             context.JournalEntries.Add(openingEntry);
+            */
 
             await context.SaveChangesAsync();
         }

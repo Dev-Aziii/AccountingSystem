@@ -1,6 +1,7 @@
 using AccountingSystem.Client;
 using AccountingSystem.Client.Auth;
 using AccountingSystem.Client.Services;
+using AccountingSystem.Client.Services.Interfaces;
 using Blazored.LocalStorage;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Web;

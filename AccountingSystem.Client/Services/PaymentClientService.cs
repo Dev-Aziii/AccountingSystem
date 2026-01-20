@@ -1,4 +1,4 @@
-﻿using AccountingSystem.Client.Services;
+﻿using AccountingSystem.Client.Services.Interfaces;
 using AccountingSystem.Shared.DTOs;
 using System.Net.Http.Json;
 using System.Text.Json;
