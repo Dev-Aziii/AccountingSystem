@@ -1,6 +1,7 @@
 ﻿@* @page "/payments/new" *@
-@using AccountingSystem.Shared.DTOs
 @using AccountingSystem.Client.Services
+@using AccountingSystem.Client.Services.Interfaces
+@using AccountingSystem.Shared.DTOs
 @attribute [Microsoft.AspNetCore.Authorization.Authorize]
 @inject IPaymentClientService PaymentService
 @inject NavigationManager NavManager
