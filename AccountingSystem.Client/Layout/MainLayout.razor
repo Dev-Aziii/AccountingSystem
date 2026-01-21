@@ -5,8 +5,6 @@
 @inject AuthService AuthService
 @inject NavigationManager NavManager
 
-<!-- Providers removed from here and moved to App.razor -->
-
 <MudLayout>
     <MudAppBar Elevation="1" Color="Color.Primary">
         <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
@@ -15,7 +13,7 @@
 
         <AuthorizeView>
             <Authorized Context="authContext">
-                <MudText Class="mr-4">Welcome, @authContext.User.Identity?.Name</MudText>
+                <MudText Class="mr-4">Welcome, @(authContext.User.FindFirst("FullName")?.Value ?? authContext.User.Identity?.Name)</MudText>
                 <MudButton Variant="Variant.Outlined" Color="Color.Inherit" OnClick="Logout" StartIcon="@Icons.Material.Filled.Logout">
                     Logout
                 </MudButton>

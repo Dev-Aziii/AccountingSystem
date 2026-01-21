@@ -107,10 +107,11 @@ namespace AccountingSystem.API.Services
             {
                 Subject = new ClaimsIdentity(new[]
                 {
-                    new Claim(ClaimTypes.Name, user.Email), // Standard Name Claim
+                    new Claim(ClaimTypes.Name, user.Email),
                     new Claim(ClaimTypes.Role, user.Role.Name),
                     new Claim("UserId", user.Id.ToString()),
-                    new Claim("role", user.Role.Name) // Explicit role claim for client mapping
+                    new Claim("role", user.Role.Name), 
+                    new Claim("FullName", user.FullName ?? user.Email)
                 }),
                 Expires = DateTime.UtcNow.AddMinutes(double.Parse(_configuration["JwtSettings:ExpiryMinutes"])),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature),
