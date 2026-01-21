@@ -2,124 +2,349 @@
 @using AccountingSystem.Shared.DTOs
 @using AccountingSystem.Client.Services
 @using MudBlazor
-@using System.Globalization
+@using Heron.MudCalendar
 @attribute [Microsoft.AspNetCore.Authorization.Authorize]
+
 @inject ReportService ReportService
+@inject LedgerService LedgerService
+@inject PayableService PayableService
+@inject ReceivableService ReceivableService
 
 <PageTitle>Financial Dashboard</PageTitle>
 
-<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
-    <div class="d-flex justify-space-between align-center mb-4">
-        <MudText Typo="Typo.h4" Color="Color.Primary">Financial Overview</MudText>
-        <MudButton Variant="Variant.Outlined" Color="Color.Primary"
-                   StartIcon="@Icons.Material.Filled.Refresh"
-                   OnClick="LoadData">
-            Refresh Data
-        </MudButton>
-    </div>
+<style>
+    .kpi-card {
+        transition: all 0.2s ease-in-out;
+    }
+
+    .kpi-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 25px rgba(0,0,0,0.15);
+    }
+
+    .kpi-value {
+        font-size: 1.6rem;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+    }
+
+    .section-title {
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .peso::before {
+        content: "₱ ";
+    }
+</style>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-6 mb-10">
+
+    <!-- HEADER -->
+    <MudPaper Elevation="2" Class="pa-5 mb-6 rounded-xl">
+        <div class="d-flex justify-space-between align-center">
+            <div>
+                <MudText Typo="Typo.h4" Color="Color.Primary"><b>Executive Financial Dashboard</b></MudText>
+                <MudText Typo="Typo.body2" Class="mud-text-secondary">
+                    Live overview of liquidity, profitability, and obligations
+                </MudText>
+            </div>
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       StartIcon="@Icons.Material.Filled.Refresh"
+                       OnClick="LoadData">
+                Refresh
+            </MudButton>
+        </div>
+    </MudPaper>
 
     @if (isLoading)
     {
-        <div class="d-flex justify-center align-center" style="height: 200px;">
-            <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+        <div class="d-flex justify-center align-center" style="height: 300px;">
+            <MudProgressCircular Color="Color.Primary" Size="Size.Large" Indeterminate />
         </div>
     }
-    else if (trialBalance != null)
+    else
     {
-        <!-- KPI Cards -->
-        <MudGrid Class="mb-4">
-            <MudItem xs="12" sm="6" md="3">
-                <MudPaper Elevation="2" Class="pa-4 rounded-lg"
-                          Style="border-left: 6px solid var(--mud-palette-success);">
-                    <MudText Typo="Typo.subtitle2" Class="mud-text-secondary text-uppercase">
-                        Total Debits
-                    </MudText>
-                    <MudText Typo="Typo.h4" Color="Color.Success">
-                        @trialBalance.TotalDebit.ToString("C0", phCulture)
-                    </MudText>
+        <!-- KPI SECTION -->
+        <MudText Typo="Typo.h6" Class="section-title mb-3">
+            <MudIcon Icon="@Icons.Material.Filled.Dashboard" /> Key Performance Indicators
+        </MudText>
+
+        <MudGrid Class="mb-8">
+
+            <!-- CASH -->
+            <MudItem xs="12" sm="6" md="4">
+                <MudPaper Elevation="3"
+                          Class="pa-5 rounded-xl kpi-card"
+                          Style="border-top:4px solid var(--mud-palette-success);">
+
+                    <div class="d-flex justify-space-between align-center">
+                        <div>
+                            <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                                CASH ON HAND & BANK
+                            </MudText>
+
+                            <MudText Class="kpi-value peso">
+                                @CashBalance.ToString("N0")
+                            </MudText>
+
+                            <MudChip T="string"
+                                     Color="Color.Success"
+                                     Size="Size.Small"
+                                     Variant="Variant.Outlined">
+                                Available
+                            </MudChip>
+                        </div>
+
+                        <MudAvatar Color="Color.Success" Size="Size.Large">
+                            <MudIcon Icon="@Icons.Material.Filled.AttachMoney" />
+                        </MudAvatar>
+                    </div>
                 </MudPaper>
             </MudItem>
 
-            <MudItem xs="12" sm="6" md="3">
-                <MudPaper Elevation="2" Class="pa-4 rounded-lg"
-                          Style="border-left: 6px solid var(--mud-palette-info);">
-                    <MudText Typo="Typo.subtitle2" Class="mud-text-secondary text-uppercase">
-                        Total Credits
-                    </MudText>
-                    <MudText Typo="Typo.h4" Color="Color.Info">
-                        @trialBalance.TotalCredit.ToString("C0", phCulture)
-                    </MudText>
+            <!-- NET PROFIT -->
+            <MudItem xs="12" sm="6" md="4">
+                <MudPaper Elevation="3" Class="pa-5 rounded-xl kpi-card" Style="border-top:4px solid var(--mud-palette-primary);">
+                    <div class="d-flex justify-space-between align-center">
+                        <div>
+                            <MudText Typo="Typo.caption" Class="mud-text-secondary">NET PROFIT (YTD)</MudText>
+                            <MudText Class="kpi-value peso">@NetProfit.ToString("N0")</MudText>
+                            <MudText Typo="Typo.caption" Class="mud-text-secondary">Revenue - Expenses</MudText>
+                        </div>
+                        <MudAvatar Color="Color.Primary" Size="Size.Large">
+                            <MudIcon Icon="@Icons.Material.Filled.TrendingUp" />
+                        </MudAvatar>
+                    </div>
                 </MudPaper>
             </MudItem>
+
+            <!-- TOTAL ASSETS -->
+            <MudItem xs="12" sm="6" md="4">
+                <MudPaper Elevation="3"
+                          Class="pa-5 rounded-xl kpi-card"
+                          Style="border-top:4px solid var(--mud-palette-info);">
+
+                    <div class="d-flex justify-space-between align-center">
+                        <div>
+                            <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                                TOTAL ASSETS
+                            </MudText>
+
+                            <MudText Class="kpi-value peso">
+                                @TotalAssets.ToString("N0")
+                            </MudText>
+
+                            <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                                Company Resources
+                            </MudText>
+                        </div>
+
+                        <MudAvatar Color="Color.Info" Size="Size.Large">
+                            <MudIcon Icon="@Icons.Material.Filled.AccountBalance" />
+                        </MudAvatar>
+                    </div>
+                </MudPaper>
+            </MudItem>
+
+            <!-- ACCOUNTS RECEIVABLE -->
+            <MudItem xs="12" sm="6" md="4">
+                <MudPaper Elevation="3"
+                          Class="pa-5 rounded-xl kpi-card"
+                          Style="border-top:4px solid var(--mud-palette-warning);">
+
+                    <div class="d-flex justify-space-between align-center">
+                        <div>
+                            <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                                ACCOUNTS RECEIVABLE
+                            </MudText>
+
+                            <MudText Class="kpi-value peso">
+                                @ArOutstanding.ToString("N0")
+                            </MudText>
+
+                            <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                                Customer Balances
+                            </MudText>
+                        </div>
+
+                        <MudAvatar Color="Color.Warning" Size="Size.Large">
+                            <MudIcon Icon="@Icons.Material.Filled.AssignmentInd" />
+                        </MudAvatar>
+                    </div>
+                </MudPaper>
+            </MudItem>
+
+            <!-- ACCOUNTS PAYABLE -->
+            <MudItem xs="12" sm="6" md="4">
+                <MudPaper Elevation="3"
+                          Class="pa-5 rounded-xl kpi-card"
+                          Style="border-top:4px solid var(--mud-palette-error);">
+
+                    <div class="d-flex justify-space-between align-center">
+                        <div>
+                            <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                                ACCOUNTS PAYABLE
+                            </MudText>
+
+                            <MudText Class="kpi-value peso">
+                                @ApOutstanding.ToString("N0")
+                            </MudText>
+
+                            <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                                Vendor Bills
+                            </MudText>
+                        </div>
+
+                        <MudAvatar Color="Color.Error" Size="Size.Large">
+                            <MudIcon Icon="@Icons.Material.Filled.MoneyOff" />
+                        </MudAvatar>
+                    </div>
+                </MudPaper>
+            </MudItem>
+
+            <!-- TOTAL LIABILITIES -->
+            <MudItem xs="12" sm="6" md="4">
+                <MudPaper Elevation="3"
+                          Class="pa-5 rounded-xl kpi-card"
+                          Style="border-top:4px solid var(--mud-palette-dark);">
+
+                    <div class="d-flex justify-space-between align-center">
+                        <div>
+                            <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                                TOTAL LIABILITIES
+                            </MudText>
+
+                            <MudText Class="kpi-value peso">
+                                @TotalLiabilities.ToString("N0")
+                            </MudText>
+
+                            <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                                Total Obligations
+                            </MudText>
+                        </div>
+
+                        <MudAvatar Color="Color.Dark" Size="Size.Large">
+                            <MudIcon Icon="@Icons.Material.Filled.AccountBalanceWallet" />
+                        </MudAvatar>
+                    </div>
+                </MudPaper>
+            </MudItem>
+
         </MudGrid>
 
-        <!-- Trial Balance Preview -->
-        <MudPaper Elevation="2" Class="pa-4">
-            <div class="d-flex justify-space-between align-center mb-2">
-                <div>
-                    <MudText Typo="Typo.h6">Current Trial Balance</MudText>
-                    <MudText Typo="Typo.caption" Class="mud-text-secondary">
-                        As of @trialBalance.GeneratedAt.ToLocalTime()
+        <!-- LOWER SECTION -->
+        <MudGrid>
+
+            <!-- CALENDAR -->
+            <MudItem xs="12" md="8">
+                <MudPaper Elevation="2" Class="pa-5 rounded-xl mb-4">
+
+                    <MudText Typo="Typo.h6" Class="section-title mb-2">
+                        <MudIcon Icon="@Icons.Material.Filled.Event" /> Payment & Collection Schedule
                     </MudText>
-                </div>
-                @if (trialBalance.Accounts.Count > 10)
-                {
-                    <MudLink Href="reports/financials"
-                             Underline="Underline.None"
-                             Color="Color.Primary">
-                        View Full Report
-                    </MudLink>
-                }
-            </div>
 
-            <MudTable Items="@trialBalance.Accounts.Take(10)"
-                      Hover="true"
-                      Dense="true"
-                      Breakpoint="Breakpoint.None"
-                      Elevation="0">
-                <HeaderContent>
-                    <MudTh>Code</MudTh>
-                    <MudTh>Account Name</MudTh>
-                    <MudTh Style="text-align:right">Debit</MudTh>
-                    <MudTh Style="text-align:right">Credit</MudTh>
-                </HeaderContent>
+                    <div class="d-flex gap-6 mb-3">
+                        <div class="d-flex align-center">
+                            <MudIcon Icon="@Icons.Material.Filled.Circle"
+                                     Color="Color.Success"
+                                     Size="Size.Small"
+                                     Class="mr-1" /> Invoices
+                        </div>
+                        <div class="d-flex align-center">
+                            <MudIcon Icon="@Icons.Material.Filled.Circle"
+                                     Color="Color.Error"
+                                     Size="Size.Small"
+                                     Class="mr-1" /> Bills
+                        </div>
+                    </div>
 
-                <RowTemplate>
-                    <MudTd DataLabel="Code">
-                        <b>@context.AccountCode</b>
-                    </MudTd>
+                    <MudCalendar Items="_events"
+                                 MonthCellMinHeight="70"
+                                 Elevation="0"
+                                 Outlined />
+                </MudPaper>
+            </MudItem>
 
-                    <MudTd DataLabel="Account Name">
-                        @context.AccountName
-                    </MudTd>
+            <!-- LEDGER SNAPSHOT -->
+            <MudItem xs="12" md="4">
+                <MudPaper Elevation="2" Class="pa-5 rounded-xl">
 
-                    <MudTd DataLabel="Debit" Style="text-align:right">
-                        <MudText Color="@(context.Debit > 0 ? Color.Success : Color.Default)">
-                            @(context.Debit > 0
-                                ? context.Debit.ToString("C2", phCulture)
-                                : "-")
-                        </MudText>
-                    </MudTd>
+                    <MudText Typo="Typo.h6" Class="section-title mb-2">
+                        <MudIcon Icon="@Icons.Material.Filled.List" /> Ledger Snapshot
+                    </MudText>
 
-                    <MudTd DataLabel="Credit" Style="text-align:right">
-                        <MudText Color="@(context.Credit > 0 ? Color.Info : Color.Default)">
-                            @(context.Credit > 0
-                                ? context.Credit.ToString("C2", phCulture)
-                                : "-")
-                        </MudText>
-                    </MudTd>
-                </RowTemplate>
-            </MudTable>
-        </MudPaper>
+                    <MudDivider Class="mb-2" />
+
+                    <MudTable Items="@(trialBalance?.Accounts.Take(8))"
+                              Dense
+                              Hover
+                              Elevation="0">
+
+                        <HeaderContent>
+                            <MudTh>Account</MudTh>
+                            <MudTh Align="Align.Right">Balance (₱)</MudTh>
+                        </HeaderContent>
+
+                        <RowTemplate>
+                            <MudTd>
+                                <MudText Typo="Typo.body2">@context.AccountName</MudText>
+                                <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                                    @context.AccountCode
+                                </MudText>
+                            </MudTd>
+
+                            <MudTd Align="Align.Right">
+                                @((context.Debit - context.Credit).ToString("N0"))
+                            </MudTd>
+                        </RowTemplate>
+
+                    </MudTable>
+
+                    <div class="text-center mt-4">
+                        <MudButton Variant="Variant.Filled"
+                                   Color="Color.Primary"
+                                   Href="reports/financials"
+                                   StartIcon="@Icons.Material.Filled.Assessment">
+                            View Financial Reports
+                        </MudButton>
+                    </div>
+
+                </MudPaper>
+            </MudItem>
+
+        </MudGrid>
     }
+
 </MudContainer>
 
 @code {
     private TrialBalanceDTO? trialBalance;
+    private Dictionary<string, string> accountTypes = new();
+    private List<CalendarItem> _events = new();
     private bool isLoading = false;
 
-    // Philippine Peso Culture
-    private readonly CultureInfo phCulture = new("en-PH");
+    // --- KPI Properties ---
+    private decimal CashBalance;
+    private decimal NetProfit;
+    private decimal ArOutstanding;
+    private decimal ApOutstanding;
+    private decimal TotalAssets;
+    private decimal TotalLiabilities;
+
+    // --- Dynamic Styling Helpers ---
+    private string NetProfitBorderColor =>
+        NetProfit >= 0
+            ? "var(--mud-palette-primary)"
+            : "var(--mud-palette-error)";
+
+    private string NetProfitTextColor =>
+        NetProfit >= 0
+            ? "var(--mud-palette-success)"
+            : "var(--mud-palette-error)";
 
     protected override async Task OnInitializedAsync()
     {
@@ -131,15 +356,86 @@
         isLoading = true;
         try
         {
-            trialBalance = await ReportService.GetTrialBalance();
+            var tbTask = ReportService.GetTrialBalance();
+            var acctsTask = LedgerService.GetAccountsAsync();
+            var billsTask = PayableService.GetBillsAsync();
+            var invoicesTask = ReceivableService.GetInvoicesAsync();
+
+            await Task.WhenAll(tbTask, acctsTask, billsTask, invoicesTask);
+
+            trialBalance = tbTask.Result;
+            var accountsList = acctsTask.Result;
+            accountTypes = accountsList.ToDictionary(a => a.Code, a => a.Type);
+
+            CalculateKPIs(trialBalance!.Accounts);
+
+            _events.Clear();
+
+            foreach (var bill in billsTask.Result.Where(b => b.Balance > 0))
+            {
+                _events.Add(new CalendarItem
+                {
+                    Start = bill.DueDate,
+                    Text = $"PAY: {bill.VendorName} (₱{bill.Balance:N0})"
+                });
+            }
+
+            foreach (var inv in invoicesTask.Result.Where(i => i.Balance > 0))
+            {
+                _events.Add(new CalendarItem
+                {
+                    Start = inv.DueDate,
+                    Text = $"COLLECT: {inv.CustomerName} (₱{inv.Balance:N0})"
+                });
+            }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error fetching data: {ex.Message}");
+            Console.WriteLine($"Dashboard Error: {ex.Message}");
         }
         finally
         {
             isLoading = false;
         }
+    }
+
+    private void CalculateKPIs(List<AccountBalanceDTO> balances)
+    {
+        decimal GetBalance(AccountBalanceDTO a)
+        {
+            if (!accountTypes.ContainsKey(a.AccountCode)) return 0;
+            var type = accountTypes[a.AccountCode];
+            return (type == "Asset" || type == "Expense")
+                ? a.Debit - a.Credit
+                : a.Credit - a.Debit;
+        }
+
+        CashBalance = balances
+            .Where(a => a.AccountCode == "1000" || a.AccountCode == "1010" || a.AccountCode == "1020")
+            .Sum(a => a.Debit - a.Credit);
+
+        var arAcct = balances.FirstOrDefault(a => a.AccountCode == "1100");
+        ArOutstanding = arAcct != null ? arAcct.Debit - arAcct.Credit : 0;
+
+        var apAcct = balances.FirstOrDefault(a => a.AccountCode == "2000");
+        ApOutstanding = apAcct != null ? apAcct.Credit - apAcct.Debit : 0;
+
+        TotalAssets = balances
+            .Where(a => accountTypes.ContainsKey(a.AccountCode) && accountTypes[a.AccountCode] == "Asset")
+            .Sum(a => a.Debit - a.Credit);
+
+        TotalLiabilities = balances
+            .Where(a => accountTypes.ContainsKey(a.AccountCode) && accountTypes[a.AccountCode] == "Liability")
+            .Sum(a => a.Credit - a.Debit);
+
+        var revenue = balances
+            .Where(a => accountTypes.ContainsKey(a.AccountCode) && accountTypes[a.AccountCode] == "Revenue")
+            .Sum(a => a.Credit - a.Debit);
+
+        var expense = balances
+            .Where(a => accountTypes.ContainsKey(a.AccountCode) && accountTypes[a.AccountCode] == "Expense")
+            .Sum(a => a.Debit - a.Credit);
+
+        NetProfit = revenue - expense;
     }
 }
