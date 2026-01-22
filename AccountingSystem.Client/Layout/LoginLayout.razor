@@ -1,15 +1,40 @@
 ﻿@inherits LayoutComponentBase
 
-<div class="login-page-container">
+<div class="login-layout">
     @Body
 </div>
 
 <style>
-    .login-page-container {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 100vh; 
-        background-color: #f8f9fa; 
+    .login-layout {
+        margin: 0;
+        padding: 0;
+        height: 100vh;
+        width: 100vw;
+        overflow-x: hidden;
+        background: #ffffff;
+        position: relative;
+    }
+
+    /* Subtle background texture for depth */
+    .login-layout::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: 
+            radial-gradient(circle at 20% 20%, rgba(22, 84, 127, 0.03) 0%, transparent 50%),
+            radial-gradient(circle at 80% 80%, rgba(56, 146, 147, 0.03) 0%, transparent 50%),
+            radial-gradient(circle at 40% 60%, rgba(22, 84, 127, 0.02) 0%, transparent 50%);
+        pointer-events: none;
+    }
+
+    /* Reset any conflicting styles */
+    .login-layout .mud-container {
+        margin: 0;
+        padding: 0;
+        max-width: none;
+        height: 100%;
     }
 </style>
