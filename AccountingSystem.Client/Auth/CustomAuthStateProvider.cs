@@ -23,15 +23,12 @@ namespace AccountingSystem.Client.Auth
                 return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
             }
 
-            // FIX: Explicitly tell ClaimsIdentity that the "role" key represents roles
             var identity = new ClaimsIdentity(ParseClaimsFromJwt(token), "jwt", "name", "role");
-
             return new AuthenticationState(new ClaimsPrincipal(identity));
         }
 
         public void NotifyUserAuthentication(string token)
         {
-            // FIX: Apply the same mapping here
             var identity = new ClaimsIdentity(ParseClaimsFromJwt(token), "jwt", "name", "role");
             var authState = Task.FromResult(new AuthenticationState(new ClaimsPrincipal(identity)));
             NotifyAuthenticationStateChanged(authState);
@@ -52,7 +49,6 @@ namespace AccountingSystem.Client.Auth
 
             foreach (var kvp in keyValuePairs)
             {
-                // Handle "role" claim specifically (it might be an array of roles)
                 if (kvp.Value is JsonElement element && element.ValueKind == JsonValueKind.Array)
                 {
                     foreach (var item in element.EnumerateArray())
@@ -65,7 +61,6 @@ namespace AccountingSystem.Client.Auth
                     claims.Add(new Claim(kvp.Key, kvp.Value.ToString()));
                 }
             }
-
             return claims;
         }
 

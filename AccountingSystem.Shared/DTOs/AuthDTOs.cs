@@ -2,6 +2,23 @@
 
 namespace AccountingSystem.Shared.DTOs
 {
+    // --- NEW: Company Registration DTO ---
+    public class CompanyRegisterDTO
+    {
+        [Required]
+        public string CompanyName { get; set; }
+
+        [Required]
+        [EmailAddress]
+        public string AdminEmail { get; set; }
+
+        [Required]
+        public string AdminFullName { get; set; }
+
+        [Required]
+        public string Password { get; set; }
+    }
+
     public class RegisterDTO
     {
         [Required]
@@ -33,6 +50,8 @@ namespace AccountingSystem.Shared.DTOs
         public string Token { get; set; }
         public string Email { get; set; }
         public string Role { get; set; }
+        public int CompanyId { get; set; } // NEW: Context for Client
+        public string CompanyName { get; set; } // NEW: Context for Client
         public DateTime ExpiresAt { get; set; }
     }
 }

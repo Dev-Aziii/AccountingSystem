@@ -10,6 +10,9 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddHttpContextAccessor(); // REQUIRED for TenantService
+builder.Services.AddScoped<ITenantService, TenantService>();
+
 // --- 1. Database Context Setup ---
 builder.Services.AddDbContext<AccountingDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));

@@ -42,5 +42,20 @@ namespace AccountingSystem.API.Controllers
                 return Unauthorized(new { error = ex.Message });
             }
         }
+
+        // NEW: Register new Company/Tenant
+        [HttpPost("register-company")]
+        public async Task<IActionResult> RegisterCompany([FromBody] CompanyRegisterDTO dto)
+        {
+            try
+            {
+                var response = await _authService.RegisterCompanyAsync(dto);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
     }
 }

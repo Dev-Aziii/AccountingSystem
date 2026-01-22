@@ -1,0 +1,96 @@
+﻿@page "/register"
+@layout LoginLayout
+@using AccountingSystem.Shared.DTOs
+@using AccountingSystem.Client.Services
+@using MudBlazor
+@inject AuthService AuthService
+@inject NavigationManager NavManager
+@inject ISnackbar Snackbar
+
+<MudContainer MaxWidth="MaxWidth.Small" Class="d-flex align-center justify-center vh-100">
+    <MudCard Elevation="4" Class="pa-4" Style="width: 500px;">
+        <MudCardHeader>
+            <CardHeaderContent>
+                <MudText Typo="Typo.h5" Align="Align.Center" Color="Color.Primary" Class="mb-1">Create Your Account</MudText>
+                <MudText Typo="Typo.body2" Align="Align.Center">Start your free company trial</MudText>
+            </CardHeaderContent>
+        </MudCardHeader>
+        <MudCardContent>
+            <EditForm Model="@registerModel" OnValidSubmit="HandleRegistration">
+                <DataAnnotationsValidator />
+
+                <MudTextField Label="Company Name"
+                              @bind-Value="registerModel.CompanyName"
+                              For="@(() => registerModel.CompanyName)"
+                              Variant="Variant.Outlined"
+                              Class="mb-3" />
+
+                <MudTextField Label="Administrator Name"
+                              @bind-Value="registerModel.AdminFullName"
+                              For="@(() => registerModel.AdminFullName)"
+                              Variant="Variant.Outlined"
+                              Class="mb-3" />
+
+                <MudTextField Label="Email Address"
+                              @bind-Value="registerModel.AdminEmail"
+                              For="@(() => registerModel.AdminEmail)"
+                              Variant="Variant.Outlined"
+                              Class="mb-3" />
+
+                <MudTextField Label="Password"
+                              @bind-Value="registerModel.Password"
+                              For="@(() => registerModel.Password)"
+                              Variant="Variant.Outlined"
+                              InputType="InputType.Password"
+                              Class="mb-4" />
+
+                <MudButton ButtonType="ButtonType.Submit"
+                           Variant="Variant.Filled"
+                           Color="Color.Primary"
+                           FullWidth="true"
+                           Disabled="@isLoading"
+                           Size="Size.Large">
+                    @if (isLoading)
+                    {
+                        <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
+                        <MudText Class="ms-2">Registering...</MudText>
+                    }
+                    else
+                    {
+                        <MudText>Create Company</MudText>
+                    }
+                </MudButton>
+            </EditForm>
+
+            <div class="mt-4 text-center">
+                <MudLink Href="/" Underline="Underline.Hover">Already have an account? Sign In</MudLink>
+            </div>
+        </MudCardContent>
+    </MudCard>
+</MudContainer>
+
+@code {
+    private CompanyRegisterDTO registerModel = new CompanyRegisterDTO();
+    private bool isLoading = false;
+
+    private async Task HandleRegistration()
+    {
+        isLoading = true;
+        try
+        {
+            await AuthService.RegisterCompany(registerModel);
+            Snackbar.Add("Company registered successfully! Welcome.", Severity.Success);
+            // Delay to allow snackbar to show
+            await Task.Delay(1500);
+            NavManager.NavigateTo("/dashboard");
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Registration failed: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}

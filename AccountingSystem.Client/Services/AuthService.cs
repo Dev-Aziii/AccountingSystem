@@ -20,7 +20,6 @@ namespace AccountingSystem.Client.Services
 
         public async Task<AuthResponseDTO> Login(LoginDTO loginDto)
         {
-            // We use PostAsync directly here as we might not have a token yet
             var response = await _api.PostAsync("api/auth/login", loginDto);
 
             if (!response.IsSuccessStatusCode)
@@ -35,6 +34,26 @@ namespace AccountingSystem.Client.Services
             await _tokenService.SetTokenAsync(result.Token);
 
             // 2. Update Auth State
+            ((CustomAuthStateProvider)_authStateProvider).NotifyUserAuthentication(result.Token);
+
+            return result;
+        }
+
+        // --- NEW: Register Company ---
+        public async Task<AuthResponseDTO> RegisterCompany(CompanyRegisterDTO registerDto)
+        {
+            var response = await _api.PostAsync("api/auth/register-company", registerDto);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                throw new Exception(error);
+            }
+
+            // Auto-login after registration
+            var result = await response.Content.ReadFromJsonAsync<AuthResponseDTO>();
+
+            await _tokenService.SetTokenAsync(result.Token);
             ((CustomAuthStateProvider)_authStateProvider).NotifyUserAuthentication(result.Token);
 
             return result;
