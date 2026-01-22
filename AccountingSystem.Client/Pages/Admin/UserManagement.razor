@@ -17,50 +17,57 @@
     </div>
 
     <MudGrid>
-        <!-- LEFT: User List -->
+        <!-- LEFT: User Lists (Tabbed) -->
         <MudItem xs="12" md="8">
-            <MudTable Items="@users" Hover="true" Breakpoint="Breakpoint.Sm" Loading="@(users == null)" LoadingProgressColor="Color.Info" Elevation="3">
-                <ToolBarContent>
-                    <MudText Typo="Typo.h6" Color="Color.Primary">Current Users</MudText>
-                </ToolBarContent>
-                <HeaderContent>
-                    <MudTh>Email</MudTh>
-                    <MudTh>Full Name</MudTh>
-                    <MudTh>Role</MudTh>
-                    <MudTh Style="text-align:right">Actions</MudTh>
-                </HeaderContent>
-                <RowTemplate>
-                    <!-- FIX: Bind to Email instead of Username -->
-                    <MudTd DataLabel="Email"><b>@context.Email</b></MudTd>
-                    <MudTd DataLabel="Full Name">@context.FullName</MudTd>
-                    <MudTd DataLabel="Role">
-                        @if (context.RoleName == "Admin")
-                        {
-                            <MudChip T="string" Color="Color.Error" Size="Size.Small">Admin</MudChip>
-                        }
-                        else if (context.RoleName == "Accounting")
-                        {
-                            <MudChip T="string" Color="Color.Primary" Size="Size.Small">Accounting</MudChip>
-                        }
-                        else
-                        {
-                            <MudChip T="string" Color="Color.Secondary" Size="Size.Small">Management</MudChip>
-                        }
-                    </MudTd>
-                    <MudTd DataLabel="Actions" Style="text-align:right">
-                        @if (!context.Email.StartsWith("admin"))
-                        {
-                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="() => ConfirmDelete(context.Id)" />
-                        }
-                    </MudTd>
-                </RowTemplate>
-                <PagerContent>
-                    <MudTablePager />
-                </PagerContent>
-            </MudTable>
+            <MudTabs Elevation="3" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-4">
+                <MudTabPanel Text="Active Users" OnClick="@(() => LoadUsers(false))">
+                    <MudTable Items="@users" Hover="true" Breakpoint="Breakpoint.Sm" Loading="@_loading" LoadingProgressColor="Color.Info" Elevation="0">
+                        <HeaderContent>
+                            <MudTh>Email</MudTh>
+                            <MudTh>Full Name</MudTh>
+                            <MudTh>Role</MudTh>
+                            <MudTh Style="text-align:right">Actions</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd DataLabel="Email"><b>@context.Email</b></MudTd>
+                            <MudTd DataLabel="Full Name">@context.FullName</MudTd>
+                            <MudTd DataLabel="Role">
+                                <MudChip T="string" Color="@(context.RoleName == "Admin" ? Color.Error : Color.Primary)" Size="Size.Small">@context.RoleName</MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="Actions" Style="text-align:right">
+                                @if (!context.Email.StartsWith("admin"))
+                                {
+                                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="() => ConfirmDelete(context.Id)" />
+                                }
+                            </MudTd>
+                        </RowTemplate>
+                        <PagerContent><MudTablePager /></PagerContent>
+                    </MudTable>
+                </MudTabPanel>
+
+                <MudTabPanel Text="Archived Users" OnClick="@(() => LoadUsers(true))">
+                    <MudTable Items="@users" Hover="true" Breakpoint="Breakpoint.Sm" Loading="@_loading" Elevation="0">
+                        <HeaderContent>
+                            <MudTh>Email</MudTh>
+                            <MudTh>Role</MudTh>
+                            <MudTh Style="text-align:right">Actions</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd DataLabel="Email" Style="color:gray;">@context.Email</MudTd>
+                            <MudTd DataLabel="Role">@context.RoleName</MudTd>
+                            <MudTd DataLabel="Actions" Style="text-align:right">
+                                <MudTooltip Text="Restore User">
+                                    <MudIconButton Icon="@Icons.Material.Filled.RestoreFromTrash" Size="Size.Small" Color="Color.Success" OnClick="() => ConfirmRestore(context.Id)" />
+                                </MudTooltip>
+                            </MudTd>
+                        </RowTemplate>
+                        <PagerContent><MudTablePager /></PagerContent>
+                    </MudTable>
+                </MudTabPanel>
+            </MudTabs>
         </MudItem>
 
-        <!-- RIGHT: Create User Form -->
+        <!-- RIGHT: Create User Form (Only visible when Active tab is selected ideally, but kept visible for simplicity) -->
         <MudItem xs="12" md="4">
             <EditForm Model="@newUser" OnValidSubmit="HandleCreateUser">
                 <DataAnnotationsValidator />
@@ -71,16 +78,13 @@
                         </CardHeaderContent>
                     </MudCardHeader>
                     <MudCardContent>
-                        <!-- FIX: Bind to Email -->
                         <MudTextField Label="Email" @bind-Value="newUser.Email" For="@(() => newUser.Email)" Variant="Variant.Outlined" Class="mb-3" />
                         <MudTextField Label="Full Name" @bind-Value="newUser.FullName" For="@(() => newUser.FullName)" Variant="Variant.Outlined" Class="mb-3" />
-
                         <MudSelect Label="Role" @bind-Value="newUser.RoleName" For="@(() => newUser.RoleName)" Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter" Class="mb-3">
                             <MudSelectItem Value="@("Admin")" />
                             <MudSelectItem Value="@("Accounting")" />
                             <MudSelectItem Value="@("Management")" />
                         </MudSelect>
-
                         <MudTextField Label="Password" @bind-Value="newUser.Password" For="@(() => newUser.Password)" InputType="InputType.Password" Variant="Variant.Outlined" Class="mb-3" />
                     </MudCardContent>
                     <MudCardActions>
@@ -98,22 +102,23 @@
     private List<UserDTO> users;
     private RegisterDTO newUser = new RegisterDTO();
     private bool isSubmitting = false;
+    private bool _loading = true;
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadUsers();
+        await LoadUsers(false);
     }
 
-    private async Task LoadUsers()
+    private async Task LoadUsers(bool archived)
     {
+        _loading = true;
         try
         {
-            users = await UserService.GetAllUsersAsync();
+            var all = await UserService.GetAllUsersAsync(archived);
+            users = archived ? all.Where(u => u.IsDeleted || !u.IsActive).ToList() : all.Where(u => !u.IsDeleted && u.IsActive).ToList();
         }
-        catch (Exception ex)
-        {
-            Snackbar.Add(ex.Message, Severity.Error);
-        }
+        catch (Exception ex) { Snackbar.Add(ex.Message, Severity.Error); }
+        finally { _loading = false; }
     }
 
     private async Task HandleCreateUser()
@@ -123,38 +128,30 @@
         {
             await UserService.CreateUserAsync(newUser);
             Snackbar.Add("User created successfully.", Severity.Success);
-            newUser = new RegisterDTO(); // Reset form
-            await LoadUsers();
+            newUser = new RegisterDTO();
+            await LoadUsers(false);
         }
-        catch (Exception ex)
-        {
-            Snackbar.Add(ex.Message, Severity.Error);
-        }
-        finally
-        {
-            isSubmitting = false;
-        }
+        catch (Exception ex) { Snackbar.Add(ex.Message, Severity.Error); }
+        finally { isSubmitting = false; }
     }
 
     private async Task ConfirmDelete(int id)
     {
-        bool? result = await DialogService.ShowMessageBox(
-            "Delete Confirmation",
-            "Are you sure you want to delete this user?",
-            yesText: "Delete", cancelText: "Cancel");
-
+        bool? result = await DialogService.ShowMessageBox("Archive", "Archive this user?", yesText: "Archive", cancelText: "Cancel");
         if (result == true)
         {
-            try
-            {
-                await UserService.DeleteUserAsync(id);
-                Snackbar.Add("User deleted successfully.", Severity.Success);
-                await LoadUsers();
-            }
-            catch (Exception ex)
-            {
-                Snackbar.Add(ex.Message, Severity.Error);
-            }
+            try { await UserService.DeleteUserAsync(id); Snackbar.Add("User archived.", Severity.Success); await LoadUsers(false); }
+            catch (Exception ex) { Snackbar.Add(ex.Message, Severity.Error); }
+        }
+    }
+
+    private async Task ConfirmRestore(int id)
+    {
+        bool? result = await DialogService.ShowMessageBox("Restore", "Restore this user?", yesText: "Restore", cancelText: "Cancel");
+        if (result == true)
+        {
+            try { await UserService.RestoreUserAsync(id); Snackbar.Add("User restored.", Severity.Success); await LoadUsers(true); }
+            catch (Exception ex) { Snackbar.Add(ex.Message, Severity.Error); }
         }
     }
 }

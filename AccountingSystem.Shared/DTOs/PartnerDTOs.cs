@@ -9,6 +9,8 @@ namespace AccountingSystem.Shared.DTOs
         public string Name { get; set; }
         public string Email { get; set; }
         public string ContactPerson { get; set; }
+        public bool IsActive { get; set; }
+        public bool IsDeleted { get; set; }
     }
 
     public class CreateVendorDTO
@@ -32,6 +34,8 @@ namespace AccountingSystem.Shared.DTOs
         public string Name { get; set; }
         public string Email { get; set; }
         public string Phone { get; set; }
+        public bool IsActive { get; set; }
+        public bool IsDeleted { get; set; }
     }
 
     public class CreateCustomerDTO

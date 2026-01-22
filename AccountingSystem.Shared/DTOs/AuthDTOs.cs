@@ -6,7 +6,7 @@ namespace AccountingSystem.Shared.DTOs
     {
         [Required]
         [EmailAddress]
-        public string Email { get; set; } // Changed from Username
+        public string Email { get; set; }
 
         [Required]
         public string Password { get; set; }
@@ -22,7 +22,7 @@ namespace AccountingSystem.Shared.DTOs
     {
         [Required]
         [EmailAddress]
-        public string Email { get; set; } // Changed from Username
+        public string Email { get; set; }
 
         [Required]
         public string Password { get; set; }
@@ -35,5 +35,4 @@ namespace AccountingSystem.Shared.DTOs
         public string Role { get; set; }
         public DateTime ExpiresAt { get; set; }
     }
-
 }

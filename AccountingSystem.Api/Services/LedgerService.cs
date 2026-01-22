@@ -1,7 +1,7 @@
 ﻿using AccountingSystem.API.Data;
-using AccountingSystem.Shared.DTOs;
 using AccountingSystem.API.Models;
 using AccountingSystem.API.Services.Interfaces;
+using AccountingSystem.Shared.DTOs;
 using Microsoft.EntityFrameworkCore;
 
 namespace AccountingSystem.API.Services
@@ -15,21 +15,26 @@ namespace AccountingSystem.API.Services
             _context = context;
         }
 
-        public async Task<List<Account>> GetChartOfAccountsAsync()
+        public async Task<List<Account>> GetChartOfAccountsAsync(bool includeArchived = false)
         {
-            return await _context.Accounts.ToListAsync();
+            var query = _context.Accounts.AsQueryable();
+
+            if (includeArchived)
+            {
+                query = query.IgnoreQueryFilters();
+            }
+
+            return await query.OrderBy(a => a.Code).ToListAsync();
         }
 
         public async Task<JournalEntry> CreateJournalEntryAsync(JournalEntryDTO entryDto, string userId)
         {
-            // 1. Validate Double Entry Rule
             var totalDebit = entryDto.Lines.Sum(l => l.Debit);
             var totalCredit = entryDto.Lines.Sum(l => l.Credit);
 
             if (totalDebit != totalCredit)
                 throw new InvalidOperationException($"Transaction is not balanced. Debit: {totalDebit}, Credit: {totalCredit}");
 
-            // 2. Create Entry
             var entry = new JournalEntry
             {
                 Date = entryDto.Date,
@@ -45,19 +50,6 @@ namespace AccountingSystem.API.Services
                 }).ToList()
             };
 
-            // 3. Update Account Balances (Simple caching logic)
-            foreach (var line in entryDto.Lines)
-            {
-                var account = await _context.Accounts.FindAsync(line.AccountId);
-                if (account != null)
-                {
-                    // Logic depends on account type (Asset/Exp increases on Dr, Liab/Eq/Rev increases on Cr)
-                    // Simplification: Store net balance. 
-                    // Production app would calculate strictly based on Type.
-                    // For now, we assume simple addition/subtraction visualization in reports
-                }
-            }
-
             _context.JournalEntries.Add(entry);
             await _context.SaveChangesAsync();
             return entry;
@@ -65,7 +57,6 @@ namespace AccountingSystem.API.Services
 
         public async Task<TrialBalanceDTO> GetTrialBalanceAsync()
         {
-            // Aggregate all lines grouped by Account
             var balances = await _context.JournalEntryLines
                 .GroupBy(l => new { l.Account.Code, l.Account.Name })
                 .Select(g => new AccountBalanceDTO
@@ -84,6 +75,62 @@ namespace AccountingSystem.API.Services
                 TotalDebit = balances.Sum(x => x.Debit),
                 TotalCredit = balances.Sum(x => x.Credit)
             };
+        }
+
+        // --- Account CRUD ---
+        public async Task<Account> CreateAccountAsync(CreateAccountDTO dto)
+        {
+            if (await _context.Accounts.AnyAsync(a => a.Code == dto.Code))
+                throw new Exception($"Account Code '{dto.Code}' already exists.");
+
+            var account = new Account
+            {
+                Code = dto.Code,
+                Name = dto.Name,
+                Type = dto.Type,
+                IsActive = true
+            };
+            _context.Accounts.Add(account);
+            await _context.SaveChangesAsync();
+            return account;
+        }
+
+        public async Task UpdateAccountAsync(int id, UpdateAccountDTO dto)
+        {
+            var account = await _context.Accounts.FindAsync(id);
+            if (account == null) throw new Exception("Account not found");
+
+            if (account.Code != dto.Code && await _context.Accounts.AnyAsync(a => a.Code == dto.Code))
+                throw new Exception($"Account Code '{dto.Code}' already exists.");
+
+            account.Code = dto.Code;
+            account.Name = dto.Name;
+            account.Type = dto.Type;
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task DeleteAccountAsync(int id)
+        {
+            var account = await _context.Accounts.FindAsync(id);
+            if (account == null) throw new Exception("Account not found");
+
+            if (await _context.JournalEntryLines.AnyAsync(l => l.AccountId == id))
+                throw new Exception("Cannot delete account. It has associated journal entries.");
+
+            // Soft Delete logic
+            account.IsDeleted = true;
+            account.IsActive = false;
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task RestoreAccountAsync(int id)
+        {
+            var account = await _context.Accounts.IgnoreQueryFilters().FirstOrDefaultAsync(a => a.Id == id);
+            if (account == null) throw new Exception("Account not found");
+
+            account.IsDeleted = false;
+            account.IsActive = true;
+            await _context.SaveChangesAsync();
         }
     }
 }

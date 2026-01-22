@@ -12,224 +12,161 @@
 
 <PageTitle>Financial Dashboard</PageTitle>
 
-<style>
-    .kpi-card {
-        transition: all 0.2s ease-in-out;
-    }
-
-    .kpi-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 12px 25px rgba(0,0,0,0.15);
-    }
-
-    .kpi-value {
-        font-size: 1.6rem;
-        font-weight: 700;
-        letter-spacing: 0.5px;
-    }
-
-    .section-title {
-        font-weight: 600;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-
-    .peso::before {
-        content: "₱ ";
-    }
-</style>
-
-<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-6 mb-10">
+<MudContainer MaxWidth="MaxWidth.ExtraExtraLarge" Class="mt-4 mb-10">
 
     <!-- HEADER -->
-    <MudPaper Elevation="2" Class="pa-5 mb-6 rounded-xl">
+    <MudPaper Class="dashboard-header pa-6 mb-8" Elevation="0">
         <div class="d-flex justify-space-between align-center">
             <div>
-                <MudText Typo="Typo.h4" Color="Color.Primary"><b>Executive Financial Dashboard</b></MudText>
-                <MudText Typo="Typo.body2" Class="mud-text-secondary">
-                    Live overview of liquidity, profitability, and obligations
+                <MudText Typo="Typo.h5" Class="mb-2 header-title">
+                    Executive Financial Dashboard
+                </MudText>
+                <MudText Typo="Typo.body1" Class="header-subtitle">
+                    Real-time insights into liquidity, profitability, and financial obligations
                 </MudText>
             </div>
             <MudButton Variant="Variant.Filled"
-                       Color="Color.Primary"
+                       Class="refresh-btn"
                        StartIcon="@Icons.Material.Filled.Refresh"
+                       Size="Size.Large"
                        OnClick="LoadData">
-                Refresh
+                Refresh Data
             </MudButton>
         </div>
     </MudPaper>
 
     @if (isLoading)
     {
-        <div class="d-flex justify-center align-center" style="height: 300px;">
-            <MudProgressCircular Color="Color.Primary" Size="Size.Large" Indeterminate />
+        <div class="loading-container d-flex justify-center align-center pa-8" style="height: 300px;">
+            <div class="text-center">
+                <MudProgressCircular Color="Color.Primary" Size="Size.Large" Indeterminate />
+                <MudText Typo="Typo.h6" Class="mt-4 custom-text-primary">Loading Dashboard...</MudText>
+            </div>
         </div>
     }
     else
     {
         <!-- KPI SECTION -->
-        <MudText Typo="Typo.h6" Class="section-title mb-3">
-            <MudIcon Icon="@Icons.Material.Filled.Dashboard" /> Key Performance Indicators
-        </MudText>
+        <div class="section-title">
+            <MudIcon Icon="@Icons.Material.Filled.Dashboard" Size="Size.Large" />
+            Key Performance Indicators
+        </div>
 
-        <MudGrid Class="mb-8">
+        <MudGrid Spacing="3" Class="mb-10">
 
+            <!-- ROW 1 -->
             <!-- CASH -->
             <MudItem xs="12" sm="6" md="4">
-                <MudPaper Elevation="3"
-                          Class="pa-5 rounded-xl kpi-card"
-                          Style="border-top:4px solid var(--mud-palette-success);">
-
+                <MudPaper Elevation="0" Class="kpi-card pa-6">
                     <div class="d-flex justify-space-between align-center">
-                        <div>
-                            <MudText Typo="Typo.caption" Class="mud-text-secondary">
-                                CASH ON HAND & BANK
-                            </MudText>
-
-                            <MudText Class="kpi-value peso">
-                                @CashBalance.ToString("N0")
-                            </MudText>
-
-                            <MudChip T="string"
-                                     Color="Color.Success"
-                                     Size="Size.Small"
-                                     Variant="Variant.Outlined">
-                                Available
+                        <div class="flex-grow-1">
+                            <MudText Class="kpi-label">Cash & Bank Balance</MudText>
+                            <MudText Class="kpi-value peso">@CashBalance.ToString("N0")</MudText>
+                            <MudText Class="kpi-description">Immediately available funds</MudText>
+                            <MudChip T="string" Class="mt-3" Style="background: rgba(76, 175, 80, 0.1); color: #4CAF50; font-weight: 600;">
+                                Liquid Assets
                             </MudChip>
                         </div>
-
-                        <MudAvatar Color="Color.Success" Size="Size.Large">
-                            <MudIcon Icon="@Icons.Material.Filled.AttachMoney" />
-                        </MudAvatar>
+                        <div class="kpi-icon">
+                            <MudIcon Icon="@Icons.Material.Filled.AccountBalanceWallet" Size="Size.Large" />
+                        </div>
                     </div>
                 </MudPaper>
             </MudItem>
 
             <!-- NET PROFIT -->
             <MudItem xs="12" sm="6" md="4">
-                <MudPaper Elevation="3" Class="pa-5 rounded-xl kpi-card" Style="border-top:4px solid var(--mud-palette-primary);">
+                <MudPaper Elevation="0" Class="kpi-card pa-6">
                     <div class="d-flex justify-space-between align-center">
-                        <div>
-                            <MudText Typo="Typo.caption" Class="mud-text-secondary">NET PROFIT (YTD)</MudText>
+                        <div class="flex-grow-1">
+                            <MudText Class="kpi-label">Net Profit (YTD)</MudText>
                             <MudText Class="kpi-value peso">@NetProfit.ToString("N0")</MudText>
-                            <MudText Typo="Typo.caption" Class="mud-text-secondary">Revenue - Expenses</MudText>
+                            <MudText Class="kpi-description">Revenue minus expenses</MudText>
+                            <MudChip T="string" Class="mt-3" 
+                                     Style="@($"background: {(NetProfit >= 0 ? "rgba(76, 175, 80, 0.1)" : "rgba(244, 67, 54, 0.1)")}; color: {(NetProfit >= 0 ? "#4CAF50" : "#F44336")}; font-weight: 600;")">
+                                @(NetProfit >= 0 ? "Profitable" : "Loss")
+                            </MudChip>
                         </div>
-                        <MudAvatar Color="Color.Primary" Size="Size.Large">
-                            <MudIcon Icon="@Icons.Material.Filled.TrendingUp" />
-                        </MudAvatar>
+                        <div class="kpi-icon">
+                            <MudIcon Icon="@Icons.Material.Filled.TrendingUp" Size="Size.Large" />
+                        </div>
                     </div>
                 </MudPaper>
             </MudItem>
 
             <!-- TOTAL ASSETS -->
             <MudItem xs="12" sm="6" md="4">
-                <MudPaper Elevation="3"
-                          Class="pa-5 rounded-xl kpi-card"
-                          Style="border-top:4px solid var(--mud-palette-info);">
-
+                <MudPaper Elevation="0" Class="kpi-card pa-6">
                     <div class="d-flex justify-space-between align-center">
-                        <div>
-                            <MudText Typo="Typo.caption" Class="mud-text-secondary">
-                                TOTAL ASSETS
-                            </MudText>
-
-                            <MudText Class="kpi-value peso">
-                                @TotalAssets.ToString("N0")
-                            </MudText>
-
-                            <MudText Typo="Typo.caption" Class="mud-text-secondary">
-                                Company Resources
-                            </MudText>
+                        <div class="flex-grow-1">
+                            <MudText Class="kpi-label">Total Assets</MudText>
+                            <MudText Class="kpi-value peso">@TotalAssets.ToString("N0")</MudText>
+                            <MudText Class="kpi-description">Company resources</MudText>
+                            <MudChip T="string" Class="mt-3" Style="background: rgba(33, 150, 243, 0.1); color: #2196F3; font-weight: 600;">
+                                Total Value
+                            </MudChip>
                         </div>
-
-                        <MudAvatar Color="Color.Info" Size="Size.Large">
-                            <MudIcon Icon="@Icons.Material.Filled.AccountBalance" />
-                        </MudAvatar>
+                        <div class="kpi-icon">
+                            <MudIcon Icon="@Icons.Material.Filled.BusinessCenter" Size="Size.Large" />
+                        </div>
                     </div>
                 </MudPaper>
             </MudItem>
 
+            <!-- ROW 2 -->
             <!-- ACCOUNTS RECEIVABLE -->
             <MudItem xs="12" sm="6" md="4">
-                <MudPaper Elevation="3"
-                          Class="pa-5 rounded-xl kpi-card"
-                          Style="border-top:4px solid var(--mud-palette-warning);">
-
+                <MudPaper Elevation="0" Class="kpi-card pa-6">
                     <div class="d-flex justify-space-between align-center">
-                        <div>
-                            <MudText Typo="Typo.caption" Class="mud-text-secondary">
-                                ACCOUNTS RECEIVABLE
-                            </MudText>
-
-                            <MudText Class="kpi-value peso">
-                                @ArOutstanding.ToString("N0")
-                            </MudText>
-
-                            <MudText Typo="Typo.caption" Class="mud-text-secondary">
-                                Customer Balances
-                            </MudText>
+                        <div class="flex-grow-1">
+                            <MudText Class="kpi-label">Accounts Receivable</MudText>
+                            <MudText Class="kpi-value peso">@ArOutstanding.ToString("N0")</MudText>
+                            <MudText Class="kpi-description">Customer outstanding</MudText>
+                            <MudChip T="string" Class="mt-3" Style="background: rgba(255, 193, 7, 0.1); color: #FFC107; font-weight: 600;">
+                                To Collect
+                            </MudChip>
                         </div>
-
-                        <MudAvatar Color="Color.Warning" Size="Size.Large">
-                            <MudIcon Icon="@Icons.Material.Filled.AssignmentInd" />
-                        </MudAvatar>
+                        <div class="kpi-icon">
+                            <MudIcon Icon="@Icons.Material.Filled.RequestQuote" Size="Size.Large" />
+                        </div>
                     </div>
                 </MudPaper>
             </MudItem>
 
             <!-- ACCOUNTS PAYABLE -->
             <MudItem xs="12" sm="6" md="4">
-                <MudPaper Elevation="3"
-                          Class="pa-5 rounded-xl kpi-card"
-                          Style="border-top:4px solid var(--mud-palette-error);">
-
+                <MudPaper Elevation="0" Class="kpi-card pa-6">
                     <div class="d-flex justify-space-between align-center">
-                        <div>
-                            <MudText Typo="Typo.caption" Class="mud-text-secondary">
-                                ACCOUNTS PAYABLE
-                            </MudText>
-
-                            <MudText Class="kpi-value peso">
-                                @ApOutstanding.ToString("N0")
-                            </MudText>
-
-                            <MudText Typo="Typo.caption" Class="mud-text-secondary">
-                                Vendor Bills
-                            </MudText>
+                        <div class="flex-grow-1">
+                            <MudText Class="kpi-label">Accounts Payable</MudText>
+                            <MudText Class="kpi-value peso">@ApOutstanding.ToString("N0")</MudText>
+                            <MudText Class="kpi-description">Vendor obligations</MudText>
+                            <MudChip T="string" Class="mt-3" Style="background: rgba(255, 87, 34, 0.1); color: #FF5722; font-weight: 600;">
+                                To Pay
+                            </MudChip>
                         </div>
-
-                        <MudAvatar Color="Color.Error" Size="Size.Large">
-                            <MudIcon Icon="@Icons.Material.Filled.MoneyOff" />
-                        </MudAvatar>
+                        <div class="kpi-icon">
+                            <MudIcon Icon="@Icons.Material.Filled.Payment" Size="Size.Large" />
+                        </div>
                     </div>
                 </MudPaper>
             </MudItem>
 
             <!-- TOTAL LIABILITIES -->
             <MudItem xs="12" sm="6" md="4">
-                <MudPaper Elevation="3"
-                          Class="pa-5 rounded-xl kpi-card"
-                          Style="border-top:4px solid var(--mud-palette-dark);">
-
+                <MudPaper Elevation="0" Class="kpi-card pa-6">
                     <div class="d-flex justify-space-between align-center">
-                        <div>
-                            <MudText Typo="Typo.caption" Class="mud-text-secondary">
-                                TOTAL LIABILITIES
-                            </MudText>
-
-                            <MudText Class="kpi-value peso">
-                                @TotalLiabilities.ToString("N0")
-                            </MudText>
-
-                            <MudText Typo="Typo.caption" Class="mud-text-secondary">
-                                Total Obligations
-                            </MudText>
+                        <div class="flex-grow-1">
+                            <MudText Class="kpi-label">Total Liabilities</MudText>
+                            <MudText Class="kpi-value peso">@TotalLiabilities.ToString("N0")</MudText>
+                            <MudText Class="kpi-description">Total obligations</MudText>
+                            <MudChip T="string" Class="mt-3" Style="background: rgba(96, 125, 139, 0.1); color: #607D8B; font-weight: 600;">
+                                Obligations
+                            </MudChip>
                         </div>
-
-                        <MudAvatar Color="Color.Dark" Size="Size.Large">
-                            <MudIcon Icon="@Icons.Material.Filled.AccountBalanceWallet" />
-                        </MudAvatar>
+                        <div class="kpi-icon">
+                            <MudIcon Icon="@Icons.Material.Filled.CreditCard" Size="Size.Large" />
+                        </div>
                     </div>
                 </MudPaper>
             </MudItem>
@@ -237,83 +174,88 @@
         </MudGrid>
 
         <!-- LOWER SECTION -->
-        <MudGrid>
+        <MudGrid Spacing="6">
 
             <!-- CALENDAR -->
-            <MudItem xs="12" md="8">
-                <MudPaper Elevation="2" Class="pa-5 rounded-xl mb-4">
+            <MudItem xs="12" lg="8">
+                <div class="calendar-section pa-6">
+                    <div class="section-title">
+                        <MudIcon Icon="@Icons.Material.Filled.CalendarMonth" Size="Size.Large" />
+                        Payment & Collection Schedule
+                    </div>
 
-                    <MudText Typo="Typo.h6" Class="section-title mb-2">
-                        <MudIcon Icon="@Icons.Material.Filled.Event" /> Payment & Collection Schedule
-                    </MudText>
-
-                    <div class="d-flex gap-6 mb-3">
-                        <div class="d-flex align-center">
-                            <MudIcon Icon="@Icons.Material.Filled.Circle"
-                                     Color="Color.Success"
-                                     Size="Size.Small"
-                                     Class="mr-1" /> Invoices
+                    <div class="d-flex gap-4 mb-6">
+                        <div class="legend-item">
+                            <MudIcon Icon="@Icons.Material.Filled.CircleNotifications"
+                                     Style="color: #4CAF50;" Size="Size.Small" />
+                            <span>Invoices Due</span>
                         </div>
-                        <div class="d-flex align-center">
-                            <MudIcon Icon="@Icons.Material.Filled.Circle"
-                                     Color="Color.Error"
-                                     Size="Size.Small"
-                                     Class="mr-1" /> Bills
+                        <div class="legend-item">
+                            <MudIcon Icon="@Icons.Material.Filled.CircleNotifications"
+                                     Style="color: #F44336;" Size="Size.Small" />
+                            <span>Bills Due</span>
                         </div>
                     </div>
 
                     <MudCalendar Items="_events"
-                                 MonthCellMinHeight="70"
+                                 MonthCellMinHeight="80"
                                  Elevation="0"
-                                 Outlined />
-                </MudPaper>
+                                 Outlined="false"
+                                 Style="border-radius: 16px; overflow: hidden;" />
+                </div>
             </MudItem>
 
             <!-- LEDGER SNAPSHOT -->
-            <MudItem xs="12" md="4">
-                <MudPaper Elevation="2" Class="pa-5 rounded-xl">
-
-                    <MudText Typo="Typo.h6" Class="section-title mb-2">
-                        <MudIcon Icon="@Icons.Material.Filled.List" /> Ledger Snapshot
-                    </MudText>
-
-                    <MudDivider Class="mb-2" />
+            <MudItem xs="12" lg="4">
+                <div class="ledger-section pa-6">
+                    <div class="section-title">
+                        <MudIcon Icon="@Icons.Material.Filled.ListAlt" Size="Size.Large" />
+                        Ledger Snapshot
+                    </div>
 
                     <MudTable Items="@(trialBalance?.Accounts.Take(8))"
-                              Dense
-                              Hover
-                              Elevation="0">
+                              Dense="true"
+                              Hover="true"
+                              Elevation="0"
+                              Class="custom-table"
+                              Style="border-radius: 12px; overflow: hidden;">
 
                         <HeaderContent>
-                            <MudTh>Account</MudTh>
-                            <MudTh Align="Align.Right">Balance (₱)</MudTh>
+                            <MudTh Style="font-size: 0.9rem;">Account Details</MudTh>
+                            <MudTh Align="Align.Right" Style="font-size: 0.9rem;">Balance (₱)</MudTh>
                         </HeaderContent>
 
                         <RowTemplate>
-                            <MudTd>
-                                <MudText Typo="Typo.body2">@context.AccountName</MudText>
-                                <MudText Typo="Typo.caption" Class="mud-text-secondary">
-                                    @context.AccountCode
-                                </MudText>
+                            <MudTd Style="padding: 16px 12px;">
+                                <div>
+                                    <MudText Typo="Typo.body2" Class="custom-text-primary" Style="font-weight: 600;">
+                                        @context.AccountName
+                                    </MudText>
+                                    <MudText Typo="Typo.caption" Class="custom-text-secondary" Style="font-weight: 500;">
+                                        @context.AccountCode
+                                    </MudText>
+                                </div>
                             </MudTd>
-
-                            <MudTd Align="Align.Right">
-                                @((context.Debit - context.Credit).ToString("N0"))
+                            <MudTd Align="Align.Right" Style="padding: 16px 12px;">
+                                <MudText Style="font-weight: 700; font-size: 1rem;" Class="custom-text-primary">
+                                    @((context.Debit - context.Credit).ToString("N0"))
+                                </MudText>
                             </MudTd>
                         </RowTemplate>
 
                     </MudTable>
 
-                    <div class="text-center mt-4">
+                    <div class="text-center mt-6">
                         <MudButton Variant="Variant.Filled"
-                                   Color="Color.Primary"
+                                   Class="custom-button"
                                    Href="reports/financials"
-                                   StartIcon="@Icons.Material.Filled.Assessment">
+                                   StartIcon="@Icons.Material.Filled.Assessment"
+                                   Size="Size.Large"
+                                   Style="color: white !important;">
                             View Financial Reports
                         </MudButton>
                     </div>
-
-                </MudPaper>
+                </div>
             </MudItem>
 
         </MudGrid>
@@ -338,7 +280,7 @@
     // --- Dynamic Styling Helpers ---
     private string NetProfitBorderColor =>
         NetProfit >= 0
-            ? "var(--mud-palette-primary)"
+            ? "var(--theme-primary)"
             : "var(--mud-palette-error)";
 
     private string NetProfitTextColor =>

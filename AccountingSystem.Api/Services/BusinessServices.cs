@@ -2,7 +2,7 @@
 using AccountingSystem.API.Services.Interfaces;
 using AccountingSystem.Shared.DTOs;
 using AccountingSystem.API.Models;
-using AccountingSystem.Shared.Enums; 
+using AccountingSystem.Shared.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace AccountingSystem.API.Services
@@ -18,10 +18,93 @@ namespace AccountingSystem.API.Services
             _ledgerService = ledgerService;
         }
 
-        public async Task<List<VendorDTO>> GetVendorsAsync()
+        public async Task<List<VendorDTO>> GetVendorsAsync(bool includeArchived = false)
         {
-            return await _context.Vendors
-                .Select(v => new VendorDTO { Id = v.Id, Name = v.Name, Email = v.Email, ContactPerson = v.ContactPerson })
+            var query = _context.Vendors.AsQueryable();
+
+            if (includeArchived)
+            {
+                query = query.IgnoreQueryFilters();
+            }
+
+            return await query
+                .Select(v => new VendorDTO
+                {
+                    Id = v.Id,
+                    Name = v.Name,
+                    Email = v.Email,
+                    ContactPerson = v.ContactPerson,
+                    // Map IsDeleted/IsActive if DTO supports it, otherwise logic handles visibility
+                })
+                .ToListAsync();
+        }
+
+        // --- Vendor CRUD ---
+        public async Task<Vendor> CreateVendorAsync(CreateVendorDTO vendorDto)
+        {
+            var vendor = new Vendor
+            {
+                Name = vendorDto.Name,
+                Email = vendorDto.Email,
+                ContactPerson = vendorDto.ContactPerson,
+                IsActive = true
+            };
+            _context.Vendors.Add(vendor);
+            await _context.SaveChangesAsync();
+            return vendor;
+        }
+
+        public async Task<Vendor> UpdateVendorAsync(int id, UpdateVendorDTO vendorDto)
+        {
+            var vendor = await _context.Vendors.FindAsync(id);
+            if (vendor == null) throw new Exception("Vendor not found");
+
+            vendor.Name = vendorDto.Name;
+            vendor.Email = vendorDto.Email;
+            vendor.ContactPerson = vendorDto.ContactPerson;
+            await _context.SaveChangesAsync();
+            return vendor;
+        }
+
+        public async Task DeleteVendorAsync(int id)
+        {
+            var vendor = await _context.Vendors.FindAsync(id);
+            if (vendor == null) throw new Exception("Vendor not found");
+
+            // Soft Delete
+            vendor.IsDeleted = true;
+            vendor.IsActive = false;
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task RestoreVendorAsync(int id)
+        {
+            var vendor = await _context.Vendors.IgnoreQueryFilters().FirstOrDefaultAsync(v => v.Id == id);
+            if (vendor == null) throw new Exception("Vendor not found");
+
+            vendor.IsDeleted = false;
+            vendor.IsActive = true;
+            await _context.SaveChangesAsync();
+        }
+        // -------------------
+
+        public async Task<List<BillDTO>> GetBillsAsync()
+        {
+            return await _context.Bills
+                .Include(b => b.Vendor)
+                .Select(b => new BillDTO
+                {
+                    Id = b.Id,
+                    VendorId = b.VendorId,
+                    VendorName = b.Vendor.Name,
+                    DueDate = b.DueDate,
+                    Amount = b.Amount,
+                    ReferenceNumber = b.ReferenceNumber,
+                    Description = b.Description,
+                    AmountPaid = b.AmountPaid,
+                    Status = b.Status
+                })
+                .OrderByDescending(b => b.DueDate)
                 .ToListAsync();
         }
 
@@ -35,7 +118,7 @@ namespace AccountingSystem.API.Services
                 ReferenceNumber = billDto.ReferenceNumber,
                 Description = billDto.Description,
                 AmountPaid = 0,
-                Status = DocumentStatus.Unpaid // Enum Assignment
+                Status = DocumentStatus.Unpaid
             };
             _context.Bills.Add(bill);
 
@@ -69,7 +152,6 @@ namespace AccountingSystem.API.Services
 
             bill.AmountPaid += paymentDto.Amount;
 
-            // Logic using Enums
             if (bill.AmountPaid >= bill.Amount - 0.01m)
                 bill.Status = DocumentStatus.Paid;
             else
@@ -80,12 +162,12 @@ namespace AccountingSystem.API.Services
                 BillId = bill.Id,
                 Amount = paymentDto.Amount,
                 Date = paymentDto.PaymentDate,
-                PaymentMethod = paymentDto.PaymentMethod, // Enum
+                PaymentMethod = paymentDto.PaymentMethod,
                 ReferenceNumber = paymentDto.ReferenceNumber,
                 Remarks = paymentDto.Remarks,
-                Type = PaymentType.Outgoing, // Enum
+                Type = PaymentType.Outgoing,
                 AccountId = paymentDto.AssetAccountId,
-                CreatedById = int.TryParse(userId, out int uid) ? uid : null // Audit
+                CreatedById = int.TryParse(userId, out int uid) ? uid : null
             };
             _context.Payments.Add(payment);
 
@@ -121,10 +203,85 @@ namespace AccountingSystem.API.Services
             _paymentService = paymentService;
         }
 
-        public async Task<List<CustomerDTO>> GetCustomersAsync()
+        public async Task<List<CustomerDTO>> GetCustomersAsync(bool includeArchived = false)
         {
-            return await _context.Customers
+            var query = _context.Customers.AsQueryable();
+
+            if (includeArchived)
+            {
+                query = query.IgnoreQueryFilters();
+            }
+
+            return await query
                 .Select(c => new CustomerDTO { Id = c.Id, Name = c.Name, Email = c.Email, Phone = c.Phone })
+                .ToListAsync();
+        }
+
+        // --- Customer CRUD ---
+        public async Task<Customer> CreateCustomerAsync(CreateCustomerDTO customerDto)
+        {
+            var customer = new Customer
+            {
+                Name = customerDto.Name,
+                Email = customerDto.Email,
+                Phone = customerDto.Phone,
+                IsActive = true
+            };
+            _context.Customers.Add(customer);
+            await _context.SaveChangesAsync();
+            return customer;
+        }
+
+        public async Task<Customer> UpdateCustomerAsync(int id, UpdateCustomerDTO customerDto)
+        {
+            var customer = await _context.Customers.FindAsync(id);
+            if (customer == null) throw new Exception("Customer not found");
+
+            customer.Name = customerDto.Name;
+            customer.Email = customerDto.Email;
+            customer.Phone = customerDto.Phone;
+            await _context.SaveChangesAsync();
+            return customer;
+        }
+
+        public async Task DeleteCustomerAsync(int id)
+        {
+            var customer = await _context.Customers.FindAsync(id);
+            if (customer == null) throw new Exception("Customer not found");
+
+            // Soft Delete
+            customer.IsDeleted = true;
+            customer.IsActive = false;
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task RestoreCustomerAsync(int id)
+        {
+            var customer = await _context.Customers.IgnoreQueryFilters().FirstOrDefaultAsync(c => c.Id == id);
+            if (customer == null) throw new Exception("Customer not found");
+
+            customer.IsDeleted = false;
+            customer.IsActive = true;
+            await _context.SaveChangesAsync();
+        }
+        // ---------------------
+
+        public async Task<List<InvoiceDTO>> GetInvoicesAsync()
+        {
+            return await _context.Invoices
+                .Include(i => i.Customer)
+                .Select(i => new InvoiceDTO
+                {
+                    Id = i.Id,
+                    CustomerId = i.CustomerId,
+                    CustomerName = i.Customer.Name,
+                    DueDate = i.DueDate,
+                    TotalAmount = i.TotalAmount,
+                    Description = i.Description,
+                    PaidAmount = i.PaidAmount,
+                    Status = i.Status
+                })
+                .OrderByDescending(i => i.DueDate)
                 .ToListAsync();
         }
 
@@ -137,7 +294,7 @@ namespace AccountingSystem.API.Services
                 TotalAmount = invoiceDto.Amount,
                 Description = invoiceDto.Description,
                 PaidAmount = 0,
-                Status = DocumentStatus.Unpaid // Enum
+                Status = DocumentStatus.Unpaid
             };
             _context.Invoices.Add(invoice);
 
@@ -166,7 +323,7 @@ namespace AccountingSystem.API.Services
             var invoice = await _context.Invoices.FindAsync(paymentDto.ReferenceId);
             if (invoice == null) throw new Exception("Invoice not found");
 
-            // Enum Check
+            // PayMongo Capture Logic
             if (paymentDto.PaymentMethod == PaymentMethod.Online && !string.IsNullOrEmpty(paymentDto.SourceId))
             {
                 await _paymentService.CapturePaymentAsync(paymentDto.SourceId, paymentDto.Amount, $"Inv #{invoice.Id}");
@@ -177,7 +334,6 @@ namespace AccountingSystem.API.Services
 
             invoice.PaidAmount += paymentDto.Amount;
 
-            // Logic using Enums
             if (invoice.PaidAmount >= invoice.TotalAmount - 0.01m)
                 invoice.Status = DocumentStatus.Paid;
             else
@@ -191,7 +347,7 @@ namespace AccountingSystem.API.Services
                 PaymentMethod = paymentDto.PaymentMethod,
                 ReferenceNumber = paymentDto.ReferenceNumber,
                 Remarks = paymentDto.Remarks,
-                Type = PaymentType.Incoming, // Enum
+                Type = PaymentType.Incoming,
                 AccountId = paymentDto.AssetAccountId,
                 CreatedById = int.TryParse(userId, out int uid) ? uid : null
             };

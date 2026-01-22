@@ -12,12 +12,20 @@ namespace AccountingSystem.Client.Services
             _api = api;
         }
 
-        public async Task<List<VendorDTO>> GetVendorsAsync()
+        // Updated to accept includeArchived
+        public async Task<List<VendorDTO>> GetVendorsAsync(bool includeArchived = false)
         {
-            return await _api.GetAsync<List<VendorDTO>>("api/payables/vendors");
+            return await _api.GetAsync<List<VendorDTO>>($"api/payables/vendors?includeArchived={includeArchived}");
         }
 
-        //Fetch list of bills
+        // New Restore Method
+        public async Task RestoreVendorAsync(int id)
+        {
+            var response = await _api.PutAsync<object>($"api/payables/vendors/{id}/restore", null);
+            if (!response.IsSuccessStatusCode) throw new Exception(await response.Content.ReadAsStringAsync());
+        }
+
+        // ... Existing methods (Create, Update, Delete, GetBills, PayBill) ...
         public async Task<List<BillDTO>> GetBillsAsync()
         {
             return await _api.GetAsync<List<BillDTO>>("api/payables/bills");
@@ -33,7 +41,6 @@ namespace AccountingSystem.Client.Services
             }
         }
 
-        //  RecordPaymentDTO
         public async Task PayBillAsync(RecordPaymentDTO paymentDto)
         {
             var response = await _api.PostAsync($"api/payables/bill/{paymentDto.ReferenceId}/pay", paymentDto);
@@ -44,18 +51,19 @@ namespace AccountingSystem.Client.Services
             }
         }
 
-        // CRUD for Vendors (kept from previous phases)
         public async Task<VendorDTO> CreateVendorAsync(CreateVendorDTO vendor)
         {
             var response = await _api.PostAsync("api/payables/vendors", vendor);
             if (!response.IsSuccessStatusCode) throw new Exception(await response.Content.ReadAsStringAsync());
             return await response.Content.ReadFromJsonAsync<VendorDTO>();
         }
+
         public async Task UpdateVendorAsync(UpdateVendorDTO vendor)
         {
             var response = await _api.PutAsync($"api/payables/vendors/{vendor.Id}", vendor);
             if (!response.IsSuccessStatusCode) throw new Exception(await response.Content.ReadAsStringAsync());
         }
+
         public async Task DeleteVendorAsync(int id)
         {
             var response = await _api.DeleteAsync($"api/payables/vendors/{id}");

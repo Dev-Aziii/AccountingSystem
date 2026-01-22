@@ -12,12 +12,20 @@ namespace AccountingSystem.Client.Services
             _api = api;
         }
 
-        public async Task<List<CustomerDTO>> GetCustomersAsync()
+        // Updated to accept includeArchived
+        public async Task<List<CustomerDTO>> GetCustomersAsync(bool includeArchived = false)
         {
-            return await _api.GetAsync<List<CustomerDTO>>("api/receivables/customers");
+            return await _api.GetAsync<List<CustomerDTO>>($"api/receivables/customers?includeArchived={includeArchived}");
         }
 
-        // Fetch list of invoices
+        // New Restore Method
+        public async Task RestoreCustomerAsync(int id)
+        {
+            var response = await _api.PutAsync<object>($"api/receivables/customers/{id}/restore", null);
+            if (!response.IsSuccessStatusCode) throw new Exception(await response.Content.ReadAsStringAsync());
+        }
+
+        // ... Existing methods ...
         public async Task<List<InvoiceDTO>> GetInvoicesAsync()
         {
             return await _api.GetAsync<List<InvoiceDTO>>("api/receivables/invoices");
@@ -33,7 +41,6 @@ namespace AccountingSystem.Client.Services
             }
         }
 
-        // RecordPaymentDTO
         public async Task ReceivePaymentAsync(RecordPaymentDTO paymentDto)
         {
             var response = await _api.PostAsync($"api/receivables/invoice/{paymentDto.ReferenceId}/receive", paymentDto);
@@ -44,18 +51,19 @@ namespace AccountingSystem.Client.Services
             }
         }
 
-        // CRUD for Customers
         public async Task<CustomerDTO> CreateCustomerAsync(CreateCustomerDTO customer)
         {
             var response = await _api.PostAsync("api/receivables/customers", customer);
             if (!response.IsSuccessStatusCode) throw new Exception(await response.Content.ReadAsStringAsync());
             return await response.Content.ReadFromJsonAsync<CustomerDTO>();
         }
+
         public async Task UpdateCustomerAsync(UpdateCustomerDTO customer)
         {
             var response = await _api.PutAsync($"api/receivables/customers/{customer.Id}", customer);
             if (!response.IsSuccessStatusCode) throw new Exception(await response.Content.ReadAsStringAsync());
         }
+
         public async Task DeleteCustomerAsync(int id)
         {
             var response = await _api.DeleteAsync($"api/receivables/customers/{id}");

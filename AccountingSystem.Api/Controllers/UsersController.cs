@@ -22,17 +22,24 @@ namespace AccountingSystem.API.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAllUsers()
+        public async Task<IActionResult> GetAllUsers([FromQuery] bool includeArchived = false)
         {
-            var users = await _context.Users
-                .Include(u => u.Role)
+            var query = _context.Users.Include(u => u.Role).AsQueryable();
+
+            if (includeArchived)
+            {
+                query = query.IgnoreQueryFilters();
+            }
+
+            var users = await query
                 .Select(u => new UserDTO
                 {
                     Id = u.Id,
-                    Email = u.Email, // Changed from Username to Email
+                    Email = u.Email,
                     FullName = u.FullName,
                     RoleName = u.Role.Name,
                     IsActive = u.IsActive
+                    // Ideally add IsDeleted to UserDTO
                 })
                 .ToListAsync();
 
@@ -59,13 +66,31 @@ namespace AccountingSystem.API.Controllers
             var user = await _context.Users.FindAsync(id);
             if (user == null) return NotFound("User not found");
 
-            // Prevent deleting the default Admin
-            if (user.Email == "admin@company.com")
+            if (user.Email == "adzyl.jipos@gmail.com")
                 return BadRequest(new { error = "Cannot delete the default System Administrator." });
 
-            _context.Users.Remove(user);
+            // SOFT DELETE
+            user.IsDeleted = true;
+            user.IsActive = false;
+
             await _context.SaveChangesAsync();
-            return Ok(new { message = "User deleted successfully" });
+            return Ok(new { message = "User archived successfully" });
+        }
+
+        [HttpPut("{id}/restore")]
+        public async Task<IActionResult> RestoreUser(int id)
+        {
+            var user = await _context.Users
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(u => u.Id == id);
+
+            if (user == null) return NotFound("User not found");
+
+            user.IsDeleted = false;
+            user.IsActive = true;
+
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "User restored successfully" });
         }
     }
 }

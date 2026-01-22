@@ -12,73 +12,91 @@
 <PageTitle>Customer Management</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
-    <MudTable Items="@customers" Dense="true" Hover="true" Bordered="true" Striped="true" 
-              Filter="new Func<CustomerDTO,bool>(FilterFunc)" Loading="@_loading">
-        <ToolBarContent>
-            <MudText Typo="Typo.h6">Customer Management</MudText>
-            <MudSpacer />
-            <MudTextField @bind-Value="searchString" Placeholder="Search customers..." Adornment="Adornment.Start" 
-                          AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0" />
-            <AuthorizeView Roles="Admin,Accounting">
-                <MudButton Variant="Variant.Filled" Color="Color.Info" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenAddDialog" Class="ml-3">
-                    Add Customer
-                </MudButton>
-            </AuthorizeView>
-        </ToolBarContent>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <MudText Typo="Typo.h4" Color="Color.Primary">Customer Management</MudText>
+        <AuthorizeView Roles="Admin,Accounting">
+            <MudButton Variant="Variant.Filled" Color="Color.Info" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenAddDialog">
+                Add New Customer
+            </MudButton>
+        </AuthorizeView>
+    </div>
 
-        <HeaderContent>
-            <MudTh>ID</MudTh>
-            <MudTh>
-                <MudTableSortLabel SortBy="new Func<CustomerDTO, object>(x => x.Name)">Name</MudTableSortLabel>
-            </MudTh>
-            <MudTh>Email</MudTh>
-            <MudTh>Phone</MudTh>
-            <AuthorizeView Roles="Admin,Accounting">
-                <MudTh Style="text-align:right">Actions</MudTh>
-            </AuthorizeView>
-        </HeaderContent>
+    <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-6">
+        <MudTabPanel Text="Active Customers" OnClick="@(() => LoadList(false))">
+            <MudTable Items="@customers" Dense="true" Hover="true" Bordered="true" Striped="true" Filter="new Func<CustomerDTO,bool>(FilterFunc)" Loading="@_loading">
+                <ToolBarContent>
+                    <MudText Typo="Typo.h6">Active List</MudText>
+                    <MudSpacer />
+                    <MudTextField @bind-Value="searchString" Placeholder="Search..." Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+                </ToolBarContent>
+                <HeaderContent>
+                    <MudTh>ID</MudTh>
+                    <MudTh>Name</MudTh>
+                    <MudTh>Email</MudTh>
+                    <MudTh>Phone</MudTh>
+                    <AuthorizeView Roles="Admin,Accounting">
+                        <MudTh Style="text-align:right">Actions</MudTh>
+                    </AuthorizeView>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="ID">@context.Id</MudTd>
+                    <MudTd DataLabel="Name"><b>@context.Name</b></MudTd>
+                    <MudTd DataLabel="Email">@context.Email</MudTd>
+                    <MudTd DataLabel="Phone">@context.Phone</MudTd>
+                    <AuthorizeView Roles="Admin,Accounting">
+                        <MudTd DataLabel="Actions" Style="text-align:right">
+                            <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Secondary" OnClick="() => OpenEditDialog(context)" />
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="() => ConfirmDelete(context.Id)" />
+                        </MudTd>
+                    </AuthorizeView>
+                </RowTemplate>
+                <PagerContent><MudTablePager /></PagerContent>
+            </MudTable>
+        </MudTabPanel>
 
-        <RowTemplate>
-            <MudTd DataLabel="ID">@context.Id</MudTd>
-            <MudTd DataLabel="Name" Style="font-weight:bold">@context.Name</MudTd>
-            <MudTd DataLabel="Email">@context.Email</MudTd>
-            <MudTd DataLabel="Phone">@context.Phone</MudTd>
-            <AuthorizeView Roles="Admin,Accounting">
-                <MudTd DataLabel="Actions" Style="text-align:right">
-                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Secondary" OnClick="() => OpenEditDialog(context)" />
-                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="() => ConfirmDelete(context.Id)" />
-                </MudTd>
-            </AuthorizeView>
-        </RowTemplate>
-
-        <PagerContent>
-            <MudTablePager />
-        </PagerContent>
-    </MudTable>
+        <AuthorizeView Roles="Admin,Accounting">
+            <MudTabPanel Text="Archived Customers" OnClick="@(() => LoadList(true))">
+                <MudTable Items="@customers" Dense="true" Hover="true" Bordered="true" Striped="true" Filter="new Func<CustomerDTO,bool>(FilterFunc)" Loading="@_loading">
+                    <HeaderContent>
+                        <MudTh>ID</MudTh>
+                        <MudTh>Name</MudTh>
+                        <MudTh>Email</MudTh>
+                        <MudTh Style="text-align:right">Actions</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="ID">@context.Id</MudTd>
+                        <MudTd DataLabel="Name" Style="color:gray;">@context.Name</MudTd>
+                        <MudTd DataLabel="Email">@context.Email</MudTd>
+                        <MudTd DataLabel="Actions" Style="text-align:right">
+                            <MudTooltip Text="Restore Customer">
+                                <MudIconButton Icon="@Icons.Material.Filled.RestoreFromTrash" Size="Size.Small" Color="Color.Success" OnClick="() => ConfirmRestore(context.Id)" />
+                            </MudTooltip>
+                        </MudTd>
+                    </RowTemplate>
+                    <PagerContent><MudTablePager /></PagerContent>
+                </MudTable>
+            </MudTabPanel>
+        </AuthorizeView>
+    </MudTabs>
 </MudContainer>
 
 @code {
-    private List<CustomerDTO> customers = new();
+    private List<CustomerDTO> customers = new List<CustomerDTO>();
     private string searchString = "";
     private bool _loading = true;
 
-    protected override async Task OnInitializedAsync() => await LoadList();
+    protected override async Task OnInitializedAsync() => await LoadList(false);
 
-    private async Task LoadList()
+    private async Task LoadList(bool archived)
     {
         _loading = true;
-        try
-        {
-            customers = await ReceivableService.GetCustomersAsync();
+        try 
+        { 
+            var all = await ReceivableService.GetCustomersAsync(archived);
+            customers = archived ? all.Where(c => c.IsDeleted).ToList() : all.Where(c => !c.IsDeleted).ToList();
         }
-        catch (Exception ex)
-        {
-            Snackbar.Add(ex.Message, Severity.Error);
-        }
-        finally
-        {
-            _loading = false;
-        }
+        catch (Exception ex) { Snackbar.Add(ex.Message, Severity.Error); }
+        finally { _loading = false; }
     }
 
     private bool FilterFunc(CustomerDTO element)
@@ -92,43 +110,35 @@
     private async Task OpenAddDialog()
     {
         var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true };
-        var dialog = DialogService.Show<CustomerDialog>("Add Customer", options);
-
-        // IMPORTANT: await the result
-        var result = await dialog.Result;
-        if (!result.Canceled)
-        {
-            await LoadList();
-        }
+        var dialog = await DialogService.ShowAsync<CustomerDialog>("Add Customer", options);
+        if (!(await dialog.Result).Canceled) await LoadList(false);
     }
 
     private async Task OpenEditDialog(CustomerDTO customer)
     {
         var parameters = new DialogParameters { ["Customer"] = customer };
         var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true };
-        var dialog = DialogService.Show<CustomerDialog>("Edit Customer", parameters, options);
-
-        var result = await dialog.Result;
-        if (!result.Canceled)
-        {
-            await LoadList();
-        }
+        var dialog = await DialogService.ShowAsync<CustomerDialog>("Edit Customer", parameters, options);
+        if (!(await dialog.Result).Canceled) await LoadList(false);
     }
 
     private async Task ConfirmDelete(int id)
     {
-        bool? result = await DialogService.ShowMessageBox("Delete", "Delete this customer?", yesText: "Delete", cancelText: "Cancel");
+        bool? result = await DialogService.ShowMessageBox("Archive", "Archive this customer?", yesText: "Archive", cancelText: "Cancel");
         if (result == true)
         {
-            try
-            {
-                await ReceivableService.DeleteCustomerAsync(id);
-                await LoadList();
-            }
-            catch (Exception ex)
-            {
-                Snackbar.Add(ex.Message, Severity.Error);
-            }
+            try { await ReceivableService.DeleteCustomerAsync(id); Snackbar.Add("Customer archived.", Severity.Success); await LoadList(false); }
+            catch (Exception ex) { Snackbar.Add(ex.Message, Severity.Error); }
+        }
+    }
+
+    private async Task ConfirmRestore(int id)
+    {
+        bool? result = await DialogService.ShowMessageBox("Restore", "Restore this customer?", yesText: "Restore", cancelText: "Cancel");
+        if (result == true)
+        {
+            try { await ReceivableService.RestoreCustomerAsync(id); Snackbar.Add("Customer restored.", Severity.Success); await LoadList(true); }
+            catch (Exception ex) { Snackbar.Add(ex.Message, Severity.Error); }
         }
     }
 }

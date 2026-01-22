@@ -1,10 +1,7 @@
-﻿using AccountingSystem.API.Data;
-using AccountingSystem.API.Services.Interfaces;
+﻿using AccountingSystem.API.Services.Interfaces;
 using AccountingSystem.Shared.DTOs;
-using AccountingSystem.API.Models; // Needed for Entity
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace AccountingSystem.API.Controllers
 {
@@ -15,98 +12,51 @@ namespace AccountingSystem.API.Controllers
     public class AccountsPayableController : ControllerBase
     {
         private readonly IPayableService _payableService;
-        private readonly AccountingDbContext _context;
 
-        public AccountsPayableController(IPayableService payableService, AccountingDbContext context)
+        public AccountsPayableController(IPayableService payableService)
         {
             _payableService = payableService;
-            _context = context;
         }
 
-        // GET LIST
         [HttpGet("vendors")]
-        public async Task<IActionResult> GetVendors()
+        public async Task<IActionResult> GetVendors([FromQuery] bool includeArchived = false)
         {
-            var vendors = await _context.Vendors
-                .Select(v => new VendorDTO
-                {
-                    Id = v.Id,
-                    Name = v.Name,
-                    Email = v.Email,
-                    ContactPerson = v.ContactPerson
-                })
-                .ToListAsync();
+            var vendors = await _payableService.GetVendorsAsync(includeArchived);
             return Ok(vendors);
         }
 
-        // CREATE
         [HttpPost("vendors")]
         public async Task<IActionResult> CreateVendor([FromBody] CreateVendorDTO dto)
         {
-            var vendor = new Vendor
-            {
-                Name = dto.Name,
-                Email = dto.Email,
-                ContactPerson = dto.ContactPerson
-            };
-            _context.Vendors.Add(vendor);
-            await _context.SaveChangesAsync();
-
-            return Ok(new VendorDTO { Id = vendor.Id, Name = vendor.Name });
+            var result = await _payableService.CreateVendorAsync(dto);
+            return Ok(result); // Return entity or DTO
         }
 
-        // UPDATE
         [HttpPut("vendors/{id}")]
         public async Task<IActionResult> UpdateVendor(int id, [FromBody] UpdateVendorDTO dto)
         {
-            var vendor = await _context.Vendors.FindAsync(id);
-            if (vendor == null) return NotFound("Vendor not found");
-
-            vendor.Name = dto.Name;
-            vendor.Email = dto.Email;
-            vendor.ContactPerson = dto.ContactPerson;
-
-            await _context.SaveChangesAsync();
+            await _payableService.UpdateVendorAsync(id, dto);
             return Ok(new { message = "Vendor updated" });
         }
 
-        // DELETE
         [HttpDelete("vendors/{id}")]
         public async Task<IActionResult> DeleteVendor(int id)
         {
-            var vendor = await _context.Vendors.FindAsync(id);
-            if (vendor == null) return NotFound("Vendor not found");
-
-            // Check for existing bills to prevent breaking referential integrity
-            bool hasBills = await _context.Bills.AnyAsync(b => b.VendorId == id);
-            if (hasBills) return BadRequest(new { error = "Cannot delete vendor with existing bills." });
-
-            _context.Vendors.Remove(vendor);
-            await _context.SaveChangesAsync();
-            return Ok(new { message = "Vendor deleted" });
+            await _payableService.DeleteVendorAsync(id);
+            return Ok(new { message = "Vendor archived" });
         }
 
-        // Bill Endpoits
+        [HttpPut("vendors/{id}/restore")]
+        public async Task<IActionResult> RestoreVendor(int id)
+        {
+            await _payableService.RestoreVendorAsync(id);
+            return Ok(new { message = "Vendor restored" });
+        }
+
         [HttpGet("bills")]
         public async Task<IActionResult> GetBills()
         {
-            var bills = await _context.Bills
-                .Include(b => b.Vendor)
-                .Select(b => new BillDTO
-                {
-                    Id = b.Id,
-                    VendorId = b.VendorId,
-                    VendorName = b.Vendor.Name,
-                    DueDate = b.DueDate,
-                    Amount = b.Amount,
-                    ReferenceNumber = b.ReferenceNumber,
-                    Description = b.Description,
-                    AmountPaid = b.AmountPaid,
-                    Status = b.Status
-                })
-                .OrderByDescending(b => b.DueDate)
-                .ToListAsync();
-
+            var bills = await _payableService.GetBillsAsync();
             return Ok(bills);
         }
 
@@ -120,126 +70,68 @@ namespace AccountingSystem.API.Controllers
         [HttpPost("bill/{id}/pay")]
         public async Task<IActionResult> PayBill(int id, [FromBody] RecordPaymentDTO paymentDto)
         {
-            try
-            {
-                // Ensure the route ID matches the DTO ID for safety
-                if (id != paymentDto.ReferenceId) return BadRequest(new { error = "Mismatched Bill ID." });
-
-                var userId = User.Identity?.Name ?? "Admin";
-                var payment = await _payableService.PayBillAsync(paymentDto, userId);
-                return Ok(payment);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { error = ex.Message });
-            }
+            if (id != paymentDto.ReferenceId) return BadRequest(new { error = "Mismatched Bill ID." });
+            var userId = User.Identity?.Name ?? "Admin";
+            var payment = await _payableService.PayBillAsync(paymentDto, userId);
+            return Ok(payment);
         }
     }
 
-    /// --- ACCOUNTS RECEIVABLE ---
+    // --- ACCOUNTS RECEIVABLE ---
     [ApiController]
     [Route("api/receivables")]
-    // Note: Management is allowed to view customers based on prompt requirements
-    [Authorize(Roles = "Admin,Accounting,Management")]
+    [Authorize(Roles = "Admin,Accounting")]
     public class AccountsReceivableController : ControllerBase
     {
         private readonly IReceivableService _receivableService;
-        private readonly AccountingDbContext _context;
 
-        public AccountsReceivableController(IReceivableService receivableService, AccountingDbContext context)
+        public AccountsReceivableController(IReceivableService receivableService)
         {
             _receivableService = receivableService;
-            _context = context;
         }
 
-        // GET LIST
         [HttpGet("customers")]
-        public async Task<IActionResult> GetCustomers()
+        public async Task<IActionResult> GetCustomers([FromQuery] bool includeArchived = false)
         {
-            var customers = await _context.Customers
-                .Select(c => new CustomerDTO
-                {
-                    Id = c.Id,
-                    Name = c.Name,
-                    Email = c.Email,
-                    Phone = c.Phone
-                })
-                .ToListAsync();
+            var customers = await _receivableService.GetCustomersAsync(includeArchived);
             return Ok(customers);
         }
 
-        // CREATE
         [HttpPost("customers")]
-        [Authorize(Roles = "Admin,Accounting")] // Management cannot create
         public async Task<IActionResult> CreateCustomer([FromBody] CreateCustomerDTO dto)
         {
-            var customer = new Customer
-            {
-                Name = dto.Name,
-                Email = dto.Email,
-                Phone = dto.Phone
-            };
-            _context.Customers.Add(customer);
-            await _context.SaveChangesAsync();
-
-            return Ok(new CustomerDTO { Id = customer.Id, Name = customer.Name });
+            var result = await _receivableService.CreateCustomerAsync(dto);
+            return Ok(result);
         }
 
-        // UPDATE
         [HttpPut("customers/{id}")]
-        [Authorize(Roles = "Admin,Accounting")] // Management cannot edit
         public async Task<IActionResult> UpdateCustomer(int id, [FromBody] UpdateCustomerDTO dto)
         {
-            var customer = await _context.Customers.FindAsync(id);
-            if (customer == null) return NotFound("Customer not found");
-
-            customer.Name = dto.Name;
-            customer.Email = dto.Email;
-            customer.Phone = dto.Phone;
-
-            await _context.SaveChangesAsync();
+            await _receivableService.UpdateCustomerAsync(id, dto);
             return Ok(new { message = "Customer updated" });
         }
 
-        // DELETE
         [HttpDelete("customers/{id}")]
-        [Authorize(Roles = "Admin,Accounting")] // Management cannot delete
         public async Task<IActionResult> DeleteCustomer(int id)
         {
-            var customer = await _context.Customers.FindAsync(id);
-            if (customer == null) return NotFound("Customer not found");
-
-            // Integrity Check
-            bool hasInvoices = await _context.Invoices.AnyAsync(i => i.CustomerId == id);
-            if (hasInvoices) return BadRequest(new { error = "Cannot delete customer with existing invoices." });
-
-            _context.Customers.Remove(customer);
-            await _context.SaveChangesAsync();
-            return Ok(new { message = "Customer deleted" });
+            await _receivableService.DeleteCustomerAsync(id);
+            return Ok(new { message = "Customer archived" });
         }
 
-        //  Invoice Endpoints ...
+        [HttpPut("customers/{id}/restore")]
+        public async Task<IActionResult> RestoreCustomer(int id)
+        {
+            await _receivableService.RestoreCustomerAsync(id);
+            return Ok(new { message = "Customer restored" });
+        }
+
         [HttpGet("invoices")]
         public async Task<IActionResult> GetInvoices()
         {
-            var invoices = await _context.Invoices
-                .Include(i => i.Customer)
-                .Select(i => new InvoiceDTO
-                {
-                    Id = i.Id,
-                    CustomerId = i.CustomerId,
-                    CustomerName = i.Customer.Name,
-                    DueDate = i.DueDate,
-                    TotalAmount = i.TotalAmount,
-                    Description = i.Description,
-                    PaidAmount = i.PaidAmount,
-                    Status = i.Status
-                })
-                .OrderByDescending(i => i.DueDate)
-                .ToListAsync();
-
+            var invoices = await _receivableService.GetInvoicesAsync();
             return Ok(invoices);
         }
+
         [HttpPost("invoice")]
         public async Task<IActionResult> CreateInvoice([FromBody] CreateInvoiceDTO invoiceDto)
         {
@@ -250,18 +142,10 @@ namespace AccountingSystem.API.Controllers
         [HttpPost("invoice/{id}/receive")]
         public async Task<IActionResult> ReceivePayment(int id, [FromBody] RecordPaymentDTO paymentDto)
         {
-            try
-            {
-                if (id != paymentDto.ReferenceId) return BadRequest(new { error = "Mismatched Invoice ID." });
-
-                var userId = User.Identity?.Name ?? "Admin";
-                var payment = await _receivableService.ReceivePaymentAsync(paymentDto, userId);
-                return Ok(payment);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { error = ex.Message });
-            }
+            if (id != paymentDto.ReferenceId) return BadRequest(new { error = "Mismatched Invoice ID." });
+            var userId = User.Identity?.Name ?? "Admin";
+            var payment = await _receivableService.ReceivePaymentAsync(paymentDto, userId);
+            return Ok(payment);
         }
     }
 }

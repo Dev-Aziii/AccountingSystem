@@ -12,51 +12,87 @@
 <PageTitle>Vendor Management</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
-    <MudTable Items="@vendors" Dense="true" Hover="true" Bordered="true" Striped="true"
-              Filter="new Func<VendorDTO, bool>(FilterFunc)" Loading="@_loading">
-        <ToolBarContent>
-            <MudText Typo="Typo.h6">Vendor Management</MudText>
-            <MudSpacer />
-            <MudTextField @bind-Value="searchString" Placeholder="Search vendors..." Adornment="Adornment.Start"
-                          AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenAddDialog" Class="ml-3">
-                Add Vendor
-            </MudButton>
-        </ToolBarContent>
-        <HeaderContent>
-            <MudTh>ID</MudTh>
-            <MudTh><MudTableSortLabel SortBy="new Func<VendorDTO, object>(x => x.Name)">Name</MudTableSortLabel></MudTh>
-            <MudTh>Email</MudTh>
-            <MudTh>Contact Person</MudTh>
-            <MudTh Style="text-align:right">Actions</MudTh>
-        </HeaderContent>
-        <RowTemplate>
-            <MudTd DataLabel="ID">@context.Id</MudTd>
-            <MudTd DataLabel="Name" Style="font-weight:bold">@context.Name</MudTd>
-            <MudTd DataLabel="Email">@context.Email</MudTd>
-            <MudTd DataLabel="Contact">@context.ContactPerson</MudTd>
-            <MudTd DataLabel="Actions" Style="text-align:right">
-                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Secondary" OnClick="() => OpenEditDialog(context)" />
-                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="() => ConfirmDelete(context.Id)" />
-            </MudTd>
-        </RowTemplate>
-        <PagerContent>
-            <MudTablePager />
-        </PagerContent>
-    </MudTable>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <MudText Typo="Typo.h4" Color="Color.Primary">Vendor Management</MudText>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenAddDialog">
+            Add New Vendor
+        </MudButton>
+    </div>
+
+    <!-- TABS: Active vs Archived -->
+    <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-6">
+        <MudTabPanel Text="Active Vendors" OnClick="@(() => LoadList(false))">
+            <MudTable Items="@vendors" Dense="true" Hover="true" Bordered="true" Striped="true" Filter="new Func<VendorDTO, bool>(FilterFunc)" Loading="@_loading">
+                <ToolBarContent>
+                    <MudText Typo="Typo.h6">Active List</MudText>
+                    <MudSpacer />
+                    <MudTextField @bind-Value="searchString" Placeholder="Search..." Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+                </ToolBarContent>
+                <HeaderContent>
+                    <MudTh>ID</MudTh>
+                    <MudTh>Name</MudTh>
+                    <MudTh>Email</MudTh>
+                    <MudTh>Contact Person</MudTh>
+                    <MudTh Style="text-align:right">Actions</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="ID">@context.Id</MudTd>
+                    <MudTd DataLabel="Name"><b>@context.Name</b></MudTd>
+                    <MudTd DataLabel="Email">@context.Email</MudTd>
+                    <MudTd DataLabel="Contact">@context.ContactPerson</MudTd>
+                    <MudTd DataLabel="Actions" Style="text-align:right">
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Secondary" OnClick="() => OpenEditDialog(context)" />
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="() => ConfirmDelete(context.Id)" />
+                    </MudTd>
+                </RowTemplate>
+                <PagerContent><MudTablePager /></PagerContent>
+            </MudTable>
+        </MudTabPanel>
+
+        <MudTabPanel Text="Archived Vendors" OnClick="@(() => LoadList(true))">
+            <MudTable Items="@vendors" Dense="true" Hover="true" Bordered="true" Striped="true" Filter="new Func<VendorDTO, bool>(FilterFunc)" Loading="@_loading">
+                <HeaderContent>
+                    <MudTh>ID</MudTh>
+                    <MudTh>Name</MudTh>
+                    <MudTh>Email</MudTh>
+                    <MudTh Style="text-align:right">Actions</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="ID">@context.Id</MudTd>
+                    <MudTd DataLabel="Name" Style="color:gray;">@context.Name</MudTd>
+                    <MudTd DataLabel="Email">@context.Email</MudTd>
+                    <MudTd DataLabel="Actions" Style="text-align:right">
+                        <MudTooltip Text="Restore Vendor">
+                            <MudIconButton Icon="@Icons.Material.Filled.RestoreFromTrash" Size="Size.Small" Color="Color.Success" OnClick="() => ConfirmRestore(context.Id)" />
+                        </MudTooltip>
+                    </MudTd>
+                </RowTemplate>
+                <PagerContent><MudTablePager /></PagerContent>
+            </MudTable>
+        </MudTabPanel>
+    </MudTabs>
 </MudContainer>
 
 @code {
     private List<VendorDTO> vendors = new List<VendorDTO>();
     private string searchString = "";
     private bool _loading = true;
+    private bool _showArchived = false;
 
-    protected override async Task OnInitializedAsync() => await LoadList();
+    protected override async Task OnInitializedAsync() => await LoadList(false);
 
-    private async Task LoadList()
+    private async Task LoadList(bool archived)
     {
+        _showArchived = archived;
         _loading = true;
-        try { vendors = await PayableService.GetVendorsAsync(); }
+        try
+        {
+            // We fetch either active or ALL (and filter client-side) or fetch specific sets from API
+            // Current API returns ALL if includeArchived=true. So we filter.
+            var all = await PayableService.GetVendorsAsync(archived);
+            // API returns all including deleted if flag is true. We filter for the tab.
+            vendors = archived ? all.Where(v => v.IsDeleted).ToList() : all.Where(v => !v.IsDeleted).ToList();
+        }
         catch (Exception ex) { Snackbar.Add(ex.Message, Severity.Error); }
         finally { _loading = false; }
     }
@@ -73,7 +109,7 @@
     {
         var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true };
         var dialog = await DialogService.ShowAsync<VendorDialog>("Add Vendor", options);
-        if (!(await dialog.Result).Canceled) await LoadList();
+        if (!(await dialog.Result).Canceled) await LoadList(false);
     }
 
     private async Task OpenEditDialog(VendorDTO vendor)
@@ -81,15 +117,35 @@
         var parameters = new DialogParameters { ["Vendor"] = vendor };
         var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true };
         var dialog = await DialogService.ShowAsync<VendorDialog>("Edit Vendor", parameters, options);
-        if (!(await dialog.Result).Canceled) await LoadList();
+        if (!(await dialog.Result).Canceled) await LoadList(false);
     }
 
     private async Task ConfirmDelete(int id)
     {
-        bool? result = await DialogService.ShowMessageBox("Delete", "Delete this vendor?", yesText: "Delete", cancelText: "Cancel");
+        bool? result = await DialogService.ShowMessageBox("Archive", "Archive this vendor?", yesText: "Archive", cancelText: "Cancel");
         if (result == true)
         {
-            try { await PayableService.DeleteVendorAsync(id); await LoadList(); }
+            try
+            {
+                await PayableService.DeleteVendorAsync(id);
+                Snackbar.Add("Vendor archived.", Severity.Success);
+                await LoadList(false);
+            }
+            catch (Exception ex) { Snackbar.Add(ex.Message, Severity.Error); }
+        }
+    }
+
+    private async Task ConfirmRestore(int id)
+    {
+        bool? result = await DialogService.ShowMessageBox("Restore", "Restore this vendor?", yesText: "Restore", cancelText: "Cancel");
+        if (result == true)
+        {
+            try
+            {
+                await PayableService.RestoreVendorAsync(id);
+                Snackbar.Add("Vendor restored.", Severity.Success);
+                await LoadList(true);
+            }
             catch (Exception ex) { Snackbar.Add(ex.Message, Severity.Error); }
         }
     }
