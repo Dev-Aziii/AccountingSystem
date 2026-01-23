@@ -87,11 +87,11 @@
         _loading = true;
         try
         {
-            // We fetch either active or ALL (and filter client-side) or fetch specific sets from API
-            // Current API returns ALL if includeArchived=true. So we filter.
             var all = await PayableService.GetVendorsAsync(archived);
-            // API returns all including deleted if flag is true. We filter for the tab.
-            vendors = archived ? all.Where(v => v.IsDeleted).ToList() : all.Where(v => !v.IsDeleted).ToList();
+            if (archived)
+                vendors = all.Where(v => v.IsDeleted).ToList();
+            else
+                vendors = all;
         }
         catch (Exception ex) { Snackbar.Add(ex.Message, Severity.Error); }
         finally { _loading = false; }

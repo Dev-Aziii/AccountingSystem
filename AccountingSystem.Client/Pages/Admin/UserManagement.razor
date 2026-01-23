@@ -147,7 +147,10 @@
         try
         {
             var all = await UserService.GetAllUsersAsync(archived);
-            users = archived ? all.Where(u => u.IsDeleted || !u.IsActive).ToList() : all.Where(u => !u.IsDeleted && u.IsActive).ToList();
+            if (archived)
+                users = all.Where(u => u.IsDeleted).ToList();
+            else
+                users = all.Where(u => !u.IsDeleted).ToList();
         }
         catch (Exception ex) { Snackbar.Add(ex.Message, Severity.Error); }
         finally { _loading = false; }

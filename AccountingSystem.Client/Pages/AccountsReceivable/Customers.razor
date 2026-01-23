@@ -93,7 +93,12 @@
         try 
         { 
             var all = await ReceivableService.GetCustomersAsync(archived);
-            customers = archived ? all.Where(c => c.IsDeleted).ToList() : all.Where(c => !c.IsDeleted).ToList();
+            if (archived)
+                // Filter "All" list to show ONLY deleted
+                customers = all.Where(c => c.IsDeleted).ToList();
+            else
+                // Trust API default filter for Active
+                customers = all;
         }
         catch (Exception ex) { Snackbar.Add(ex.Message, Severity.Error); }
         finally { _loading = false; }

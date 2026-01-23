@@ -40,10 +40,12 @@ namespace AccountingSystem.API.Data
             base.OnModelCreating(modelBuilder);
 
             // --- Multi-Tenancy Global Filters ---
-            // Automatically filter data by the current CompanyId
 
             modelBuilder.Entity<User>().HasQueryFilter(e => !e.IsDeleted && e.CompanyId == _tenantService.GetCurrentTenant());
-            modelBuilder.Entity<Account>().HasQueryFilter(e => e.CompanyId == _tenantService.GetCurrentTenant());
+
+            // Added !e.IsDeleted to Account filter
+            modelBuilder.Entity<Account>().HasQueryFilter(e => !e.IsDeleted && e.CompanyId == _tenantService.GetCurrentTenant());
+
             modelBuilder.Entity<JournalEntry>().HasQueryFilter(e => e.CompanyId == _tenantService.GetCurrentTenant());
 
             modelBuilder.Entity<Vendor>().HasQueryFilter(e => !e.IsDeleted && e.CompanyId == _tenantService.GetCurrentTenant());
@@ -52,14 +54,12 @@ namespace AccountingSystem.API.Data
             modelBuilder.Entity<Invoice>().HasQueryFilter(e => !e.IsDeleted && e.CompanyId == _tenantService.GetCurrentTenant());
             modelBuilder.Entity<Payment>().HasQueryFilter(e => !e.IsDeleted && e.CompanyId == _tenantService.GetCurrentTenant());
 
-            // NEW: Secure Audit Logs per Company
             modelBuilder.Entity<AuditLog>().HasQueryFilter(e => e.CompanyId == _tenantService.GetCurrentTenant());
 
-            // --- FIX: Prevent AuditLog.CompanyId from being a Foreign Key ---
-            // This allows saving logs with CompanyId = 0 (Anonymous/System actions) without crashing
+            // Prevent AuditLog.CompanyId from being a Foreign Key ---
             modelBuilder.Entity<AuditLog>()
                 .Property(a => a.CompanyId)
-                .IsRequired(); // Keeps it as int, but we rely on lack of Navigation property to avoid FK
+                .IsRequired();
 
             // --- Enums & Conversions ---
             modelBuilder.Entity<Bill>().Property(b => b.Status).HasConversion<string>();
@@ -97,8 +97,6 @@ namespace AccountingSystem.API.Data
                 if (entry.State == EntityState.Added)
                 {
                     entry.Entity.CreatedAt = DateTime.UtcNow;
-                    // Only auto-assign if we have a valid tenant context (Logged In)
-                    // If not logged in (Registration), the Service handles assignment manually.
                     if (currentTenantId != 0)
                     {
                         entry.Entity.CompanyId = currentTenantId;

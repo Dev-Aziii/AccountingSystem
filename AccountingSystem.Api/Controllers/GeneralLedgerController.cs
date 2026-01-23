@@ -26,8 +26,9 @@ namespace AccountingSystem.API.Controllers
                 Id = a.Id,
                 Code = a.Code,
                 Name = a.Name,
-                Type = a.Type
-                // Add IsDeleted here if AccountDTO supports it for UI
+                Type = a.Type,
+                IsActive = a.IsActive,
+                IsDeleted = a.IsDeleted
             }).ToList();
 
             return Ok(dtos);

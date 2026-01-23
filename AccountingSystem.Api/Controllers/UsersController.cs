@@ -38,8 +38,8 @@ namespace AccountingSystem.API.Controllers
                     Email = u.Email,
                     FullName = u.FullName,
                     RoleName = u.Role.Name,
-                    IsActive = u.IsActive
-                    // Ideally add IsDeleted to UserDTO
+                    IsActive = u.IsActive,
+                    IsDeleted = u.IsDeleted
                 })
                 .ToListAsync();
 

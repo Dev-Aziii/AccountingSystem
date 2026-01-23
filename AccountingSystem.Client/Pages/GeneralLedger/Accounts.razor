@@ -104,20 +104,11 @@
         _loading = true;
         try 
         { 
-            // Fetch data from API
             var all = await LedgerService.GetAccountsAsync(archived);
-
-            // Filter Client Side:
-            // If archived=true, API returns ALL records (IgnoreQueryFilters). We filter to show ONLY deleted.
-            // If archived=false, API returns ONLY active records (Global Filter). We confirm !IsDeleted.
             if (archived)
-            {
                 accounts = all.Where(a => a.IsDeleted).ToList();
-            }
             else
-            {
-                accounts = all.Where(a => !a.IsDeleted).ToList();
-            }
+                accounts = all;
         }
         catch (Exception ex) { Snackbar.Add(ex.Message, Severity.Error); }
         finally { _loading = false; }

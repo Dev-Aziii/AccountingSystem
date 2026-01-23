@@ -34,7 +34,8 @@ namespace AccountingSystem.API.Services
                     Name = v.Name,
                     Email = v.Email,
                     ContactPerson = v.ContactPerson,
-                    // Map IsDeleted/IsActive if DTO supports it, otherwise logic handles visibility
+                    IsActive = v.IsActive,
+                    IsDeleted = v.IsDeleted
                 })
                 .ToListAsync();
         }
@@ -213,7 +214,15 @@ namespace AccountingSystem.API.Services
             }
 
             return await query
-                .Select(c => new CustomerDTO { Id = c.Id, Name = c.Name, Email = c.Email, Phone = c.Phone })
+                .Select(c => new CustomerDTO 
+                { 
+                    Id = c.Id, 
+                    Name = c.Name, 
+                    Email = c.Email, 
+                    Phone = c.Phone,
+                    IsActive = c.IsActive,
+                    IsDeleted = c.IsDeleted
+                })
                 .ToListAsync();
         }
 
