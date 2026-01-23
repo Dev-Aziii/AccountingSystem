@@ -26,7 +26,8 @@ builder.Services.AddScoped<IPaymentService, PaymentService>();
 
 // --- 3. Authentication Setup (JWT) ---
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
-var key = Encoding.ASCII.GetBytes(jwtSettings["Secret"]);
+var secret = jwtSettings["Secret"] ?? throw new InvalidOperationException("JWT Secret is not configured in appsettings.json");
+var key = Encoding.ASCII.GetBytes(secret);
 
 builder.Services.AddAuthentication(options =>
 {

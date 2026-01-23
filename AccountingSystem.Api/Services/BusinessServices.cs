@@ -32,8 +32,8 @@ namespace AccountingSystem.API.Services
                 {
                     Id = v.Id,
                     Name = v.Name,
-                    Email = v.Email,
-                    ContactPerson = v.ContactPerson,
+                    Email = v.Email ?? string.Empty,
+                    ContactPerson = v.ContactPerson ?? string.Empty,
                     IsActive = v.IsActive,
                     IsDeleted = v.IsDeleted
                 })
@@ -101,7 +101,7 @@ namespace AccountingSystem.API.Services
                     DueDate = b.DueDate,
                     Amount = b.Amount,
                     ReferenceNumber = b.ReferenceNumber,
-                    Description = b.Description,
+                    Description = b.Description ?? string.Empty,
                     AmountPaid = b.AmountPaid,
                     Status = b.Status
                 })
@@ -149,7 +149,7 @@ namespace AccountingSystem.API.Services
             if (bill == null) throw new Exception("Bill not found");
 
             if (paymentDto.Amount > (bill.Amount - bill.AmountPaid))
-                throw new Exception($"Overpayment detected.");
+                throw new Exception("Overpayment detected.");
 
             bill.AmountPaid += paymentDto.Amount;
 
@@ -173,6 +173,8 @@ namespace AccountingSystem.API.Services
             _context.Payments.Add(payment);
 
             var apAccount = await _context.Accounts.FirstOrDefaultAsync(a => a.Code == "2000");
+            if (apAccount == null) throw new Exception("Critical Error: Accounts Payable (2000) account not found.");
+
             var entry = new JournalEntryDTO
             {
                 Date = paymentDto.PaymentDate,
@@ -214,12 +216,12 @@ namespace AccountingSystem.API.Services
             }
 
             return await query
-                .Select(c => new CustomerDTO 
-                { 
-                    Id = c.Id, 
-                    Name = c.Name, 
-                    Email = c.Email, 
-                    Phone = c.Phone,
+                .Select(c => new CustomerDTO
+                {
+                    Id = c.Id,
+                    Name = c.Name,
+                    Email = c.Email ?? string.Empty,
+                    Phone = c.Phone ?? string.Empty, 
                     IsActive = c.IsActive,
                     IsDeleted = c.IsDeleted
                 })
@@ -286,7 +288,7 @@ namespace AccountingSystem.API.Services
                     CustomerName = i.Customer.Name,
                     DueDate = i.DueDate,
                     TotalAmount = i.TotalAmount,
-                    Description = i.Description,
+                    Description = i.Description ?? string.Empty,
                     PaidAmount = i.PaidAmount,
                     Status = i.Status
                 })
@@ -339,7 +341,7 @@ namespace AccountingSystem.API.Services
             }
 
             if (paymentDto.Amount > (invoice.TotalAmount - invoice.PaidAmount))
-                throw new Exception($"Overpayment detected.");
+                throw new Exception("Overpayment detected.");
 
             invoice.PaidAmount += paymentDto.Amount;
 
@@ -363,6 +365,8 @@ namespace AccountingSystem.API.Services
             _context.Payments.Add(payment);
 
             var arAccount = await _context.Accounts.FirstOrDefaultAsync(a => a.Code == "1100");
+            if (arAccount == null) throw new Exception("Critical Error: Accounts Receivable (1100) missing.");
+
             var entry = new JournalEntryDTO
             {
                 Date = paymentDto.PaymentDate,

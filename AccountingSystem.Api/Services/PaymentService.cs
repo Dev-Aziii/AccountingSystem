@@ -18,6 +18,11 @@ namespace AccountingSystem.API.Services
             _httpClient.BaseAddress = new Uri("https://api.paymongo.com/v1/");
 
             var secretKey = _configuration["PayMongo:SecretKey"];
+            if (string.IsNullOrEmpty(secretKey))
+            {
+                throw new InvalidOperationException("PayMongo:SecretKey configuration is required but not found.");
+            }
+
             var authHeader = Convert.ToBase64String(Encoding.UTF8.GetBytes(secretKey + ":"));
             _httpClient.DefaultRequestHeaders.Authorization =
                 new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", authHeader);
@@ -33,7 +38,7 @@ namespace AccountingSystem.API.Services
                     {
                         amount = (int)(dto.Amount * 100),
                         type = "gcash",
-                        currency = "PHP", 
+                        currency = "PHP",
                         redirect = new
                         {
                             success = dto.SuccessUrl ?? "https://localhost:7150/success",
@@ -58,10 +63,15 @@ namespace AccountingSystem.API.Services
             var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
             var result = JsonSerializer.Deserialize<PayMongoSourceResponse>(responseString, options);
 
+            if (result?.Data == null)
+            {
+                throw new InvalidOperationException("Invalid response from PayMongo API: missing data");
+            }
+
             return new PaymentSourceResponseDTO
             {
-                SourceId = result.Data.Id,
-                CheckoutUrl = result.Data.Attributes.Redirect.CheckoutUrl
+                SourceId = result.Data.Id ?? throw new InvalidOperationException("PayMongo API returned null source ID"),
+                CheckoutUrl = result.Data.Attributes?.Redirect?.CheckoutUrl ?? throw new InvalidOperationException("PayMongo API returned null checkout URL")
             };
         }
 

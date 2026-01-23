@@ -49,6 +49,10 @@ namespace AccountingSystem.API.Services
             var user = await _context.Users.FindAsync(userId);
             if (user == null) throw new Exception("User not found.");
 
+            // Check for null PasswordSalt before conversion
+            if (string.IsNullOrEmpty(user.PasswordSalt))
+                throw new Exception("User password data is corrupted.");
+
             // Verify Current Password
             if (!VerifyPasswordHash(dto.CurrentPassword, Convert.FromBase64String(user.PasswordHash), Convert.FromBase64String(user.PasswordSalt)))
             {
@@ -112,7 +116,7 @@ namespace AccountingSystem.API.Services
                     Role = "Admin",
                     CompanyId = company.Id,
                     CompanyName = company.Name,
-                    ExpiresAt = DateTime.UtcNow.AddMinutes(int.Parse(_configuration["JwtSettings:ExpiryMinutes"]))
+                    ExpiresAt = DateTime.UtcNow.AddMinutes(int.Parse(_configuration["JwtSettings:ExpiryMinutes"]!))
                 };
             }
             catch
@@ -157,6 +161,10 @@ namespace AccountingSystem.API.Services
             if (user == null || user.IsDeleted || !user.IsActive)
                 throw new Exception("Invalid email or password.");
 
+            // Check for null PasswordSalt before conversion
+            if (string.IsNullOrEmpty(user.PasswordSalt))
+                throw new Exception("Invalid email or password.");
+
             if (!VerifyPasswordHash(loginDto.Password, Convert.FromBase64String(user.PasswordHash), Convert.FromBase64String(user.PasswordSalt)))
                 throw new Exception("Invalid email or password.");
 
@@ -173,7 +181,7 @@ namespace AccountingSystem.API.Services
                 Role = user.Role.Name,
                 CompanyId = company.Id,
                 CompanyName = company.Name,
-                ExpiresAt = DateTime.UtcNow.AddMinutes(int.Parse(_configuration["JwtSettings:ExpiryMinutes"]))
+                ExpiresAt = DateTime.UtcNow.AddMinutes(int.Parse(_configuration["JwtSettings:ExpiryMinutes"]!))
             };
         }
 
@@ -182,42 +190,40 @@ namespace AccountingSystem.API.Services
         {
             var accounts = new List<Account>
             {
-                new Account { CompanyId = companyId, Code = "1000", Name = "Cash on Hand", Type = "Asset" },
-                new Account { CompanyId = companyId, Code = "1010", Name = "Bank", Type = "Asset" },
-                new Account { CompanyId = companyId, Code = "1100", Name = "Accounts Receivable", Type = "Asset" },
-                new Account { CompanyId = companyId, Code = "2000", Name = "Accounts Payable", Type = "Liability" },
-                new Account { CompanyId = companyId, Code = "3000", Name = "Owner's Capital", Type = "Equity" },
-                new Account { CompanyId = companyId, Code = "4000", Name = "Sales Revenue", Type = "Revenue" },
-                new Account { CompanyId = companyId, Code = "5000", Name = "General Expense", Type = "Expense" }
+                new() { CompanyId = companyId, Code = "1000", Name = "Cash on Hand", Type = "Asset" },
+                new() { CompanyId = companyId, Code = "1010", Name = "Bank", Type = "Asset" },
+                new() { CompanyId = companyId, Code = "1100", Name = "Accounts Receivable", Type = "Asset" },
+                new() { CompanyId = companyId, Code = "2000", Name = "Accounts Payable", Type = "Liability" },
+                new() { CompanyId = companyId, Code = "3000", Name = "Owner's Capital", Type = "Equity" },
+                new() { CompanyId = companyId, Code = "4000", Name = "Sales Revenue", Type = "Revenue" },
+                new() { CompanyId = companyId, Code = "5000", Name = "General Expense", Type = "Expense" }
             };
+
             _context.Accounts.AddRange(accounts);
+            await _context.SaveChangesAsync(); // Added await to ensure the method is truly asynchronous
         }
 
-        private void CreatePasswordHash(string password, out byte[] passwordHash, out byte[] passwordSalt)
+        private static void CreatePasswordHash(string password, out byte[] passwordHash, out byte[] passwordSalt)
         {
-            using (var hmac = new HMACSHA512())
-            {
-                passwordSalt = hmac.Key;
-                passwordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(password));
-            }
+            using var hmac = new HMACSHA512();
+            passwordSalt = hmac.Key;
+            passwordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(password));
         }
 
-        private bool VerifyPasswordHash(string password, byte[] storedHash, byte[] storedSalt)
+        private static bool VerifyPasswordHash(string password, byte[] storedHash, byte[] storedSalt)
         {
-            using (var hmac = new HMACSHA512(storedSalt))
+            using var hmac = new HMACSHA512(storedSalt);
+            var computedHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(password));
+            for (int i = 0; i < computedHash.Length; i++)
             {
-                var computedHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(password));
-                for (int i = 0; i < computedHash.Length; i++)
-                {
-                    if (computedHash[i] != storedHash[i]) return false;
-                }
+                if (computedHash[i] != storedHash[i]) return false;
             }
             return true;
         }
 
         private string GenerateJwtToken(User user, Company company)
         {
-            var key = Encoding.ASCII.GetBytes(_configuration["JwtSettings:Secret"]);
+            var key = Encoding.ASCII.GetBytes(_configuration["JwtSettings:Secret"]!);
             var tokenHandler = new JwtSecurityTokenHandler();
             var tokenDescriptor = new SecurityTokenDescriptor
             {
@@ -231,7 +237,7 @@ namespace AccountingSystem.API.Services
                     new Claim("CompanyId", company.Id.ToString()),
                     new Claim("CompanyName", company.Name)
                 }),
-                Expires = DateTime.UtcNow.AddMinutes(double.Parse(_configuration["JwtSettings:ExpiryMinutes"])),
+                Expires = DateTime.UtcNow.AddMinutes(double.Parse(_configuration["JwtSettings:ExpiryMinutes"]!)),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature),
                 Issuer = _configuration["JwtSettings:Issuer"],
                 Audience = _configuration["JwtSettings:Audience"]

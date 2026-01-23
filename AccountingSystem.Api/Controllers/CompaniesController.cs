@@ -38,8 +38,8 @@ namespace AccountingSystem.API.Controllers
             {
                 Id = company.Id,
                 Name = company.Name,
-                Address = company.Address,
-                TaxId = company.TaxId,
+                Address = company.Address ?? String.Empty,
+                TaxId = company.TaxId ?? String.Empty,
                 Currency = company.Currency
             });
         }

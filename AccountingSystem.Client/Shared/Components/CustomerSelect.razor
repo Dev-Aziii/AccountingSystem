@@ -29,8 +29,8 @@
     [Parameter] public int SelectedCustomerId { get; set; }
     [Parameter] public EventCallback<int> SelectedCustomerIdChanged { get; set; }
 
-    private List<CustomerDTO> customers;
-    private CustomerDTO _selectedCustomer;
+    private List<CustomerDTO>? customers;
+    private CustomerDTO? _selectedCustomer;
 
     protected override async Task OnInitializedAsync() => await LoadCustomers();
 
@@ -53,39 +53,46 @@
     {
         try
         {
-            customers = await ReceivableService.GetCustomersAsync();
+            customers = await ReceivableService.GetCustomersAsync().ConfigureAwait(false);
             if (SelectedCustomerId != 0 && customers != null)
             {
                 _selectedCustomer = customers.FirstOrDefault(c => c.Id == SelectedCustomerId);
             }
         }
-        catch (Exception ex) { Console.WriteLine(ex.Message); }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
     }
 
-    private async Task OnValueChanged(CustomerDTO value)
+    private async Task OnValueChanged(CustomerDTO? value)
     {
         _selectedCustomer = value;
         SelectedCustomerId = value?.Id ?? 0;
         await SelectedCustomerIdChanged.InvokeAsync(SelectedCustomerId);
     }
 
-    private async Task<IEnumerable<CustomerDTO>> SearchCustomers(string value, CancellationToken token)
+    private Task<IEnumerable<CustomerDTO>> SearchCustomers(string? value, CancellationToken token)
     {
-        if (customers == null) return new List<CustomerDTO>();
-        if (string.IsNullOrEmpty(value)) return customers;
-        return customers.Where(x => x.Name.Contains(value, StringComparison.InvariantCultureIgnoreCase));
+        if (customers == null) return Task.FromResult(Enumerable.Empty<CustomerDTO>());
+        if (string.IsNullOrEmpty(value)) return Task.FromResult(customers.AsEnumerable());
+        return Task.FromResult(customers.Where(x => x.Name.Contains(value, StringComparison.InvariantCultureIgnoreCase)));
     }
 
     private async Task OpenAddDialog()
     {
         var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true };
         var dialog = await DialogService.ShowAsync<CustomerDialog>("Add New Customer", options);
-        var result = await dialog.Result;
 
-        if (!result.Canceled)
+        if (dialog != null) // Ensure dialog is not null before accessing Result
         {
-            await LoadCustomers();
-            Snackbar.Add("Customer list refreshed.", Severity.Info);
+            var result = await dialog.Result;
+
+            if (result != null && !result.Canceled) // Ensure result is not null before accessing Canceled
+            {
+                await LoadCustomers();
+                Snackbar.Add("Customer list refreshed.", Severity.Info);
+            }
         }
     }
 }

@@ -26,21 +26,21 @@
 
 @code {
     [CascadingParameter]
-    private IMudDialogInstance MudDialog { get; set; }
+    private IMudDialogInstance MudDialog { get; set; } = default!;
 
-    [Parameter] public AccountDTO Account { get; set; }
+    [Parameter] public AccountDTO? Account { get; set; }
 
     private CreateAccountDTO model = new CreateAccountDTO();
     private bool success;
-    private MudForm form;
+    private MudForm form = default!;
 
     protected override void OnInitialized()
     {
         if (Account != null)
         {
-            model.Code = Account.Code;
-            model.Name = Account.Name;
-            model.Type = Account.Type;
+            model.Code = Account.Code ?? string.Empty;
+            model.Name = Account.Name ?? string.Empty;
+            model.Type = Account.Type ?? string.Empty;
         }
     }
 
@@ -58,9 +58,9 @@
                 var updateDto = new UpdateAccountDTO
                 {
                     Id = Account.Id,
-                    Code = model.Code,
-                    Name = model.Name,
-                    Type = model.Type
+                    Code = model.Code ?? string.Empty,
+                    Name = model.Name ?? string.Empty,
+                    Type = model.Type ?? string.Empty
                 };
                 await LedgerService.UpdateAccountAsync(updateDto);
                 Snackbar.Add("Account updated.", Severity.Success);
