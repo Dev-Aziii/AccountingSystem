@@ -12,7 +12,6 @@
 <PageTitle>System Audit Logs</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
-
     <MudPaper Class="dashboard-header pa-6 mb-8" Elevation="0">
         <div class="d-flex justify-space-between align-center">
             <div>
@@ -21,7 +20,7 @@
                 </MudText>
                 <MudText Typo="Typo.body1" Class="header-subtitle">
                     Track all system modifications and security events
-                </MudText>               
+                </MudText>
             </div>
             <MudButton Variant="Variant.Filled"
                        Class="refresh-btn"
@@ -57,34 +56,13 @@
                 </MudText>
             </MudTd>
             <MudTd DataLabel="Action">
-                @switch (context.Action)
-                {
-                    case "POST":
-                        <MudChip T="string" Color="Color.Success" Size="Size.Small">CREATE</MudChip>
-                        ; break;
-                    case "PUT":
-
-                        <MudChip T="string" Color="Color.Warning" Size="Size.Small">UPDATE</MudChip>
-                        ; break;
-                    case "DELETE":
-
-                        <MudChip T="string" Color="Color.Error" Size="Size.Small">DELETE</MudChip>
-                        ; break;
-                    case "LOGIN":
-
-                        <MudChip T="string" Color="Color.Info" Size="Size.Small">LOGIN</MudChip>
-                        ; break; // NEW
-                    default:
-
-                        <MudChip T="string" Size="Size.Small">@context.Action</MudChip>
-                        ; break;
-                }
+                <MudChip T="string" Color="@GetActionColor(context.Action)" Size="Size.Small">@context.Action</MudChip>
             </MudTd>
             <MudTd DataLabel="Target">
                 <code style="font-size: 0.8em">@context.EntityName</code>
             </MudTd>
             <MudTd DataLabel="Details" Style="text-align:center">
-                <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small" Color="Color.Primary" OnClick="@(() => ViewDetails(context))" />
+                <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Medium" Color="Color.Default" OnClick="@(() => ViewDetails(context))" />
             </MudTd>
         </RowTemplate>
         <PagerContent>
@@ -134,5 +112,28 @@
         var parameters = new DialogParameters { ["Log"] = log };
         var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true, CloseButton = true };
         DialogService.Show<AuditDetailsDialog>("Audit Log Details", parameters, options);
+    }
+
+    // NEW: Centralized color logic for Action Types
+    private Color GetActionColor(string action)
+    {
+        if (action == "LOGIN") return Color.Dark;
+
+        if (action.StartsWith("USER-")) return Color.Tertiary;       // Purple for User Mgmt
+        if (action.StartsWith("CUSTOMER-")) return Color.Info;       // Blue for AR
+        if (action.StartsWith("VENDOR-")) return Color.Warning;      // Orange for AP
+        if (action.StartsWith("ACCOUNT-")) return Color.Success;     // Green for GL
+        if (action.StartsWith("BILL-")) return Color.Error;          // Red/Pink for Expenses
+        if (action.StartsWith("INVOICE-")) return Color.Primary;     // Primary for Revenue
+        if (action == "JOURNAL-ENTRY") return Color.Surface;         // Neutral for Journals
+
+        // Fallbacks for raw HTTP methods
+        return action switch
+        {
+            "POST" => Color.Success,
+            "PUT" => Color.Warning,
+            "DELETE" => Color.Error,
+            _ => Color.Default
+        };
     }
 }

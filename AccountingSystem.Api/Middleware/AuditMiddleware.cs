@@ -51,22 +51,67 @@ namespace AccountingSystem.API.Middleware
                     companyId = parsedCId;
                 }
 
-                // FIX: Clarify "LOGIN" actions instead of generic "POST" (CREATE)
+                // Determine Action Name based on Method and Path
                 string action = context.Request.Method;
                 string path = context.Request.Path.Value?.ToLower() ?? "";
 
-                if (action == "POST" && path.Contains("/auth/login"))
+                if (path.Contains("/auth/login") && action == "POST")
                 {
                     action = "LOGIN";
-                    // Optional: Redact password from bodyContent here if needed for security
                     bodyContent = "[Credentials Hidden]";
+                }
+                // User Management
+                else if (path.Contains("/api/users"))
+                {
+                    if (path.EndsWith("/restore")) action = "USER-RESTORE";
+                    else if (action == "POST") action = "USER-CREATE";
+                    else if (action == "DELETE") action = "USER-ARCHIVE";
+                }
+                // Customer Management
+                else if (path.Contains("/receivables/customers"))
+                {
+                    if (path.EndsWith("/restore")) action = "CUSTOMER-RESTORE";
+                    else if (action == "POST") action = "CUSTOMER-CREATE";
+                    else if (action == "PUT") action = "CUSTOMER-UPDATE";
+                    else if (action == "DELETE") action = "CUSTOMER-ARCHIVE";
+                }
+                // Vendor Management
+                else if (path.Contains("/payables/vendors"))
+                {
+                    if (path.EndsWith("/restore")) action = "VENDOR-RESTORE";
+                    else if (action == "POST") action = "VENDOR-CREATE";
+                    else if (action == "PUT") action = "VENDOR-UPDATE";
+                    else if (action == "DELETE") action = "VENDOR-ARCHIVE";
+                }
+                // Chart of Accounts
+                else if (path.Contains("/ledger/accounts"))
+                {
+                    if (path.EndsWith("/restore")) action = "ACCOUNT-RESTORE";
+                    else if (action == "POST") action = "ACCOUNT-CREATE";
+                    else if (action == "PUT") action = "ACCOUNT-UPDATE";
+                    else if (action == "DELETE") action = "ACCOUNT-ARCHIVE";
+                }
+                // Transactions
+                else if (path.Contains("/bill") && action == "POST")
+                {
+                    if (path.Contains("/pay")) action = "BILL-PAY";
+                    else action = "BILL-CREATE";
+                }
+                else if (path.Contains("/invoice") && action == "POST")
+                {
+                    if (path.Contains("/receive")) action = "INVOICE-PAYMENT";
+                    else action = "INVOICE-CREATE";
+                }
+                else if (path.Contains("/journal") && action == "POST")
+                {
+                    action = "JOURNAL-ENTRY";
                 }
 
                 var auditLog = new AuditLog
                 {
                     UserId = userId,
                     CompanyId = companyId,
-                    Action = action, // Now stores "LOGIN", "POST", "PUT", or "DELETE"
+                    Action = action,
                     EntityName = context.Request.Path,
                     EntityId = "N/A",
                     Timestamp = DateTime.UtcNow,
