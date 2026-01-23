@@ -39,7 +39,6 @@ namespace AccountingSystem.Client.Services
             return result;
         }
 
-        // --- NEW: Register Company ---
         public async Task<AuthResponseDTO> RegisterCompany(CompanyRegisterDTO registerDto)
         {
             var response = await _api.PostAsync("api/auth/register-company", registerDto);
@@ -63,6 +62,31 @@ namespace AccountingSystem.Client.Services
         {
             await _tokenService.RemoveTokenAsync();
             ((CustomAuthStateProvider)_authStateProvider).NotifyUserLogout();
+        }
+
+        // --- NEW: Profile & Password Methods ---
+
+        public async Task UpdateProfile(UpdateProfileDTO dto)
+        {
+            // ApiService handles the Bearer token attachment automatically
+            var response = await _api.PutAsync("api/auth/profile", dto);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                throw new Exception(error);
+            }
+        }
+
+        public async Task ChangePassword(ChangePasswordDTO dto)
+        {
+            var response = await _api.PutAsync("api/auth/password", dto);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                throw new Exception(error);
+            }
         }
     }
 }

@@ -1,6 +1,8 @@
-﻿using AccountingSystem.Shared.DTOs;
-using AccountingSystem.API.Services.Interfaces;
+﻿using AccountingSystem.API.Services.Interfaces;
+using AccountingSystem.Shared.DTOs;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace AccountingSystem.API.Controllers
 {
@@ -13,20 +15,6 @@ namespace AccountingSystem.API.Controllers
         public AuthController(IAuthService authService)
         {
             _authService = authService;
-        }
-
-        [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] RegisterDTO registerDto)
-        {
-            try
-            {
-                var user = await _authService.RegisterAsync(registerDto);
-                return Ok(new { message = "User registered successfully", userId = user.Id });
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { error = ex.Message });
-            }
         }
 
         [HttpPost("login")]
@@ -43,7 +31,6 @@ namespace AccountingSystem.API.Controllers
             }
         }
 
-        // NEW: Register new Company/Tenant
         [HttpPost("register-company")]
         public async Task<IActionResult> RegisterCompany([FromBody] CompanyRegisterDTO dto)
         {
@@ -56,6 +43,51 @@ namespace AccountingSystem.API.Controllers
             {
                 return BadRequest(new { error = ex.Message });
             }
+        }
+
+        // --- NEW: Profile & Password Endpoints ---
+
+        [HttpPut("profile")]
+        [Authorize]
+        public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileDTO dto)
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+                await _authService.UpdateProfileAsync(userId, dto);
+                return Ok(new { message = "Profile updated successfully." });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
+        [HttpPut("password")]
+        [Authorize]
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDTO dto)
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+                await _authService.ChangePasswordAsync(userId, dto);
+                return Ok(new { message = "Password changed successfully." });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
+        // Helper to extract UserId safely
+        private int GetCurrentUserId()
+        {
+            var userIdClaim = User.FindFirst("UserId");
+            if (userIdClaim != null && int.TryParse(userIdClaim.Value, out int userId))
+            {
+                return userId;
+            }
+            throw new UnauthorizedAccessException("User ID not found in token.");
         }
     }
 }

@@ -13,7 +13,7 @@
             <MudText Typo="Typo.h6" Style="line-height: 1.2;">Accounting System</MudText>
             <AuthorizeView>
                 <Authorized Context="authContext">
-                    <!-- NEW: Display Company Name if available -->
+                    <!-- Display Company Name -->
                     <MudText Typo="Typo.caption" Style="opacity: 0.8;">
                         @(authContext.User.FindFirst("CompanyName")?.Value ?? "Multi-Tenant Edition")
                     </MudText>
@@ -25,10 +25,20 @@
 
         <AuthorizeView>
             <Authorized Context="authContext">
-                <MudText Class="mr-4">@(authContext.User.FindFirst("FullName")?.Value ?? authContext.User.Identity?.Name)</MudText>
-                <MudButton Variant="Variant.Outlined" Color="Color.Inherit" OnClick="Logout" StartIcon="@Icons.Material.Filled.Logout">
-                    Logout
-                </MudButton>
+                <!-- User Dropdown Menu -->
+                <MudMenu AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight">
+                    <ActivatorContent>
+                        <MudButton Variant="Variant.Text" Color="Color.Inherit" EndIcon="@Icons.Material.Filled.KeyboardArrowDown">
+                            <MudIcon Icon="@Icons.Material.Filled.AccountCircle" Class="mr-2" />
+                            @(authContext.User.FindFirst("FullName")?.Value ?? authContext.User.Identity?.Name)
+                        </MudButton>
+                    </ActivatorContent>
+                    <ChildContent>
+                        <MudMenuItem Href="/profile" Icon="@Icons.Material.Filled.Person">My Profile</MudMenuItem>
+                        <MudDivider />
+                        <MudMenuItem OnClick="Logout" Icon="@Icons.Material.Filled.Logout">Logout</MudMenuItem>
+                    </ChildContent>
+                </MudMenu>
             </Authorized>
             <NotAuthorized>
                 <MudButton Variant="Variant.Filled" Color="Color.Secondary" Href="/">Login</MudButton>

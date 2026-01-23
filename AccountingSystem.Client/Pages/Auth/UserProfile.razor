@@ -1,0 +1,159 @@
+﻿@page "/profile"
+@using AccountingSystem.Shared.DTOs
+@using AccountingSystem.Client.Services
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using MudBlazor
+@attribute [Authorize]
+@inject AuthService AuthService
+@inject AuthenticationStateProvider AuthStateProvider
+@inject ISnackbar Snackbar
+
+<PageTitle>My Profile</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Medium" Class="mt-8">
+    <MudText Typo="Typo.h4" Color="Color.Primary" Class="mb-4">My Account Settings</MudText>
+
+    <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-6">
+
+        <!-- TAB 1: GENERAL PROFILE -->
+        <MudTabPanel Text="General Information" Icon="@Icons.Material.Filled.Person">
+            <EditForm Model="@profileModel" OnValidSubmit="HandleUpdateProfile">
+                <DataAnnotationsValidator />
+                <MudCard Elevation="0">
+                    <MudCardContent>
+                        <MudGrid>
+                            <MudItem xs="12" sm="6">
+                                <MudTextField Label="Full Name"
+                                              @bind-Value="profileModel.FullName"
+                                              For="@(() => profileModel.FullName)"
+                                              Variant="Variant.Outlined" />
+                            </MudItem>
+                            <MudItem xs="12" sm="6">
+                                <MudTextField Label="Email Address"
+                                              @bind-Value="profileModel.Email"
+                                              For="@(() => profileModel.Email)"
+                                              Variant="Variant.Outlined" />
+                            </MudItem>
+                        </MudGrid>
+                    </MudCardContent>
+                    <MudCardActions Class="d-flex justify-end">
+                        <MudButton ButtonType="ButtonType.Submit"
+                                   Variant="Variant.Filled"
+                                   Color="Color.Primary"
+                                   Disabled="@isProfileSubmitting">
+                            @(isProfileSubmitting ? "Saving..." : "Save Changes")
+                        </MudButton>
+                    </MudCardActions>
+                </MudCard>
+            </EditForm>
+        </MudTabPanel>
+
+        <!-- TAB 2: SECURITY (PASSWORD) -->
+        <MudTabPanel Text="Security" Icon="@Icons.Material.Filled.Lock">
+            <EditForm Model="@passwordModel" OnValidSubmit="HandleChangePassword">
+                <DataAnnotationsValidator />
+                <MudCard Elevation="0">
+                    <MudCardContent>
+                        <MudGrid>
+                            <MudItem xs="12">
+                                <MudTextField Label="Current Password"
+                                              @bind-Value="passwordModel.CurrentPassword"
+                                              For="@(() => passwordModel.CurrentPassword)"
+                                              InputType="InputType.Password"
+                                              Variant="Variant.Outlined" />
+                            </MudItem>
+                            <MudItem xs="12" sm="6">
+                                <MudTextField Label="New Password"
+                                              @bind-Value="passwordModel.NewPassword"
+                                              For="@(() => passwordModel.NewPassword)"
+                                              InputType="InputType.Password"
+                                              Variant="Variant.Outlined"
+                                              HelperText="Must be at least 6 characters" />
+                            </MudItem>
+                            <MudItem xs="12" sm="6">
+                                <MudTextField Label="Confirm New Password"
+                                              @bind-Value="passwordModel.ConfirmPassword"
+                                              For="@(() => passwordModel.ConfirmPassword)"
+                                              InputType="InputType.Password"
+                                              Variant="Variant.Outlined" />
+                            </MudItem>
+                        </MudGrid>
+                    </MudCardContent>
+                    <MudCardActions Class="d-flex justify-end">
+                        <MudButton ButtonType="ButtonType.Submit"
+                                   Variant="Variant.Filled"
+                                   Color="Color.Warning"
+                                   Disabled="@isPasswordSubmitting">
+                            @(isPasswordSubmitting ? "Updating..." : "Change Password")
+                        </MudButton>
+                    </MudCardActions>
+                </MudCard>
+            </EditForm>
+        </MudTabPanel>
+
+    </MudTabs>
+</MudContainer>
+
+@code {
+    private UpdateProfileDTO profileModel = new UpdateProfileDTO();
+    private ChangePasswordDTO passwordModel = new ChangePasswordDTO();
+    private bool isProfileSubmitting = false;
+    private bool isPasswordSubmitting = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Pre-fill form with current user data from claims
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity != null && user.Identity.IsAuthenticated)
+        {
+            // Note: In JWT logic, Name usually maps to Email, and we added a custom FullName claim
+            profileModel.Email = user.Identity.Name ?? "";
+            profileModel.FullName = user.FindFirst("FullName")?.Value ?? "";
+        }
+    }
+
+    private async Task HandleUpdateProfile()
+    {
+        isProfileSubmitting = true;
+        try
+        {
+            await AuthService.UpdateProfile(profileModel);
+            Snackbar.Add("Profile updated successfully.", Severity.Success);
+
+            // Optional: Force logout or refresh token if email changed,
+            // but for now we just notify success.
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            isProfileSubmitting = false;
+        }
+    }
+
+    private async Task HandleChangePassword()
+    {
+        isPasswordSubmitting = true;
+        try
+        {
+            await AuthService.ChangePassword(passwordModel);
+            Snackbar.Add("Password changed successfully.", Severity.Success);
+
+            // Reset form
+            passwordModel = new ChangePasswordDTO();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            isPasswordSubmitting = false;
+        }
+    }
+}

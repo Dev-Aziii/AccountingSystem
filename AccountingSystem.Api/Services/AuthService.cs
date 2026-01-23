@@ -22,18 +22,58 @@ namespace AccountingSystem.API.Services
             _configuration = configuration;
         }
 
-        // --- NEW: Multi-Tenant Registration ---
+        // --- NEW: Update Profile ---
+        public async Task UpdateProfileAsync(int userId, UpdateProfileDTO dto)
+        {
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null) throw new Exception("User not found.");
+
+            // Check if email is being changed and if it is already taken by ANOTHER user
+            if (user.Email != dto.Email)
+            {
+                // We use IgnoreQueryFilters to ensure global uniqueness across tenants if required, 
+                // or just within tenant depending on design. Here we assume standard checks.
+                bool emailExists = await _context.Users.AnyAsync(u => u.Email == dto.Email && u.Id != userId);
+                if (emailExists) throw new Exception("Email is already in use.");
+            }
+
+            user.FullName = dto.FullName;
+            user.Email = dto.Email;
+
+            await _context.SaveChangesAsync();
+        }
+
+        // --- NEW: Change Password ---
+        public async Task ChangePasswordAsync(int userId, ChangePasswordDTO dto)
+        {
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null) throw new Exception("User not found.");
+
+            // Verify Current Password
+            if (!VerifyPasswordHash(dto.CurrentPassword, Convert.FromBase64String(user.PasswordHash), Convert.FromBase64String(user.PasswordSalt)))
+            {
+                throw new Exception("Incorrect current password.");
+            }
+
+            // Hash New Password
+            CreatePasswordHash(dto.NewPassword, out byte[] newHash, out byte[] newSalt);
+
+            user.PasswordHash = Convert.ToBase64String(newHash);
+            user.PasswordSalt = Convert.ToBase64String(newSalt);
+
+            await _context.SaveChangesAsync();
+        }
+
+        // ... Existing Methods (RegisterCompanyAsync, RegisterAsync, LoginAsync) ...
+
         public async Task<AuthResponseDTO> RegisterCompanyAsync(CompanyRegisterDTO dto)
         {
-            // 1. Check Global Email Uniqueness
-            // We use IgnoreQueryFilters because we need to check ALL companies
             if (await _context.Users.IgnoreQueryFilters().AnyAsync(u => u.Email == dto.AdminEmail))
                 throw new Exception("Email already exists.");
 
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
-                // 2. Create Company
                 var company = new Company
                 {
                     Name = dto.CompanyName,
@@ -42,9 +82,8 @@ namespace AccountingSystem.API.Services
                     Currency = "PHP"
                 };
                 _context.Companies.Add(company);
-                await _context.SaveChangesAsync(); // Generates Company.Id
+                await _context.SaveChangesAsync();
 
-                // 3. Create Admin User linked to Company
                 var adminRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == "Admin");
                 if (adminRole == null) throw new Exception("System Role 'Admin' missing.");
 
@@ -52,7 +91,7 @@ namespace AccountingSystem.API.Services
 
                 var user = new User
                 {
-                    CompanyId = company.Id, // Explicit Assignment
+                    CompanyId = company.Id,
                     Email = dto.AdminEmail,
                     FullName = dto.AdminFullName,
                     RoleId = adminRole.Id,
@@ -61,14 +100,10 @@ namespace AccountingSystem.API.Services
                     IsActive = true
                 };
                 _context.Users.Add(user);
-
-                // 4. Seed Default Data for this Company (Chart of Accounts)
                 await SeedCompanyDataAsync(company.Id);
-
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
 
-                // 5. Auto-Login
                 var token = GenerateJwtToken(user, company);
                 return new AuthResponseDTO
                 {
@@ -89,9 +124,6 @@ namespace AccountingSystem.API.Services
 
         public async Task<User> RegisterAsync(RegisterDTO registerDto)
         {
-            // Note: This method is for adding users to an EXISTING company (by an Admin)
-            // The DbContext automatically handles CompanyId via TenantService for the logged-in Admin
-
             if (await _context.Users.AnyAsync(u => u.Email == registerDto.Email))
                 throw new Exception("Email already exists in this company.");
 
@@ -108,7 +140,6 @@ namespace AccountingSystem.API.Services
                 PasswordHash = Convert.ToBase64String(passwordHash),
                 PasswordSalt = Convert.ToBase64String(passwordSalt),
                 IsActive = true
-                // CompanyId is set automatically by DbContext.SaveChanges override based on current Admin
             };
 
             _context.Users.Add(user);
@@ -118,8 +149,6 @@ namespace AccountingSystem.API.Services
 
         public async Task<AuthResponseDTO> LoginAsync(LoginDTO loginDto)
         {
-            // CRITICAL: We must IgnoreQueryFilters because the user is not logged in yet,
-            // so the TenantService returns 0, filtering out all users.
             var user = await _context.Users
                 .IgnoreQueryFilters()
                 .Include(u => u.Role)
@@ -131,7 +160,6 @@ namespace AccountingSystem.API.Services
             if (!VerifyPasswordHash(loginDto.Password, Convert.FromBase64String(user.PasswordHash), Convert.FromBase64String(user.PasswordSalt)))
                 throw new Exception("Invalid email or password.");
 
-            // Fetch Company Info manually since Filters are ignored
             var company = await _context.Companies.FindAsync(user.CompanyId);
             if (company == null || !company.IsActive)
                 throw new Exception("Company account is inactive.");
@@ -150,7 +178,6 @@ namespace AccountingSystem.API.Services
         }
 
         // --- Helpers ---
-
         private async Task SeedCompanyDataAsync(int companyId)
         {
             var accounts = new List<Account>
@@ -164,7 +191,6 @@ namespace AccountingSystem.API.Services
                 new Account { CompanyId = companyId, Code = "5000", Name = "General Expense", Type = "Expense" }
             };
             _context.Accounts.AddRange(accounts);
-            // Add initial Partners? Optional.
         }
 
         private void CreatePasswordHash(string password, out byte[] passwordHash, out byte[] passwordSalt)
@@ -202,8 +228,6 @@ namespace AccountingSystem.API.Services
                     new Claim("UserId", user.Id.ToString()),
                     new Claim("role", user.Role.Name),
                     new Claim("FullName", user.FullName ?? user.Email),
-                    
-                    // NEW: Multi-Tenant Claims
                     new Claim("CompanyId", company.Id.ToString()),
                     new Claim("CompanyName", company.Name)
                 }),
