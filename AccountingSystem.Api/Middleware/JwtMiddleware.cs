@@ -46,15 +46,21 @@ namespace AccountingSystem.API.Middleware
 
                 var jwtToken = (JwtSecurityToken)validatedToken;
 
-                // Existing: Email/Name
+                // Existing Claims
                 context.Items["User"] = jwtToken.Claims.First(x => x.Type == "unique_name").Value;
                 context.Items["Role"] = jwtToken.Claims.First(x => x.Type == "role").Value;
 
-                // FIX: Extract UserId (int) so AuditMiddleware can use it
                 var userIdClaim = jwtToken.Claims.FirstOrDefault(x => x.Type == "UserId");
                 if (userIdClaim != null)
                 {
                     context.Items["UserId"] = userIdClaim.Value;
+                }
+
+                // NEW: Extract CompanyId
+                var companyIdClaim = jwtToken.Claims.FirstOrDefault(x => x.Type == "CompanyId");
+                if (companyIdClaim != null)
+                {
+                    context.Items["CompanyId"] = companyIdClaim.Value;
                 }
             }
             catch

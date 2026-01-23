@@ -39,20 +39,34 @@ namespace AccountingSystem.API.Middleware
 
                 context.Request.Body.Position = 0;
 
-                // FIX: Retrieve the numeric UserId stored by JwtMiddleware
                 int? userId = null;
                 if (context.Items["UserId"] is string userIdStr && int.TryParse(userIdStr, out int parsedId))
                 {
                     userId = parsedId;
                 }
 
-                // Identify User (Email) for fallback or debugging if needed, but we use ID for FK
-                // var userEmail = context.Items["User"]?.ToString() ?? "Anonymous";
+                int companyId = 0;
+                if (context.Items["CompanyId"] is string companyIdStr && int.TryParse(companyIdStr, out int parsedCId))
+                {
+                    companyId = parsedCId;
+                }
+
+                // FIX: Clarify "LOGIN" actions instead of generic "POST" (CREATE)
+                string action = context.Request.Method;
+                string path = context.Request.Path.Value?.ToLower() ?? "";
+
+                if (action == "POST" && path.Contains("/auth/login"))
+                {
+                    action = "LOGIN";
+                    // Optional: Redact password from bodyContent here if needed for security
+                    bodyContent = "[Credentials Hidden]";
+                }
 
                 var auditLog = new AuditLog
                 {
-                    UserId = userId, // Now assigning int? (Correct type)
-                    Action = context.Request.Method,
+                    UserId = userId,
+                    CompanyId = companyId,
+                    Action = action, // Now stores "LOGIN", "POST", "PUT", or "DELETE"
                     EntityName = context.Request.Path,
                     EntityId = "N/A",
                     Timestamp = DateTime.UtcNow,

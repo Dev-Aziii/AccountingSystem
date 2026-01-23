@@ -9,7 +9,6 @@ namespace AccountingSystem.API.Data
     {
         private readonly ITenantService _tenantService;
 
-        // Constructor Injection for Tenant Service
         public AccountingDbContext(DbContextOptions<AccountingDbContext> options, ITenantService tenantService) : base(options)
         {
             _tenantService = tenantService;
@@ -42,12 +41,9 @@ namespace AccountingSystem.API.Data
 
             // --- Multi-Tenancy Global Filters ---
             // Automatically filter data by the current CompanyId
-            // We skip this check if CompanyId is 0 (System Admin / Registration context)
-
-            // Expression to filter: (e.CompanyId == _tenantService.GetCurrentTenant())
 
             modelBuilder.Entity<User>().HasQueryFilter(e => !e.IsDeleted && e.CompanyId == _tenantService.GetCurrentTenant());
-            modelBuilder.Entity<Account>().HasQueryFilter(e => e.CompanyId == _tenantService.GetCurrentTenant()); // Accounts usually hard deleted, no IsDeleted check needed unless added
+            modelBuilder.Entity<Account>().HasQueryFilter(e => e.CompanyId == _tenantService.GetCurrentTenant());
             modelBuilder.Entity<JournalEntry>().HasQueryFilter(e => e.CompanyId == _tenantService.GetCurrentTenant());
 
             modelBuilder.Entity<Vendor>().HasQueryFilter(e => !e.IsDeleted && e.CompanyId == _tenantService.GetCurrentTenant());
@@ -56,13 +52,22 @@ namespace AccountingSystem.API.Data
             modelBuilder.Entity<Invoice>().HasQueryFilter(e => !e.IsDeleted && e.CompanyId == _tenantService.GetCurrentTenant());
             modelBuilder.Entity<Payment>().HasQueryFilter(e => !e.IsDeleted && e.CompanyId == _tenantService.GetCurrentTenant());
 
-            // --- Enums & Conversions (Existing) ---
+            // NEW: Secure Audit Logs per Company
+            modelBuilder.Entity<AuditLog>().HasQueryFilter(e => e.CompanyId == _tenantService.GetCurrentTenant());
+
+            // --- FIX: Prevent AuditLog.CompanyId from being a Foreign Key ---
+            // This allows saving logs with CompanyId = 0 (Anonymous/System actions) without crashing
+            modelBuilder.Entity<AuditLog>()
+                .Property(a => a.CompanyId)
+                .IsRequired(); // Keeps it as int, but we rely on lack of Navigation property to avoid FK
+
+            // --- Enums & Conversions ---
             modelBuilder.Entity<Bill>().Property(b => b.Status).HasConversion<string>();
             modelBuilder.Entity<Invoice>().Property(i => i.Status).HasConversion<string>();
             modelBuilder.Entity<Payment>().Property(p => p.PaymentMethod).HasConversion<string>();
             modelBuilder.Entity<Payment>().Property(p => p.Type).HasConversion<string>();
 
-            // --- Decimal Precision (Existing) ---
+            // --- Decimal Precision ---
             var decimalProps = modelBuilder.Model.GetEntityTypes().SelectMany(t => t.GetProperties())
                 .Where(p => p.ClrType == typeof(decimal) || p.ClrType == typeof(decimal?));
             foreach (var property in decimalProps)
@@ -72,11 +77,7 @@ namespace AccountingSystem.API.Data
             }
 
             // --- Constraints ---
-            // Emails are now unique PER COMPANY, not globally? 
-            // Ideally unique globally for login, but let's keep simple index for now.
             modelBuilder.Entity<User>().HasIndex(u => u.Email).IsUnique();
-
-            // Account Codes unique PER COMPANY
             modelBuilder.Entity<Account>().HasIndex(a => new { a.Code, a.CompanyId }).IsUnique();
 
             modelBuilder.Entity<Role>().HasData(
@@ -93,10 +94,11 @@ namespace AccountingSystem.API.Data
 
             foreach (var entry in entries)
             {
-                // Auto-assign CompanyId on creation
                 if (entry.State == EntityState.Added)
                 {
                     entry.Entity.CreatedAt = DateTime.UtcNow;
+                    // Only auto-assign if we have a valid tenant context (Logged In)
+                    // If not logged in (Registration), the Service handles assignment manually.
                     if (currentTenantId != 0)
                     {
                         entry.Entity.CompanyId = currentTenantId;

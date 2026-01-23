@@ -5,7 +5,7 @@ using System.Text.Json.Serialization;
 
 namespace AccountingSystem.API.Models
 {
-    // --- LEDGER ENTITIES  ---
+    // --- LEDGER ENTITIES ---
     public class Account : BaseEntity
     {
         [Required]
@@ -18,7 +18,7 @@ namespace AccountingSystem.API.Models
 
         [Required]
         [MaxLength(20)]
-        public string Type { get; set; } // Asset, Liability, etc.
+        public string Type { get; set; }
 
         [Column(TypeName = "decimal(18,2)")]
         public decimal Balance { get; set; } = 0;
@@ -33,7 +33,7 @@ namespace AccountingSystem.API.Models
         public string Reference { get; set; }
 
         [MaxLength(100)]
-        public string? CreatedBy { get; set; } 
+        public string? CreatedBy { get; set; }
 
         public bool IsPosted { get; set; } = false;
 
@@ -177,6 +177,10 @@ namespace AccountingSystem.API.Models
     public class AuditLog
     {
         public int Id { get; set; }
+
+        // NEW: Multi-Tenancy field
+        public int CompanyId { get; set; }
+
         public int? UserId { get; set; }
         public string Action { get; set; }
         public string EntityName { get; set; }
