@@ -62,7 +62,6 @@
                                   InputType="InputType.Password"
                                   Class="mb-6 register-field"
                                   FullWidth="true"
-                                  Starticon="@Icons.Material.Filled.Lock"
                                   Style="border-radius: 12px;" />
 
                     <MudButton ButtonType="ButtonType.Submit"
@@ -71,7 +70,7 @@
                                FullWidth="true"
                                Disabled="@isLoading"
                                Size="Size.Large"
-                               starticon="@(!isLoading ? Icons.Material.Filled.AppRegistration : "")">
+                               Starticon="@(!isLoading ? Icons.Material.Filled.AppRegistration : "")">
                         @if (isLoading)
                         {
                             <div class="d-flex align-center">

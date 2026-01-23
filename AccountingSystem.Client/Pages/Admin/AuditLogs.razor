@@ -12,6 +12,7 @@
 <PageTitle>System Audit Logs</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
+
     <MudPaper Class="dashboard-header pa-6 mb-8" Elevation="0">
         <div class="d-flex justify-space-between align-center">
             <div>
@@ -20,8 +21,15 @@
                 </MudText>
                 <MudText Typo="Typo.body1" Class="header-subtitle">
                     Track all system modifications and security events
-                </MudText>
+                </MudText>               
             </div>
+            <MudButton Variant="Variant.Filled"
+                       Class="refresh-btn"
+                       StartIcon="@Icons.Material.Filled.Refresh"
+                       Size="Size.Large"
+                       OnClick="LoadLogs">
+                Refresh Logs
+            </MudButton>
         </div>
     </MudPaper>
 
@@ -33,7 +41,6 @@
             <MudTextField @bind-Value="searchString" Placeholder="Search by User, Action, or Target..."
                           Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
                           IconSize="Size.Medium" Class="mt-0"></MudTextField>
-            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Refresh" OnClick="LoadLogs" Class="ml-4">Refresh</MudButton>
         </ToolBarContent>
         <HeaderContent>
             <MudTh><MudTableSortLabel SortBy="new Func<AuditLogDTO, object>(x => x.Timestamp)">Date & Time</MudTableSortLabel></MudTh>
