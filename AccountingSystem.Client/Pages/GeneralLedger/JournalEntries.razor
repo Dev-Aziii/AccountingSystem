@@ -12,10 +12,19 @@
 
 <PageTitle>Journal Entries</PageTitle>
 
-<MudContainer MaxWidth="MaxWidth.Large">
-    <MudText Typo="Typo.h4" Color="Color.Primary" Class="mb-4">
-        New Journal Entry
-    </MudText>
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
+    <MudPaper Class="dashboard-header pa-6 mb-8" Elevation="0">
+        <div class="d-flex justify-space-between align-center">
+            <div>
+                <MudText Typo="Typo.h5" Class="mb-2 header-title">
+                    New Journal Entry
+                </MudText>
+                <MudText Typo="Typo.body1" Class="header-subtitle">
+                    Create Double-Entry Journal
+                </MudText>
+            </div>
+        </div>
+    </MudPaper>
 
     <EditForm Model="@entry" OnValidSubmit="HandleSubmit">
         <MudCard Class="mb-4">

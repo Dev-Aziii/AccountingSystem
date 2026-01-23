@@ -12,10 +12,18 @@
 <PageTitle>System Audit Logs</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
-    <div class="mb-4">
-        <MudText Typo="Typo.h4" Color="Color.Primary">Audit Logs</MudText>
-        <MudText Typo="Typo.body2" Class="mud-text-secondary">Track all system modifications and security events.</MudText>
-    </div>
+    <MudPaper Class="dashboard-header pa-6 mb-8" Elevation="0">
+        <div class="d-flex justify-space-between align-center">
+            <div>
+                <MudText Typo="Typo.h5" Class="mb-2 header-title">
+                    Audit Logs
+                </MudText>
+                <MudText Typo="Typo.body1" Class="header-subtitle">
+                    Track all system modifications and security events
+                </MudText>
+            </div>
+        </div>
+    </MudPaper>
 
     <MudTable Items="@auditLogs" Dense="true" Hover="true" Bordered="false" Striped="true"
               Filter="new Func<AuditLogDTO, bool>(FilterFunc)" Loading="@_loading" LoadingProgressColor="Color.Info" Elevation="3">

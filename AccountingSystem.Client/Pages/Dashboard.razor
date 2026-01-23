@@ -12,7 +12,7 @@
 
 <PageTitle>Financial Dashboard</PageTitle>
 
-<MudContainer MaxWidth="MaxWidth.ExtraExtraLarge" Class="mt-4 mb-10">
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4 mb-10">
 
     <!-- HEADER -->
     <MudPaper Class="dashboard-header pa-6 mb-8" Elevation="0">
@@ -222,7 +222,7 @@
 
                         <HeaderContent>
                             <MudTh Style="font-size: 0.9rem;">Account Details</MudTh>
-                            <MudTh Align="Align.Right" Style="font-size: 0.9rem;">Balance (₱)</MudTh>
+                            <MudTh align="Align.Right" Style="font-size: 0.9rem;">Balance (₱)</MudTh>
                         </HeaderContent>
 
                         <RowTemplate>
@@ -236,7 +236,7 @@
                                     </MudText>
                                 </div>
                             </MudTd>
-                            <MudTd Align="Align.Right" Style="padding: 16px 12px;">
+                            <MudTd align="Align.Right" Style="padding: 16px 12px;">
                                 <MudText Style="font-weight: 700; font-size: 1rem;" Class="custom-text-primary">
                                     @((context.Debit - context.Credit).ToString("N0"))
                                 </MudText>

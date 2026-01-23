@@ -10,11 +10,27 @@
 
 <PageTitle>User Management</PageTitle>
 
-<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
-    <div class="mb-4">
-        <MudText Typo="Typo.h4" Color="Color.Primary">User Management</MudText>
-        <MudText Typo="Typo.body2" Class="mud-text-secondary">Manage system access and roles</MudText>
-    </div>
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
+    <!-- HEADER -->
+    <MudPaper Class="dashboard-header pa-6 mb-8" Elevation="0">
+        <div class="d-flex justify-space-between align-center">
+            <div>
+                <MudText Typo="Typo.h5" Class="mb-2 header-title">
+                    User Management System
+                </MudText>
+                <MudText Typo="Typo.body1" Class="header-subtitle">
+                    Manage system access, user roles, and account permissions
+                </MudText>
+            </div>
+            <MudButton Variant="Variant.Filled"
+                       Class="refresh-btn"
+                       StartIcon="@Icons.Material.Filled.Refresh"
+                       Size="Size.Large"
+                       OnClick="() => LoadUsers(false)">
+                Refresh Users
+            </MudButton>
+        </div>
+    </MudPaper>
 
     <MudGrid>
         <!-- LEFT: User Lists (Tabbed) -->
@@ -88,7 +104,7 @@
                         <MudTextField Label="Password" @bind-Value="newUser.Password" For="@(() => newUser.Password)" InputType="InputType.Password" Variant="Variant.Outlined" Class="mb-3" />
                     </MudCardContent>
                     <MudCardActions>
-                        <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" Disabled="@isSubmitting">
+                        <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Class="custom-button" StartIcon="@Icons.Material.Filled.Add" Size="Size.Large" FullWidth="true" Disabled="@isSubmitting">
                             @(isSubmitting ? "Creating..." : "Create Account")
                         </MudButton>
                     </MudCardActions>

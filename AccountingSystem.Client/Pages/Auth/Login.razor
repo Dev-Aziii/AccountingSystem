@@ -39,7 +39,6 @@
                                   Variant="Variant.Outlined"
                                   Class="mb-4 login-field"
                                   FullWidth="true"
-                                  StartIcon="@Icons.Material.Filled.Email"
                                   Style="border-radius: 12px;" />
 
                     <MudTextField Label="Password"
@@ -49,7 +48,6 @@
                                   InputType="InputType.Password"
                                   Class="mb-6 login-field"
                                   FullWidth="true"
-                                  StartIcon="@Icons.Material.Filled.Lock"
                                   Style="border-radius: 12px;" />
 
                     <MudButton ButtonType="ButtonType.Submit"
@@ -58,7 +56,7 @@
                                FullWidth="true"
                                Disabled="@isLoading"
                                Size="Size.Large"
-                               StartIcon="@(!isLoading ? Icons.Material.Filled.Login : "")">
+                               Starticon="@(!isLoading ? Icons.Material.Filled.Login : "")">
                         @if (isLoading)
                         {
                             <div class="d-flex align-center">
