@@ -1,0 +1,119 @@
+﻿@page "/admin/audit-logs"
+@using AccountingSystem.Shared.DTOs
+@using AccountingSystem.Client.Services
+@using AccountingSystem.Client.Shared.Dialogs
+@using Microsoft.AspNetCore.Authorization
+@using MudBlazor
+@attribute [Authorize(Roles = "Admin")]
+@inject AuditLogService AuditService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+<PageTitle>System Audit Logs</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
+    <div class="mb-4">
+        <MudText Typo="Typo.h4" Color="Color.Primary">Audit Logs</MudText>
+        <MudText Typo="Typo.body2" Class="mud-text-secondary">Track all system modifications and security events.</MudText>
+    </div>
+
+    <MudTable Items="@auditLogs" Dense="true" Hover="true" Bordered="false" Striped="true"
+              Filter="new Func<AuditLogDTO, bool>(FilterFunc)" Loading="@_loading" LoadingProgressColor="Color.Info" Elevation="3">
+        <ToolBarContent>
+            <MudText Typo="Typo.h6">Activity History</MudText>
+            <MudSpacer />
+            <MudTextField @bind-Value="searchString" Placeholder="Search by User, Action, or Target..."
+                          Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
+                          IconSize="Size.Medium" Class="mt-0"></MudTextField>
+            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Refresh" OnClick="LoadLogs" Class="ml-4">Refresh</MudButton>
+        </ToolBarContent>
+        <HeaderContent>
+            <MudTh><MudTableSortLabel SortBy="new Func<AuditLogDTO, object>(x => x.Timestamp)">Date & Time</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<AuditLogDTO, object>(x => x.UserEmail)">User</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<AuditLogDTO, object>(x => x.Action)">Action</MudTableSortLabel></MudTh>
+            <MudTh>Target Endpoint</MudTh>
+            <MudTh Style="text-align:center">Details</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Date">@context.Timestamp.ToLocalTime().ToString("g")</MudTd>
+            <MudTd DataLabel="User">
+                <MudText Typo="Typo.body2" Color="@(context.UserEmail.Contains("System") ? Color.Secondary : Color.Default)">
+                    @context.UserEmail
+                </MudText>
+            </MudTd>
+            <MudTd DataLabel="Action">
+                @switch (context.Action)
+                {
+                    case "POST":
+                        <MudChip T="string" Color="Color.Success" Size="Size.Small">CREATE</MudChip>
+                        ; break;
+                    case "PUT":
+
+                        <MudChip T="string" Color="Color.Warning" Size="Size.Small">UPDATE</MudChip>
+                        ; break;
+                    case "DELETE":
+
+                        <MudChip T="string" Color="Color.Error" Size="Size.Small">DELETE</MudChip>
+                        ; break;
+                    default:
+
+                        <MudChip T="string" Size="Size.Small">@context.Action</MudChip>
+                        ; break;
+                }
+            </MudTd>
+            <MudTd DataLabel="Target">
+                <code style="font-size: 0.8em">@context.EntityName</code>
+            </MudTd>
+            <MudTd DataLabel="Details" Style="text-align:center">
+                <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small" Color="Color.Primary" OnClick="@(() => ViewDetails(context))" />
+            </MudTd>
+        </RowTemplate>
+        <PagerContent>
+            <MudTablePager />
+        </PagerContent>
+    </MudTable>
+</MudContainer>
+
+@code {
+    private List<AuditLogDTO> auditLogs = new List<AuditLogDTO>();
+    private string searchString = "";
+    private bool _loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadLogs();
+    }
+
+    private async Task LoadLogs()
+    {
+        _loading = true;
+        try
+        {
+            auditLogs = await AuditService.GetAuditLogsAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add("Failed to load logs: " + ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private bool FilterFunc(AuditLogDTO log)
+    {
+        if (string.IsNullOrWhiteSpace(searchString)) return true;
+        if (log.UserEmail.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
+        if (log.Action.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
+        if (log.EntityName.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
+        return false;
+    }
+
+    private void ViewDetails(AuditLogDTO log)
+    {
+        var parameters = new DialogParameters { ["Log"] = log };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true, CloseButton = true };
+        DialogService.Show<AuditDetailsDialog>("Audit Log Details", parameters, options);
+    }
+}

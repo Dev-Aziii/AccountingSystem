@@ -30,6 +30,7 @@ builder.Services.AddScoped<PayableService>();
 builder.Services.AddScoped<ReceivableService>();
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<CompanyService>();
+builder.Services.AddScoped<AuditLogService>();
 builder.Services.AddScoped<PaymentClientService>();
 builder.Services.AddScoped<IPaymentClientService>(sp => sp.GetRequiredService<PaymentClientService>());
 
