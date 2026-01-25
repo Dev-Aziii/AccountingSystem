@@ -26,10 +26,6 @@ namespace AccountingSystem.API.Controllers
         {
             var tenantId = _tenantService.GetCurrentTenant();
 
-            // Note: We use IgnoreQueryFilters because 'Company' table itself doesn't have a CompanyId column 
-            // pointing to itself in a way that Global Filters usually handle, OR we simply look it up by ID.
-            // Since the user is logged in, we trust the TenantID from the token.
-
             var company = await _context.Companies.FindAsync(tenantId);
 
             if (company == null) return NotFound("Company profile not found.");
@@ -38,10 +34,30 @@ namespace AccountingSystem.API.Controllers
             {
                 Id = company.Id,
                 Name = company.Name,
-                Address = company.Address ?? String.Empty,
-                TaxId = company.TaxId ?? String.Empty,
+                Address = company.Address ?? string.Empty, 
+                TaxId = company.TaxId ?? string.Empty,     
                 Currency = company.Currency
             });
+        }
+
+        // NEW: Update Company Profile
+        [HttpPut("current")]
+        [Authorize(Roles = "Admin")] // Only Admins can update company settings
+        public async Task<IActionResult> UpdateCompany([FromBody] UpdateCompanyDTO dto)
+        {
+            var tenantId = _tenantService.GetCurrentTenant();
+            var company = await _context.Companies.FindAsync(tenantId);
+
+            if (company == null) return NotFound("Company profile not found.");
+
+            company.Name = dto.Name;
+            company.Address = dto.Address;
+            company.TaxId = dto.TaxId;
+            company.Currency = dto.Currency;
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Company profile updated successfully." });
         }
     }
 }

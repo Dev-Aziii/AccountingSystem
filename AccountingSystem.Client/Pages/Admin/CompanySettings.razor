@@ -1,0 +1,125 @@
+﻿@page "/admin/company-settings"
+@using AccountingSystem.Shared.DTOs
+@using AccountingSystem.Client.Services
+@using Microsoft.AspNetCore.Authorization
+@using MudBlazor
+@attribute [Authorize(Roles = "Admin")]
+@inject CompanyService CompanyService
+@inject ISnackbar Snackbar
+
+<PageTitle>Company Settings</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Medium" Class="mt-8">
+    <MudText Typo="Typo.h4" Color="Color.Primary" Class="mb-4">Company Profile</MudText>
+    <MudText Typo="Typo.body1" Class="mud-text-secondary mb-6">
+        Manage your organization's details used in financial reports and invoices.
+    </MudText>
+
+    @if (isLoading)
+    {
+        <div class="d-flex justify-center my-8">
+            <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+        </div>
+    }
+    else
+    {
+        <EditForm Model="@model" OnValidSubmit="HandleSubmit">
+            <DataAnnotationsValidator />
+            <MudCard Elevation="3">
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6">General Information</MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudGrid>
+                        <MudItem xs="12">
+                            <MudTextField Label="Company Name"
+                                          @bind-Value="model.Name"
+                                          For="@(() => model.Name)"
+                                          Variant="Variant.Outlined"
+                                          Required="true" />
+                        </MudItem>
+
+                        <MudItem xs="12">
+                            <MudTextField Label="Business Address"
+                                          @bind-Value="model.Address"
+                                          For="@(() => model.Address)"
+                                          Variant="Variant.Outlined"
+                                          Lines="3" />
+                        </MudItem>
+
+                        <MudItem xs="12" sm="6">
+                            <MudTextField Label="Tax ID / TIN"
+                                          @bind-Value="model.TaxId"
+                                          For="@(() => model.TaxId)"
+                                          Variant="Variant.Outlined" />
+                        </MudItem>
+
+                        <MudItem xs="12" sm="6">
+                            <MudTextField Label="Currency Code"
+                                          @bind-Value="model.Currency"
+                                          For="@(() => model.Currency)"
+                                          Variant="Variant.Outlined"
+                                          HelperText="e.g. PHP, USD" />
+                        </MudItem>
+                    </MudGrid>
+                </MudCardContent>
+                <MudCardActions Class="d-flex justify-end pa-4">
+                    <MudButton ButtonType="ButtonType.Submit"
+                               Variant="Variant.Filled"
+                               Color="Color.Primary"
+                               Disabled="@isSubmitting"
+                               StartIcon="@Icons.Material.Filled.Save">
+                        @(isSubmitting ? "Saving..." : "Save Changes")
+                    </MudButton>
+                </MudCardActions>
+            </MudCard>
+        </EditForm>
+    }
+</MudContainer>
+
+@code {
+    private UpdateCompanyDTO model = new UpdateCompanyDTO();
+    private bool isLoading = true;
+    private bool isSubmitting = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var current = await CompanyService.GetCurrentCompanyAsync();
+            // Map CompanyDTO to UpdateCompanyDTO
+            model.Name = current.Name;
+            model.Address = current.Address;
+            model.TaxId = current.TaxId;
+            model.Currency = current.Currency;
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to load settings: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task HandleSubmit()
+    {
+        isSubmitting = true;
+        try
+        {
+            await CompanyService.UpdateCompanyAsync(model);
+            Snackbar.Add("Company profile updated successfully.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Update failed: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+}

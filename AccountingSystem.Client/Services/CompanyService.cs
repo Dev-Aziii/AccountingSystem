@@ -16,5 +16,16 @@ namespace AccountingSystem.Client.Services
         {
             return await _api.GetAsync<CompanyDTO>("api/companies/current");
         }
+
+        public async Task UpdateCompanyAsync(UpdateCompanyDTO dto)
+        {
+            var response = await _api.PutAsync("api/companies/current", dto);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                throw new Exception(error);
+            }
+        }
     }
 }
