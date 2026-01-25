@@ -10,119 +10,210 @@
 
 <PageTitle>User Management</PageTitle>
 
-<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-6">
     <!-- HEADER -->
-    <MudPaper Class="dashboard-header pa-6 mb-8" Elevation="0">
+    <MudPaper Class="page-header mb-6" Elevation="0">
         <div class="d-flex justify-space-between align-center">
             <div>
-                <MudText Typo="Typo.h5" Class="mb-2 header-title">
-                    User Management System
-                </MudText>
-                <MudText Typo="Typo.body1" Class="header-subtitle">
-                    Manage system access, user roles, and account permissions
-                </MudText>
+                @if (_initialLoading)
+                {
+                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="300px" Height="32px" Class="mb-2" />
+                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="400px" Height="20px" />
+                }
+                else
+                {
+                    <MudText Typo="Typo.h5" Class="mb-2 page-header-title">
+                        User Management System
+                    </MudText>
+                    <MudText Typo="Typo.body1" Class="page-header-subtitle">
+                        Manage system access, user roles, and account permissions
+                    </MudText>
+                }
             </div>
-            <MudButton Variant="Variant.Filled"
-                       Class="refresh-btn"
-                       StartIcon="@Icons.Material.Filled.Refresh"
-                       Size="Size.Large"
-                       OnClick="() => LoadUsers(false)">
-                Refresh Users
-            </MudButton>
+            @if (_initialLoading)
+            {
+                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="150px" Height="42px" />
+            }
+            else
+            {
+                <MudButton Variant="Variant.Filled"
+                           Class="refresh-btn"
+                           StartIcon="@Icons.Material.Filled.Refresh"
+                           Size="Size.Large"
+                           OnClick="() => LoadUsers(false)">
+                    Refresh Users
+                </MudButton>
+            }
         </div>
     </MudPaper>
 
     <MudGrid>
         <!-- LEFT: User Lists (Tabbed) -->
         <MudItem xs="12" md="8">
-            <MudTabs Elevation="3" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-4">
-                <MudTabPanel Text="Active Users" OnClick="@(() => LoadUsers(false))">
-                    <MudTable Items="@users" Hover="true" Breakpoint="Breakpoint.Sm" Loading="@_loading" LoadingProgressColor="Color.Info" Elevation="0">
-                        <HeaderContent>
-                            <MudTh>Email</MudTh>
-                            <MudTh>Full Name</MudTh>
-                            <MudTh>Role</MudTh>
-                            <MudTh Style="text-align:right">Actions</MudTh>
-                        </HeaderContent>
-                        <RowTemplate>
-                            <MudTd DataLabel="Email"><b>@context.Email</b></MudTd>
-                            <MudTd DataLabel="Full Name">@context.FullName</MudTd>
-                            <MudTd DataLabel="Role">
-                                <MudChip T="string" Color="@(context.RoleName == "Admin" ? Color.Error : Color.Primary)" Size="Size.Small">@context.RoleName</MudChip>
-                            </MudTd>
-                            <MudTd DataLabel="Actions" Style="text-align:right">
-                                @if (!context.Email.StartsWith("admin"))
-                                {
-                                    <MudIconButton Icon="@Icons.Material.Filled.Archive" Size="Size.Medium" Color="Color.Default" Class="archive-hover" OnClick="() => ConfirmDelete(context.Id)" />
-                                }
-                            </MudTd>
-                        </RowTemplate>
-                        <PagerContent><MudTablePager /></PagerContent>
-                    </MudTable>
-                </MudTabPanel>
+            @if (_initialLoading)
+            {
+                <!-- Skeleton for Tabs -->
+                <MudCard Elevation="3">
+                    <MudCardContent>
+                        <div class="d-flex mb-4">
+                            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="120px" Height="36px" Class="me-2" />
+                            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="120px" Height="36px" />
+                        </div>
+                        <!-- Skeleton for Table Headers -->
+                        <div class="d-flex justify-space-between mb-3">
+                            <MudSkeleton SkeletonType="SkeletonType.Text" Width="80px" Height="20px" />
+                            <MudSkeleton SkeletonType="SkeletonType.Text" Width="100px" Height="20px" />
+                            <MudSkeleton SkeletonType="SkeletonType.Text" Width="60px" Height="20px" />
+                            <MudSkeleton SkeletonType="SkeletonType.Text" Width="80px" Height="20px" />
+                        </div>
+                        <!-- Skeleton for Table Rows -->
+                        @for (int i = 0; i < 5; i++)
+                        {
+                            <div class="d-flex justify-space-between align-center mb-3">
+                                <MudSkeleton SkeletonType="SkeletonType.Text" Width="180px" Height="16px" />
+                                <MudSkeleton SkeletonType="SkeletonType.Text" Width="140px" Height="16px" />
+                                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="70px" Height="24px" />
+                                <MudSkeleton SkeletonType="SkeletonType.Circle" Width="32px" Height="32px" />
+                            </div>
+                        }
+                        <!-- Skeleton for Pagination -->
+                        <div class="d-flex justify-center mt-4">
+                            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="200px" Height="32px" />
+                        </div>
+                    </MudCardContent>
+                </MudCard>
+            }
+            else
+            {
+                <MudTabs Elevation="3" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-4">
+                    <MudTabPanel Text="Active Users" OnClick="@(() => LoadUsers(false))">
+                        <MudTable Items="@users" Hover="true" Breakpoint="Breakpoint.Sm" Loading="@_loading" LoadingProgressColor="Color.Info" Elevation="0">
+                            <HeaderContent>
+                                <MudTh>Email</MudTh>
+                                <MudTh>Full Name</MudTh>
+                                <MudTh>Role</MudTh>
+                                <MudTh Style="text-align:right">Actions</MudTh>
+                            </HeaderContent>
+                            <RowTemplate>
+                                <MudTd DataLabel="Email"><b>@context.Email</b></MudTd>
+                                <MudTd DataLabel="Full Name">@context.FullName</MudTd>
+                                <MudTd DataLabel="Role">
+                                    <MudChip T="string" Color="@(context.RoleName == "Admin" ? Color.Error : Color.Primary)" Size="Size.Small">@context.RoleName</MudChip>
+                                </MudTd>
+                                <MudTd DataLabel="Actions" Style="text-align:right">
+                                    @if (!context.Email.StartsWith("admin"))
+                                    {
+                                        <MudIconButton Icon="@Icons.Material.Filled.Archive" Size="Size.Medium" Color="Color.Default" Class="archive-hover" OnClick="() => ConfirmDelete(context.Id)" />
+                                    }
+                                </MudTd>
+                            </RowTemplate>
+                            <PagerContent><MudTablePager /></PagerContent>
+                        </MudTable>
+                    </MudTabPanel>
 
-                <MudTabPanel Text="Archived Users" OnClick="@(() => LoadUsers(true))">
-                    <MudTable Items="@users" Hover="true" Breakpoint="Breakpoint.Sm" Loading="@_loading" Elevation="0">
-                        <HeaderContent>
-                            <MudTh>Email</MudTh>
-                            <MudTh>Role</MudTh>
-                            <MudTh Style="text-align:right">Actions</MudTh>
-                        </HeaderContent>
-                        <RowTemplate>
-                            <MudTd DataLabel="Email" Style="color:gray;">@context.Email</MudTd>
-                            <MudTd DataLabel="Role">@context.RoleName</MudTd>
-                            <MudTd DataLabel="Actions" Style="text-align:right">
-                                <MudTooltip Text="Restore User">
-                                    <MudIconButton Icon="@Icons.Material.Filled.RestoreFromTrash" Size="Size.Medium" Color="Color.Default" Class="restore-hover" OnClick="() => ConfirmRestore(context.Id)" />
-                                </MudTooltip>
-                            </MudTd>
-                        </RowTemplate>
-                        <PagerContent><MudTablePager /></PagerContent>
-                    </MudTable>
-                </MudTabPanel>
-            </MudTabs>
+                    <MudTabPanel Text="Archived Users" OnClick="@(() => LoadUsers(true))">
+                        <MudTable Items="@users" Hover="true" Breakpoint="Breakpoint.Sm" Loading="@_loading" Elevation="0">
+                            <HeaderContent>
+                                <MudTh>Email</MudTh>
+                                <MudTh>Role</MudTh>
+                                <MudTh Style="text-align:right">Actions</MudTh>
+                            </HeaderContent>
+                            <RowTemplate>
+                                <MudTd DataLabel="Email" Style="color:gray;">@context.Email</MudTd>
+                                <MudTd DataLabel="Role">@context.RoleName</MudTd>
+                                <MudTd DataLabel="Actions" Style="text-align:right">
+                                    <MudTooltip Text="Restore User">
+                                        <MudIconButton Icon="@Icons.Material.Filled.RestoreFromTrash" Size="Size.Medium" Color="Color.Default" Class="restore-hover" OnClick="() => ConfirmRestore(context.Id)" />
+                                    </MudTooltip>
+                                </MudTd>
+                            </RowTemplate>
+                            <PagerContent><MudTablePager /></PagerContent>
+                        </MudTable>
+                    </MudTabPanel>
+                </MudTabs>
+            }
         </MudItem>
 
-        <!-- RIGHT: Create User Form (Only visible when Active tab is selected ideally, but kept visible for simplicity) -->
+        <!-- RIGHT: Create User Form -->
         <MudItem xs="12" md="4">
-            <EditForm Model="@newUser" OnValidSubmit="HandleCreateUser">
-                <DataAnnotationsValidator />
+            @if (_initialLoading)
+            {
+                <!-- Skeleton for Create User Form -->
                 <MudCard Elevation="3">
                     <MudCardHeader>
                         <CardHeaderContent>
-                            <MudText Typo="Typo.h6">Create New User</MudText>
+                            <MudSkeleton SkeletonType="SkeletonType.Text" Width="150px" Height="24px" />
                         </CardHeaderContent>
                     </MudCardHeader>
                     <MudCardContent>
-                        <MudTextField Label="Email" @bind-Value="newUser.Email" For="@(() => newUser.Email)" Variant="Variant.Outlined" Class="mb-3" />
-                        <MudTextField Label="Full Name" @bind-Value="newUser.FullName" For="@(() => newUser.FullName)" Variant="Variant.Outlined" Class="mb-3" />
-                        <MudSelect Label="Role" @bind-Value="newUser.RoleName" For="@(() => newUser.RoleName)" Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter" Class="mb-3">
-                            <MudSelectItem Value="@("Admin")" />
-                            <MudSelectItem Value="@("Accounting")" />
-                            <MudSelectItem Value="@("Management")" />
-                        </MudSelect>
-                        <MudTextField Label="Password" @bind-Value="newUser.Password" For="@(() => newUser.Password)" InputType="InputType.Password" Variant="Variant.Outlined" Class="mb-3" />
+                        @for (int i = 0; i < 4; i++)
+                        {
+                            <div class="mb-3">
+                                <MudSkeleton SkeletonType="SkeletonType.Text" Width="60px" Height="16px" Class="mb-1" />
+                                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="56px" />
+                            </div>
+                        }
                     </MudCardContent>
                     <MudCardActions>
-                        <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Class="create-btn" StartIcon="@Icons.Material.Filled.Add" Size="Size.Large" FullWidth="true" Disabled="@isSubmitting">
-                            @(isSubmitting ? "Creating..." : "Create Account")
-                        </MudButton>
+                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="48px" />
                     </MudCardActions>
                 </MudCard>
-            </EditForm>
+            }
+            else
+            {
+                <EditForm Model="@newUser" OnValidSubmit="HandleCreateUser">
+                    <DataAnnotationsValidator />
+                    <MudCard Elevation="3">
+                        <MudCardHeader>
+                            <CardHeaderContent>
+                                <MudText Typo="Typo.h6">Create New User</MudText>
+                            </CardHeaderContent>
+                        </MudCardHeader>
+                        <MudCardContent>
+                            @if (isSubmitting)
+                            {
+                                <!-- Show skeleton during form submission -->
+                                @for (int i = 0; i < 4; i++)
+                                {
+                                    <div class="mb-3">
+                                        <MudSkeleton SkeletonType="SkeletonType.Text" Width="60px" Height="16px" Class="mb-1" />
+                                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="56px" />
+                                    </div>
+                                }
+                            }
+                            else
+                            {
+                                <MudTextField Label="Email" @bind-Value="newUser.Email" For="@(() => newUser.Email)" Variant="Variant.Outlined" Class="mb-3" />
+                                <MudTextField Label="Full Name" @bind-Value="newUser.FullName" For="@(() => newUser.FullName)" Variant="Variant.Outlined" Class="mb-3" />
+                                <MudSelect Label="Role" @bind-Value="newUser.RoleName" For="@(() => newUser.RoleName)" Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter" Class="mb-3">
+                                    <MudSelectItem Value="@("Admin")" />
+                                    <MudSelectItem Value="@("Accounting")" />
+                                    <MudSelectItem Value="@("Management")" />
+                                </MudSelect>
+                                <MudTextField Label="Password" @bind-Value="newUser.Password" For="@(() => newUser.Password)" InputType="InputType.Password" Variant="Variant.Outlined" Class="mb-3" />
+                            }
+                        </MudCardContent>
+                        <MudCardActions>
+                            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Class="create-btn" StartIcon="@Icons.Material.Filled.Add" Size="Size.Large" FullWidth="true" Disabled="@isSubmitting">
+                                @(isSubmitting ? "Creating..." : "Create Account")
+                            </MudButton>
+                        </MudCardActions>
+                    </MudCard>
+                </EditForm>
+            }
         </MudItem>
     </MudGrid>
 </MudContainer>
 
 <style>
     .archive-hover:hover {
-        color: #ff9800 !important; 
+        color: #ff9800 !important;
         transform: scale(1.1);
         transition: all 0.2s ease-in-out;
     }
 
     .restore-hover:hover {
-        color: #4caf50 !important; 
+        color: #4caf50 !important;
         background-color: rgba(76, 175, 80, 0.1);
         border-radius: 50%;
         transform: scale(1.1);
@@ -135,10 +226,13 @@
     private RegisterDTO newUser = new RegisterDTO();
     private bool isSubmitting = false;
     private bool _loading = true;
+    private bool _initialLoading = true;
 
     protected override async Task OnInitializedAsync()
     {
         await LoadUsers(false);
+        _initialLoading = false;
+        StateHasChanged();
     }
 
     private async Task LoadUsers(bool archived)

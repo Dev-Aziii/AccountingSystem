@@ -18,31 +18,151 @@
     <MudPaper Class="dashboard-header pa-6 mb-8" Elevation="0">
         <div class="d-flex justify-space-between align-center">
             <div>
-                <MudText Typo="Typo.h5" Class="mb-2 header-title">
-                    Executive Financial Dashboard
-                </MudText>
-                <MudText Typo="Typo.body1" Class="header-subtitle">
-                    Real-time insights into liquidity, profitability, and financial obligations
-                </MudText>
+                @if (isLoading)
+                {
+                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="350px" Height="32px" Class="mb-2" />
+                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="450px" Height="20px" />
+                }
+                else
+                {
+                    <MudText Typo="Typo.h5" Class="mb-2 header-title">
+                        Executive Financial Dashboard
+                    </MudText>
+                    <MudText Typo="Typo.body1" Class="header-subtitle">
+                        Real-time insights into liquidity, profitability, and financial obligations
+                    </MudText>
+                }
             </div>
-            <MudButton Variant="Variant.Filled"
-                       Class="refresh-btn"
-                       StartIcon="@Icons.Material.Filled.Refresh"
-                       Size="Size.Large"
-                       OnClick="LoadData">
-                Refresh Data
-            </MudButton>
+            @if (isLoading)
+            {
+                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="150px" Height="42px" />
+            }
+            else
+            {
+                <MudButton Variant="Variant.Filled"
+                           Class="refresh-btn"
+                           StartIcon="@Icons.Material.Filled.Refresh"
+                           Size="Size.Large"
+                           OnClick="LoadData">
+                    Refresh Data
+                </MudButton>
+            }
         </div>
     </MudPaper>
 
     @if (isLoading)
     {
-        <div class="loading-container d-flex justify-center align-center pa-8" style="height: 300px;">
-            <div class="text-center">
-                <MudProgressCircular Color="Color.Primary" Size="Size.Large" Indeterminate />
-                <MudText Typo="Typo.h6" Class="mt-4 custom-text-primary">Loading Dashboard...</MudText>
-            </div>
+        <!-- SKELETON FOR KPI SECTION -->
+        <div class="section-title mb-4">
+            <MudSkeleton SkeletonType="SkeletonType.Circle" Width="32px" Height="32px" Class="me-2" Style="display: inline-block;" />
+            <MudSkeleton SkeletonType="SkeletonType.Text" Width="250px" Height="24px" Style="display: inline-block;" />
         </div>
+
+        <MudGrid Spacing="3" Class="mb-10">
+            <!-- KPI CARD SKELETONS -->
+            @for (int i = 0; i < 6; i++)
+            {
+                <MudItem xs="12" sm="6" md="4">
+                    <MudPaper Elevation="0" Class="kpi-card pa-6">
+                        <div class="d-flex justify-space-between align-center">
+                            <div class="flex-grow-1">
+                                <MudSkeleton SkeletonType="SkeletonType.Text" Width="150px" Height="16px" Class="mb-2" />
+                                <MudSkeleton SkeletonType="SkeletonType.Text" Width="120px" Height="32px" Class="mb-2" />
+                                <MudSkeleton SkeletonType="SkeletonType.Text" Width="140px" Height="14px" Class="mb-3" />
+                                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100px" Height="24px" />
+                            </div>
+                            <div class="kpi-icon">
+                                <MudSkeleton SkeletonType="SkeletonType.Circle" Width="40px" Height="40px" />
+                            </div>
+                        </div>
+                    </MudPaper>
+                </MudItem>
+            }
+        </MudGrid>
+
+        <!-- SKELETON FOR LOWER SECTION -->
+        <MudGrid Spacing="6">
+            <!-- CALENDAR SKELETON -->
+            <MudItem xs="12" lg="8">
+                <div class="calendar-section pa-6">
+                    <div class="section-title mb-4">
+                        <MudSkeleton SkeletonType="SkeletonType.Circle" Width="32px" Height="32px" Class="me-2" Style="display: inline-block;" />
+                        <MudSkeleton SkeletonType="SkeletonType.Text" Width="280px" Height="24px" Style="display: inline-block;" />
+                    </div>
+
+                    <div class="d-flex gap-4 mb-6">
+                        @for (int i = 0; i < 2; i++)
+                        {
+                            <div class="legend-item d-flex align-center">
+                                <MudSkeleton SkeletonType="SkeletonType.Circle" Width="16px" Height="16px" Class="me-2" />
+                                <MudSkeleton SkeletonType="SkeletonType.Text" Width="100px" Height="14px" />
+                            </div>
+                        }
+                    </div>
+
+                    <!-- Calendar Grid Skeleton -->
+                    <MudCard Elevation="0" Style="border-radius: 16px; overflow: hidden;">
+                        <MudCardContent>
+                            <div class="d-flex justify-space-between mb-4">
+                                @for (int i = 0; i < 7; i++)
+                                {
+                                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="60px" Height="16px" />
+                                }
+                            </div>
+                            @for (int week = 0; week < 5; week++)
+                            {
+                                <div class="d-flex justify-space-between mb-3" style="height: 80px;">
+                                    @for (int day = 0; day < 7; day++)
+                                    {
+                                        <div style="width: 13%; padding: 8px;">
+                                            <MudSkeleton SkeletonType="SkeletonType.Text" Width="20px" Height="16px" Class="mb-2" />
+                                            @if ((week + day) % 3 == 0)
+                                            {
+                                                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="20px" />
+                                            }
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        </MudCardContent>
+                    </MudCard>
+                </div>
+            </MudItem>
+
+            <!-- LEDGER SKELETON -->
+            <MudItem xs="12" lg="4">
+                <div class="ledger-section pa-6">
+                    <div class="section-title mb-4">
+                        <MudSkeleton SkeletonType="SkeletonType.Circle" Width="32px" Height="32px" Class="me-2" Style="display: inline-block;" />
+                        <MudSkeleton SkeletonType="SkeletonType.Text" Width="150px" Height="24px" Style="display: inline-block;" />
+                    </div>
+
+                    <!-- Table Header Skeleton -->
+                    <div class="d-flex justify-space-between mb-3 pa-3">
+                        <MudSkeleton SkeletonType="SkeletonType.Text" Width="120px" Height="16px" />
+                        <MudSkeleton SkeletonType="SkeletonType.Text" Width="80px" Height="16px" />
+                    </div>
+
+                    <!-- Table Rows Skeleton -->
+                    @for (int i = 0; i < 8; i++)
+                    {
+                        <div class="d-flex justify-space-between align-center pa-3 mb-2">
+                            <div class="flex-grow-1">
+                                <MudSkeleton SkeletonType="SkeletonType.Text" Width="140px" Height="16px" Class="mb-1" />
+                                <MudSkeleton SkeletonType="SkeletonType.Text" Width="60px" Height="12px" />
+                            </div>
+                            <div>
+                                <MudSkeleton SkeletonType="SkeletonType.Text" Width="80px" Height="16px" />
+                            </div>
+                        </div>
+                    }
+
+                    <div class="text-center mt-6">
+                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="200px" Height="42px" />
+                    </div>
+                </div>
+            </MudItem>
+        </MudGrid>
     }
     else
     {

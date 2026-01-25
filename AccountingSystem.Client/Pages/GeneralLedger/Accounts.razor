@@ -11,15 +11,25 @@
 
 <PageTitle>Chart of Accounts</PageTitle>
 
-<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <MudText Typo="Typo.h4" Color="Color.Primary">Chart of Accounts</MudText>
-        <AuthorizeView Roles="Admin,Accounting">
-            <MudButton Variant="Variant.Filled" Color="Color.Success" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenAddDialog">
-                Add New Account
-            </MudButton>
-        </AuthorizeView>
-    </div>
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-6">
+    <!-- HEADER -->
+    <MudPaper Class="page-header mb-6" Elevation="0">
+        <div class="d-flex justify-space-between align-center">
+            <div>
+                <MudText Typo="Typo.h5" Class="mb-2 page-header-title">
+                   Chart of Accounts
+                </MudText>
+                <MudText Typo="Typo.body1" Class="page-header-subtitle">
+                    Manage system access, user roles, and account permissions
+                </MudText>
+            </div>
+            <AuthorizeView Roles="Admin,Accounting">
+                <MudButton Variant="Variant.Filled" Class="create-btn" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenAddDialog">
+                    Set up account classifications to track your business financial activities
+                </MudButton>
+            </AuthorizeView>
+        </div>
+    </MudPaper>
 
     <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-6">
         <!-- Tab 1: Active Accounts -->

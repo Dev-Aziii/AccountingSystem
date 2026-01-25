@@ -11,74 +11,145 @@
 
 <PageTitle>System Audit Logs</PageTitle>
 
-<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
-    <MudPaper Class="dashboard-header pa-6 mb-8" Elevation="0">
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-6">
+    <!-- HEADER -->
+    <MudPaper Class="page-header mb-6" Elevation="0">
         <div class="d-flex justify-space-between align-center">
             <div>
-                <MudText Typo="Typo.h5" Class="mb-2 header-title">
-                    Audit Logs
-                </MudText>
-                <MudText Typo="Typo.body1" Class="header-subtitle">
-                    Track all system modifications and security events
-                </MudText>
+                @if (_initialLoading)
+                {
+                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="150px" Height="32px" Class="mb-2" />
+                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="350px" Height="20px" />
+                }
+                else
+                {
+                    <MudText Typo="Typo.h5" Class="mb-2 page-header-title">
+                        Audit Logs
+                    </MudText>
+                    <MudText Typo="Typo.body1" Class="page-header-subtitle">
+                        Track all system modifications and security events
+                    </MudText>
+                }
             </div>
-            <MudButton Variant="Variant.Filled"
-                       Class="refresh-btn"
-                       StartIcon="@Icons.Material.Filled.Refresh"
-                       Size="Size.Large"
-                       OnClick="LoadLogs">
-                Refresh Logs
-            </MudButton>
+            @if (_initialLoading)
+            {
+                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="150px" Height="42px" />
+            }
+            else
+            {
+                <MudButton Variant="Variant.Filled"
+                           Class="refresh-btn"
+                           StartIcon="@Icons.Material.Filled.Refresh"
+                           Size="Size.Large"
+                           OnClick="LoadLogs">
+                    Refresh Logs
+                </MudButton>
+            }
         </div>
     </MudPaper>
 
-    <MudTable Items="@auditLogs" Dense="true" Hover="true" Bordered="false" Striped="true"
-              Filter="new Func<AuditLogDTO, bool>(FilterFunc)" Loading="@_loading" LoadingProgressColor="Color.Info" Elevation="3">
-        <ToolBarContent>
-            <MudText Typo="Typo.h6">Activity History</MudText>
-            <MudSpacer />
-            <MudTextField @bind-Value="searchString" Placeholder="Search by User, Action, or Target..."
-                          Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
-                          IconSize="Size.Medium" Class="mt-0"></MudTextField>
-        </ToolBarContent>
-        <HeaderContent>
-            <MudTh><MudTableSortLabel SortBy="new Func<AuditLogDTO, object>(x => x.Timestamp)">Date & Time</MudTableSortLabel></MudTh>
-            <MudTh><MudTableSortLabel SortBy="new Func<AuditLogDTO, object>(x => x.UserEmail)">User</MudTableSortLabel></MudTh>
-            <MudTh><MudTableSortLabel SortBy="new Func<AuditLogDTO, object>(x => x.Action)">Action</MudTableSortLabel></MudTh>
-            <MudTh>Target Endpoint</MudTh>
-            <MudTh Style="text-align:center">Details</MudTh>
-        </HeaderContent>
-        <RowTemplate>
-            <MudTd DataLabel="Date">@context.Timestamp.ToLocalTime().ToString("g")</MudTd>
-            <MudTd DataLabel="User">
-                <MudText Typo="Typo.body2" Color="@(context.UserEmail.Contains("System") ? Color.Secondary : Color.Default)">
-                    @context.UserEmail
-                </MudText>
-            </MudTd>
-            <MudTd DataLabel="Action">
-                <MudChip T="string" Color="@GetActionColor(context.Action)" Size="Size.Small">@context.Action</MudChip>
-            </MudTd>
-            <MudTd DataLabel="Target">
-                <code style="font-size: 0.8em">@context.EntityName</code>
-            </MudTd>
-            <MudTd DataLabel="Details" Style="text-align:center">
-                <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Medium" Color="Color.Default" OnClick="@(() => ViewDetails(context))" />
-            </MudTd>
-        </RowTemplate>
-        <PagerContent>
-            <MudTablePager />
-        </PagerContent>
-    </MudTable>
+    @if (_initialLoading)
+    {
+        <!-- SKELETON FOR TABLE -->
+        <MudCard Elevation="3">
+            <!-- Toolbar Skeleton -->
+            <MudCardContent Class="pa-4">
+                <div class="d-flex justify-space-between align-center mb-4">
+                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="150px" Height="24px" />
+                    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="300px" Height="40px" />
+                </div>
+
+                <!-- Table Header Skeleton -->
+                <div class="d-flex justify-space-between mb-3">
+                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="120px" Height="20px" />
+                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="80px" Height="20px" />
+                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="70px" Height="20px" />
+                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="140px" Height="20px" />
+                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="60px" Height="20px" />
+                </div>
+
+                <!-- Table Rows Skeleton -->
+                @for (int i = 0; i < 10; i++)
+                {
+                    <div class="d-flex justify-space-between align-center mb-3 pa-2" style="border-bottom: 1px solid rgba(0,0,0,0.05);">
+                        <div style="flex: 1;">
+                            <MudSkeleton SkeletonType="SkeletonType.Text" Width="140px" Height="16px" />
+                        </div>
+                        <div style="flex: 1;">
+                            <MudSkeleton SkeletonType="SkeletonType.Text" Width="160px" Height="16px" />
+                        </div>
+                        <div style="flex: 1;">
+                            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="80px" Height="24px" />
+                        </div>
+                        <div style="flex: 1;">
+                            <MudSkeleton SkeletonType="SkeletonType.Text" Width="120px" Height="16px" />
+                        </div>
+                        <div style="flex: 1; text-align: center;">
+                            <MudSkeleton SkeletonType="SkeletonType.Circle" Width="32px" Height="32px" />
+                        </div>
+                    </div>
+                }
+
+                <!-- Pagination Skeleton -->
+                <div class="d-flex justify-center mt-4">
+                    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="250px" Height="32px" />
+                </div>
+            </MudCardContent>
+        </MudCard>
+    }
+    else
+    {
+        <MudTable Items="@auditLogs" Dense="true" Hover="true" Bordered="false" Striped="true"
+                  Filter="new Func<AuditLogDTO, bool>(FilterFunc)" Loading="@_loading" LoadingProgressColor="Color.Info" Elevation="3">
+            <ToolBarContent>
+                <MudText Typo="Typo.h6">Activity History</MudText>
+                <MudSpacer />
+                <MudTextField @bind-Value="searchString" Placeholder="Search by User, Action, or Target..."
+                              Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
+                              IconSize="Size.Medium" Class="mt-0"></MudTextField>
+            </ToolBarContent>
+            <HeaderContent>
+                <MudTh><MudTableSortLabel SortBy="new Func<AuditLogDTO, object>(x => x.Timestamp)">Date & Time</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel SortBy="new Func<AuditLogDTO, object>(x => x.UserEmail)">User</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel SortBy="new Func<AuditLogDTO, object>(x => x.Action)">Action</MudTableSortLabel></MudTh>
+                <MudTh>Target Endpoint</MudTh>
+                <MudTh Style="text-align:center">Details</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Date">@context.Timestamp.ToLocalTime().ToString("g")</MudTd>
+                <MudTd DataLabel="User">
+                    <MudText Typo="Typo.body2" Color="@(context.UserEmail.Contains("System") ? Color.Secondary : Color.Default)">
+                        @context.UserEmail
+                    </MudText>
+                </MudTd>
+                <MudTd DataLabel="Action">
+                    <MudChip T="string" Color="@GetActionColor(context.Action)" Size="Size.Small">@context.Action</MudChip>
+                </MudTd>
+                <MudTd DataLabel="Target">
+                    <code style="font-size: 0.8em">@context.EntityName</code>
+                </MudTd>
+                <MudTd DataLabel="Details" Style="text-align:center">
+                    <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Medium" Color="Color.Default" OnClick="@(() => ViewDetails(context))" />
+                </MudTd>
+            </RowTemplate>
+            <PagerContent>
+                <MudTablePager />
+            </PagerContent>
+        </MudTable>
+    }
 </MudContainer>
 
 @code {
     private List<AuditLogDTO> auditLogs = new List<AuditLogDTO>();
     private string searchString = "";
     private bool _loading = true;
+    private bool _initialLoading = true;
 
     protected override async Task OnInitializedAsync()
     {
         await LoadLogs();
+        _initialLoading = false;
+        StateHasChanged();
     }
 
     private async Task LoadLogs()

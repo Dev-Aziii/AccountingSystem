@@ -155,6 +155,27 @@ code {
     font-weight: 400;
 }
 
+.page-header {
+    background: none !important;
+    position: relative;
+    overflow: hidden;
+}
+
+    .page-header .mud-paper {
+        background: transparent !important;
+        box-shadow: none !important;
+    }
+
+.page-header-title {
+    color: var(--theme-primary) !important;
+    font-weight: 800;
+}
+
+.page-header-subtitle {
+    color: var(--theme-secondary) !important;
+    font-weight: 400;
+}
+
 /* ========================================
    KPI CARD STYLES
    ======================================== */
