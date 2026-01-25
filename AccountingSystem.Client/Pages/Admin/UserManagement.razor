@@ -104,7 +104,7 @@
                         <MudTextField Label="Password" @bind-Value="newUser.Password" For="@(() => newUser.Password)" InputType="InputType.Password" Variant="Variant.Outlined" Class="mb-3" />
                     </MudCardContent>
                     <MudCardActions>
-                        <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Class="custom-button" StartIcon="@Icons.Material.Filled.Add" Size="Size.Large" FullWidth="true" Disabled="@isSubmitting">
+                        <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Class="create-btn" StartIcon="@Icons.Material.Filled.Add" Size="Size.Large" FullWidth="true" Disabled="@isSubmitting">
                             @(isSubmitting ? "Creating..." : "Create Account")
                         </MudButton>
                     </MudCardActions>
