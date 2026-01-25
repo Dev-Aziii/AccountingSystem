@@ -125,11 +125,11 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseCors("AllowBlazorClient");
 
-app.UseMiddleware<JwtMiddleware>();
-app.UseMiddleware<AuditMiddleware>();
 
 app.UseAuthentication();
+app.UseMiddleware<JwtMiddleware>();
 app.UseAuthorization();
+app.UseMiddleware<AuditMiddleware>();
 
 app.MapControllers();
 

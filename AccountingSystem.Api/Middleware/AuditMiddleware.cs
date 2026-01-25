@@ -15,11 +15,20 @@ namespace AccountingSystem.API.Middleware
 
         public async Task Invoke(HttpContext context, AccountingDbContext dbContext)
         {
+            // Check if this request has already been logged by another middleware
+            if (context.Items.ContainsKey("AuditLogged"))
+            {
+                await _next(context);
+                return;
+            }
+
             // Only log state-changing methods
             var method = context.Request.Method;
             if (method == "POST" || method == "PUT" || method == "DELETE")
             {
                 await LogAuditAsync(context, dbContext);
+                // Mark as logged to prevent duplicate entries
+                context.Items["AuditLogged"] = true;
             }
 
             await _next(context);
