@@ -1,4 +1,5 @@
-﻿using System.Net.Http.Headers;
+﻿using Microsoft.JSInterop;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 
 namespace AccountingSystem.Client.Services
@@ -7,11 +8,13 @@ namespace AccountingSystem.Client.Services
     {
         private readonly HttpClient _httpClient;
         private readonly TokenStorageService _tokenService;
+        private readonly IJSRuntime _js;
 
-        public ApiService(HttpClient httpClient, TokenStorageService tokenService)
+        public ApiService(HttpClient httpClient, TokenStorageService tokenService, IJSRuntime js)
         {
             _httpClient = httpClient;
             _tokenService = tokenService;
+            _js = js;
         }
 
         private async Task AddAuthHeader()
@@ -45,6 +48,23 @@ namespace AccountingSystem.Client.Services
         {
             await AddAuthHeader();
             return await _httpClient.DeleteAsync(uri);
+        }
+
+        // NEW: Method to download files
+        public async Task DownloadFileAsync(string uri, string fileName)
+        {
+            await AddAuthHeader();
+            var response = await _httpClient.GetAsync(uri);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                throw new Exception(error);
+            }
+
+            var fileStream = await response.Content.ReadAsStreamAsync();
+            using var streamRef = new DotNetStreamReference(fileStream);
+            await _js.InvokeVoidAsync("downloadFileFromStream", fileName, streamRef);
         }
     }
 }

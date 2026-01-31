@@ -6,9 +6,12 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using QuestPDF.Infrastructure;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
+
+QuestPDF.Settings.License = LicenseType.Community;
 
 builder.Services.AddHttpContextAccessor(); // REQUIRED for TenantService
 builder.Services.AddScoped<ITenantService, TenantService>();
@@ -23,6 +26,7 @@ builder.Services.AddScoped<ILedgerService, LedgerService>();
 builder.Services.AddScoped<IPayableService, PayableService>();
 builder.Services.AddScoped<IReceivableService, ReceivableService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
+builder.Services.AddScoped<IPdfService, PdfService>();
 
 // --- 3. Authentication Setup (JWT) ---
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");

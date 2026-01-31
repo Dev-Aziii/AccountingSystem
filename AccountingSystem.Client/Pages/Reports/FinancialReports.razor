@@ -7,11 +7,12 @@
 @inject ReportService ReportService
 @inject LedgerService LedgerService
 @inject CompanyService CompanyService
+@inject ISnackbar Snackbar
 @inject IJSRuntime JS
 
 <PageTitle>Financial Reports</PageTitle>
 
-<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4 mb-8" id="printable-area">
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4 mb-8" ID="printable-area">
 
     <!-- Action Bar (Hidden when printing) -->
     <div class="d-flex justify-space-between align-center mb-6 no-print">
@@ -21,7 +22,7 @@
         </div>
         <div>
             <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Refresh" OnClick="LoadData" Class="mr-2">Refresh</MudButton>
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Print" OnClick="PrintReport">Print / PDF</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.PictureAsPdf" OnClick="PrintReport">Download PDF</MudButton>
         </div>
     </div>
 
@@ -59,8 +60,9 @@
                             <tr class="mud-theme-light">
                                 <th class="py-3"><b>ACCOUNT CODE</b></th>
                                 <th class="py-3"><b>ACCOUNT NAME</b></th>
-                                <th class="py-3 text-right"><b>DEBIT</b></th>
-                                <th class="py-3 text-right"><b>CREDIT</b></th>
+                                <!-- Fixed Alignment: Applied text-align:right directly to headers -->
+                                <th class="py-3" style="text-align:right"><b>DEBIT</b></th>
+                                <th class="py-3" style="text-align:right"><b>CREDIT</b></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -76,9 +78,9 @@
                         </tbody>
                         <tfoot>
                             <tr style="border-top: 2px solid var(--mud-palette-text-primary);">
-                                <td colspan="2" class="text-right py-4"><b>TOTALS:</b></td>
-                                <td class="text-right py-4" style="font-family: monospace; border-bottom: 3px double black;"><b>@trialBalance.TotalDebit.ToString("C2", _phCulture)</b></td>
-                                <td class="text-right py-4" style="font-family: monospace; border-bottom: 3px double black;"><b>@trialBalance.TotalCredit.ToString("C2", _phCulture)</b></td>
+                                <td colspan="2" class="py-4" style="text-align:right"><b>TOTALS:</b></td>
+                                <td class="py-4" style="text-align:right; font-family: monospace; border-bottom: 3px double black;"><b>@trialBalance.TotalDebit.ToString("C2", _phCulture)</b></td>
+                                <td class="py-4" style="text-align:right; font-family: monospace; border-bottom: 3px double black;"><b>@trialBalance.TotalCredit.ToString("C2", _phCulture)</b></td>
                             </tr>
                         </tfoot>
                     </MudSimpleTable>
@@ -256,8 +258,10 @@
     private Dictionary<string, string> accountTypes;
     private bool isLoading = false;
 
+    // Philippine Culture for formatting "₱"
     private CultureInfo _phCulture = CultureInfo.GetCultureInfo("en-PH");
 
+    // Computed Properties
     private decimal TotalRevenue => GetAccountsByType("Revenue").Sum(a => a.Credit - a.Debit);
     private decimal TotalExpense => GetAccountsByType("Expense").Sum(a => a.Debit - a.Credit);
     private decimal NetIncome => TotalRevenue - TotalExpense;
@@ -274,7 +278,7 @@
         {
             var tbTask = ReportService.GetTrialBalance();
             var accountsTask = LedgerService.GetAccountsAsync();
-            var companyTask = CompanyService.GetCurrentCompanyAsync(); // NEW: Fetch Company
+            var companyTask = CompanyService.GetCurrentCompanyAsync();
 
             await Task.WhenAll(tbTask, accountsTask, companyTask);
 
@@ -292,6 +296,19 @@
         return trialBalance.Accounts.Where(a => accountTypes.ContainsKey(a.AccountCode) && accountTypes[a.AccountCode] == type);
     }
 
-    private async Task PrintReport() => await JS.InvokeVoidAsync("print");
+    private async Task PrintReport()
+    {
+        try
+        {
+            Snackbar.Add("Generating Financial Report PDF...", Severity.Info);
+            await ReportService.DownloadFinancialsPdf();
+            Snackbar.Add("Download started.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error: {ex.Message}", Severity.Error);
+        }
+    }
+
     private void OnTabChanged(int index) { }
 }

@@ -15,5 +15,16 @@ namespace AccountingSystem.Client.Services
         {
             return await _api.GetAsync<TrialBalanceDTO>("api/ledger/trial-balance");
         }
+
+        public async Task DownloadInvoicePdf(int invoiceId)
+        {
+            await _api.DownloadFileAsync($"api/reports/invoices/{invoiceId}/pdf", $"Invoice-{invoiceId}.pdf");
+        }
+
+        // NEW: Financials PDF
+        public async Task DownloadFinancialsPdf()
+        {
+            await _api.DownloadFileAsync($"api/reports/financials/pdf", $"FinancialStatements.pdf");
+        }
     }
 }

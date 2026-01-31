@@ -6,6 +6,7 @@
 @using MudBlazor
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin,Accounting")]
 @inject ReceivableService ReceivableService
+@inject ReportService ReportService
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
 
@@ -51,10 +52,14 @@
                 }
             </MudTd>
             <MudTd>
-                @if (context.Balance > 0)
-                {
-                    <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Success" OnClick="@(() => OpenReceiveDialog(context))">Receive</MudButton>
-                }
+                <div class="d-flex gap-2">
+                    @if (context.Balance > 0)
+                    {
+                        <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Success" OnClick="@(() => OpenReceiveDialog(context))">Receive</MudButton>
+                    }
+                    <!-- NEW: Download PDF Button -->
+                    <MudIconButton Icon="@Icons.Material.Filled.PictureAsPdf" Color="Color.Error" Size="Size.Small" OnClick="@(() => DownloadPdf(context.Id))" Title="Download PDF" />
+                </div>
             </MudTd>
         </RowTemplate>
         <PagerContent><MudTablePager /></PagerContent>
@@ -83,6 +88,20 @@
         var dialog = await DialogService.ShowAsync<ReceivePaymentDialog>("Receive Payment", parameters, options);
         var result = await dialog.Result;
         if (!result.Canceled) await LoadData();
+    }
+
+    private async Task DownloadPdf(int id)
+    {
+        try
+        {
+            Snackbar.Add("Generating PDF...", Severity.Info);
+            await ReportService.DownloadInvoicePdf(id);
+            Snackbar.Add("Download started.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Download failed: {ex.Message}", Severity.Error);
+        }
     }
 
     private bool FilterFunc(InvoiceDTO element) =>
