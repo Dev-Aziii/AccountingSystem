@@ -284,6 +284,83 @@ code {
 }
 
 /* ========================================
+   WORLD BANK CARD STYLES
+   ======================================== */
+
+:root {
+    --worldbank-primary: rgb(156, 39, 176);
+    --worldbank-secondary: rgb(103, 58, 183);
+    --worldbank-light: rgba(156, 39, 176, 0.1);
+    --worldbank-dark: rgb(123, 31, 138);
+}
+
+.worldbank-card {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 20px;
+    border: 1px solid rgba(156, 39, 176, 0.2);
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(145deg, #fafafa 0%, #f3e5f5 100%);
+}
+
+    .worldbank-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--worldbank-primary) 0%, var(--worldbank-secondary) 100%);
+    }
+
+    .worldbank-card:hover {
+        transform: translateY(-8px) scale(1.02);
+        box-shadow: 0 20px 40px rgba(156, 39, 176, 0.15);
+        border-color: var(--worldbank-primary);
+    }
+
+.worldbank-value {
+    font-size: 2rem;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    background: linear-gradient(135deg, var(--worldbank-primary) 0%, var(--worldbank-secondary) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.worldbank-icon {
+    background: linear-gradient(135deg, var(--worldbank-primary) 0%, var(--worldbank-secondary) 100%);
+    border-radius: 16px;
+    padding: 12px;
+    color: white;
+}
+
+.worldbank-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--worldbank-primary);
+    opacity: 0.8;
+}
+
+.worldbank-description {
+    font-size: 0.8rem;
+    color: var(--worldbank-secondary);
+    font-weight: 500;
+    margin-top: 4px;
+}
+
+.worldbank-chart-section {
+    background: linear-gradient(145deg, #ffffff 0%, #f3e5f5 100%);
+    border-radius: 20px;
+    border: 1px solid rgba(156, 39, 176, 0.1);
+    box-shadow: 0 8px 24px rgba(156, 39, 176, 0.08);
+}
+
+
+/* ========================================
    TABLE STYLES
    ======================================== */
 

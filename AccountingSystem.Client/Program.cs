@@ -32,6 +32,7 @@ builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<CompanyService>();
 builder.Services.AddScoped<AuditLogService>();
 builder.Services.AddScoped<PaymentClientService>();
+builder.Services.AddScoped<WorldBankService>();
 builder.Services.AddScoped<IPaymentClientService>(sp => sp.GetRequiredService<PaymentClientService>());
 
 // 4. HTTP Configuration

@@ -9,376 +9,820 @@
 @inject LedgerService LedgerService
 @inject PayableService PayableService
 @inject ReceivableService ReceivableService
+@inject WorldBankService WorldBankService
 
 <PageTitle>Financial Dashboard</PageTitle>
 
+<style>
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(12, 1fr);
+        gap: 1.5rem;
+    }
+
+    .span-3 {
+        grid-column: span 3;
+    }
+
+    .span-4 {
+        grid-column: span 4;
+    }
+
+    .span-6 {
+        grid-column: span 6;
+    }
+
+    .span-8 {
+        grid-column: span 8;
+    }
+
+    .span-12 {
+        grid-column: span 12;
+    }
+
+    @@media (max-width: 1400px) {
+        .span-3 {
+            grid-column: span 6;
+        }
+
+        .span-4 {
+            grid-column: span 6;
+        }
+    }
+
+    @@media (max-width: 768px) {
+
+        .span-3,
+        .span-4,
+        .span-6,
+        .span-8 {
+            grid-column: span 12;
+        }
+
+        .top-metrics-grid {
+            grid-template-columns: repeat(2, 1fr) !important;
+        }
+    }
+
+    .top-metrics-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1rem;
+    }
+
+    .metric-card-compact {
+        padding: 1.25rem;
+        background: white;
+        border-radius: 16px;
+        border: 1px solid rgba(22, 84, 127, 0.1);
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+    }
+
+    .metric-card-compact:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 24px rgba(22, 84, 127, 0.12);
+        border-color: var(--theme-primary);
+    }
+
+    .metric-icon-compact {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, rgb(22, 84, 127) 0%, rgb(56, 146, 147) 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        flex-shrink: 0;
+    }
+
+    .metric-value-compact {
+        font-size: 1.5rem;
+        font-weight: 800;
+        background: linear-gradient(135deg, rgb(22, 84, 127) 0%, rgb(56, 146, 147) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        line-height: 1.2;
+    }
+
+    .metric-label-compact {
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: rgb(22, 84, 127);
+        opacity: 0.7;
+    }
+
+    .featured-card {
+        background: white;
+        border-radius: 20px;
+        padding: 1.5rem;
+        border: 1px solid rgba(22, 84, 127, 0.1);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .featured-card:hover {
+        box-shadow: 0 16px 40px rgba(22, 84, 127, 0.12);
+    }
+
+    .featured-value-huge {
+        font-size: 3.5rem;
+        font-weight: 800;
+        background: linear-gradient(135deg, rgb(22, 84, 127) 0%, rgb(56, 146, 147) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        line-height: 1;
+    }
+
+    .featured-value-large {
+        font-size: 3rem;
+        font-weight: 800;
+        background: linear-gradient(135deg, rgb(22, 84, 127) 0%, rgb(56, 146, 147) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        line-height: 1;
+    }
+
+    .mini-stat-card {
+        background: linear-gradient(135deg, rgb(22, 84, 127) 0%, rgb(56, 146, 147) 100%);
+        border-radius: 16px;
+        padding: 1.25rem;
+        color: white;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+
+    .mini-stat-card:hover {
+        transform: scale(1.02);
+    }
+
+    .mini-stat-card.purple {
+        background: linear-gradient(135deg, rgb(156, 39, 176) 0%, rgb(103, 58, 183) 100%);
+    }
+
+    .mini-stat-card.green {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    }
+
+    .mini-stat-card.orange {
+        background: linear-gradient(135deg, #fd7e14 0%, #ffc107 100%);
+    }
+
+    .mini-stat-value {
+        font-size: 1.75rem;
+        font-weight: 800;
+        line-height: 1.2;
+    }
+
+    .mini-stat-label {
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        opacity: 0.9;
+        margin-top: 0.25rem;
+    }
+
+    .worldbank-featured {
+        background: linear-gradient(145deg, #ffffff 0%, #f3e5f5 100%);
+        border: 1px solid rgba(156, 39, 176, 0.15);
+    }
+
+    .worldbank-featured:hover {
+        box-shadow: 0 16px 40px rgba(156, 39, 176, 0.12);
+    }
+
+    .chart-bar:hover {
+        opacity: 1 !important;
+        filter: brightness(1.1);
+    }
+</style>
+
 <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4 mb-10">
 
-    <!-- HEADER -->
-    <MudPaper Class="dashboard-header pa-6 mb-8" Elevation="0">
-        <div class="d-flex justify-space-between align-center">
-            <div>
-                @if (isLoading)
-                {
-                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="350px" Height="32px" Class="mb-2" />
-                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="450px" Height="20px" />
-                }
-                else
-                {
-                    <MudText Typo="Typo.h5" Class="mb-2 header-title">
-                        Executive Financial Dashboard
-                    </MudText>
-                    <MudText Typo="Typo.body1" Class="header-subtitle">
-                        Real-time insights into liquidity, profitability, and financial obligations
-                    </MudText>
-                }
-            </div>
+    <!-- COMPACT HEADER -->
+    <div class="d-flex justify-space-between align-center mb-6">
+        <div>
             @if (isLoading)
             {
-                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="150px" Height="42px" />
+                <MudSkeleton SkeletonType="SkeletonType.Text" Width="280px" Height="28px" Class="mb-1" />
+                <MudSkeleton SkeletonType="SkeletonType.Text" Width="200px" Height="16px" />
             }
             else
             {
-                <MudButton Variant="Variant.Filled"
-                           Class="refresh-btn"
-                           StartIcon="@Icons.Material.Filled.Refresh"
-                           Size="Size.Large"
-                           OnClick="LoadData">
-                    Refresh Data
-                </MudButton>
+                <MudText Typo="Typo.h5" Style="font-weight: 800; color: rgb(22, 84, 127);">
+                    Financial Dashboard
+                </MudText>
+                <MudText Typo="Typo.body2" Style="color: rgb(56, 146, 147);">
+                    @DateTime.Now.ToString("dddd, MMMM dd, yyyy")
+                </MudText>
             }
         </div>
-    </MudPaper>
+        @if (!isLoading)
+        {
+            <MudButton Variant="Variant.Filled" Class="refresh-btn" StartIcon="@Icons.Material.Filled.Refresh"
+                Size="Size.Medium" OnClick="LoadData">
+                Refresh
+            </MudButton>
+        }
+    </div>
 
     @if (isLoading)
     {
-        <!-- SKELETON FOR KPI SECTION -->
-        <div class="section-title mb-4">
-            <MudSkeleton SkeletonType="SkeletonType.Circle" Width="32px" Height="32px" Class="me-2" Style="display: inline-block;" />
-            <MudSkeleton SkeletonType="SkeletonType.Text" Width="250px" Height="24px" Style="display: inline-block;" />
-        </div>
-
-        <MudGrid Spacing="3" Class="mb-10">
-            <!-- KPI CARD SKELETONS -->
+        <!-- SKELETON FOR TOP METRICS -->
+        <div class="top-metrics-grid mb-6">
             @for (int i = 0; i < 6; i++)
             {
-                <MudItem xs="12" sm="6" md="4">
-                    <MudPaper Elevation="0" Class="kpi-card pa-6">
-                        <div class="d-flex justify-space-between align-center">
-                            <div class="flex-grow-1">
-                                <MudSkeleton SkeletonType="SkeletonType.Text" Width="150px" Height="16px" Class="mb-2" />
-                                <MudSkeleton SkeletonType="SkeletonType.Text" Width="120px" Height="32px" Class="mb-2" />
-                                <MudSkeleton SkeletonType="SkeletonType.Text" Width="140px" Height="14px" Class="mb-3" />
-                                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100px" Height="24px" />
-                            </div>
-                            <div class="kpi-icon">
-                                <MudSkeleton SkeletonType="SkeletonType.Circle" Width="40px" Height="40px" />
-                            </div>
-                        </div>
-                    </MudPaper>
-                </MudItem>
+                <div class="metric-card-compact">
+                    <MudSkeleton SkeletonType="SkeletonType.Circle" Width="40px" Height="40px" />
+                    <div style="flex: 1;">
+                        <MudSkeleton SkeletonType="SkeletonType.Text" Width="80px" Height="24px" Class="mb-1" />
+                        <MudSkeleton SkeletonType="SkeletonType.Text" Width="60px" Height="12px" />
+                    </div>
+                </div>
             }
-        </MudGrid>
+        </div>
 
-        <!-- SKELETON FOR LOWER SECTION -->
-        <MudGrid Spacing="6">
-            <!-- CALENDAR SKELETON -->
-            <MudItem xs="12" lg="8">
-                <div class="calendar-section pa-6">
-                    <div class="section-title mb-4">
-                        <MudSkeleton SkeletonType="SkeletonType.Circle" Width="32px" Height="32px" Class="me-2" Style="display: inline-block;" />
-                        <MudSkeleton SkeletonType="SkeletonType.Text" Width="280px" Height="24px" Style="display: inline-block;" />
-                    </div>
-
-                    <div class="d-flex gap-4 mb-6">
-                        @for (int i = 0; i < 2; i++)
-                        {
-                            <div class="legend-item d-flex align-center">
-                                <MudSkeleton SkeletonType="SkeletonType.Circle" Width="16px" Height="16px" Class="me-2" />
-                                <MudSkeleton SkeletonType="SkeletonType.Text" Width="100px" Height="14px" />
-                            </div>
-                        }
-                    </div>
-
-                    <!-- Calendar Grid Skeleton -->
-                    <MudCard Elevation="0" Style="border-radius: 16px; overflow: hidden;">
-                        <MudCardContent>
-                            <div class="d-flex justify-space-between mb-4">
-                                @for (int i = 0; i < 7; i++)
-                                {
-                                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="60px" Height="16px" />
-                                }
-                            </div>
-                            @for (int week = 0; week < 5; week++)
-                            {
-                                <div class="d-flex justify-space-between mb-3" style="height: 80px;">
-                                    @for (int day = 0; day < 7; day++)
-                                    {
-                                        <div style="width: 13%; padding: 8px;">
-                                            <MudSkeleton SkeletonType="SkeletonType.Text" Width="20px" Height="16px" Class="mb-2" />
-                                            @if ((week + day) % 3 == 0)
-                                            {
-                                                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="20px" />
-                                            }
-                                        </div>
-                                    }
-                                </div>
-                            }
-                        </MudCardContent>
-                    </MudCard>
-                </div>
-            </MudItem>
-
-            <!-- LEDGER SKELETON -->
-            <MudItem xs="12" lg="4">
-                <div class="ledger-section pa-6">
-                    <div class="section-title mb-4">
-                        <MudSkeleton SkeletonType="SkeletonType.Circle" Width="32px" Height="32px" Class="me-2" Style="display: inline-block;" />
-                        <MudSkeleton SkeletonType="SkeletonType.Text" Width="150px" Height="24px" Style="display: inline-block;" />
-                    </div>
-
-                    <!-- Table Header Skeleton -->
-                    <div class="d-flex justify-space-between mb-3 pa-3">
-                        <MudSkeleton SkeletonType="SkeletonType.Text" Width="120px" Height="16px" />
-                        <MudSkeleton SkeletonType="SkeletonType.Text" Width="80px" Height="16px" />
-                    </div>
-
-                    <!-- Table Rows Skeleton -->
-                    @for (int i = 0; i < 8; i++)
-                    {
-                        <div class="d-flex justify-space-between align-center pa-3 mb-2">
-                            <div class="flex-grow-1">
-                                <MudSkeleton SkeletonType="SkeletonType.Text" Width="140px" Height="16px" Class="mb-1" />
-                                <MudSkeleton SkeletonType="SkeletonType.Text" Width="60px" Height="12px" />
-                            </div>
-                            <div>
-                                <MudSkeleton SkeletonType="SkeletonType.Text" Width="80px" Height="16px" />
-                            </div>
+        <!-- SKELETON FOR MAIN GRID -->
+        <div class="dashboard-grid">
+            <div class="span-3">
+                <MudPaper Class="featured-card" Elevation="0">
+                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="100px" Height="16px" Class="mb-2" />
+                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="120px" Height="48px" Class="mb-3" />
+                    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="80px" />
+                </MudPaper>
+            </div>
+            <div class="span-3">
+                <MudPaper Class="featured-card" Elevation="0">
+                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="120px" Height="16px" Class="mb-2" />
+                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="80px" Height="40px" Class="mb-3" />
+                    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="60px" />
+                </MudPaper>
+            </div>
+            <div class="span-6">
+                <MudPaper Class="featured-card" Elevation="0">
+                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="180px" Height="16px" Class="mb-2" />
+                    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="280px" />
+                </MudPaper>
+            </div>
+            <div class="span-6">
+                <MudPaper Class="featured-card worldbank-featured" Elevation="0">
+                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="200px" Height="16px" Class="mb-4" />
+                    <div class="d-flex gap-4 align-center">
+                        <MudSkeleton SkeletonType="SkeletonType.Circle" Width="180px" Height="180px" />
+                        <div style="flex: 1;">
+                            <MudSkeleton SkeletonType="SkeletonType.Text" Width="100%" Height="24px" Class="mb-2" />
+                            <MudSkeleton SkeletonType="SkeletonType.Text" Width="100%" Height="24px" Class="mb-2" />
+                            <MudSkeleton SkeletonType="SkeletonType.Text" Width="100%" Height="24px" />
                         </div>
-                    }
-
-                    <div class="text-center mt-6">
-                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="200px" Height="42px" />
                     </div>
+                </MudPaper>
+            </div>
+            <div class="span-6">
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">
+                    @for (int i = 0; i < 4; i++)
+                    {
+                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="100px"
+                            Style="border-radius: 16px;" />
+                    }
                 </div>
-            </MudItem>
-        </MudGrid>
+            </div>
+            <div class="span-12">
+                <MudPaper Class="featured-card" Elevation="0">
+                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="200px" Height="20px" Class="mb-4" />
+                    @for (int i = 0; i < 5; i++)
+                    {
+                        <MudSkeleton SkeletonType="SkeletonType.Text" Width="100%" Height="40px" Class="mb-2" />
+                    }
+                </MudPaper>
+            </div>
+        </div>
     }
     else
     {
-        <!-- KPI SECTION -->
-        <div class="section-title">
-            <MudIcon Icon="@Icons.Material.Filled.Dashboard" Size="Size.Large" />
-            Key Performance Indicators
+        <!-- TOP METRICS ROW - 6 Compact Cards -->
+        <div class="top-metrics-grid mb-6">
+            <!-- Cash -->
+            <div class="metric-card-compact">
+                <div class="metric-icon-compact">
+                    <MudIcon Icon="@Icons.Material.Filled.AccountBalanceWallet" Size="Size.Small" />
+                </div>
+                <div>
+                    <div class="metric-value-compact">₱@FormatCompact(CashBalance)</div>
+                    <div class="metric-label-compact">Cash Balance</div>
+                </div>
+            </div>
+
+            <!-- Net Profit -->
+            <div class="metric-card-compact">
+                <div class="metric-icon-compact"
+                    style="@(NetProfit < 0 ? "background: linear-gradient(135deg, #F44336 0%, #E91E63 100%);" : "")">
+                    <MudIcon Icon="@Icons.Material.Filled.TrendingUp" Size="Size.Small" />
+                </div>
+                <div>
+                    <div class="metric-value-compact" style="@(NetProfit < 0 ? "-webkit-text-fill-color: #F44336;" : "")">
+                        ₱@FormatCompact(NetProfit)</div>
+                    <div class="metric-label-compact">Net Profit</div>
+                </div>
+            </div>
+
+            <!-- Total Assets -->
+            <div class="metric-card-compact">
+                <div class="metric-icon-compact">
+                    <MudIcon Icon="@Icons.Material.Filled.BusinessCenter" Size="Size.Small" />
+                </div>
+                <div>
+                    <div class="metric-value-compact">₱@FormatCompact(TotalAssets)</div>
+                    <div class="metric-label-compact">Total Assets</div>
+                </div>
+            </div>
+
+            <!-- Liabilities -->
+            <div class="metric-card-compact">
+                <div class="metric-icon-compact" style="background: linear-gradient(135deg, #607D8B 0%, #455A64 100%);">
+                    <MudIcon Icon="@Icons.Material.Filled.CreditCard" Size="Size.Small" />
+                </div>
+                <div>
+                    <div class="metric-value-compact">₱@FormatCompact(TotalLiabilities)</div>
+                    <div class="metric-label-compact">Liabilities</div>
+                </div>
+            </div>
         </div>
 
-        <MudGrid Spacing="3" Class="mb-10">
+        <!-- MAIN CONTENT GRID -->
+        <div class="dashboard-grid">
 
-            <!-- ROW 1 -->
-            <!-- CASH -->
-            <MudItem xs="12" sm="6" md="4">
-                <MudPaper Elevation="0" Class="kpi-card pa-6">
-                    <div class="d-flex justify-space-between align-center">
-                        <div class="flex-grow-1">
-                            <MudText Class="kpi-label">Cash & Bank Balance</MudText>
-                            <MudText Class="kpi-value peso">@CashBalance.ToString("N0")</MudText>
-                            <MudText Class="kpi-description">Immediately available funds</MudText>
-                            <MudChip T="string" Class="mt-3" Style="background: rgba(76, 175, 80, 0.1); color: #4CAF50; font-weight: 600;">
-                                Liquid Assets
-                            </MudChip>
-                        </div>
-                        <div class="kpi-icon">
-                            <MudIcon Icon="@Icons.Material.Filled.AccountBalanceWallet" Size="Size.Large" />
-                        </div>
+            <!-- CARD A: Cash Flow Ratio (span-3) -->
+            <div class="span-3">
+                <div class="featured-card">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+                        <span
+                            style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: rgb(22, 84, 127); opacity: 0.7;">Cash
+                            Flow Ratio</span>
+                        <MudIcon Icon="@Icons.Material.Filled.Percent" Size="Size.Small"
+                            Style="color: rgb(56, 146, 147);" />
                     </div>
-                </MudPaper>
-            </MudItem>
+                    <div class="featured-value-huge">@CashFlowRatio.ToString("F1")%</div>
+                    <div style="font-size: 0.8rem; color: #6b7280; margin-top: 0.25rem; margin-bottom: 1rem;">Liquidity
+                        position indicator</div>
 
-            <!-- NET PROFIT -->
-            <MudItem xs="12" sm="6" md="4">
-                <MudPaper Elevation="0" Class="kpi-card pa-6">
-                    <div class="d-flex justify-space-between align-center">
-                        <div class="flex-grow-1">
-                            <MudText Class="kpi-label">Net Profit (YTD)</MudText>
-                            <MudText Class="kpi-value peso">@NetProfit.ToString("N0")</MudText>
-                            <MudText Class="kpi-description">Revenue minus expenses</MudText>
-                            <MudChip T="string" Class="mt-3" 
-                                     Style="@($"background: {(NetProfit >= 0 ? "rgba(76, 175, 80, 0.1)" : "rgba(244, 67, 54, 0.1)")}; color: {(NetProfit >= 0 ? "#4CAF50" : "#F44336")}; font-weight: 600;")">
-                                @(NetProfit >= 0 ? "Profitable" : "Loss")
-                            </MudChip>
-                        </div>
-                        <div class="kpi-icon">
-                            <MudIcon Icon="@Icons.Material.Filled.TrendingUp" Size="Size.Large" />
-                        </div>
-                    </div>
-                </MudPaper>
-            </MudItem>
-
-            <!-- TOTAL ASSETS -->
-            <MudItem xs="12" sm="6" md="4">
-                <MudPaper Elevation="0" Class="kpi-card pa-6">
-                    <div class="d-flex justify-space-between align-center">
-                        <div class="flex-grow-1">
-                            <MudText Class="kpi-label">Total Assets</MudText>
-                            <MudText Class="kpi-value peso">@TotalAssets.ToString("N0")</MudText>
-                            <MudText Class="kpi-description">Company resources</MudText>
-                            <MudChip T="string" Class="mt-3" Style="background: rgba(33, 150, 243, 0.1); color: #2196F3; font-weight: 600;">
-                                Total Value
-                            </MudChip>
-                        </div>
-                        <div class="kpi-icon">
-                            <MudIcon Icon="@Icons.Material.Filled.BusinessCenter" Size="Size.Large" />
-                        </div>
-                    </div>
-                </MudPaper>
-            </MudItem>
-
-            <!-- ROW 2 -->
-            <!-- ACCOUNTS RECEIVABLE -->
-            <MudItem xs="12" sm="6" md="4">
-                <MudPaper Elevation="0" Class="kpi-card pa-6">
-                    <div class="d-flex justify-space-between align-center">
-                        <div class="flex-grow-1">
-                            <MudText Class="kpi-label">Accounts Receivable</MudText>
-                            <MudText Class="kpi-value peso">@ArOutstanding.ToString("N0")</MudText>
-                            <MudText Class="kpi-description">Customer outstanding</MudText>
-                            <MudChip T="string" Class="mt-3" Style="background: rgba(255, 193, 7, 0.1); color: #FFC107; font-weight: 600;">
-                                To Collect
-                            </MudChip>
-                        </div>
-                        <div class="kpi-icon">
-                            <MudIcon Icon="@Icons.Material.Filled.RequestQuote" Size="Size.Large" />
-                        </div>
-                    </div>
-                </MudPaper>
-            </MudItem>
-
-            <!-- ACCOUNTS PAYABLE -->
-            <MudItem xs="12" sm="6" md="4">
-                <MudPaper Elevation="0" Class="kpi-card pa-6">
-                    <div class="d-flex justify-space-between align-center">
-                        <div class="flex-grow-1">
-                            <MudText Class="kpi-label">Accounts Payable</MudText>
-                            <MudText Class="kpi-value peso">@ApOutstanding.ToString("N0")</MudText>
-                            <MudText Class="kpi-description">Vendor obligations</MudText>
-                            <MudChip T="string" Class="mt-3" Style="background: rgba(255, 87, 34, 0.1); color: #FF5722; font-weight: 600;">
-                                To Pay
-                            </MudChip>
-                        </div>
-                        <div class="kpi-icon">
-                            <MudIcon Icon="@Icons.Material.Filled.Payment" Size="Size.Large" />
-                        </div>
-                    </div>
-                </MudPaper>
-            </MudItem>
-
-            <!-- TOTAL LIABILITIES -->
-            <MudItem xs="12" sm="6" md="4">
-                <MudPaper Elevation="0" Class="kpi-card pa-6">
-                    <div class="d-flex justify-space-between align-center">
-                        <div class="flex-grow-1">
-                            <MudText Class="kpi-label">Total Liabilities</MudText>
-                            <MudText Class="kpi-value peso">@TotalLiabilities.ToString("N0")</MudText>
-                            <MudText Class="kpi-description">Total obligations</MudText>
-                            <MudChip T="string" Class="mt-3" Style="background: rgba(96, 125, 139, 0.1); color: #607D8B; font-weight: 600;">
-                                Obligations
-                            </MudChip>
-                        </div>
-                        <div class="kpi-icon">
-                            <MudIcon Icon="@Icons.Material.Filled.CreditCard" Size="Size.Large" />
-                        </div>
-                    </div>
-                </MudPaper>
-            </MudItem>
-
-        </MudGrid>
-
-        <!-- LOWER SECTION -->
-        <MudGrid Spacing="6">
-
-            <!-- CALENDAR -->
-            <MudItem xs="12" lg="8">
-                <div class="calendar-section pa-6">
-                    <div class="section-title">
-                        <MudIcon Icon="@Icons.Material.Filled.CalendarMonth" Size="Size.Large" />
-                        Payment & Collection Schedule
-                    </div>
-
-                    <div class="d-flex gap-4 mb-6">
-                        <div class="legend-item">
-                            <MudIcon Icon="@Icons.Material.Filled.CircleNotifications"
-                                     Style="color: #4CAF50;" Size="Size.Small" />
-                            <span>Invoices Due</span>
-                        </div>
-                        <div class="legend-item">
-                            <MudIcon Icon="@Icons.Material.Filled.CircleNotifications"
-                                     Style="color: #F44336;" Size="Size.Small" />
-                            <span>Bills Due</span>
+                    <!-- Mini Wave Chart -->
+                    <div
+                        style="width: 100%; height: 80px; background: linear-gradient(180deg, rgba(22, 84, 127, 0.08) 0%, rgba(22, 84, 127, 0.02) 100%); border-radius: 12px; position: relative; margin-top: auto;">
+                        <div
+                            style="position: absolute; bottom: 0; left: 0; right: 0; height: 70%; background: linear-gradient(90deg, rgb(22, 84, 127) 0%, rgb(56, 146, 147) 100%); opacity: 0.25; clip-path: polygon(0% 100%, 0% 70%, 10% 65%, 20% 75%, 30% 55%, 40% 60%, 50% 45%, 60% 55%, 70% 40%, 80% 50%, 90% 35%, 100% 25%, 100% 100%); border-radius: 0 0 12px 12px;">
                         </div>
                     </div>
 
-                    <MudCalendar Items="_events"
-                                 MonthCellMinHeight="80"
-                                 Elevation="0"
-                                 Outlined="false"
-                                 Style="border-radius: 16px; overflow: hidden;" />
+                    <!-- Bottom Stats -->
+                    <div
+                        style="display: flex; justify-content: space-between; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(22, 84, 127, 0.1);">
+                        <div style="text-align: center;">
+                            <div style="font-size: 1.1rem; font-weight: 700; color: rgb(22, 84, 127);">@CashInMillions M
+                            </div>
+                            <div style="font-size: 0.65rem; text-transform: uppercase; color: #9ca3af;">Cash</div>
+                        </div>
+                        <div style="width: 1px; background: rgba(22, 84, 127, 0.1);"></div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 1.1rem; font-weight: 700; color: rgb(56, 146, 147);">@AssetsInMillions M
+                            </div>
+                            <div style="font-size: 0.65rem; text-transform: uppercase; color: #9ca3af;">Assets</div>
+                        </div>
+                    </div>
                 </div>
-            </MudItem>
+            </div>
 
-            <!-- LEDGER SNAPSHOT -->
-            <MudItem xs="12" lg="4">
-                <div class="ledger-section pa-6">
-                    <div class="section-title">
-                        <MudIcon Icon="@Icons.Material.Filled.ListAlt" Size="Size.Large" />
-                        Ledger Snapshot
+            <!-- CARD B: Active Transactions (span-3) -->
+            <div class="span-3">
+                <div class="featured-card">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+                        <span
+                            style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: rgb(22, 84, 127); opacity: 0.7;">Active
+                            Transactions</span>
+                        <MudIcon Icon="@Icons.Material.Filled.SwapHoriz" Size="Size.Small"
+                            Style="color: rgb(56, 146, 147);" />
+                    </div>
+                    <div class="featured-value-large">@ActiveTransactions</div>
+                    <div style="font-size: 0.8rem; color: #6b7280; margin-top: 0.25rem;">Pending payments & collections
                     </div>
 
-                    <MudTable Items="@(trialBalance?.Accounts.Take(8))"
-                              Dense="true"
-                              Hover="true"
-                              Elevation="0"
-                              Class="custom-table"
-                              Style="border-radius: 12px; overflow: hidden;">
+                    <!-- Split Stats -->
+                    <div style="display: flex; gap: 1rem; margin: 1rem 0;">
+                        <div
+                            style="flex: 1; background: rgba(244, 67, 54, 0.1); border-radius: 10px; padding: 0.75rem; text-align: center;">
+                            <div style="font-size: 1.25rem; font-weight: 700; color: #F44336;">@BillsToPay</div>
+                            <div style="font-size: 0.65rem; text-transform: uppercase; color: #F44336;">To Pay</div>
+                        </div>
+                        <div
+                            style="flex: 1; background: rgba(76, 175, 80, 0.1); border-radius: 10px; padding: 0.75rem; text-align: center;">
+                            <div style="font-size: 1.25rem; font-weight: 700; color: #4CAF50;">@InvoicesToCollect</div>
+                            <div style="font-size: 0.65rem; text-transform: uppercase; color: #4CAF50;">To Collect</div>
+                        </div>
+                    </div>
+
+                    <!-- Receivable & Payable Amounts -->
+                    <div
+                        style="display: flex; gap: 0.75rem; margin-top: auto; padding-top: 0.75rem; border-top: 1px solid rgba(22, 84, 127, 0.1);">
+                        <div
+                            style="flex: 1; display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; background: rgba(255, 193, 7, 0.08); border-radius: 8px; border-left: 3px solid #FFC107;">
+                            <MudIcon Icon="@Icons.Material.Filled.RequestQuote" Size="Size.Small" Style="color: #FF9800;" />
+                            <div>
+                                <div style="font-size: 0.95rem; font-weight: 700; color: #FF9800;">
+                                    ₱@FormatCompact(ArOutstanding)</div>
+                                <div style="font-size: 0.6rem; text-transform: uppercase; color: #FF9800; opacity: 0.8;">
+                                    Receivable</div>
+                            </div>
+                        </div>
+                        <div
+                            style="flex: 1; display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; background: rgba(255, 87, 34, 0.08); border-radius: 8px; border-left: 3px solid #FF5722;">
+                            <MudIcon Icon="@Icons.Material.Filled.Payment" Size="Size.Small" Style="color: #FF5722;" />
+                            <div>
+                                <div style="font-size: 0.95rem; font-weight: 700; color: #FF5722;">
+                                    ₱@FormatCompact(ApOutstanding)</div>
+                                <div style="font-size: 0.6rem; text-transform: uppercase; color: #FF5722; opacity: 0.8;">
+                                    Payable</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CARD C: Financial Summary (span-6) -->
+            <div class="span-6">
+                <div class="featured-card">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+                        <div>
+                            <span
+                                style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: rgb(22, 84, 127); opacity: 0.7;">Financial
+                                Summary</span>
+                            <div
+                                style="font-size: 0.85rem; color: rgb(56, 146, 147); font-weight: 500; margin-top: 0.25rem;">
+                                Year-to-Date Overview</div>
+                        </div>
+                        <MudIcon Icon="@Icons.Material.Filled.AccountBalance" Size="Size.Small"
+                            Style="color: rgb(56, 146, 147);" />
+                    </div>
+
+                    <!-- Revenue & Expenses Bars -->
+                    <div style="display: flex; gap: 1.5rem; margin-bottom: 1.5rem;">
+                        <div style="flex: 1;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                <span style="font-size: 0.8rem; color: #374151; font-weight: 500;">Revenue</span>
+                                <span
+                                    style="font-size: 0.9rem; font-weight: 700; color: #4CAF50;">₱@FormatCompact(TotalRevenue)</span>
+                            </div>
+                            <div style="height: 12px; background: #e5e7eb; border-radius: 6px; overflow: hidden;">
+                                <div
+                                    style="height: 100%; width: @(TotalRevenue > 0 && TotalRevenue >= TotalExpenses ? 100 : (TotalExpenses > 0 ? (double)TotalRevenue / (double)TotalExpenses * 100 : 0))%; background: linear-gradient(90deg, #4CAF50 0%, #81C784 100%); border-radius: 6px;">
+                                </div>
+                            </div>
+                        </div>
+                        <div style="flex: 1;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                <span style="font-size: 0.8rem; color: #374151; font-weight: 500;">Expenses</span>
+                                <span
+                                    style="font-size: 0.9rem; font-weight: 700; color: #F44336;">₱@FormatCompact(TotalExpenses)</span>
+                            </div>
+                            <div style="height: 12px; background: #e5e7eb; border-radius: 6px; overflow: hidden;">
+                                <div
+                                    style="height: 100%; width: @(TotalExpenses > 0 && TotalExpenses >= TotalRevenue ? 100 : (TotalRevenue > 0 ? (double)TotalExpenses / (double)TotalRevenue * 100 : 0))%; background: linear-gradient(90deg, #F44336 0%, #E57373 100%); border-radius: 6px;">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Net Profit Section -->
+                    <div
+                        style="background: linear-gradient(135deg, @(NetProfit >= 0 ? "rgba(76, 175, 80, 0.1)" : "rgba(244, 67, 54, 0.1)") 0%, @(NetProfit >= 0 ? "rgba(129, 199, 132, 0.05)" : "rgba(229, 115, 115, 0.05)") 100%); border-radius: 16px; padding: 1.25rem; margin-bottom: 1rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <div
+                                    style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px; color: @(NetProfit >= 0 ? "#4CAF50" : "#F44336"); opacity: 0.8; margin-bottom: 0.25rem;">
+                                    Net Profit</div>
+                                <div
+                                    style="font-size: 2rem; font-weight: 800; color: @(NetProfit >= 0 ? "#4CAF50" : "#F44336");">
+                                    ₱@FormatCompact(NetProfit)</div>
+                            </div>
+                            <div
+                                style="width: 60px; height: 60px; border-radius: 50%; background: @(NetProfit >= 0 ? "linear-gradient(135deg, #4CAF50 0%, #81C784 100%)" : "linear-gradient(135deg, #F44336 0%, #E57373 100%)"); display: flex; align-items: center; justify-content: center;">
+                                <MudIcon
+                                    Icon="@(NetProfit >= 0 ? Icons.Material.Filled.TrendingUp : Icons.Material.Filled.TrendingDown)"
+                                    Size="Size.Large" Style="color: white;" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Stats Row -->
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;">
+                        <div
+                            style="text-align: center; padding: 0.75rem; background: rgba(22, 84, 127, 0.05); border-radius: 10px;">
+                            <div style="font-size: 1.25rem; font-weight: 700; color: rgb(22, 84, 127);">@ActiveAccounts
+                            </div>
+                            <div style="font-size: 0.65rem; text-transform: uppercase; color: #6b7280;">Accounts</div>
+                        </div>
+                        <div
+                            style="text-align: center; padding: 0.75rem; background: rgba(56, 146, 147, 0.05); border-radius: 10px;">
+                            <div style="font-size: 1.25rem; font-weight: 700; color: rgb(56, 146, 147);">@ActiveTransactions
+                            </div>
+                            <div style="font-size: 0.65rem; text-transform: uppercase; color: #6b7280;">Transactions</div>
+                        </div>
+                        <div
+                            style="text-align: center; padding: 0.75rem; background: rgba(156, 39, 176, 0.05); border-radius: 10px;">
+                            <div style="font-size: 1.25rem; font-weight: 700; color: rgb(156, 39, 176);">
+                                @ProfitMarginPercent.ToString("F1")%</div>
+                            <div style="font-size: 0.65rem; text-transform: uppercase; color: #6b7280;">Margin</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CARD D: Philippines Economic Health (span-6) - World Bank -->
+            <div class="span-6">
+                <div class="featured-card worldbank-featured">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+                        <div>
+                            <span
+                                style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: rgb(156, 39, 176); opacity: 0.8;">Philippines
+                                Economic Health</span>
+                            <div
+                                style="font-size: 0.85rem; color: rgb(103, 58, 183); font-weight: 500; margin-top: 0.25rem;">
+                                World Bank Inflation Data</div>
+                        </div>
+                        <MudChip T="string" Size="Size.Small"
+                            Style="background: rgba(156, 39, 176, 0.1); color: #9C27B0; font-weight: 600;">
+                            Live Data
+                        </MudChip>
+                    </div>
+
+                    <!-- SVG Pie Chart at top -->
+                    <div style="display: flex; justify-content: center; align-items: center; margin-bottom: 1.5rem;">
+                        <svg width="180" height="180" viewBox="0 0 200 200" style="flex-shrink: 0;">
+                            <circle cx="100" cy="100" r="70" fill="transparent" stroke="#e5e7eb" stroke-width="30" />
+                            @if (CurrentInflationValue > 0)
+                            {
+                                <circle cx="100" cy="100" r="70" fill="transparent" stroke="url(#inflationGradient)"
+                                    stroke-width="30" stroke-dasharray="@((double)CurrentInflationValue * 4.4) 440"
+                                    stroke-linecap="round" transform="rotate(-90 100 100)" />
+                            }
+                            <defs>
+                                <linearGradient id="inflationGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                    <stop offset="0%" style="stop-color:rgb(156, 39, 176)" />
+                                    <stop offset="100%" style="stop-color:rgb(103, 58, 183)" />
+                                </linearGradient>
+                            </defs>
+                            <text x="100" y="95" text-anchor="middle" font-size="28" font-weight="800"
+                                fill="rgb(156, 39, 176)">
+                                @CurrentInflationValue.ToString("F1")%
+                            </text>
+                            <text x="100" y="118" text-anchor="middle" font-size="12" fill="#6b7280" font-weight="500">
+                                Inflation
+                            </text>
+                        </svg>
+                    </div>
+
+                    <!-- Legend at bottom -->
+                    <div>
+                        @if (inflationData.Any())
+                        {
+                            <div style="margin-bottom: 1rem;">
+                                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem;">
+                                    <div
+                                        style="width: 12px; height: 12px; border-radius: 3px; background: linear-gradient(135deg, rgb(156, 39, 176) 0%, rgb(103, 58, 183) 100%);">
+                                    </div>
+                                    <span style="font-size: 0.8rem; color: #374151;">Current Rate
+                                        (@inflationData.First().Date)</span>
+                                    <span
+                                        style="font-weight: 700; color: rgb(156, 39, 176); margin-left: auto;">@(inflationData.First().Value?.ToString("F2")
+                                                                        ?? "N/A")%</span>
+                                </div>
+                                @if (inflationData.Count >= 2)
+                                {
+                                    var yoyChange = (inflationData[0].Value ?? 0) - (inflationData[1].Value ?? 0);
+                                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem;">
+                                        <div
+                                            style="width: 12px; height: 12px; border-radius: 3px; background: @(yoyChange >= 0 ? "#F44336" : "#4CAF50");">
+                                        </div>
+                                        <span style="font-size: 0.8rem; color: #374151;">YoY Change</span>
+                                        <span
+                                            style="font-weight: 700; color: @(yoyChange >= 0 ? "#F44336" : "#4CAF50"); margin-left: auto;">@(yoyChange
+                                                                            >= 0 ? "+" : "")@yoyChange.ToString("F2")%</span>
+                                    </div>
+                                }
+                                @{
+                                    var avg3yr = inflationData.Take(3).Where(x => x.Value.HasValue).Average(x => x.Value) ?? 0;
+                                }
+                                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                    <div style="width: 12px; height: 12px; border-radius: 3px; background: #3F51B5;"></div>
+                                    <span style="font-size: 0.8rem; color: #374151;">3-Year Average</span>
+                                    <span
+                                        style="font-weight: 700; color: #3F51B5; margin-left: auto;">@avg3yr.ToString("F2")%</span>
+                                </div>
+                            </div>
+                            <div
+                                style="padding: 0.75rem; background: rgba(156, 39, 176, 0.08); border-radius: 10px; text-align: center;">
+                                <span style="font-size: 0.75rem; color: rgb(103, 58, 183); font-weight: 600;">Status:
+                                    @GetInflationStatus(inflationData.First().Value)</span>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- CARD E: World Bank Inflation History (span-6) -->
+            <div class="span-6">
+                <div class="featured-card worldbank-featured">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+                        <div>
+                            <span
+                                style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: rgb(156, 39, 176); opacity: 0.8;">Inflation
+                                History</span>
+                            <div
+                                style="font-size: 0.85rem; color: rgb(103, 58, 183); font-weight: 500; margin-top: 0.25rem;">
+                                Philippines Historical Data</div>
+                        </div>
+                        <MudChip T="string" Size="Size.Small"
+                            Style="background: rgba(156, 39, 176, 0.1); color: #9C27B0; font-weight: 600;">
+                            World Bank
+                        </MudChip>
+                    </div>
+
+                    @if (inflationData.Any())
+                    {
+                        <!-- Inflation Data Table -->
+                        <div style="flex: 1; overflow: hidden;">
+                            @foreach (var data in inflationData.Take(6))
+                            {
+                                var prevVal = GetPreviousInflationValue(data.Date);
+                                var isUp = prevVal.HasValue && data.Value > prevVal;
+                                var changeAmount = prevVal.HasValue ? data.Value - prevVal : null;
+                                <div
+                                    style="display: flex; justify-content: space-between; align-items: center; padding: 0.6rem 0.75rem; margin-bottom: 0.5rem; background: rgba(156, 39, 176, 0.04); border-radius: 10px; border-left: 3px solid @GetInflationBorderColor(data.Value);">
+                                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                        <span
+                                            style="font-size: 0.9rem; font-weight: 600; color: #374151; min-width: 50px;">@data.Date</span>
+                                        @if (prevVal.HasValue)
+                                        {
+                                            <MudIcon
+                                                Icon="@(isUp ? Icons.Material.Filled.ArrowUpward : Icons.Material.Filled.ArrowDownward)"
+                                                Size="Size.Small" Style="@($"color: {(isUp ? "#F44336" : "#4CAF50")};")" />
+                                        }
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: 1rem;">
+                                        @if (changeAmount.HasValue)
+                                        {
+                                            <span
+                                                style="font-size: 0.75rem; color: @(isUp ? "#F44336" : "#4CAF50"); font-weight: 500;">@(changeAmount
+                                                                                >= 0 ? "+" : "")@changeAmount.Value.ToString("F2")%</span>
+                                        }
+                                        <span
+                                            style="font-size: 1rem; font-weight: 700; color: rgb(156, 39, 176); min-width: 60px; text-align: right;">@(data.Value?.ToString("F2")
+                                                                            ?? "N/A")%</span>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+
+                        <!-- Summary Footer -->
+                        <div
+                            style="display: flex; gap: 1rem; margin-top: 0.5rem; padding-top: 1rem; border-top: 1px solid rgba(156, 39, 176, 0.1);">
+                            <div
+                                style="flex: 1; text-align: center; padding: 0.5rem; background: rgba(156, 39, 176, 0.08); border-radius: 8px;">
+                                <div
+                                    style="font-size: 0.65rem; text-transform: uppercase; color: rgb(103, 58, 183); opacity: 0.8;">
+                                    3-Year Avg</div>
+                                <div style="font-size: 1rem; font-weight: 700; color: rgb(156, 39, 176);">
+                                    @(inflationData.Take(3).Where(x => x.Value.HasValue).Average(x => x.Value)?.ToString("F2")
+                                                                ?? "N/A")%</div>
+                            </div>
+                            <div
+                                style="flex: 1; text-align: center; padding: 0.5rem; background: rgba(156, 39, 176, 0.08); border-radius: 8px;">
+                                <div
+                                    style="font-size: 0.65rem; text-transform: uppercase; color: rgb(103, 58, 183); opacity: 0.8;">
+                                    5-Year Avg</div>
+                                <div style="font-size: 1rem; font-weight: 700; color: rgb(156, 39, 176);">
+                                    @(inflationData.Take(5).Where(x => x.Value.HasValue).Average(x => x.Value)?.ToString("F2")
+                                                                ?? "N/A")%</div>
+                            </div>
+                            <div
+                                style="flex: 1; text-align: center; padding: 0.5rem; background: @GetInflationStatusBg(inflationData.First().Value); border-radius: 8px;">
+                                <div
+                                    style="font-size: 0.65rem; text-transform: uppercase; color: @GetInflationStatusColor(inflationData.First().Value); opacity: 0.8;">
+                                    Status</div>
+                                <div
+                                    style="font-size: 1rem; font-weight: 700; color: @GetInflationStatusColor(inflationData.First().Value);">
+                                    @GetInflationStatus(inflationData.First().Value)</div>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div style="text-align: center; padding: 2rem; color: #9ca3af;">
+                            <MudIcon Icon="@Icons.Material.Filled.CloudOff" Size="Size.Large" />
+                            <div style="margin-top: 0.5rem;">Loading inflation data...</div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- CARD F: Account Ledger Snapshot (span-12) -->
+            <div class="span-12">
+                <div class="featured-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <div class="section-title" style="margin-bottom: 0;">
+                            <MudIcon Icon="@Icons.Material.Filled.ListAlt" Size="Size.Medium" />
+                            Account Ledger Snapshot
+                        </div>
+                        <MudButton Variant="Variant.Filled" Class="custom-button" Href="reports/financials"
+                            StartIcon="@Icons.Material.Filled.Assessment" Size="Size.Small"
+                            Style="color: white !important;">
+                            View Financial Reports
+                        </MudButton>
+                    </div>
+
+                    <MudTable Items="@(trialBalance?.Accounts.Take(10))" Dense="true" Hover="true" Elevation="0"
+                        Class="custom-table" Style="border-radius: 12px; overflow: hidden;">
 
                         <HeaderContent>
-                            <MudTh Style="font-size: 0.9rem;">Account Details</MudTh>
-                            <MudTh align="Align.Right" Style="font-size: 0.9rem;">Balance (₱)</MudTh>
+                            <MudTh Style="font-size: 0.85rem; width: 100px;">Code</MudTh>
+                            <MudTh Style="font-size: 0.85rem;">Account Name</MudTh>
+                            <MudTh align="Align.Right" Style="font-size: 0.85rem; width: 140px;">Debit (₱)</MudTh>
+                            <MudTh align="Align.Right" Style="font-size: 0.85rem; width: 140px;">Credit (₱)</MudTh>
+                            <MudTh align="Align.Right" Style="font-size: 0.85rem; width: 140px;">Balance (₱)</MudTh>
                         </HeaderContent>
 
                         <RowTemplate>
-                            <MudTd Style="padding: 16px 12px;">
-                                <div>
-                                    <MudText Typo="Typo.body2" Class="custom-text-primary" Style="font-weight: 600;">
-                                        @context.AccountName
-                                    </MudText>
-                                    <MudText Typo="Typo.caption" Class="custom-text-secondary" Style="font-weight: 500;">
-                                        @context.AccountCode
-                                    </MudText>
-                                </div>
+                            <MudTd Style="padding: 12px;">
+                                <MudChip T="string" Size="Size.Small"
+                                    Style="background: rgba(22, 84, 127, 0.1); color: rgb(22, 84, 127); font-weight: 600; font-size: 0.75rem;">
+                                    @context.AccountCode
+                                </MudChip>
                             </MudTd>
-                            <MudTd align="Align.Right" Style="padding: 16px 12px;">
-                                <MudText Style="font-weight: 700; font-size: 1rem;" Class="custom-text-primary">
+                            <MudTd Style="padding: 12px;">
+                                <MudText Typo="Typo.body2" Style="font-weight: 600;" Class="custom-text-primary">
+                                    @context.AccountName
+                                </MudText>
+                            </MudTd>
+                            <MudTd align="Align.Right" Style="padding: 12px;">
+                                <MudText Style="font-weight: 500; font-size: 0.9rem; color: #4CAF50;">
+                                    @(context.Debit > 0 ? context.Debit.ToString("N0") : "-")
+                                </MudText>
+                            </MudTd>
+                            <MudTd align="Align.Right" Style="padding: 12px;">
+                                <MudText Style="font-weight: 500; font-size: 0.9rem; color: #F44336;">
+                                    @(context.Credit > 0 ? context.Credit.ToString("N0") : "-")
+                                </MudText>
+                            </MudTd>
+                            <MudTd align="Align.Right" Style="padding: 12px;">
+                                <MudText Style="font-weight: 700; font-size: 0.95rem;" Class="custom-text-primary">
                                     @((context.Debit - context.Credit).ToString("N0"))
                                 </MudText>
                             </MudTd>
                         </RowTemplate>
 
                     </MudTable>
-
-                    <div class="text-center mt-6">
-                        <MudButton Variant="Variant.Filled"
-                                   Class="custom-button"
-                                   Href="reports/financials"
-                                   StartIcon="@Icons.Material.Filled.Assessment"
-                                   Size="Size.Large"
-                                   Style="color: white !important;">
-                            View Financial Reports
-                        </MudButton>
-                    </div>
                 </div>
-            </MudItem>
+            </div>
 
-        </MudGrid>
+            <!-- CALENDAR SECTION (span-12) -->
+            <div class="span-12">
+                <div class="calendar-section pa-5">
+                    <div class="section-title" style="margin-bottom: 1rem;">
+                        <MudIcon Icon="@Icons.Material.Filled.CalendarMonth" Size="Size.Medium" />
+                        Payment & Collection Schedule
+                    </div>
+
+                    <div class="d-flex gap-3 mb-4">
+                        <div class="legend-item" style="padding: 6px 12px;">
+                            <MudIcon Icon="@Icons.Material.Filled.Circle" Style="color: #4CAF50;" Size="Size.Small" />
+                            <span style="font-size: 0.8rem;">Invoices Due</span>
+                        </div>
+                        <div class="legend-item" style="padding: 6px 12px;">
+                            <MudIcon Icon="@Icons.Material.Filled.Circle" Style="color: #F44336;" Size="Size.Small" />
+                            <span style="font-size: 0.8rem;">Bills Due</span>
+                        </div>
+                    </div>
+
+                    <MudCalendar Items="_events" MonthCellMinHeight="80" Elevation="0" Outlined="false"
+                        Style="border-radius: 12px; overflow: hidden;" />
+                </div>
+            </div>
+
+        </div>
     }
 
 </MudContainer>
@@ -388,6 +832,7 @@
     private Dictionary<string, string> accountTypes = new();
     private List<CalendarItem> _events = new();
     private bool isLoading = false;
+    private List<WorldBankDataPoint> inflationData = new();
 
     // --- KPI Properties ---
     private decimal CashBalance;
@@ -396,17 +841,29 @@
     private decimal ApOutstanding;
     private decimal TotalAssets;
     private decimal TotalLiabilities;
+    private decimal TotalRevenue;
+    private decimal TotalExpenses;
 
-    // --- Dynamic Styling Helpers ---
-    private string NetProfitBorderColor =>
-        NetProfit >= 0
-            ? "var(--theme-primary)"
-            : "var(--mud-palette-error)";
+    // --- New Calculated Properties ---
+    private decimal CashFlowRatio => TotalAssets > 0 ? (CashBalance / TotalAssets * 100) : 0;
+    private string CashInMillions => (CashBalance / 1000000).ToString("F1");
+    private string AssetsInMillions => (TotalAssets / 1000000).ToString("F1");
 
-    private string NetProfitTextColor =>
-        NetProfit >= 0
-            ? "var(--mud-palette-success)"
-            : "var(--mud-palette-error)";
+    private int ActiveTransactions => BillsToPay + InvoicesToCollect;
+    private int BillsToPay;
+    private int InvoicesToCollect;
+    private int ActiveAccounts => trialBalance?.Accounts.Count ?? 0;
+    private decimal AvgTransaction => ActiveTransactions > 0 ? Math.Abs(NetProfit) / ActiveTransactions : 0;
+    private decimal AvgMonthlyAmount => monthlyData.Length > 0 ? (decimal)(monthlyData.Average() * 10000) : 0;
+    private decimal CurrentInflationValue => inflationData.FirstOrDefault()?.Value ?? 0;
+    private decimal ProfitMarginPercent => TotalRevenue > 0 ? (NetProfit / TotalRevenue * 100) : 0;
+
+    // Monthly chart data
+    private int[] monthlyData = new[] { 65, 45, 70, 85, 55, 75, 95, 70, 80, 105, 75, 90, 95 };
+    private int maxMonthlyValue => monthlyData.Length > 0 ? monthlyData.Max() : 1;
+
+    // Mini bar chart data
+    private int[] miniBarData = new[] { 25, 35, 20, 45, 30, 55, 40, 50, 35, 60, 45, 55 };
 
     protected override async Task OnInitializedAsync()
     {
@@ -422,18 +879,26 @@
             var acctsTask = LedgerService.GetAccountsAsync();
             var billsTask = PayableService.GetBillsAsync();
             var invoicesTask = ReceivableService.GetInvoicesAsync();
+            var worldBankTask = WorldBankService.GetInflationDataAsync();
 
-            await Task.WhenAll(tbTask, acctsTask, billsTask, invoicesTask);
+            await Task.WhenAll(tbTask, acctsTask, billsTask, invoicesTask, worldBankTask);
 
             trialBalance = tbTask.Result;
             var accountsList = acctsTask.Result;
             accountTypes = accountsList.ToDictionary(a => a.Code, a => a.Type);
+            inflationData = worldBankTask.Result.Where(x => x.Value.HasValue).ToList();
+
+            var bills = billsTask.Result.Where(b => b.Balance > 0).ToList();
+            var invoices = invoicesTask.Result.Where(i => i.Balance > 0).ToList();
+
+            BillsToPay = bills.Count;
+            InvoicesToCollect = invoices.Count;
 
             CalculateKPIs(trialBalance!.Accounts);
 
             _events.Clear();
 
-            foreach (var bill in billsTask.Result.Where(b => b.Balance > 0))
+            foreach (var bill in bills)
             {
                 _events.Add(new CalendarItem
                 {
@@ -442,7 +907,7 @@
                 });
             }
 
-            foreach (var inv in invoicesTask.Result.Where(i => i.Balance > 0))
+            foreach (var inv in invoices)
             {
                 _events.Add(new CalendarItem
                 {
@@ -463,18 +928,9 @@
 
     private void CalculateKPIs(List<AccountBalanceDTO> balances)
     {
-        decimal GetBalance(AccountBalanceDTO a)
-        {
-            if (!accountTypes.ContainsKey(a.AccountCode)) return 0;
-            var type = accountTypes[a.AccountCode];
-            return (type == "Asset" || type == "Expense")
-                ? a.Debit - a.Credit
-                : a.Credit - a.Debit;
-        }
-
         CashBalance = balances
-            .Where(a => a.AccountCode == "1000" || a.AccountCode == "1010" || a.AccountCode == "1020")
-            .Sum(a => a.Debit - a.Credit);
+        .Where(a => a.AccountCode == "1000" || a.AccountCode == "1010" || a.AccountCode == "1020")
+        .Sum(a => a.Debit - a.Credit);
 
         var arAcct = balances.FirstOrDefault(a => a.AccountCode == "1100");
         ArOutstanding = arAcct != null ? arAcct.Debit - arAcct.Credit : 0;
@@ -483,21 +939,106 @@
         ApOutstanding = apAcct != null ? apAcct.Credit - apAcct.Debit : 0;
 
         TotalAssets = balances
-            .Where(a => accountTypes.ContainsKey(a.AccountCode) && accountTypes[a.AccountCode] == "Asset")
-            .Sum(a => a.Debit - a.Credit);
+        .Where(a => accountTypes.ContainsKey(a.AccountCode) && accountTypes[a.AccountCode] == "Asset")
+        .Sum(a => a.Debit - a.Credit);
 
         TotalLiabilities = balances
-            .Where(a => accountTypes.ContainsKey(a.AccountCode) && accountTypes[a.AccountCode] == "Liability")
-            .Sum(a => a.Credit - a.Debit);
+        .Where(a => accountTypes.ContainsKey(a.AccountCode) && accountTypes[a.AccountCode] == "Liability")
+        .Sum(a => a.Credit - a.Debit);
 
-        var revenue = balances
-            .Where(a => accountTypes.ContainsKey(a.AccountCode) && accountTypes[a.AccountCode] == "Revenue")
-            .Sum(a => a.Credit - a.Debit);
+        TotalRevenue = balances
+        .Where(a => accountTypes.ContainsKey(a.AccountCode) && accountTypes[a.AccountCode] == "Revenue")
+        .Sum(a => a.Credit - a.Debit);
 
-        var expense = balances
-            .Where(a => accountTypes.ContainsKey(a.AccountCode) && accountTypes[a.AccountCode] == "Expense")
-            .Sum(a => a.Debit - a.Credit);
+        TotalExpenses = balances
+        .Where(a => accountTypes.ContainsKey(a.AccountCode) && accountTypes[a.AccountCode] == "Expense")
+        .Sum(a => a.Debit - a.Credit);
 
-        NetProfit = revenue - expense;
+        NetProfit = TotalRevenue - TotalExpenses;
+    }
+
+    private string FormatCompact(decimal value)
+    {
+        var absValue = Math.Abs(value);
+        var sign = value < 0 ? "-" : "";
+
+        if (absValue >= 1000000000)
+            return $"{sign}{(absValue / 1000000000):F1}B";
+        if (absValue >= 1000000)
+            return $"{sign}{(absValue / 1000000):F1}M";
+        if (absValue >= 1000)
+            return $"{sign}{(absValue / 1000):F1}K";
+        return $"{sign}{absValue:N0}";
+    }
+
+    private string GetMonthLabel(int index)
+    {
+        var months = new[] { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Jan" };
+        return index < months.Length ? months[index] : "";
+    }
+
+    private string GetChartPolylinePoints()
+    {
+        if (monthlyData.Length == 0) return "";
+
+        var points = new List<string>();
+        for (int i = 0; i < monthlyData.Length; i++)
+        {
+            var x = (i / (double)(monthlyData.Length - 1)) * 100;
+            var y = 100 - ((monthlyData[i] / (double)maxMonthlyValue) * 100);
+            points.Add($"{x:F0},{y:F0}");
+        }
+        return string.Join(" ", points);
+    }
+
+    private string GetInflationChipStyle(decimal? value)
+    {
+        if (!value.HasValue) return "background: rgba(96, 125, 139, 0.1); color: #607D8B; font-weight: 600;";
+
+        if (value < 2) return "background: rgba(76, 175, 80, 0.1); color: #4CAF50; font-weight: 600;";
+        if (value <= 4) return "background: rgba(255, 193, 7, 0.1); color: #FFC107; font-weight: 600;";
+        return "background: rgba(244, 67, 54, 0.1); color: #F44336; font-weight: 600;";
+    }
+
+    private string GetInflationStatus(decimal? value)
+    {
+        if (!value.HasValue) return "No Data";
+
+        if (value < 2) return "Low";
+        if (value <= 4) return "Moderate";
+        return "High";
+    }
+
+    private decimal? GetPreviousInflationValue(string currentYear)
+    {
+        if (!int.TryParse(currentYear, out int year)) return null;
+
+        var previousYear = (year - 1).ToString();
+        var previousData = inflationData.FirstOrDefault(x => x.Date == previousYear);
+        return previousData?.Value;
+    }
+
+    private string GetInflationBorderColor(decimal? value)
+    {
+        if (!value.HasValue) return "#607D8B";
+        if (value < 2) return "#4CAF50";
+        if (value <= 4) return "#FFC107";
+        return "#F44336";
+    }
+
+    private string GetInflationStatusBg(decimal? value)
+    {
+        if (!value.HasValue) return "rgba(96, 125, 139, 0.1)";
+        if (value < 2) return "rgba(76, 175, 80, 0.1)";
+        if (value <= 4) return "rgba(255, 193, 7, 0.1)";
+        return "rgba(244, 67, 54, 0.1)";
+    }
+
+    private string GetInflationStatusColor(decimal? value)
+    {
+        if (!value.HasValue) return "#607D8B";
+        if (value < 2) return "#4CAF50";
+        if (value <= 4) return "#FFC107";
+        return "#F44336";
     }
 }
