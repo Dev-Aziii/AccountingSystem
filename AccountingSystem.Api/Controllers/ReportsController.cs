@@ -42,11 +42,23 @@ namespace AccountingSystem.API.Controllers
                 TotalAmount = invoice.TotalAmount,
                 PaidAmount = invoice.PaidAmount,
                 Status = invoice.Status,
-                Description = invoice.Description
+                Description = invoice.Description ?? string.Empty
             };
 
-            var customerDto = new CustomerDTO { Name = invoice.Customer.Name, Email = invoice.Customer.Email, Phone = invoice.Customer.Phone };
-            var companyDto = new CompanyDTO { Name = company.Name, Address = company.Address, TaxId = company.TaxId, Currency = company.Currency };
+            var customerDto = new CustomerDTO
+            {
+                Name = invoice.Customer?.Name ?? string.Empty,
+                Email = invoice.Customer?.Email ?? string.Empty,
+                Phone = invoice.Customer?.Phone ?? string.Empty
+            };
+
+            var companyDto = new CompanyDTO
+            {
+                Name = company.Name ?? string.Empty,
+                Address = company.Address ?? string.Empty,
+                TaxId = company.TaxId ?? string.Empty,
+                Currency = company.Currency ?? string.Empty
+            };
 
             var pdfBytes = _pdfService.GenerateInvoicePdf(invoiceDto, companyDto, customerDto);
             return File(pdfBytes, "application/pdf", $"Invoice-{id}.pdf");
@@ -60,12 +72,23 @@ namespace AccountingSystem.API.Controllers
             var company = await _context.Companies.FindAsync(tenantId);
             if (company == null) return BadRequest("Company profile missing.");
 
-            var companyDto = new CompanyDTO { Name = company.Name, Address = company.Address, TaxId = company.TaxId, Currency = company.Currency };
+            var companyDto = new CompanyDTO
+            {
+                Name = company.Name ?? string.Empty,
+                Address = company.Address ?? string.Empty,
+                TaxId = company.TaxId ?? string.Empty,
+                Currency = company.Currency ?? string.Empty
+            };
 
             // Fetch Data
             var tb = await _ledgerService.GetTrialBalanceAsync();
             var accounts = await _ledgerService.GetChartOfAccountsAsync();
-            var accountDtos = accounts.Select(a => new AccountDTO { Code = a.Code, Name = a.Name, Type = a.Type }).ToList();
+            var accountDtos = accounts.Select(a => new AccountDTO
+            {
+                Code = a.Code ?? string.Empty,
+                Name = a.Name ?? string.Empty,
+                Type = a.Type ?? string.Empty
+            }).ToList();
 
             var pdfBytes = _pdfService.GenerateFinancialReportPdf(tb, accountDtos, companyDto);
             return File(pdfBytes, "application/pdf", $"Financials-{DateTime.Now:yyyy-MM-dd}.pdf");

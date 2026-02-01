@@ -20,7 +20,6 @@
                 <MudText Typo="Typo.caption">Target</MudText>
                 <MudText>@Log.EntityName</MudText>
             </MudItem>
-
             <MudItem xs="12">
                 <MudDivider Class="my-2" />
                 <MudText Typo="Typo.subtitle2" Class="mb-1">Request Payload / Changes</MudText>
@@ -36,8 +35,11 @@
 </MudDialog>
 
 @code {
-    [CascadingParameter] IMudDialogInstance MudDialog { get; set; }
-    [Parameter] public AuditLogDTO Log { get; set; }
+    [CascadingParameter]
+    IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter]
+    public AuditLogDTO Log { get; set; } = default!;
 
     private void Cancel() => MudDialog.Cancel();
 

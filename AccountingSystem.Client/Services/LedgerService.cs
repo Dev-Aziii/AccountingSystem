@@ -13,7 +13,7 @@ namespace AccountingSystem.Client.Services
         }
 
         // Updated to accept includeArchived
-        public async Task<List<AccountDTO>> GetAccountsAsync(bool includeArchived = false)
+        public async Task<List<AccountDTO>?> GetAccountsAsync(bool includeArchived = false)
         {
             return await _api.GetAsync<List<AccountDTO>>($"api/ledger/accounts?includeArchived={includeArchived}");
         }
@@ -21,16 +21,15 @@ namespace AccountingSystem.Client.Services
         // New Restore Method
         public async Task RestoreAccountAsync(int id)
         {
-            var response = await _api.PutAsync<object>($"api/ledger/accounts/{id}/restore", null);
+            var response = await _api.PutAsync<object?>($"api/ledger/accounts/{id}/restore", null);
             if (!response.IsSuccessStatusCode) throw new Exception(await response.Content.ReadAsStringAsync());
         }
 
         // ... Existing methods ...
-        public async Task<AccountDTO> CreateAccountAsync(CreateAccountDTO account)
+        public async Task<AccountDTO?> CreateAccountAsync(CreateAccountDTO account)
         {
             var response = await _api.PostAsync("api/ledger/accounts", account);
             if (!response.IsSuccessStatusCode) throw new Exception(await response.Content.ReadAsStringAsync());
-
             return await response.Content.ReadFromJsonAsync<AccountDTO>();
         }
 
@@ -46,7 +45,7 @@ namespace AccountingSystem.Client.Services
             if (!response.IsSuccessStatusCode) throw new Exception(await response.Content.ReadAsStringAsync());
         }
 
-        public async Task<JournalEntryDTO> PostJournalEntryAsync(JournalEntryDTO entry)
+        public async Task<JournalEntryDTO?> PostJournalEntryAsync(JournalEntryDTO entry)
         {
             var response = await _api.PostAsync("api/ledger/journal", entry);
             if (!response.IsSuccessStatusCode)

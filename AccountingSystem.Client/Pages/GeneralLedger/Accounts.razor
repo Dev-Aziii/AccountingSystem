@@ -3,6 +3,7 @@
 @using AccountingSystem.Client.Services
 @using AccountingSystem.Client.Shared.Dialogs
 @using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
 @using MudBlazor
 @attribute [Authorize(Roles = "Admin,Accounting,Management")]
 @inject LedgerService LedgerService
@@ -17,13 +18,13 @@
         <div class="d-flex justify-space-between align-center">
             <div>
                 <MudText Typo="Typo.h5" Class="mb-2 page-header-title">
-                   Chart of Accounts
+                    Chart of Accounts
                 </MudText>
                 <MudText Typo="Typo.body1" Class="page-header-subtitle">
                     Manage system access, user roles, and account permissions
                 </MudText>
             </div>
-            <AuthorizeView Roles="Admin,Accounting">
+            <AuthorizeView Roles="Admin,Accounting" Context="authContext">
                 <MudButton Variant="Variant.Filled" Class="create-btn" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenAddDialog">
                     Set up account classifications to track your business financial activities
                 </MudButton>
@@ -34,7 +35,7 @@
     <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-6">
         <!-- Tab 1: Active Accounts -->
         <MudTabPanel Text="Active Accounts" OnClick="@(() => LoadList(false))">
-            <MudTable Items="@accounts" Dense="true" Hover="true" Bordered="true" Striped="true" Filter="new Func<AccountDTO,bool>(FilterFunc)" Loading="@_loading">
+            <MudTable Items="@accounts" Dense="true" Hover="true" Bordered="true" Striped="true" Filter="new Func<AccountDTO, bool>(FilterFunc)" Loading="@_loading">
                 <ToolBarContent>
                     <MudText Typo="Typo.h6">Active List</MudText>
                     <MudSpacer />
@@ -44,7 +45,7 @@
                     <MudTh>Code</MudTh>
                     <MudTh>Name</MudTh>
                     <MudTh>Type</MudTh>
-                    <AuthorizeView Roles="Admin,Accounting">
+                    <AuthorizeView Roles="Admin,Accounting" Context="authContext">
                         <MudTh Style="text-align:right">Actions</MudTh>
                     </AuthorizeView>
                 </HeaderContent>
@@ -54,15 +55,32 @@
                     <MudTd DataLabel="Type">
                         @switch (context.Type)
                         {
-                            case "Asset": <MudChip T="string" Color="Color.Primary" Size="Size.Small" Variant="Variant.Text">Asset</MudChip>; break;
-                            case "Liability": <MudChip T="string" Color="Color.Error" Size="Size.Small" Variant="Variant.Text">Liability</MudChip>; break;
-                            case "Equity": <MudChip T="string" Color="Color.Info" Size="Size.Small" Variant="Variant.Text">Equity</MudChip>; break;
-                            case "Revenue": <MudChip T="string" Color="Color.Success" Size="Size.Small" Variant="Variant.Text">Revenue</MudChip>; break;
-                            case "Expense": <MudChip T="string" Color="Color.Warning" Size="Size.Small" Variant="Variant.Text">Expense</MudChip>; break;
-                            default: <MudChip T="string" Size="Size.Small">@context.Type</MudChip>; break;
+                            case "Asset":
+                                <MudChip T="string" Color="Color.Primary" Size="Size.Small" Variant="Variant.Text">Asset</MudChip>
+                                ; break;
+                            case "Liability":
+
+                                <MudChip T="string" Color="Color.Error" Size="Size.Small" Variant="Variant.Text">Liability</MudChip>
+                                ; break;
+                            case "Equity":
+
+                                <MudChip T="string" Color="Color.Info" Size="Size.Small" Variant="Variant.Text">Equity</MudChip>
+                                ; break;
+                            case "Revenue":
+
+                                <MudChip T="string" Color="Color.Success" Size="Size.Small" Variant="Variant.Text">Revenue</MudChip>
+                                ; break;
+                            case "Expense":
+
+                                <MudChip T="string" Color="Color.Warning" Size="Size.Small" Variant="Variant.Text">Expense</MudChip>
+                                ; break;
+                            default:
+
+                                <MudChip T="string" Size="Size.Small">@context.Type</MudChip>
+                                ; break;
                         }
                     </MudTd>
-                    <AuthorizeView Roles="Admin,Accounting">
+                    <AuthorizeView Roles="Admin,Accounting" Context="authContext">
                         <MudTd DataLabel="Actions" Style="text-align:right">
                             <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Secondary" OnClick="() => OpenEditDialog(context)" />
                             <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="() => ConfirmDelete(context.Id)" />
@@ -74,9 +92,9 @@
         </MudTabPanel>
 
         <!-- Tab 2: Archived Accounts -->
-        <AuthorizeView Roles="Admin,Accounting">
+        <AuthorizeView Roles="Admin,Accounting" Context="authContext">
             <MudTabPanel Text="Archived Accounts" OnClick="@(() => LoadList(true))">
-                <MudTable Items="@accounts" Dense="true" Hover="true" Bordered="true" Striped="true" Filter="new Func<AccountDTO,bool>(FilterFunc)" Loading="@_loading">
+                <MudTable Items="@accounts" Dense="true" Hover="true" Bordered="true" Striped="true" Filter="new Func<AccountDTO, bool>(FilterFunc)" Loading="@_loading">
                     <HeaderContent>
                         <MudTh>Code</MudTh>
                         <MudTh>Name</MudTh>
@@ -112,15 +130,26 @@
     {
         _showArchived = archived;
         _loading = true;
-        try 
-        { 
+        try
+        {
             var all = await LedgerService.GetAccountsAsync(archived);
-            if (archived)
-                accounts = all.Where(a => a.IsDeleted).ToList();
+            if (all != null)
+            {
+                if (archived)
+                    accounts = all.Where(a => a.IsDeleted).ToList();
+                else
+                    accounts = all.ToList();
+            }
             else
-                accounts = all;
+            {
+                accounts = new List<AccountDTO>();
+            }
         }
-        catch (Exception ex) { Snackbar.Add(ex.Message, Severity.Error); }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+            accounts = new List<AccountDTO>();
+        }
         finally { _loading = false; }
     }
 
@@ -133,7 +162,8 @@
     {
         var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true };
         var dialog = await DialogService.ShowAsync<AccountDialog>("Add Account", options);
-        if (!(await dialog.Result).Canceled) await LoadList(false);
+        var result = await dialog.Result;
+        if (result != null && !result.Canceled) await LoadList(false);
     }
 
     private async Task OpenEditDialog(AccountDTO account)
@@ -141,7 +171,8 @@
         var parameters = new DialogParameters { ["Account"] = account };
         var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true };
         var dialog = await DialogService.ShowAsync<AccountDialog>("Edit Account", parameters, options);
-        if (!(await dialog.Result).Canceled) await LoadList(false);
+        var result = await dialog.Result;
+        if (result != null && !result.Canceled) await LoadList(false);
     }
 
     private async Task ConfirmDelete(int id)
@@ -149,10 +180,10 @@
         bool? result = await DialogService.ShowMessageBox("Archive", "Archive this account? It will be hidden from selection lists.", yesText: "Archive", cancelText: "Cancel");
         if (result == true)
         {
-            try 
-            { 
-                await LedgerService.DeleteAccountAsync(id); 
-                Snackbar.Add("Account archived.", Severity.Success); 
+            try
+            {
+                await LedgerService.DeleteAccountAsync(id);
+                Snackbar.Add("Account archived.", Severity.Success);
                 await LoadList(false); // Refresh Active list
             }
             catch (Exception ex) { Snackbar.Add(ex.Message, Severity.Error); }
@@ -164,10 +195,10 @@
         bool? result = await DialogService.ShowMessageBox("Restore", "Restore this account?", yesText: "Restore", cancelText: "Cancel");
         if (result == true)
         {
-            try 
-            { 
-                await LedgerService.RestoreAccountAsync(id); 
-                Snackbar.Add("Account restored.", Severity.Success); 
+            try
+            {
+                await LedgerService.RestoreAccountAsync(id);
+                Snackbar.Add("Account restored.", Severity.Success);
                 await LoadList(true); // Refresh Archived list
             }
             catch (Exception ex) { Snackbar.Add(ex.Message, Severity.Error); }

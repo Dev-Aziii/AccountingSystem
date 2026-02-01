@@ -17,7 +17,6 @@ namespace AccountingSystem.Client.Auth
         public override async Task<AuthenticationState> GetAuthenticationStateAsync()
         {
             var token = await _tokenService.GetTokenAsync();
-
             if (string.IsNullOrWhiteSpace(token))
             {
                 return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
@@ -45,7 +44,14 @@ namespace AccountingSystem.Client.Auth
             var claims = new List<Claim>();
             var payload = jwt.Split('.')[1];
             var jsonBytes = ParseBase64WithoutPadding(payload);
+
+            // Fix: Handle potential null from deserialization
             var keyValuePairs = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonBytes);
+
+            if (keyValuePairs == null)
+            {
+                return claims;
+            }
 
             foreach (var kvp in keyValuePairs)
             {
@@ -58,9 +64,15 @@ namespace AccountingSystem.Client.Auth
                 }
                 else
                 {
-                    claims.Add(new Claim(kvp.Key, kvp.Value.ToString()));
+                    // Fix: Handle potential null value
+                    var claimValue = kvp.Value?.ToString();
+                    if (claimValue != null)
+                    {
+                        claims.Add(new Claim(kvp.Key, claimValue));
+                    }
                 }
             }
+
             return claims;
         }
 

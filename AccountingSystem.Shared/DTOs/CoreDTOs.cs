@@ -6,10 +6,10 @@ namespace AccountingSystem.Shared.DTOs
     // --- LEDGER ---
     public class JournalEntryDTO
     {
-        public string Description { get; set; }
-        public string Reference { get; set; }
+        public string Description { get; set; } = string.Empty;
+        public string Reference { get; set; } = string.Empty;
         public DateTime Date { get; set; }
-        public List<JournalEntryLineDTO> Lines { get; set; }
+        public List<JournalEntryLineDTO> Lines { get; set; } = new();
     }
 
     public class JournalEntryLineDTO
@@ -22,15 +22,15 @@ namespace AccountingSystem.Shared.DTOs
     public class TrialBalanceDTO
     {
         public DateTime GeneratedAt { get; set; }
-        public List<AccountBalanceDTO> Accounts { get; set; }
+        public List<AccountBalanceDTO> Accounts { get; set; } = new();
         public decimal TotalDebit { get; set; }
         public decimal TotalCredit { get; set; }
     }
 
     public class AccountBalanceDTO
     {
-        public string AccountName { get; set; }
-        public string AccountCode { get; set; }
+        public string AccountName { get; set; } = string.Empty;
+        public string AccountCode { get; set; } = string.Empty;
         public decimal Debit { get; set; }
         public decimal Credit { get; set; }
     }
@@ -40,11 +40,11 @@ namespace AccountingSystem.Shared.DTOs
     {
         public int Id { get; set; }
         public int VendorId { get; set; }
-        public string VendorName { get; set; }
+        public string VendorName { get; set; } = string.Empty;
         public DateTime DueDate { get; set; }
         public decimal Amount { get; set; }
-        public string ReferenceNumber { get; set; }
-        public string Description { get; set; }
+        public string ReferenceNumber { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
         public decimal AmountPaid { get; set; }
         public DocumentStatus Status { get; set; } // Enum
         public decimal Balance => Amount - AmountPaid;
@@ -55,8 +55,8 @@ namespace AccountingSystem.Shared.DTOs
         public int VendorId { get; set; }
         public DateTime DueDate { get; set; }
         public decimal Amount { get; set; }
-        public string ReferenceNumber { get; set; }
-        public string Description { get; set; }
+        public string ReferenceNumber { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
         public int ExpenseAccountId { get; set; }
     }
 
@@ -65,10 +65,10 @@ namespace AccountingSystem.Shared.DTOs
     {
         public int Id { get; set; }
         public int CustomerId { get; set; }
-        public string CustomerName { get; set; }
+        public string CustomerName { get; set; } = string.Empty;
         public DateTime DueDate { get; set; }
         public decimal TotalAmount { get; set; }
-        public string Description { get; set; }
+        public string Description { get; set; } = string.Empty;
         public decimal PaidAmount { get; set; }
         public DocumentStatus Status { get; set; } // Enum
         public decimal Balance => TotalAmount - PaidAmount;
@@ -79,7 +79,7 @@ namespace AccountingSystem.Shared.DTOs
         public int CustomerId { get; set; }
         public DateTime DueDate { get; set; }
         public decimal Amount { get; set; }
-        public string Description { get; set; }
+        public string Description { get; set; } = string.Empty;
         public int RevenueAccountId { get; set; }
     }
 }

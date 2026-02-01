@@ -29,8 +29,8 @@
     [Parameter] public int SelectedVendorId { get; set; }
     [Parameter] public EventCallback<int> SelectedVendorIdChanged { get; set; }
 
-    private List<VendorDTO> vendors;
-    private VendorDTO _selectedVendor;
+    private List<VendorDTO>? vendors = null;
+    private VendorDTO? _selectedVendor = null;
 
     protected override async Task OnInitializedAsync() => await LoadVendors();
 
@@ -64,21 +64,21 @@
         catch (Exception ex) { Console.WriteLine(ex.Message); }
     }
 
-    private async Task OnValueChanged(VendorDTO value)
+    private async Task OnValueChanged(VendorDTO? value)
     {
         _selectedVendor = value;
         SelectedVendorId = value?.Id ?? 0;
         await SelectedVendorIdChanged.InvokeAsync(SelectedVendorId);
     }
 
-    private async Task<IEnumerable<VendorDTO>> SearchVendors(string value, CancellationToken token)
+    private Task<IEnumerable<VendorDTO>> SearchVendors(string value, CancellationToken token)
     {
-        if (vendors == null) return new List<VendorDTO>();
+        if (vendors == null) return Task.FromResult(Enumerable.Empty<VendorDTO>());
 
         if (string.IsNullOrEmpty(value))
-            return vendors;
+            return Task.FromResult(vendors.AsEnumerable());
 
-        return vendors.Where(x => x.Name.Contains(value, StringComparison.InvariantCultureIgnoreCase));
+        return Task.FromResult(vendors.Where(x => x.Name.Contains(value, StringComparison.InvariantCultureIgnoreCase)));
     }
 
     private async Task OpenAddDialog()
@@ -87,7 +87,7 @@
         var dialog = await DialogService.ShowAsync<VendorDialog>("Add New Vendor", options);
         var result = await dialog.Result;
 
-        if (!result.Canceled)
+        if (result != null && !result.Canceled)
         {
             await LoadVendors();
             Snackbar.Add("Vendor list refreshed.", Severity.Info);

@@ -44,7 +44,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        string sourceId = UrlSourceId;
+        string? sourceId = UrlSourceId;
 
         if (string.IsNullOrEmpty(sourceId))
         {
@@ -74,9 +74,7 @@
             };
 
             await ReceivableService.ReceivePaymentAsync(paymentDto);
-
             await LocalStorage.RemoveItemAsync("pending_payment_source_id");
-
             isSuccess = true;
             Snackbar.Add("Payment Verified & Recorded!", Severity.Success);
         }

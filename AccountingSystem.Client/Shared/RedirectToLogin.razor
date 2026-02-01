@@ -2,15 +2,23 @@
 @using Microsoft.AspNetCore.Components.Authorization
 @code {
     [CascadingParameter]
-    private Task<AuthenticationState> AuthState { get; set; }
+    private Task<AuthenticationState>? AuthState { get; set; } // Made nullable
 
     protected override async Task OnInitializedAsync()
     {
-        var authState = await AuthState;
-
-        // Double check: Only redirect if truly not authenticated
-        if (authState?.User?.Identity is null || !authState.User.Identity.IsAuthenticated)
+        if (AuthState is not null) // Ensure AuthState is not null before awaiting
         {
+            var authState = await AuthState;
+
+            // Double check: Only redirect if truly not authenticated
+            if (authState.User?.Identity is null || !authState.User.Identity.IsAuthenticated)
+            {
+                NavManager.NavigateTo("/");
+            }
+        }
+        else
+        {
+            // Handle the case where AuthState is null (optional)
             NavManager.NavigateTo("/");
         }
     }

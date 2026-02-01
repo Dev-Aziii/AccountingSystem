@@ -3,6 +3,7 @@
 @using AccountingSystem.Client.Services
 @using AccountingSystem.Client.Shared.Dialogs
 @using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
 @using MudBlazor
 @attribute [Authorize(Roles = "Admin,Accounting,Management")]
 @inject ReceivableService ReceivableService
@@ -14,7 +15,7 @@
 <MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <MudText Typo="Typo.h4" Color="Color.Primary">Customer Management</MudText>
-        <AuthorizeView Roles="Admin,Accounting">
+        <AuthorizeView Roles="Admin,Accounting" Context="authContext">
             <MudButton Variant="Variant.Filled" Color="Color.Info" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenAddDialog">
                 Add New Customer
             </MudButton>
@@ -23,7 +24,7 @@
 
     <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-6">
         <MudTabPanel Text="Active Customers" OnClick="@(() => LoadList(false))">
-            <MudTable Items="@customers" Dense="true" Hover="true" Bordered="true" Striped="true" Filter="new Func<CustomerDTO,bool>(FilterFunc)" Loading="@_loading">
+            <MudTable Items="@customers" Dense="true" Hover="true" Bordered="true" Striped="true" Filter="new Func<CustomerDTO, bool>(FilterFunc)" Loading="@_loading">
                 <ToolBarContent>
                     <MudText Typo="Typo.h6">Active List</MudText>
                     <MudSpacer />
@@ -34,7 +35,7 @@
                     <MudTh>Name</MudTh>
                     <MudTh>Email</MudTh>
                     <MudTh>Phone</MudTh>
-                    <AuthorizeView Roles="Admin,Accounting">
+                    <AuthorizeView Roles="Admin,Accounting" Context="authContext">
                         <MudTh Style="text-align:right">Actions</MudTh>
                     </AuthorizeView>
                 </HeaderContent>
@@ -43,7 +44,7 @@
                     <MudTd DataLabel="Name"><b>@context.Name</b></MudTd>
                     <MudTd DataLabel="Email">@context.Email</MudTd>
                     <MudTd DataLabel="Phone">@context.Phone</MudTd>
-                    <AuthorizeView Roles="Admin,Accounting">
+                    <AuthorizeView Roles="Admin,Accounting" Context="authContext">
                         <MudTd DataLabel="Actions" Style="text-align:right">
                             <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Secondary" OnClick="() => OpenEditDialog(context)" />
                             <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="() => ConfirmDelete(context.Id)" />
@@ -54,9 +55,9 @@
             </MudTable>
         </MudTabPanel>
 
-        <AuthorizeView Roles="Admin,Accounting">
+        <AuthorizeView Roles="Admin,Accounting" Context="authContext">
             <MudTabPanel Text="Archived Customers" OnClick="@(() => LoadList(true))">
-                <MudTable Items="@customers" Dense="true" Hover="true" Bordered="true" Striped="true" Filter="new Func<CustomerDTO,bool>(FilterFunc)" Loading="@_loading">
+                <MudTable Items="@customers" Dense="true" Hover="true" Bordered="true" Striped="true" Filter="new Func<CustomerDTO, bool>(FilterFunc)" Loading="@_loading">
                     <HeaderContent>
                         <MudTh>ID</MudTh>
                         <MudTh>Name</MudTh>
@@ -90,15 +91,15 @@
     private async Task LoadList(bool archived)
     {
         _loading = true;
-        try 
-        { 
+        try
+        {
             var all = await ReceivableService.GetCustomersAsync(archived);
             if (archived)
                 // Filter "All" list to show ONLY deleted
-                customers = all.Where(c => c.IsDeleted).ToList();
+                customers = all?.Where(c => c.IsDeleted).ToList() ?? new List<CustomerDTO>();
             else
                 // Trust API default filter for Active
-                customers = all;
+                customers = all ?? new List<CustomerDTO>();
         }
         catch (Exception ex) { Snackbar.Add(ex.Message, Severity.Error); }
         finally { _loading = false; }
@@ -116,7 +117,8 @@
     {
         var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true };
         var dialog = await DialogService.ShowAsync<CustomerDialog>("Add Customer", options);
-        if (!(await dialog.Result).Canceled) await LoadList(false);
+        var result = await dialog.Result;
+        if (result != null && !result.Canceled) await LoadList(false);
     }
 
     private async Task OpenEditDialog(CustomerDTO customer)
@@ -124,7 +126,8 @@
         var parameters = new DialogParameters { ["Customer"] = customer };
         var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true };
         var dialog = await DialogService.ShowAsync<CustomerDialog>("Edit Customer", parameters, options);
-        if (!(await dialog.Result).Canceled) await LoadList(false);
+        var result = await dialog.Result;
+        if (result != null && !result.Canceled) await LoadList(false);
     }
 
     private async Task ConfirmDelete(int id)

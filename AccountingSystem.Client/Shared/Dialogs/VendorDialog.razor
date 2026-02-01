@@ -20,13 +20,14 @@
 
 @code {
     [CascadingParameter]
-    private IMudDialogInstance MudDialog { get; set; }
+    private IMudDialogInstance MudDialog { get; set; } = default!;
 
-    [Parameter] public VendorDTO Vendor { get; set; }
+    [Parameter]
+    public VendorDTO? Vendor { get; set; }
 
     private CreateVendorDTO model = new CreateVendorDTO();
     private bool success;
-    private MudForm form;
+    private MudForm form = default!;
 
     protected override void OnInitialized()
     {

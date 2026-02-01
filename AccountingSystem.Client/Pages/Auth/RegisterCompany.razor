@@ -298,55 +298,50 @@
         font-style: italic;
     }
 
-    media (max-width: 768px) {
-        .register-container
+    @@media (max-width: 768px) {
+        .register-container {
+            padding: 1rem;
+        }
 
-    {
-        padding: 1rem;
+        .register-card {
+            padding: 2rem !important;
+        }
+
+        .logo-image {
+            height: 60px;
+        }
+
+        .main-title {
+            font-size: 2rem;
+        }
+
+        .website-subtitle {
+            font-size: 0.8rem;
+        }
     }
 
-    .register-card {
-        padding: 2rem !important;
-    }
+    @@media (max-width: 480px) {
+        .register-card {
+            padding: 1.5rem !important;
+            border-radius: 16px;
+        }
 
-    .logo-image {
-        height: 60px;
-    }
+        .logo-image {
+            height: 50px;
+        }
 
-    .main-title {
-        font-size: 2rem;
-    }
+        .main-title {
+            font-size: 1.8rem;
+            letter-spacing: -0.5px;
+        }
 
-    .website-subtitle {
-        font-size: 0.8rem;
-    }
+        .website-subtitle {
+            font-size: 0.75rem;
+        }
 
-    }
-
-    media (max-width: 480px) {
-        .register-card
-
-    {
-        padding: 1.5rem !important;
-        border-radius: 16px;
-    }
-
-    .logo-image {
-        height: 50px;
-    }
-
-    .main-title {
-        font-size: 1.8rem;
-        letter-spacing: -0.5px;
-    }
-
-    .website-subtitle {
-        font-size: 0.75rem;
-    }
-
-    .register-form .register-field {
-        margin-bottom: 1rem;
-    }
+        .register-form .register-field {
+            margin-bottom: 1rem;
+        }
 
     }
 

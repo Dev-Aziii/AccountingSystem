@@ -13,7 +13,7 @@ namespace AccountingSystem.Client.Services
         }
 
         // Updated to accept includeArchived
-        public async Task<List<CustomerDTO>> GetCustomersAsync(bool includeArchived = false)
+        public async Task<List<CustomerDTO>?> GetCustomersAsync(bool includeArchived = false)
         {
             return await _api.GetAsync<List<CustomerDTO>>($"api/receivables/customers?includeArchived={includeArchived}");
         }
@@ -21,12 +21,12 @@ namespace AccountingSystem.Client.Services
         // New Restore Method
         public async Task RestoreCustomerAsync(int id)
         {
-            var response = await _api.PutAsync<object>($"api/receivables/customers/{id}/restore", null);
+            var response = await _api.PutAsync<object?>($"api/receivables/customers/{id}/restore", null);
             if (!response.IsSuccessStatusCode) throw new Exception(await response.Content.ReadAsStringAsync());
         }
 
         // ... Existing methods ...
-        public async Task<List<InvoiceDTO>> GetInvoicesAsync()
+        public async Task<List<InvoiceDTO>?> GetInvoicesAsync()
         {
             return await _api.GetAsync<List<InvoiceDTO>>("api/receivables/invoices");
         }
@@ -51,7 +51,7 @@ namespace AccountingSystem.Client.Services
             }
         }
 
-        public async Task<CustomerDTO> CreateCustomerAsync(CreateCustomerDTO customer)
+        public async Task<CustomerDTO?> CreateCustomerAsync(CreateCustomerDTO customer)
         {
             var response = await _api.PostAsync("api/receivables/customers", customer);
             if (!response.IsSuccessStatusCode) throw new Exception(await response.Content.ReadAsStringAsync());

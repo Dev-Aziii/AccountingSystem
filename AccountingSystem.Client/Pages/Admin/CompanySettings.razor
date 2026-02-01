@@ -89,11 +89,18 @@
         try
         {
             var current = await CompanyService.GetCurrentCompanyAsync();
-            // Map CompanyDTO to UpdateCompanyDTO
-            model.Name = current.Name;
-            model.Address = current.Address;
-            model.TaxId = current.TaxId;
-            model.Currency = current.Currency;
+            if (current != null)
+            {
+                // Map CompanyDTO to UpdateCompanyDTO
+                model.Name = current.Name;
+                model.Address = current.Address;
+                model.TaxId = current.TaxId;
+                model.Currency = current.Currency;
+            }
+            else
+            {
+                Snackbar.Add("No company profile found.", Severity.Warning);
+            }
         }
         catch (Exception ex)
         {

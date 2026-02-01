@@ -89,9 +89,9 @@
         {
             var all = await PayableService.GetVendorsAsync(archived);
             if (archived)
-                vendors = all.Where(v => v.IsDeleted).ToList();
+                vendors = all?.Where(v => v.IsDeleted).ToList() ?? new List<VendorDTO>();
             else
-                vendors = all;
+                vendors = all ?? new List<VendorDTO>();
         }
         catch (Exception ex) { Snackbar.Add(ex.Message, Severity.Error); }
         finally { _loading = false; }
@@ -109,7 +109,8 @@
     {
         var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true };
         var dialog = await DialogService.ShowAsync<VendorDialog>("Add Vendor", options);
-        if (!(await dialog.Result).Canceled) await LoadList(false);
+        var result = await dialog.Result;
+        if (result != null && !result.Canceled) await LoadList(false);
     }
 
     private async Task OpenEditDialog(VendorDTO vendor)
@@ -117,7 +118,8 @@
         var parameters = new DialogParameters { ["Vendor"] = vendor };
         var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true };
         var dialog = await DialogService.ShowAsync<VendorDialog>("Edit Vendor", parameters, options);
-        if (!(await dialog.Result).Canceled) await LoadList(false);
+        var result = await dialog.Result;
+        if (result != null && !result.Canceled) await LoadList(false);
     }
 
     private async Task ConfirmDelete(int id)

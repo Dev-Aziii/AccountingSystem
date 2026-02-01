@@ -26,7 +26,7 @@ namespace AccountingSystem.Client.Services
             }
         }
 
-        public async Task<T> GetAsync<T>(string uri)
+        public async Task<T?> GetAsync<T>(string uri)
         {
             await AddAuthHeader();
             return await _httpClient.GetFromJsonAsync<T>(uri);
@@ -55,7 +55,6 @@ namespace AccountingSystem.Client.Services
         {
             await AddAuthHeader();
             var response = await _httpClient.GetAsync(uri);
-
             if (!response.IsSuccessStatusCode)
             {
                 var error = await response.Content.ReadAsStringAsync();

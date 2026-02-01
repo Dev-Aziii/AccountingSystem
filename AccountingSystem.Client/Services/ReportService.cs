@@ -11,7 +11,7 @@ namespace AccountingSystem.Client.Services
             _api = api;
         }
 
-        public async Task<TrialBalanceDTO> GetTrialBalance()
+        public async Task<TrialBalanceDTO?> GetTrialBalance()
         {
             return await _api.GetAsync<TrialBalanceDTO>("api/ledger/trial-balance");
         }

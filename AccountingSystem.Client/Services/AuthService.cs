@@ -21,7 +21,6 @@ namespace AccountingSystem.Client.Services
         public async Task<AuthResponseDTO> Login(LoginDTO loginDto)
         {
             var response = await _api.PostAsync("api/auth/login", loginDto);
-
             if (!response.IsSuccessStatusCode)
             {
                 var error = await response.Content.ReadAsStringAsync();
@@ -29,6 +28,11 @@ namespace AccountingSystem.Client.Services
             }
 
             var result = await response.Content.ReadFromJsonAsync<AuthResponseDTO>();
+
+            if (result == null)
+            {
+                throw new Exception("Failed to deserialize authentication response");
+            }
 
             // 1. Store Token
             await _tokenService.SetTokenAsync(result.Token);
@@ -42,7 +46,6 @@ namespace AccountingSystem.Client.Services
         public async Task<AuthResponseDTO> RegisterCompany(CompanyRegisterDTO registerDto)
         {
             var response = await _api.PostAsync("api/auth/register-company", registerDto);
-
             if (!response.IsSuccessStatusCode)
             {
                 var error = await response.Content.ReadAsStringAsync();
@@ -51,6 +54,11 @@ namespace AccountingSystem.Client.Services
 
             // Auto-login after registration
             var result = await response.Content.ReadFromJsonAsync<AuthResponseDTO>();
+
+            if (result == null)
+            {
+                throw new Exception("Failed to deserialize registration response");
+            }
 
             await _tokenService.SetTokenAsync(result.Token);
             ((CustomAuthStateProvider)_authStateProvider).NotifyUserAuthentication(result.Token);
@@ -65,12 +73,10 @@ namespace AccountingSystem.Client.Services
         }
 
         // --- NEW: Profile & Password Methods ---
-
         public async Task UpdateProfile(UpdateProfileDTO dto)
         {
             // ApiService handles the Bearer token attachment automatically
             var response = await _api.PutAsync("api/auth/profile", dto);
-
             if (!response.IsSuccessStatusCode)
             {
                 var error = await response.Content.ReadAsStringAsync();
@@ -81,7 +87,6 @@ namespace AccountingSystem.Client.Services
         public async Task ChangePassword(ChangePasswordDTO dto)
         {
             var response = await _api.PutAsync("api/auth/password", dto);
-
             if (!response.IsSuccessStatusCode)
             {
                 var error = await response.Content.ReadAsStringAsync();

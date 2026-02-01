@@ -101,7 +101,7 @@
                                     <MudChip T="string" Color="@(context.RoleName == "Admin" ? Color.Error : Color.Primary)" Size="Size.Small">@context.RoleName</MudChip>
                                 </MudTd>
                                 <MudTd DataLabel="Actions" Style="text-align:right">
-                                    @if (!context.Email.StartsWith("admin"))
+                                    @if (!string.IsNullOrEmpty(context.Email) && !context.Email.StartsWith("admin"))
                                     {
                                         <MudIconButton Icon="@Icons.Material.Filled.Archive" Size="Size.Medium" Color="Color.Default" Class="archive-hover" OnClick="() => ConfirmDelete(context.Id)" />
                                     }
@@ -222,7 +222,7 @@
 </style>
 
 @code {
-    private List<UserDTO> users;
+    private List<UserDTO> users = new List<UserDTO>();
     private RegisterDTO newUser = new RegisterDTO();
     private bool isSubmitting = false;
     private bool _loading = true;
@@ -242,9 +242,9 @@
         {
             var all = await UserService.GetAllUsersAsync(archived);
             if (archived)
-                users = all.Where(u => u.IsDeleted).ToList();
+                users = all?.Where(u => u.IsDeleted).ToList() ?? new List<UserDTO>();
             else
-                users = all.Where(u => !u.IsDeleted).ToList();
+                users = all?.Where(u => !u.IsDeleted).ToList() ?? new List<UserDTO>();
         }
         catch (Exception ex) { Snackbar.Add(ex.Message, Severity.Error); }
         finally { _loading = false; }

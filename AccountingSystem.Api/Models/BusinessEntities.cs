@@ -10,15 +10,15 @@ namespace AccountingSystem.API.Models
     {
         [Required]
         [MaxLength(20)]
-        public string Code { get; set; }
+        public string Code { get; set; } = string.Empty;
 
         [Required]
         [MaxLength(100)]
-        public string Name { get; set; }
+        public string Name { get; set; } = string.Empty;
 
         [Required]
         [MaxLength(20)]
-        public string Type { get; set; }
+        public string Type { get; set; } = string.Empty;
 
         [Column(TypeName = "decimal(18,2)")]
         public decimal Balance { get; set; } = 0;
@@ -27,10 +27,12 @@ namespace AccountingSystem.API.Models
     public class JournalEntry : BaseEntity
     {
         public DateTime Date { get; set; }
+
         [MaxLength(500)]
-        public string Description { get; set; }
+        public string Description { get; set; } = string.Empty;
+
         [MaxLength(50)]
-        public string Reference { get; set; }
+        public string Reference { get; set; } = string.Empty;
 
         [MaxLength(100)]
         public string? CreatedBy { get; set; }
@@ -46,11 +48,12 @@ namespace AccountingSystem.API.Models
         public int Id { get; set; }
 
         public int JournalEntryId { get; set; }
+
         [JsonIgnore]
-        public JournalEntry JournalEntry { get; set; }
+        public JournalEntry JournalEntry { get; set; } = default!;
 
         public int AccountId { get; set; }
-        public Account Account { get; set; }
+        public Account Account { get; set; } = default!;
 
         [Column(TypeName = "decimal(18,2)")]
         public decimal Debit { get; set; } = 0;
@@ -64,7 +67,7 @@ namespace AccountingSystem.API.Models
     {
         [Required]
         [MaxLength(100)]
-        public string Name { get; set; }
+        public string Name { get; set; } = string.Empty;
 
         [EmailAddress]
         [MaxLength(100)]
@@ -77,14 +80,14 @@ namespace AccountingSystem.API.Models
         [MaxLength(20)]
         public string? Phone { get; set; }
 
-        public virtual ICollection<Bill> Bills { get; set; }
+        public virtual ICollection<Bill> Bills { get; set; } = new List<Bill>();
     }
 
     public class Customer : BaseEntity
     {
         [Required]
         [MaxLength(100)]
-        public string Name { get; set; }
+        public string Name { get; set; } = string.Empty;
 
         [EmailAddress]
         [MaxLength(100)]
@@ -94,14 +97,14 @@ namespace AccountingSystem.API.Models
         [MaxLength(20)]
         public string? Phone { get; set; }
 
-        public virtual ICollection<Invoice> Invoices { get; set; }
+        public virtual ICollection<Invoice> Invoices { get; set; } = new List<Invoice>();
     }
 
     // --- ACCOUNTS PAYABLE ---
     public class Bill : BaseEntity
     {
         public int VendorId { get; set; }
-        public virtual Vendor Vendor { get; set; }
+        public virtual Vendor Vendor { get; set; } = default!;
 
         public DateTime DueDate { get; set; }
 
@@ -112,7 +115,7 @@ namespace AccountingSystem.API.Models
         public decimal AmountPaid { get; set; }
 
         [MaxLength(50)]
-        public string ReferenceNumber { get; set; }
+        public string ReferenceNumber { get; set; } = string.Empty;
 
         [MaxLength(500)]
         public string? Description { get; set; }
@@ -127,7 +130,7 @@ namespace AccountingSystem.API.Models
     public class Invoice : BaseEntity
     {
         public int CustomerId { get; set; }
-        public virtual Customer Customer { get; set; }
+        public virtual Customer Customer { get; set; } = default!;
 
         public DateTime DueDate { get; set; }
 
@@ -164,13 +167,13 @@ namespace AccountingSystem.API.Models
         public string? Remarks { get; set; }
 
         public int? AccountId { get; set; }
-        public Account Account { get; set; }
+        public Account? Account { get; set; }
 
         public int? InvoiceId { get; set; }
-        public virtual Invoice Invoice { get; set; }
+        public virtual Invoice? Invoice { get; set; }
 
         public int? BillId { get; set; }
-        public virtual Bill Bill { get; set; }
+        public virtual Bill? Bill { get; set; }
     }
 
     // --- SECURITY ---
@@ -182,10 +185,10 @@ namespace AccountingSystem.API.Models
         public int CompanyId { get; set; }
 
         public int? UserId { get; set; }
-        public string Action { get; set; }
-        public string EntityName { get; set; }
-        public string EntityId { get; set; }
+        public string Action { get; set; } = string.Empty;
+        public string EntityName { get; set; } = string.Empty;
+        public string EntityId { get; set; } = string.Empty;
         public DateTime Timestamp { get; set; } = DateTime.UtcNow;
-        public string Changes { get; set; }
+        public string Changes { get; set; } = string.Empty;
     }
 }

@@ -12,7 +12,7 @@ namespace AccountingSystem.Client.Services
             _api = api;
         }
 
-        public async Task<List<AuditLogDTO>> GetAuditLogsAsync()
+        public async Task<List<AuditLogDTO>?> GetAuditLogsAsync()
         {
             return await _api.GetAsync<List<AuditLogDTO>>("api/audit-logs");
         }

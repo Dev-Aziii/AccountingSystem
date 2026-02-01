@@ -11,9 +11,7 @@
                Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Add" OnAdornmentClick="OpenAddDialog"
                Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter"
                Dense="true" Disabled="@(accounts == null)" Clearable="true">
-
         <MudSelectItem Value="0" Disabled="true">-- Select Account --</MudSelectItem>
-
         @if (accounts != null)
         {
             foreach (var a in accounts)
@@ -29,7 +27,7 @@
     [Parameter] public EventCallback<int> SelectedAccountIdChanged { get; set; }
     [Parameter] public string? TypeFilter { get; set; }
 
-    private List<AccountDTO> accounts;
+    private List<AccountDTO>? accounts = null;
 
     // Proxy property to handle binding reliably
     private int InternalAccountId
@@ -53,9 +51,10 @@
         {
             var all = await LedgerService.GetAccountsAsync();
             // Filter accounts if TypeFilter is provided (e.g., only "Asset" accounts for payments)
+            // Fix: Handle potential null from GetAccountsAsync
             accounts = string.IsNullOrEmpty(TypeFilter)
                 ? all
-                : all.Where(a => a.Type.Equals(TypeFilter, StringComparison.OrdinalIgnoreCase)).ToList();
+                : all?.Where(a => a.Type.Equals(TypeFilter, StringComparison.OrdinalIgnoreCase)).ToList();
         }
         catch (Exception ex) { Console.WriteLine(ex.Message); }
     }
@@ -66,7 +65,7 @@
         var dialog = await DialogService.ShowAsync<AccountDialog>("Add New Account", options);
         var result = await dialog.Result;
 
-        if (!result.Canceled)
+        if (result != null && !result.Canceled)
         {
             await LoadAccounts();
             Snackbar.Add("Account list refreshed.", Severity.Info);

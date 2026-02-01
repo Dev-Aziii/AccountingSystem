@@ -71,7 +71,11 @@
     private async Task LoadData()
     {
         _loading = true;
-        try { bills = await PayableService.GetBillsAsync(); }
+        try
+        {
+            // Fix: Handle potential null return value
+            bills = await PayableService.GetBillsAsync() ?? new List<BillDTO>();
+        }
         catch (Exception ex) { Snackbar.Add(ex.Message, Severity.Error); }
         finally { _loading = false; }
     }
@@ -82,7 +86,9 @@
         var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true };
         var dialog = await DialogService.ShowAsync<PayBillDialog>("Record Payment", parameters, options);
         var result = await dialog.Result;
-        if (!result.Canceled) await LoadData();
+
+        // Fix: Handle potential null result
+        if (result != null && !result.Canceled) await LoadData();
     }
 
     private bool FilterFunc(BillDTO element) =>

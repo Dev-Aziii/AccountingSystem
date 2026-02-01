@@ -5,17 +5,17 @@ namespace AccountingSystem.Shared.DTOs
     public class CompanyDTO
     {
         public int Id { get; set; }
-        public string Name { get; set; }
-        public string Address { get; set; }
-        public string TaxId { get; set; }
-        public string Currency { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string Address { get; set; } = string.Empty;
+        public string TaxId { get; set; } = string.Empty;
+        public string Currency { get; set; } = "PHP";
     }
 
     public class UpdateCompanyDTO
     {
         [Required]
         [MaxLength(100)]
-        public string Name { get; set; }
+        public string Name { get; set; } = string.Empty;
 
         [MaxLength(200)]
         public string? Address { get; set; }

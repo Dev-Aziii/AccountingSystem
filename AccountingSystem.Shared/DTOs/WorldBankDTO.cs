@@ -5,21 +5,21 @@ namespace AccountingSystem.Shared.DTOs
     public class WorldBankIndicator
     {
         [JsonPropertyName("id")]
-        public string Id { get; set; }
+        public string? Id { get; set; }
         [JsonPropertyName("value")]
-        public string Value { get; set; }
+        public string? Value { get; set; }
     }
 
     public class WorldBankDataPoint
     {
         [JsonPropertyName("indicator")]
-        public WorldBankIndicator Indicator { get; set; }
+        public WorldBankIndicator? Indicator { get; set; }
 
         [JsonPropertyName("countryiso3code")]
-        public string CountryCode { get; set; }
+        public string? CountryCode { get; set; }
 
         [JsonPropertyName("date")]
-        public string Date { get; set; }
+        public string? Date { get; set; }
 
         [JsonPropertyName("value")]
         public decimal? Value { get; set; }

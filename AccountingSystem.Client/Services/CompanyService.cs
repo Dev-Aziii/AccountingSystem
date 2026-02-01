@@ -12,7 +12,7 @@ namespace AccountingSystem.Client.Services
             _api = api;
         }
 
-        public async Task<CompanyDTO> GetCurrentCompanyAsync()
+        public async Task<CompanyDTO?> GetCurrentCompanyAsync()
         {
             return await _api.GetAsync<CompanyDTO>("api/companies/current");
         }
@@ -20,7 +20,6 @@ namespace AccountingSystem.Client.Services
         public async Task UpdateCompanyAsync(UpdateCompanyDTO dto)
         {
             var response = await _api.PutAsync("api/companies/current", dto);
-
             if (!response.IsSuccessStatusCode)
             {
                 var error = await response.Content.ReadAsStringAsync();

@@ -20,7 +20,6 @@ namespace AccountingSystem.Client.Services
         {
             // We use PostAsync from ApiService to ensure Auth headers are present
             var response = await _api.PostAsync("api/payments/paymongo-source", sourceDto);
-
             if (!response.IsSuccessStatusCode)
             {
                 var error = await response.Content.ReadAsStringAsync();
@@ -30,10 +29,14 @@ namespace AccountingSystem.Client.Services
             // Deserialize the new DTO
             var result = await response.Content.ReadFromJsonAsync<PaymentSourceResponseDTO>();
 
+            if (result == null)
+            {
+                throw new Exception("Failed to deserialize payment response");
+            }
+
             // IMPORTANT: Return both ID and URL (we will need to change interface return type or handle storage here)
             // Ideally, we return the object. For now, let's store the ID in LocalStorage via the Component to keep service simple
             // We'll hack the return to just be the URL for now, but we need that ID.
-
             return result.CheckoutUrl;
         }
 
@@ -42,7 +45,15 @@ namespace AccountingSystem.Client.Services
         {
             var response = await _api.PostAsync("api/payments/paymongo-source", sourceDto);
             if (!response.IsSuccessStatusCode) throw new Exception(await response.Content.ReadAsStringAsync());
-            return await response.Content.ReadFromJsonAsync<PaymentSourceResponseDTO>();
+
+            var result = await response.Content.ReadFromJsonAsync<PaymentSourceResponseDTO>();
+
+            if (result == null)
+            {
+                throw new Exception("Failed to deserialize payment response");
+            }
+
+            return result;
         }
     }
 }

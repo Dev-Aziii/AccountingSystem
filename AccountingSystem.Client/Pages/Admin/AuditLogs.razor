@@ -129,7 +129,7 @@
                     <code style="font-size: 0.8em">@context.EntityName</code>
                 </MudTd>
                 <MudTd DataLabel="Details" Style="text-align:center">
-                    <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Medium" Color="Color.Default" OnClick="@(() => ViewDetails(context))" />
+                    <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Medium" Color="Color.Default" OnClick="@(async () => await ViewDetails(context))" />
                 </MudTd>
             </RowTemplate>
             <PagerContent>
@@ -157,7 +157,8 @@
         _loading = true;
         try
         {
-            auditLogs = await AuditService.GetAuditLogsAsync();
+            // Fix: Handle potential null return value
+            auditLogs = await AuditService.GetAuditLogsAsync() ?? new List<AuditLogDTO>();
         }
         catch (Exception ex)
         {
@@ -178,11 +179,12 @@
         return false;
     }
 
-    private void ViewDetails(AuditLogDTO log)
+    // Fix: Changed from Show to ShowAsync
+    private async Task ViewDetails(AuditLogDTO log)
     {
         var parameters = new DialogParameters { ["Log"] = log };
         var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true, CloseButton = true };
-        DialogService.Show<AuditDetailsDialog>("Audit Log Details", parameters, options);
+        await DialogService.ShowAsync<AuditDetailsDialog>("Audit Log Details", parameters, options);
     }
 
     // NEW: Centralized color logic for Action Types

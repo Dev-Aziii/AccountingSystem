@@ -58,7 +58,7 @@
                         <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Success" OnClick="@(() => OpenReceiveDialog(context))">Receive</MudButton>
                     }
                     <!-- NEW: Download PDF Button -->
-                    <MudIconButton Icon="@Icons.Material.Filled.PictureAsPdf" Color="Color.Error" Size="Size.Small" OnClick="@(() => DownloadPdf(context.Id))" Title="Download PDF" />
+                    <MudIconButton Icon="@Icons.Material.Filled.PictureAsPdf" Color="Color.Error" Size="Size.Small" OnClick="@(() => DownloadPdf(context.Id))" title="Download PDF" />
                 </div>
             </MudTd>
         </RowTemplate>
@@ -76,7 +76,11 @@
     private async Task LoadData()
     {
         _loading = true;
-        try { invoices = await ReceivableService.GetInvoicesAsync(); }
+        try
+        {
+            // Fix: Handle potential null return value
+            invoices = await ReceivableService.GetInvoicesAsync() ?? new List<InvoiceDTO>();
+        }
         catch (Exception ex) { Snackbar.Add(ex.Message, Severity.Error); }
         finally { _loading = false; }
     }
@@ -87,7 +91,9 @@
         var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true };
         var dialog = await DialogService.ShowAsync<ReceivePaymentDialog>("Receive Payment", parameters, options);
         var result = await dialog.Result;
-        if (!result.Canceled) await LoadData();
+
+        // Fix: Handle potential null result
+        if (result != null && !result.Canceled) await LoadData();
     }
 
     private async Task DownloadPdf(int id)

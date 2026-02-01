@@ -19,7 +19,6 @@ namespace AccountingSystem.API.Middleware
         public async Task Invoke(HttpContext context)
         {
             var token = context.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
-
             if (token != null)
                 AttachUserToContext(context, token);
 
@@ -31,7 +30,15 @@ namespace AccountingSystem.API.Middleware
             try
             {
                 var tokenHandler = new JwtSecurityTokenHandler();
-                var key = Encoding.ASCII.GetBytes(_configuration["JwtSettings:Secret"]);
+
+                // Fix: Handle potential null from configuration
+                var secret = _configuration["JwtSettings:Secret"];
+                if (string.IsNullOrEmpty(secret))
+                {
+                    return; // Exit if secret is not configured
+                }
+
+                var key = Encoding.ASCII.GetBytes(secret);
 
                 tokenHandler.ValidateToken(token, new TokenValidationParameters
                 {

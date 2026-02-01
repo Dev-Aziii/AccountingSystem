@@ -52,12 +52,15 @@
 </MudDialog>
 
 @code {
-    [CascadingParameter] IMudDialogInstance MudDialog { get; set; }
-    [Parameter] public BillDTO Bill { get; set; }
+    [CascadingParameter]
+    IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter]
+    public BillDTO Bill { get; set; } = default!;
 
     private RecordPaymentDTO model = new RecordPaymentDTO();
     private DateTime? date = DateTime.Today;
-    private MudForm form;
+    private MudForm form = default!;
     private bool success;
     private bool isSubmitting;
 

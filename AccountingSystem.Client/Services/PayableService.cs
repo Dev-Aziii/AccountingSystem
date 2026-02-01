@@ -13,7 +13,7 @@ namespace AccountingSystem.Client.Services
         }
 
         // Updated to accept includeArchived
-        public async Task<List<VendorDTO>> GetVendorsAsync(bool includeArchived = false)
+        public async Task<List<VendorDTO>?> GetVendorsAsync(bool includeArchived = false)
         {
             return await _api.GetAsync<List<VendorDTO>>($"api/payables/vendors?includeArchived={includeArchived}");
         }
@@ -21,12 +21,12 @@ namespace AccountingSystem.Client.Services
         // New Restore Method
         public async Task RestoreVendorAsync(int id)
         {
-            var response = await _api.PutAsync<object>($"api/payables/vendors/{id}/restore", null);
+            var response = await _api.PutAsync<object?>($"api/payables/vendors/{id}/restore", null);
             if (!response.IsSuccessStatusCode) throw new Exception(await response.Content.ReadAsStringAsync());
         }
 
         // ... Existing methods (Create, Update, Delete, GetBills, PayBill) ...
-        public async Task<List<BillDTO>> GetBillsAsync()
+        public async Task<List<BillDTO>?> GetBillsAsync()
         {
             return await _api.GetAsync<List<BillDTO>>("api/payables/bills");
         }
@@ -51,7 +51,7 @@ namespace AccountingSystem.Client.Services
             }
         }
 
-        public async Task<VendorDTO> CreateVendorAsync(CreateVendorDTO vendor)
+        public async Task<VendorDTO?> CreateVendorAsync(CreateVendorDTO vendor)
         {
             var response = await _api.PostAsync("api/payables/vendors", vendor);
             if (!response.IsSuccessStatusCode) throw new Exception(await response.Content.ReadAsStringAsync());

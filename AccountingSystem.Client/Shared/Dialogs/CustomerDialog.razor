@@ -1,7 +1,6 @@
 ﻿@using AccountingSystem.Shared.DTOs
 @using AccountingSystem.Client.Services
 @using MudBlazor
-
 @inject ReceivableService ReceivableService
 @inject ISnackbar Snackbar
 
@@ -13,7 +12,6 @@
             <MudTextField T="string" Label="Phone" @bind-Value="model.Phone" Variant="Variant.Outlined" />
         </MudForm>
     </DialogContent>
-
     <DialogActions>
         <MudButton Variant="Variant.Text" OnClick="Cancel">Cancel</MudButton>
         <MudButton Variant="Variant.Filled" Color="Color.Info" OnClick="Submit">
@@ -23,11 +21,11 @@
 </MudDialog>
 
 @code {
-    // FIX: The cascading parameter must be of type MudDialogInstance
     [CascadingParameter]
-    private IMudDialogInstance MudDialog { get; set; }
+    private IMudDialogInstance MudDialog { get; set; } = default!;
 
-    [Parameter] public CustomerDTO? Customer { get; set; }
+    [Parameter]
+    public CustomerDTO? Customer { get; set; }
 
     private CreateCustomerDTO model = new();
     private MudForm? form;
@@ -48,7 +46,6 @@
     private async Task Submit()
     {
         if (form is null) return;
-
         await form.Validate();
         if (!form.IsValid) return;
 
@@ -70,7 +67,6 @@
                 await ReceivableService.CreateCustomerAsync(model);
                 Snackbar.Add("Customer created successfully.", Severity.Success);
             }
-
             MudDialog.Close(DialogResult.Ok(true));
         }
         catch (Exception ex)
