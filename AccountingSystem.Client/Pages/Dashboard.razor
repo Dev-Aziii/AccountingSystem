@@ -10,6 +10,7 @@
 @inject PayableService PayableService
 @inject ReceivableService ReceivableService
 @inject WorldBankService WorldBankService
+@inject FrankfurterService FrankfurterService
 
 <PageTitle>Financial Dashboard</PageTitle>
 
@@ -154,45 +155,6 @@
         line-height: 1;
     }
 
-    .mini-stat-card {
-        background: linear-gradient(135deg, rgb(22, 84, 127) 0%, rgb(56, 146, 147) 100%);
-        border-radius: 16px;
-        padding: 1.25rem;
-        color: white;
-        text-align: center;
-        transition: all 0.3s ease;
-    }
-
-    .mini-stat-card:hover {
-        transform: scale(1.02);
-    }
-
-    .mini-stat-card.purple {
-        background: linear-gradient(135deg, rgb(156, 39, 176) 0%, rgb(103, 58, 183) 100%);
-    }
-
-    .mini-stat-card.green {
-        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-    }
-
-    .mini-stat-card.orange {
-        background: linear-gradient(135deg, #fd7e14 0%, #ffc107 100%);
-    }
-
-    .mini-stat-value {
-        font-size: 1.75rem;
-        font-weight: 800;
-        line-height: 1.2;
-    }
-
-    .mini-stat-label {
-        font-size: 0.7rem;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        opacity: 0.9;
-        margin-top: 0.25rem;
-    }
-
     .worldbank-featured {
         background: linear-gradient(145deg, #ffffff 0%, #f3e5f5 100%);
         border: 1px solid rgba(156, 39, 176, 0.15);
@@ -202,20 +164,13 @@
         box-shadow: 0 16px 40px rgba(156, 39, 176, 0.12);
     }
 
-    .chart-bar:hover {
-        opacity: 1 !important;
-        filter: brightness(1.1);
+    .forex-featured {
+        background: linear-gradient(145deg, #ffffff 0%, #e3f2fd 100%);
+        border: 1px solid rgba(33, 150, 243, 0.15);
     }
 
-    .inflation-kpi {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 1.25rem;
-        background: linear-gradient(135deg, rgba(156, 39, 176, 0.08) 0%, rgba(103, 58, 183, 0.05) 100%);
-        border-radius: 16px;
-        margin-bottom: 1.5rem;
-        border: 2px solid rgba(156, 39, 176, 0.2);
+    .forex-featured:hover {
+        box-shadow: 0 16px 40px rgba(33, 150, 243, 0.12);
     }
 
     .inflation-kpi-value {
@@ -237,15 +192,45 @@
         margin-top: 0.5rem;
     }
 
-    .inflation-kpi-icon {
-        width: 60px;
-        height: 60px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, rgb(156, 39, 176) 0%, rgb(103, 58, 183) 100%);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
+    .usd-php-pulse {
+        animation: pulse 2s ease-in-out infinite;
+    }
+
+    @@keyframes pulse {
+        0%, 100% {
+            opacity: 1;
+        }
+        50% {
+            opacity: 0.7;
+        }
+    }
+
+    .converter-input {
+        background: white;
+        border: 2px solid rgba(33, 150, 243, 0.3);
+        border-radius: 12px;
+        padding: 0.75rem 1rem;
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #1976D2;
+        text-align: center;
+        transition: all 0.3s ease;
+        width: 100%;
+    }
+
+    .converter-input:focus {
+        outline: none;
+        border-color: #2196F3;
+        box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+    }
+
+    .converter-result {
+        background: linear-gradient(135deg, rgba(33, 150, 243, 0.15) 0%, rgba(33, 150, 243, 0.05) 100%);
+        border: 2px solid rgba(33, 150, 243, 0.3);
+        border-radius: 12px;
+        padding: 1rem;
+        text-align: center;
+        margin-top: 1rem;
     }
 </style>
 
@@ -279,212 +264,156 @@
     </div>
 
     @if (isLoading)
-    {
-        <!-- SKELETON FOR TOP METRICS -->
-        <div class="top-metrics-grid mb-6">
-            @for (int i = 0; i < 6; i++)
-            {
-                <div class="metric-card-compact">
-                    <MudSkeleton SkeletonType="SkeletonType.Circle" Width="40px" Height="40px" />
-                    <div style="flex: 1;">
-                        <MudSkeleton SkeletonType="SkeletonType.Text" Width="80px" Height="24px" Class="mb-1" />
-                        <MudSkeleton SkeletonType="SkeletonType.Text" Width="60px" Height="12px" />
-                    </div>
-                </div>
-            }
-        </div>
-
+    {        
         <!-- SKELETON FOR MAIN GRID -->
         <div class="dashboard-grid">
-            <div class="span-3">
-                <MudPaper Class="featured-card" Elevation="0">
-                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="100px" Height="16px" Class="mb-2" />
-                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="120px" Height="48px" Class="mb-3" />
-                    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="80px" />
-                </MudPaper>
-            </div>
-            <div class="span-3">
-                <MudPaper Class="featured-card" Elevation="0">
-                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="120px" Height="16px" Class="mb-2" />
-                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="80px" Height="40px" Class="mb-3" />
-                    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="60px" />
-                </MudPaper>
-            </div>
+            <!-- Card A Skeleton - Financial Summary (span-6) -->
             <div class="span-6">
                 <MudPaper Class="featured-card" Elevation="0">
-                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="180px" Height="16px" Class="mb-2" />
-                    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="280px" />
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <div>
+                            <MudSkeleton SkeletonType="SkeletonType.Text" Width="140px" Height="14px" Class="mb-1" />
+                            <MudSkeleton SkeletonType="SkeletonType.Text" Width="180px" Height="12px" />
+                        </div>
+                        <MudSkeleton SkeletonType="SkeletonType.Circle" Width="24px" Height="24px" />
+                    </div>
+                    <div style="display: flex; gap: 1.5rem; margin-bottom: 1.5rem;">
+                        <div style="flex: 1;">
+                            <MudSkeleton SkeletonType="SkeletonType.Text" Width="100%" Height="12px" Class="mb-2" />
+                            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="12px" />
+                        </div>
+                        <div style="flex: 1;">
+                            <MudSkeleton SkeletonType="SkeletonType.Text" Width="100%" Height="12px" Class="mb-2" />
+                            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="12px" />
+                        </div>
+                    </div>
+                    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="100px" Class="mb-3" />
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem;">
+                        @for (int i = 0; i < 4; i++)
+                        {
+                            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="60px" />
+                        }
+                    </div>
                 </MudPaper>
             </div>
-            <div class="span-12">
+
+            <!-- Card B Skeleton - Active Transactions (span-3) -->
+            <div class="span-3">
+                <MudPaper Class="featured-card" Elevation="0">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                        <MudSkeleton SkeletonType="SkeletonType.Text" Width="140px" Height="14px" />
+                        <MudSkeleton SkeletonType="SkeletonType.Circle" Width="24px" Height="24px" />
+                    </div>
+                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="120px" Height="48px" Class="mb-2" />
+                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="180px" Height="12px" Class="mb-3" />
+                    <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="60px" />
+                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="60px" />
+                    </div>
+                    <div style="display: flex; gap: 0.75rem; margin-top: auto;">
+                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="60px" />
+                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="60px" />
+                    </div>
+                </MudPaper>
+            </div>
+
+            <!-- Card C Skeleton - USD to PHP (span-3) -->
+            <div class="span-3">
+                <MudPaper Class="featured-card forex-featured" Elevation="0">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                        <MudSkeleton SkeletonType="SkeletonType.Text" Width="100px" Height="14px" />
+                        <MudSkeleton SkeletonType="SkeletonType.Circle" Width="24px" Height="24px" />
+                    </div>
+                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="150px" Height="12px" Class="mb-3" />
+                    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="140px" Class="mb-3" />
+                    @for (int i = 0; i < 3; i++)
+                    {
+                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="45px" Class="mb-2" />
+                    }
+                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="150px" Height="10px" style="margin-top: auto;" />
+                </MudPaper>
+            </div>
+
+            <!-- Card D Skeleton - Philippines Economic Health (span-6) -->
+            <div class="span-6">
                 <MudPaper Class="featured-card worldbank-featured" Elevation="0">
-                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="200px" Height="16px" Class="mb-4" />
-                    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="300px" />
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <div>
+                            <MudSkeleton SkeletonType="SkeletonType.Text" Width="180px" Height="14px" Class="mb-1" />
+                            <MudSkeleton SkeletonType="SkeletonType.Text" Width="200px" Height="12px" />
+                        </div>
+                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="80px" Height="24px" />
+                    </div>
+                    <div style="text-align: center; margin-bottom: 1.5rem;">
+                        <MudSkeleton SkeletonType="SkeletonType.Text" Width="120px" Height="48px" Class="mb-1" style="margin: 0 auto;" />
+                        <MudSkeleton SkeletonType="SkeletonType.Text" Width="180px" Height="12px" style="margin: 0 auto;" />
+                    </div>
+                    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="200px" Class="mb-3" />
+                    @for (int i = 0; i < 3; i++)
+                    {
+                        <MudSkeleton SkeletonType="SkeletonType.Text" Width="100%" Height="16px" Class="mb-2" />
+                    }
+                    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="40px" />
                 </MudPaper>
             </div>
+
+            <!-- Card E Skeleton - Inflation History (span-6) -->
+            <div class="span-6">
+                <MudPaper Class="featured-card worldbank-featured" Elevation="0">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <div>
+                            <MudSkeleton SkeletonType="SkeletonType.Text" Width="140px" Height="14px" Class="mb-1" />
+                            <MudSkeleton SkeletonType="SkeletonType.Text" Width="180px" Height="12px" />
+                        </div>
+                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="80px" Height="24px" />
+                    </div>
+                    @for (int i = 0; i < 6; i++)
+                    {
+                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="50px" Class="mb-2" />
+                    }
+                    <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                        @for (int i = 0; i < 3; i++)
+                        {
+                            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="50px" />
+                        }
+                    </div>
+                </MudPaper>
+            </div>
+
+            <!-- Card F Skeleton - Account Ledger (span-12) -->
             <div class="span-12">
                 <MudPaper Class="featured-card" Elevation="0">
-                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="200px" Height="20px" Class="mb-4" />
-                    @for (int i = 0; i < 5; i++)
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <MudSkeleton SkeletonType="SkeletonType.Text" Width="220px" Height="20px" />
+                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="180px" Height="36px" />
+                    </div>
+                    @for (int i = 0; i < 10; i++)
                     {
                         <MudSkeleton SkeletonType="SkeletonType.Text" Width="100%" Height="40px" Class="mb-2" />
                     }
                 </MudPaper>
             </div>
+
+            <!-- Calendar Skeleton (span-12) -->
+            <div class="span-12">
+                <MudPaper Class="featured-card" Elevation="0">
+                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="260px" Height="20px" Class="mb-3" />
+                    <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="120px" Height="32px" />
+                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="120px" Height="32px" />
+                    </div>
+                    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="400px" />
+                </MudPaper>
+            </div>
         </div>
     }
     else
-    {
-        <!-- TOP METRICS ROW - 4 Compact Cards -->
-        <div class="top-metrics-grid mb-6">
-            <!-- Cash -->
-            <div class="metric-card-compact">
-                <div class="metric-icon-compact">
-                    <MudIcon Icon="@Icons.Material.Filled.AccountBalanceWallet" Size="Size.Small" />
-                </div>
-                <div>
-                    <div class="metric-value-compact">₱@FormatCompact(CashBalance)</div>
-                    <div class="metric-label-compact">Cash Balance</div>
-                </div>
-            </div>
-
-            <!-- Net Profit -->
-            <div class="metric-card-compact">
-                <div class="metric-icon-compact"
-                    style="@(NetProfit < 0 ? "background: linear-gradient(135deg, #F44336 0%, #E91E63 100%);" : "")">
-                    <MudIcon Icon="@Icons.Material.Filled.TrendingUp" Size="Size.Small" />
-                </div>
-                <div>
-                    <div class="metric-value-compact" style="@(NetProfit < 0 ? "-webkit-text-fill-color: #F44336;" : "")">
-                        ₱@FormatCompact(NetProfit)</div>
-                    <div class="metric-label-compact">Net Profit</div>
-                </div>
-            </div>
-
-            <!-- Total Assets -->
-            <div class="metric-card-compact">
-                <div class="metric-icon-compact">
-                    <MudIcon Icon="@Icons.Material.Filled.BusinessCenter" Size="Size.Small" />
-                </div>
-                <div>
-                    <div class="metric-value-compact">₱@FormatCompact(TotalAssets)</div>
-                    <div class="metric-label-compact">Total Assets</div>
-                </div>
-            </div>
-
-            <!-- Liabilities -->
-            <div class="metric-card-compact">
-                <div class="metric-icon-compact" style="background: linear-gradient(135deg, #607D8B 0%, #455A64 100%);">
-                    <MudIcon Icon="@Icons.Material.Filled.CreditCard" Size="Size.Small" />
-                </div>
-                <div>
-                    <div class="metric-value-compact">₱@FormatCompact(TotalLiabilities)</div>
-                    <div class="metric-label-compact">Liabilities</div>
-                </div>
-            </div>
-        </div>
+    {      
 
         <!-- MAIN CONTENT GRID -->
         <div class="dashboard-grid">
 
-            <!-- CARD A: Cash Flow Ratio (span-3) -->
-            <div class="span-3">
-                <div class="featured-card">
-                    <div
-                        style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
-                        <span
-                            style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: rgb(22, 84, 127); opacity: 0.7;">Cash
-                            Flow Ratio</span>
-                        <MudIcon Icon="@Icons.Material.Filled.Percent" Size="Size.Small"
-                            Style="color: rgb(56, 146, 147);" />
-                    </div>
-                    <div class="featured-value-huge">@CashFlowRatio.ToString("F1")%</div>
-                    <div style="font-size: 0.8rem; color: #6b7280; margin-top: 0.25rem; margin-bottom: 1rem;">Liquidity
-                        position indicator</div>
-
-                    <!-- Mini Wave Chart -->
-                    <div
-                        style="width: 100%; height: 80px; background: linear-gradient(180deg, rgba(22, 84, 127, 0.08) 0%, rgba(22, 84, 127, 0.02) 100%); border-radius: 12px; position: relative; margin-top: auto;">
-                        <div
-                            style="position: absolute; bottom: 0; left: 0; right: 0; height: 70%; background: linear-gradient(90deg, rgb(22, 84, 127) 0%, rgb(56, 146, 147) 100%); opacity: 0.25; clip-path: polygon(0% 100%, 0% 70%, 10% 65%, 20% 75%, 30% 55%, 40% 60%, 50% 45%, 60% 55%, 70% 40%, 80% 50%, 90% 35%, 100% 25%, 100% 100%); border-radius: 0 0 12px 12px;">
-                        </div>
-                    </div>
-
-                    <!-- Bottom Stats -->
-                    <div
-                        style="display: flex; justify-content: space-between; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(22, 84, 127, 0.1);">
-                        <div style="text-align: center;">
-                            <div style="font-size: 1.1rem; font-weight: 700; color: rgb(22, 84, 127);">@CashInMillions M
-                            </div>
-                            <div style="font-size: 0.65rem; text-transform: uppercase; color: #9ca3af;">Cash</div>
-                        </div>
-                        <div style="width: 1px; background: rgba(22, 84, 127, 0.1);"></div>
-                        <div style="text-align: center;">
-                            <div style="font-size: 1.1rem; font-weight: 700; color: rgb(56, 146, 147);">@AssetsInMillions M
-                            </div>
-                            <div style="font-size: 0.65rem; text-transform: uppercase; color: #9ca3af;">Assets</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- CARD B: Active Transactions (span-3) -->
-            <div class="span-3">
-                <div class="featured-card">
-                    <div
-                        style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
-                        <span
-                            style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: rgb(22, 84, 127); opacity: 0.7;">Active
-                            Transactions</span>
-                        <MudIcon Icon="@Icons.Material.Filled.SwapHoriz" Size="Size.Small"
-                            Style="color: rgb(56, 146, 147);" />
-                    </div>
-                    <div class="featured-value-large">@ActiveTransactions</div>
-                    <div style="font-size: 0.8rem; color: #6b7280; margin-top: 0.25rem;">Pending payments & collections
-                    </div>
-
-                    <!-- Split Stats -->
-                    <div style="display: flex; gap: 1rem; margin: 1rem 0;">
-                        <div
-                            style="flex: 1; background: rgba(244, 67, 54, 0.1); border-radius: 10px; padding: 0.75rem; text-align: center;">
-                            <div style="font-size: 1.25rem; font-weight: 700; color: #F44336;">@BillsToPay</div>
-                            <div style="font-size: 0.65rem; text-transform: uppercase; color: #F44336;">To Pay</div>
-                        </div>
-                        <div
-                            style="flex: 1; background: rgba(76, 175, 80, 0.1); border-radius: 10px; padding: 0.75rem; text-align: center;">
-                            <div style="font-size: 1.25rem; font-weight: 700; color: #4CAF50;">@InvoicesToCollect</div>
-                            <div style="font-size: 0.65rem; text-transform: uppercase; color: #4CAF50;">To Collect</div>
-                        </div>
-                    </div>
-
-                    <!-- Receivable & Payable Amounts -->
-                    <div
-                        style="display: flex; gap: 0.75rem; margin-top: auto; padding-top: 0.75rem; border-top: 1px solid rgba(22, 84, 127, 0.1);">
-                        <div
-                            style="flex: 1; display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; background: rgba(255, 193, 7, 0.08); border-radius: 8px; border-left: 3px solid #FFC107;">
-                            <MudIcon Icon="@Icons.Material.Filled.RequestQuote" Size="Size.Small" Style="color: #FF9800;" />
-                            <div>
-                                <div style="font-size: 0.95rem; font-weight: 700; color: #FF9800;">
-                                    ₱@FormatCompact(ArOutstanding)</div>
-                                <div style="font-size: 0.6rem; text-transform: uppercase; color: #FF9800; opacity: 0.8;">
-                                    Receivable</div>
-                            </div>
-                        </div>
-                        <div
-                            style="flex: 1; display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; background: rgba(255, 87, 34, 0.08); border-radius: 8px; border-left: 3px solid #FF5722;">
-                            <MudIcon Icon="@Icons.Material.Filled.Payment" Size="Size.Small" Style="color: #FF5722;" />
-                            <div>
-                                <div style="font-size: 0.95rem; font-weight: 700; color: #FF5722;">
-                                    ₱@FormatCompact(ApOutstanding)</div>
-                                <div style="font-size: 0.6rem; text-transform: uppercase; color: #FF5722; opacity: 0.8;">
-                                    Payable</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- CARD C: Financial Summary (span-6) -->
+            <!-- CARD A: Financial Summary (span-6) -->
             <div class="span-6">
                 <div class="featured-card">
                     <div
@@ -551,18 +480,24 @@
                     </div>
 
                     <!-- Quick Stats Row -->
-                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;">
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem;">
                         <div
                             style="text-align: center; padding: 0.75rem; background: rgba(22, 84, 127, 0.05); border-radius: 10px;">
-                            <div style="font-size: 1.25rem; font-weight: 700; color: rgb(22, 84, 127);">@ActiveAccounts
+                            <div style="font-size: 1.25rem; font-weight: 700; color: rgb(22, 84, 127);">₱@FormatCompact(CashBalance)
                             </div>
-                            <div style="font-size: 0.65rem; text-transform: uppercase; color: #6b7280;">Accounts</div>
+                            <div style="font-size: 0.65rem; text-transform: uppercase; color: #6b7280;">Cash</div>
                         </div>
                         <div
                             style="text-align: center; padding: 0.75rem; background: rgba(56, 146, 147, 0.05); border-radius: 10px;">
-                            <div style="font-size: 1.25rem; font-weight: 700; color: rgb(56, 146, 147);">@ActiveTransactions
+                            <div style="font-size: 1.25rem; font-weight: 700; color: rgb(56, 146, 147);">₱@FormatCompact(TotalAssets)
                             </div>
-                            <div style="font-size: 0.65rem; text-transform: uppercase; color: #6b7280;">Transactions</div>
+                            <div style="font-size: 0.65rem; text-transform: uppercase; color: #6b7280;">Assets</div>
+                        </div>
+                        <div
+                            style="text-align: center; padding: 0.75rem; background: rgba(96, 125, 139, 0.05); border-radius: 10px;">
+                            <div style="font-size: 1.25rem; font-weight: 700; color: rgb(96, 125, 139);">₱@FormatCompact(TotalLiabilities)
+                            </div>
+                            <div style="font-size: 0.65rem; text-transform: uppercase; color: #6b7280;">Liabilities</div>
                         </div>
                         <div
                             style="text-align: center; padding: 0.75rem; background: rgba(156, 39, 176, 0.05); border-radius: 10px;">
@@ -574,7 +509,148 @@
                 </div>
             </div>
 
-            <!-- CARD D: Philippines Economic Health (span-6) - World Bank Line Chart -->
+            <!-- CARD B: Active Transactions (span-3) -->
+            <div class="span-3">
+                <div class="featured-card">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+                        <span
+                            style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: rgb(22, 84, 127); opacity: 0.7;">Active
+                            Transactions</span>
+                        <MudIcon Icon="@Icons.Material.Filled.SwapHoriz" Size="Size.Small"
+                            Style="color: rgb(56, 146, 147);" />
+                    </div>
+                    <div class="featured-value-large">@ActiveTransactions</div>
+                    <div style="font-size: 0.8rem; color: #6b7280; margin-top: 0.25rem;">Pending payments & collections
+                    </div>
+
+                    <!-- Split Stats -->
+                    <div style="display: flex; gap: 1rem; margin: 1rem 0;">
+                        <div
+                            style="flex: 1; background: rgba(244, 67, 54, 0.1); border-radius: 10px; padding: 0.75rem; text-align: center;">
+                            <div style="font-size: 1.25rem; font-weight: 700; color: #F44336;">@BillsToPay</div>
+                            <div style="font-size: 0.65rem; text-transform: uppercase; color: #F44336;">To Pay</div>
+                        </div>
+                        <div
+                            style="flex: 1; background: rgba(76, 175, 80, 0.1); border-radius: 10px; padding: 0.75rem; text-align: center;">
+                            <div style="font-size: 1.25rem; font-weight: 700; color: #4CAF50;">@InvoicesToCollect</div>
+                            <div style="font-size: 0.65rem; text-transform: uppercase; color: #4CAF50;">To Collect</div>
+                        </div>
+                    </div>
+
+                    <!-- Receivable & Payable Amounts -->
+                    <div
+                        style="display: flex; gap: 0.75rem; margin-top: auto; padding-top: 0.75rem; border-top: 1px solid rgba(22, 84, 127, 0.1);">
+                        <div
+                            style="flex: 1; display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; background: rgba(255, 193, 7, 0.08); border-radius: 8px; border-left: 3px solid #FFC107;">
+                            <MudIcon Icon="@Icons.Material.Filled.RequestQuote" Size="Size.Small" Style="color: #FF9800;" />
+                            <div>
+                                <div style="font-size: 0.95rem; font-weight: 700; color: #FF9800;">
+                                    ₱@FormatCompact(ArOutstanding)</div>
+                                <div style="font-size: 0.6rem; text-transform: uppercase; color: #FF9800; opacity: 0.8;">
+                                    Receivable</div>
+                            </div>
+                        </div>
+                        <div
+                            style="flex: 1; display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; background: rgba(255, 87, 34, 0.08); border-radius: 8px; border-left: 3px solid #FF5722;">
+                            <MudIcon Icon="@Icons.Material.Filled.Payment" Size="Size.Small" Style="color: #FF5722;" />
+                            <div>
+                                <div style="font-size: 0.95rem; font-weight: 700; color: #FF5722;">
+                                    ₱@FormatCompact(ApOutstanding)</div>
+                                <div style="font-size: 0.6rem; text-transform: uppercase; color: #FF5722; opacity: 0.8;">
+                                    Payable</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CARD C: USD to PHP Exchange Rate (span-3) - INTERACTIVE COMPACT -->
+            <div class="span-3">
+                <div class="featured-card forex-featured">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+                        <span style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: rgb(33, 150, 243); opacity: 0.8;">USD to PHP</span>
+                        <MudIcon Icon="@Icons.Material.Filled.CurrencyExchange" Size="Size.Small" Style="color: rgb(33, 150, 243);" />
+                    </div>
+                    <div style="font-size: 0.85rem; color: rgb(33, 150, 243); font-weight: 500; margin-bottom: 1rem;">Live Currency Converter</div>
+
+                    @if (usdToPhpRate > 0)
+                    {
+                        <!-- Exchange Rate Display -->
+                        <div style="background: linear-gradient(135deg, rgba(33, 150, 243, 0.15) 0%, rgba(33, 150, 243, 0.05) 100%); border-radius: 16px; padding: 1rem; margin-bottom: 1rem; border: 2px solid rgba(33, 150, 243, 0.3); text-align: center;">
+                            <div style="display: flex; justify-content: center; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                                <div style="width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, #1976D2 0%, #2196F3 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 1rem; font-weight: 800;">$</div>
+                                <MudIcon Icon="@Icons.Material.Filled.ArrowForward" Size="Size.Small" Style="color: #2196F3;" />
+                                <div style="width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, #FFC107 0%, #FFD54F 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 1rem; font-weight: 800;">₱</div>
+                            </div>
+                            <div class="usd-php-pulse" style="font-size: 1.75rem; font-weight: 800; color: #1976D2; line-height: 1;">@usdToPhpRate.ToString("F2")</div>
+                            <div style="font-size: 0.65rem; color: #6b7280; margin-top: 0.25rem;">PHP per 1 USD</div>
+                        </div>
+
+                        <!-- Compact Converter - Input and Result on Same Line -->
+                        <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem;">
+                            <!-- USD Input -->
+                            <div style="flex: 1;">
+                                <div style="display: flex; align-items: center; gap: 0.25rem; margin-bottom: 0.25rem;">
+                                    <div style="width: 20px; height: 20px; border-radius: 50%; background: linear-gradient(135deg, #1976D2 0%, #2196F3 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 0.7rem; font-weight: 800;">$</div>
+                                    <span style="font-size: 0.7rem; color: #374151; font-weight: 600;">USD</span>
+                                </div>
+                                <MudNumericField @bind-Value="usdInputAmount" 
+                                               Min="0" 
+                                               Step="1M"
+                                               Variant="Variant.Outlined"
+                                               Margin="Margin.Dense"
+                                               HideSpinButtons="true"
+                                               Style="background: white;" />
+                            </div>
+
+                            <!-- Arrow -->
+                            <MudIcon Icon="@Icons.Material.Filled.ArrowForward" Style="color: #2196F3; margin-top: 1.25rem;" Size="Size.Small" />
+
+                            <!-- PHP Result -->
+                            <div style="flex: 1;">
+                                <div style="display: flex; align-items: center; gap: 0.25rem; margin-bottom: 0.25rem;">
+                                    <div style="width: 20px; height: 20px; border-radius: 50%; background: linear-gradient(135deg, #FFC107 0%, #FFD54F 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 0.7rem; font-weight: 800;">₱</div>
+                                    <span style="font-size: 0.7rem; color: #374151; font-weight: 600;">PHP</span>
+                                </div>
+                                <div style="background: linear-gradient(135deg, rgba(33, 150, 243, 0.1) 0%, rgba(33, 150, 243, 0.05) 100%); border: 1px solid rgba(33, 150, 243, 0.2); border-radius: 4px; padding: 0.5rem; text-align: center;">
+                                    <div style="font-size: 1.1rem; font-weight: 700; color: #1976D2;">@((usdInputAmount * usdToPhpRate).ToString("N2"))</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Quick Conversion Buttons -->
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin-bottom: 0.75rem;">
+                            @foreach (var amount in new[] { 100, 500, 1000 })
+                            {
+                                <MudButton Variant="Variant.Outlined" 
+                                         Size="Size.Small"
+                                         OnClick="@(() => usdInputAmount = amount)"
+                                         Style="border-color: rgba(33, 150, 243, 0.3); color: #1976D2; font-weight: 600; font-size: 0.7rem;">
+                                    $@amount
+                                </MudButton>
+                            }
+                        </div>
+
+                        <!-- Last Updated Footer -->
+                        <div style="padding-top: 0.5rem; border-top: 1px solid rgba(33, 150, 243, 0.1); text-align: center;">
+                            <div style="font-size: 0.65rem; color: #6b7280; display: flex; align-items: center; justify-content: center; gap: 0.25rem;">
+                                <MudIcon Icon="@Icons.Material.Filled.Update" Size="Size.Small" Style="color: #6b7280; font-size: 0.9rem;" />
+                                Live Rate • @DateTime.Now.ToString("MMM dd, HH:mm")
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div style="text-align: center; padding: 2rem; color: #9ca3af;">
+                            <MudIcon Icon="@Icons.Material.Filled.CloudOff" Size="Size.Large" />
+                            <div style="margin-top: 0.5rem; font-size: 0.9rem;">Loading forex data...</div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- CARD D: Philippines Economic Health (span-6) -->
             <div class="span-6">
                 <div class="featured-card worldbank-featured">
                     <div
@@ -686,7 +762,7 @@
                     {
                         <!-- Inflation Data Table -->
                         <div style="flex: 1; overflow: hidden;">
-                            @foreach (var data in inflationData.Take(6))
+                            @foreach (var data in inflationData.Take(8))
                             {
                                 var prevVal = GetPreviousInflationValue(data.Date);
                                 var isUp = prevVal.HasValue && data.Value > prevVal;
@@ -739,15 +815,7 @@
                                     @(inflationData.Take(5).Where(x => x.Value.HasValue).Average(x => x.Value)?.ToString("F2")
                                                                 ?? "N/A")%</div>
                             </div>
-                            <div
-                                style="flex: 1; text-align: center; padding: 0.5rem; background: @GetInflationStatusBg(inflationData.First().Value); border-radius: 8px;">
-                                <div
-                                    style="font-size: 0.65rem; text-transform: uppercase; color: @GetInflationStatusColor(inflationData.First().Value); opacity: 0.8;">
-                                    Status</div>
-                                <div
-                                    style="font-size: 1rem; font-weight: 700; color: @GetInflationStatusColor(inflationData.First().Value);">
-                                    @GetInflationStatus(inflationData.First().Value)</div>
-                            </div>
+                            
                         </div>
                     }
                     else
@@ -760,30 +828,30 @@
                 </div>
             </div>
 
-            <!-- CARD E: Account Ledger Snapshot (span-12) -->
+            <!-- CARD F: Account Ledger Snapshot (span-12) -->
             <div class="span-12">
                 <div class="featured-card">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                        <div class="section-title" style="margin-bottom: 0;">
-                            <MudIcon Icon="@Icons.Material.Filled.ListAlt" Size="Size.Medium" />
-                            Account Ledger Snapshot
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <MudIcon Icon="@Icons.Material.Filled.ListAlt" Size="Size.Medium" Style="color: rgb(22, 84, 127);" />
+                            <span style="font-size: 1.1rem; font-weight: 700; color: rgb(22, 84, 127);">Account Ledger Snapshot</span>
                         </div>
-                        <MudButton Variant="Variant.Filled" Class="custom-button" Href="reports/financials"
+                        <MudButton Variant="Variant.Filled" Href="reports/financials"
                             StartIcon="@Icons.Material.Filled.Assessment" Size="Size.Small"
-                            Style="color: white !important;">
+                            Style="background: linear-gradient(135deg, rgb(22, 84, 127) 0%, rgb(56, 146, 147) 100%); color: white;">
                             View Financial Reports
                         </MudButton>
                     </div>
 
                     <MudTable Items="@(trialBalance?.Accounts.Take(10))" Dense="true" Hover="true" Elevation="0"
-                        Class="custom-table" Style="border-radius: 12px; overflow: hidden;">
+                        Style="border-radius: 12px; overflow: hidden; border: 1px solid rgba(22, 84, 127, 0.1);">
 
                         <HeaderContent>
-                            <MudTh Style="font-size: 0.85rem; width: 100px;">Code</MudTh>
-                            <MudTh Style="font-size: 0.85rem;">Account Name</MudTh>
-                            <MudTh align="Align.Right" Style="font-size: 0.85rem; width: 140px;">Debit (₱)</MudTh>
-                            <MudTh align="Align.Right" Style="font-size: 0.85rem; width: 140px;">Credit (₱)</MudTh>
-                            <MudTh align="Align.Right" Style="font-size: 0.85rem; width: 140px;">Balance (₱)</MudTh>
+                            <MudTh Style="font-size: 0.85rem; width: 100px; background: rgba(22, 84, 127, 0.05);">Code</MudTh>
+                            <MudTh Style="font-size: 0.85rem; background: rgba(22, 84, 127, 0.05);">Account Name</MudTh>
+                            <MudTh align="Align.Right" Style="font-size: 0.85rem; width: 140px; background: rgba(22, 84, 127, 0.05);">Debit (₱)</MudTh>
+                            <MudTh align="Align.Right" Style="font-size: 0.85rem; width: 140px; background: rgba(22, 84, 127, 0.05);">Credit (₱)</MudTh>
+                            <MudTh align="Align.Right" Style="font-size: 0.85rem; width: 140px; background: rgba(22, 84, 127, 0.05);">Balance (₱)</MudTh>
                         </HeaderContent>
 
                         <RowTemplate>
@@ -794,7 +862,7 @@
                                 </MudChip>
                             </MudTd>
                             <MudTd Style="padding: 12px;">
-                                <MudText Typo="Typo.body2" Style="font-weight: 600;" Class="custom-text-primary">
+                                <MudText Typo="Typo.body2" Style="font-weight: 600; color: rgb(22, 84, 127);">
                                     @context.AccountName
                                 </MudText>
                             </MudTd>
@@ -809,7 +877,7 @@
                                 </MudText>
                             </MudTd>
                             <MudTd align="Align.Right" Style="padding: 12px;">
-                                <MudText Style="font-weight: 700; font-size: 0.95rem;" Class="custom-text-primary">
+                                <MudText Style="font-weight: 700; font-size: 0.95rem; color: rgb(22, 84, 127);">
                                     @((context.Debit - context.Credit).ToString("N0"))
                                 </MudText>
                             </MudTd>
@@ -821,20 +889,20 @@
 
             <!-- CALENDAR SECTION (span-12) -->
             <div class="span-12">
-                <div class="calendar-section pa-5">
-                    <div class="section-title" style="margin-bottom: 1rem;">
-                        <MudIcon Icon="@Icons.Material.Filled.CalendarMonth" Size="Size.Medium" />
-                        Payment & Collection Schedule
+                <div class="featured-card">
+                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
+                        <MudIcon Icon="@Icons.Material.Filled.CalendarMonth" Size="Size.Medium" Style="color: rgb(22, 84, 127);" />
+                        <span style="font-size: 1.1rem; font-weight: 700; color: rgb(22, 84, 127);">Payment & Collection Schedule</span>
                     </div>
 
                     <div class="d-flex gap-3 mb-4">
-                        <div class="legend-item" style="padding: 6px 12px;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem; padding: 6px 12px; background: rgba(76, 175, 80, 0.1); border-radius: 8px;">
                             <MudIcon Icon="@Icons.Material.Filled.Circle" Style="color: #4CAF50;" Size="Size.Small" />
-                            <span style="font-size: 0.8rem;">Invoices Due</span>
+                            <span style="font-size: 0.8rem; color: #4CAF50; font-weight: 500;">Invoices Due</span>
                         </div>
-                        <div class="legend-item" style="padding: 6px 12px;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem; padding: 6px 12px; background: rgba(244, 67, 54, 0.1); border-radius: 8px;">
                             <MudIcon Icon="@Icons.Material.Filled.Circle" Style="color: #F44336;" Size="Size.Small" />
-                            <span style="font-size: 0.8rem;">Bills Due</span>
+                            <span style="font-size: 0.8rem; color: #F44336; font-weight: 500;">Bills Due</span>
                         </div>
                     </div>
 
@@ -854,6 +922,8 @@
     private List<CalendarItem> _events = new();
     private bool isLoading = false;
     private List<WorldBankDataPoint> inflationData = new();
+    private decimal usdToPhpRate = 0;
+    private decimal usdInputAmount = 100; // Default conversion amount
 
     // Chart data for MudBlazor
     private List<ChartSeries> inflationChartSeries = new();
@@ -870,11 +940,7 @@
     private decimal TotalRevenue;
     private decimal TotalExpenses;
 
-    // --- New Calculated Properties ---
-    private decimal CashFlowRatio => TotalAssets > 0 ? (CashBalance / TotalAssets * 100) : 0;
-    private string CashInMillions => (CashBalance / 1000000).ToString("F1");
-    private string AssetsInMillions => (TotalAssets / 1000000).ToString("F1");
-
+    // --- Calculated Properties ---
     private int ActiveTransactions => BillsToPay + InvoicesToCollect;
     private int BillsToPay;
     private int InvoicesToCollect;
@@ -897,14 +963,16 @@
             var billsTask = PayableService.GetBillsAsync();
             var invoicesTask = ReceivableService.GetInvoicesAsync();
             var worldBankTask = WorldBankService.GetInflationDataAsync();
+            var forexTask = FrankfurterService.GetUsdToPhpRateAsync();
 
-            await Task.WhenAll(tbTask, acctsTask, billsTask, invoicesTask, worldBankTask);
+            await Task.WhenAll(tbTask, acctsTask, billsTask, invoicesTask, worldBankTask, forexTask);
 
             trialBalance = tbTask.Result;
             var accountsList = acctsTask.Result;
 
             accountTypes = accountsList?.ToDictionary(a => a.Code, a => a.Type) ?? new Dictionary<string, string>();
             inflationData = worldBankTask.Result.Where(x => x.Value.HasValue).OrderByDescending(x => x.Date).ToList();
+            usdToPhpRate = forexTask.Result;
 
             // Prepare chart data
             PrepareInflationChartData();
@@ -954,13 +1022,9 @@
     {
         if (!inflationData.Any()) return;
 
-        // Take last 10 years of data and reverse to show chronologically
         var chartData = inflationData.Take(10).Reverse().ToList();
-
-        // Extract years for X-axis
         inflationYears = chartData.Select(d => d.Date ?? "").ToArray();
 
-        // Create chart series
         inflationChartSeries = new List<ChartSeries>
         {
             new ChartSeries
@@ -970,7 +1034,6 @@
             }
         };
 
-        // Configure chart options
         inflationChartOptions = new ChartOptions
         {
             YAxisTicks = 1,
@@ -1031,7 +1094,6 @@
     private string GetInflationStatus(decimal? value)
     {
         if (!value.HasValue) return "No Data";
-
         if (value < 2) return "Low";
         if (value <= 4) return "Moderate";
         return "High";
@@ -1040,7 +1102,6 @@
     private decimal? GetPreviousInflationValue(string? currentYear)
     {
         if (string.IsNullOrEmpty(currentYear) || !int.TryParse(currentYear, out int year)) return null;
-
         var previousYear = (year - 1).ToString();
         var previousData = inflationData.FirstOrDefault(x => x.Date == previousYear);
         return previousData?.Value;
