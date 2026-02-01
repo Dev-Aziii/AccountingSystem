@@ -1,20 +1,66 @@
 ﻿@using AccountingSystem.Shared.DTOs
 @using AccountingSystem.Client.Services
 @using MudBlazor
+@using System.ComponentModel.DataAnnotations
 @inject PayableService PayableService
 @inject ISnackbar Snackbar
 
 <MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Material.Filled.Business" Class="mr-2" />
+            @(Vendor?.Id > 0 ? "Edit Vendor" : "Create New Vendor")
+        </MudText>
+    </TitleContent>
+
     <DialogContent>
-        <MudForm @ref="form" @bind-IsValid="@success">
-            <MudTextField T="string" Label="Vendor Name" Required="true" RequiredError="Name is required!" @bind-Value="model.Name" />
-            <MudTextField T="string" Label="Email" @bind-Value="model.Email" />
-            <MudTextField T="string" Label="Contact Person" @bind-Value="model.ContactPerson" />
+        <MudForm @ref="form" @bind-IsValid="@success" Spacing="4">
+            <MudTextField T="string"
+                          Label="Vendor Name"
+                          Required="true"
+                          RequiredError="Vendor name is required"
+                          @bind-Value="model.Name"
+                          Immediate="true"
+                          Variant="Variant.Outlined"
+                          HelperText="Legal or business name of the vendor" />
+
+            <MudTextField T="string"
+                          Label="Email"
+                          @bind-Value="model.Email"
+                          Validation="@(new EmailAddressAttribute())"
+                          Immediate="true"
+                          Variant="Variant.Outlined"
+                          InputType="InputType.Email"
+                          HelperText="Primary email address for communications" />
+
+            <MudTextField T="string"
+                          Label="Contact Person"
+                          @bind-Value="model.ContactPerson"
+                          Variant="Variant.Outlined"
+                          HelperText="Primary point of contact at the vendor" />
         </MudForm>
     </DialogContent>
+
     <DialogActions>
-        <MudButton OnClick="Cancel">Cancel</MudButton>
-        <MudButton Color="Color.Primary" OnClick="Submit">@((Vendor?.Id > 0) ? "Update" : "Create")</MudButton>
+        <MudButton OnClick="Cancel"
+                   Variant="Variant.Text">
+            Cancel
+        </MudButton>
+        <MudButton Color="Color.Primary"
+                   OnClick="Submit"
+                   Variant="Variant.Filled"
+                   Disabled="isSubmitting"
+                   StartIcon="@(isSubmitting ? null : (Vendor?.Id > 0 ? Icons.Material.Filled.Save : Icons.Material.Filled.Add))">
+            @if (isSubmitting)
+            {
+                <MudProgressCircular Class="mr-2" Size="Size.Small" Indeterminate="true" />
+                @(Vendor?.Id > 0 ? "Updating..." : "Creating...")
+            }
+            else
+            {
+                @(Vendor?.Id > 0 ? "Update" : "Create")
+            }
+        </MudButton>
     </DialogActions>
 </MudDialog>
 
@@ -25,8 +71,9 @@
     [Parameter]
     public VendorDTO? Vendor { get; set; }
 
-    private CreateVendorDTO model = new CreateVendorDTO();
+    private CreateVendorDTO model = new();
     private bool success;
+    private bool isSubmitting;
     private MudForm form = default!;
 
     protected override void OnInitialized()
@@ -44,7 +91,14 @@
     private async Task Submit()
     {
         await form.Validate();
-        if (!form.IsValid) return;
+
+        if (!form.IsValid)
+        {
+            Snackbar.Add("Please correct the validation errors.", Severity.Warning);
+            return;
+        }
+
+        isSubmitting = true;
 
         try
         {
@@ -57,19 +111,25 @@
                     Email = model.Email,
                     ContactPerson = model.ContactPerson
                 };
+
                 await PayableService.UpdateVendorAsync(updateDto);
-                Snackbar.Add("Vendor updated.", Severity.Success);
+                Snackbar.Add("Vendor updated successfully!", Severity.Success);
             }
             else
             {
                 await PayableService.CreateVendorAsync(model);
-                Snackbar.Add("Vendor created.", Severity.Success);
+                Snackbar.Add("Vendor created successfully!", Severity.Success);
             }
+
             MudDialog.Close(DialogResult.Ok(true));
         }
         catch (Exception ex)
         {
-            Snackbar.Add(ex.Message, Severity.Error);
+            Snackbar.Add($"Error: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isSubmitting = false;
         }
     }
 }

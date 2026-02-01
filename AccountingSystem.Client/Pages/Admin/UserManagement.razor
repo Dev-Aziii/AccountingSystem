@@ -266,21 +266,47 @@
 
     private async Task ConfirmDelete(int id)
     {
-        bool? result = await DialogService.ShowMessageBox("Archive", "Archive this user?", yesText: "Archive", cancelText: "Cancel");
+        bool? result = await DialogService.ShowMessageBox(
+            "Archive User?",
+            "This user will be archived and lose system access. You can restore them later if needed.",
+            yesText: "Archive",
+            cancelText: "Cancel");
+
         if (result == true)
         {
-            try { await UserService.DeleteUserAsync(id); Snackbar.Add("User archived.", Severity.Success); await LoadUsers(false); }
-            catch (Exception ex) { Snackbar.Add(ex.Message, Severity.Error); }
+            try
+            {
+                await UserService.DeleteUserAsync(id);
+                Snackbar.Add("User archived successfully!", Severity.Success);
+                await LoadUsers(false);
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Failed to archive user: {ex.Message}", Severity.Error);
+            }
         }
     }
 
     private async Task ConfirmRestore(int id)
     {
-        bool? result = await DialogService.ShowMessageBox("Restore", "Restore this user?", yesText: "Restore", cancelText: "Cancel");
+        bool? result = await DialogService.ShowMessageBox(
+            "Restore User?",
+            "This user will regain system access with their previous permissions and role.",
+            yesText: "Restore",
+            cancelText: "Cancel");
+
         if (result == true)
         {
-            try { await UserService.RestoreUserAsync(id); Snackbar.Add("User restored.", Severity.Success); await LoadUsers(true); }
-            catch (Exception ex) { Snackbar.Add(ex.Message, Severity.Error); }
+            try
+            {
+                await UserService.RestoreUserAsync(id);
+                Snackbar.Add("User restored successfully!", Severity.Success);
+                await LoadUsers(true);
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Failed to restore user: {ex.Message}", Severity.Error);
+            }
         }
     }
 }

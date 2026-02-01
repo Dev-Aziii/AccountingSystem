@@ -5,22 +5,82 @@
 @inject ISnackbar Snackbar
 
 <MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Material.Filled.AccountBalance" Class="mr-2" />
+            @(Account?.Id > 0 ? "Edit Account" : "Create New Account")
+        </MudText>
+    </TitleContent>
+
     <DialogContent>
-        <MudForm @ref="form" @bind-IsValid="@success">
-            <MudTextField T="string" Label="Code" Required="true" @bind-Value="model.Code" MaxLength="10" />
-            <MudTextField T="string" Label="Name" Required="true" @bind-Value="model.Name" />
-            <MudSelect T="string" Label="Type" Required="true" @bind-Value="model.Type" AnchorOrigin="Origin.BottomCenter">
-                <MudSelectItem Value="@("Asset")" />
-                <MudSelectItem Value="@("Liability")" />
-                <MudSelectItem Value="@("Equity")" />
-                <MudSelectItem Value="@("Revenue")" />
-                <MudSelectItem Value="@("Expense")" />
+        <MudForm @ref="form" @bind-IsValid="@success" Spacing="4">
+            <MudTextField T="string"
+                          Label="Account Code"
+                          Required="true"
+                          RequiredError="Code is required"
+                          @bind-Value="model.Code"
+                          MaxLength="10"
+                          Counter="10"
+                          Immediate="true"
+                          Variant="Variant.Outlined"
+                          HelperText="Unique identifier for the account (max 10 characters)" />
+
+            <MudTextField T="string"
+                          Label="Account Name"
+                          Required="true"
+                          RequiredError="Name is required"
+                          @bind-Value="model.Name"
+                          Immediate="true"
+                          Variant="Variant.Outlined"
+                          HelperText="Descriptive name for the account" />
+
+            <MudSelect T="string"
+                       Label="Account Type"
+                       Required="true"
+                       RequiredError="Type is required"
+                       @bind-Value="model.Type"
+                       Variant="Variant.Outlined"
+                       AnchorOrigin="Origin.BottomCenter"
+                       HelperText="Select the classification of this account">
+                <MudSelectItem Value="@("Asset")">
+                    <MudIcon Icon="@Icons.Material.Filled.TrendingUp" Size="Size.Small" Class="mr-2" />Asset
+                </MudSelectItem>
+                <MudSelectItem Value="@("Liability")">
+                    <MudIcon Icon="@Icons.Material.Filled.TrendingDown" Size="Size.Small" Class="mr-2" />Liability
+                </MudSelectItem>
+                <MudSelectItem Value="@("Equity")">
+                    <MudIcon Icon="@Icons.Material.Filled.Balance" Size="Size.Small" Class="mr-2" />Equity
+                </MudSelectItem>
+                <MudSelectItem Value="@("Revenue")">
+                    <MudIcon Icon="@Icons.Material.Filled.Paid" Size="Size.Small" Class="mr-2" />Revenue
+                </MudSelectItem>
+                <MudSelectItem Value="@("Expense")">
+                    <MudIcon Icon="@Icons.Material.Filled.ShoppingCart" Size="Size.Small" Class="mr-2" />Expense
+                </MudSelectItem>
             </MudSelect>
         </MudForm>
     </DialogContent>
+
     <DialogActions>
-        <MudButton OnClick="Cancel">Cancel</MudButton>
-        <MudButton Color="Color.Success" OnClick="Submit">@((Account?.Id > 0) ? "Update" : "Create")</MudButton>
+        <MudButton OnClick="Cancel"
+                   Variant="Variant.Text">
+            Cancel
+        </MudButton>
+        <MudButton Color="Color.Primary"
+                   OnClick="Submit"
+                   Variant="Variant.Filled"
+                   Disabled="isSubmitting"
+                   StartIcon="@(isSubmitting ? null : (Account?.Id > 0 ? Icons.Material.Filled.Save : Icons.Material.Filled.Add))">
+            @if (isSubmitting)
+            {
+                <MudProgressCircular Class="mr-2" Size="Size.Small" Indeterminate="true" />
+                @(Account?.Id > 0 ? "Updating..." : "Creating...")
+            }
+            else
+            {
+                @(Account?.Id > 0 ? "Update" : "Create")
+            }
+        </MudButton>
     </DialogActions>
 </MudDialog>
 
@@ -28,10 +88,12 @@
     [CascadingParameter]
     private IMudDialogInstance MudDialog { get; set; } = default!;
 
-    [Parameter] public AccountDTO? Account { get; set; }
+    [Parameter]
+    public AccountDTO? Account { get; set; }
 
-    private CreateAccountDTO model = new CreateAccountDTO();
+    private CreateAccountDTO model = new();
     private bool success;
+    private bool isSubmitting;
     private MudForm form = default!;
 
     protected override void OnInitialized()
@@ -49,7 +111,14 @@
     private async Task Submit()
     {
         await form.Validate();
-        if (!form.IsValid) return;
+
+        if (!form.IsValid)
+        {
+            Snackbar.Add("Please correct the validation errors.", Severity.Warning);
+            return;
+        }
+
+        isSubmitting = true;
 
         try
         {
@@ -62,19 +131,25 @@
                     Name = model.Name ?? string.Empty,
                     Type = model.Type ?? string.Empty
                 };
+
                 await LedgerService.UpdateAccountAsync(updateDto);
-                Snackbar.Add("Account updated.", Severity.Success);
+                Snackbar.Add("Account updated successfully!", Severity.Success);
             }
             else
             {
                 await LedgerService.CreateAccountAsync(model);
-                Snackbar.Add("Account created.", Severity.Success);
+                Snackbar.Add("Account created successfully!", Severity.Success);
             }
+
             MudDialog.Close(DialogResult.Ok(true));
         }
         catch (Exception ex)
         {
-            Snackbar.Add(ex.Message, Severity.Error);
+            Snackbar.Add($"Error: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isSubmitting = false;
         }
     }
 }

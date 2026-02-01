@@ -1,21 +1,66 @@
 ﻿@using AccountingSystem.Shared.DTOs
 @using AccountingSystem.Client.Services
 @using MudBlazor
+@using System.ComponentModel.DataAnnotations
 @inject ReceivableService ReceivableService
 @inject ISnackbar Snackbar
 
 <MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Material.Filled.Person" Class="mr-2" />
+            @(Customer?.Id > 0 ? "Edit Customer" : "Create New Customer")
+        </MudText>
+    </TitleContent>
+
     <DialogContent>
-        <MudForm @ref="form" @bind-IsValid="success">
-            <MudTextField T="string" Label="Customer Name" Required="true" RequiredError="Name is required!" @bind-Value="model.Name" Variant="Variant.Outlined" Class="mb-3" />
-            <MudTextField T="string" Label="Email" @bind-Value="model.Email" Variant="Variant.Outlined" Class="mb-3" />
-            <MudTextField T="string" Label="Phone" @bind-Value="model.Phone" Variant="Variant.Outlined" />
+        <MudForm @ref="form" @bind-IsValid="@success" Spacing="4">
+            <MudTextField T="string"
+                          Label="Customer Name"
+                          Required="true"
+                          RequiredError="Customer name is required"
+                          @bind-Value="model.Name"
+                          Immediate="true"
+                          Variant="Variant.Outlined"
+                          HelperText="Full name or business name of the customer" />
+
+            <MudTextField T="string"
+                          Label="Email"
+                          @bind-Value="model.Email"
+                          Validation="@(new EmailAddressAttribute())"
+                          Immediate="true"
+                          Variant="Variant.Outlined"
+                          InputType="InputType.Email"
+                          HelperText="Primary email address for communications" />
+
+            <MudTextField T="string"
+                          Label="Phone"
+                          @bind-Value="model.Phone"
+                          Variant="Variant.Outlined"
+                          InputType="InputType.Telephone"
+                          HelperText="Contact phone number" />
         </MudForm>
     </DialogContent>
+
     <DialogActions>
-        <MudButton Variant="Variant.Text" OnClick="Cancel">Cancel</MudButton>
-        <MudButton Variant="Variant.Filled" Color="Color.Info" OnClick="Submit">
-            @((Customer != null && Customer.Id > 0) ? "Update" : "Create")
+        <MudButton OnClick="Cancel"
+                   Variant="Variant.Text">
+            Cancel
+        </MudButton>
+        <MudButton Color="Color.Primary"
+                   OnClick="Submit"
+                   Variant="Variant.Filled"
+                   Disabled="isSubmitting"
+                   StartIcon="@(isSubmitting ? null : (Customer?.Id > 0 ? Icons.Material.Filled.Save : Icons.Material.Filled.Add))">
+            @if (isSubmitting)
+            {
+                <MudProgressCircular Class="mr-2" Size="Size.Small" Indeterminate="true" />
+                @(Customer?.Id > 0 ? "Updating..." : "Creating...")
+            }
+            else
+            {
+                @(Customer?.Id > 0 ? "Update" : "Create")
+            }
         </MudButton>
     </DialogActions>
 </MudDialog>
@@ -28,8 +73,9 @@
     public CustomerDTO? Customer { get; set; }
 
     private CreateCustomerDTO model = new();
-    private MudForm? form;
     private bool success;
+    private bool isSubmitting;
+    private MudForm form = default!;
 
     protected override void OnInitialized()
     {
@@ -45,33 +91,46 @@
 
     private async Task Submit()
     {
-        if (form is null) return;
         await form.Validate();
-        if (!form.IsValid) return;
+
+        if (!form.IsValid)
+        {
+            Snackbar.Add("Please correct the validation errors.", Severity.Warning);
+            return;
+        }
+
+        isSubmitting = true;
 
         try
         {
             if (Customer != null && Customer.Id > 0)
             {
-                await ReceivableService.UpdateCustomerAsync(new UpdateCustomerDTO
+                var updateDto = new UpdateCustomerDTO
                 {
                     Id = Customer.Id,
                     Name = model.Name,
                     Email = model.Email,
                     Phone = model.Phone
-                });
-                Snackbar.Add("Customer updated successfully.", Severity.Success);
+                };
+
+                await ReceivableService.UpdateCustomerAsync(updateDto);
+                Snackbar.Add("Customer updated successfully!", Severity.Success);
             }
             else
             {
                 await ReceivableService.CreateCustomerAsync(model);
-                Snackbar.Add("Customer created successfully.", Severity.Success);
+                Snackbar.Add("Customer created successfully!", Severity.Success);
             }
+
             MudDialog.Close(DialogResult.Ok(true));
         }
         catch (Exception ex)
         {
-            Snackbar.Add(ex.Message, Severity.Error);
+            Snackbar.Add($"Error: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isSubmitting = false;
         }
     }
 }

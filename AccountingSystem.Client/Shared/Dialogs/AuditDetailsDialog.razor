@@ -2,68 +2,141 @@
 @using MudBlazor
 
 <MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Material.Filled.History" Class="mr-2" />
+            Audit Log Details
+        </MudText>
+    </TitleContent>
+
     <DialogContent>
-        <MudGrid>
-            <MudItem xs="6">
-                <MudText Typo="Typo.caption">User</MudText>
-                <MudText><b>@Log.UserEmail</b></MudText>
-            </MudItem>
-            <MudItem xs="6">
-                <MudText Typo="Typo.caption">Timestamp</MudText>
-                <MudText><b>@Log.Timestamp.ToLocalTime().ToString("g")</b></MudText>
-            </MudItem>
-            <MudItem xs="6">
-                <MudText Typo="Typo.caption">Action</MudText>
-                <MudChip T="string" Size="Size.Small" Color="@GetColor(Log.Action)">@Log.Action</MudChip>
-            </MudItem>
-            <MudItem xs="6">
-                <MudText Typo="Typo.caption">Target</MudText>
-                <MudText>@Log.EntityName</MudText>
-            </MudItem>
-            <MudItem xs="12">
-                <MudDivider Class="my-2" />
-                <MudText Typo="Typo.subtitle2" Class="mb-1">Request Payload / Changes</MudText>
-                <MudPaper Class="pa-3 mud-theme-dark" Elevation="0" Style="max-height: 300px; overflow: auto;">
-                    <pre style="font-family: monospace; font-size: 0.8rem; white-space: pre-wrap;">@FormatJson(Log.Changes)</pre>
-                </MudPaper>
-            </MudItem>
-        </MudGrid>
+        <MudPaper Elevation="0" Class="pa-4 mb-4" Style="background-color: var(--mud-palette-background-grey);">
+            <MudGrid Spacing="3">
+                <MudItem xs="12" sm="6">
+                    <MudText Typo="Typo.caption" Color="Color.Default">User</MudText>
+                    <MudText Typo="Typo.body2" Class="mt-1">
+                        <MudIcon Icon="@Icons.Material.Filled.Person" Size="Size.Small" Class="mr-1" />
+                        <strong>@Log.UserEmail</strong>
+                    </MudText>
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudText Typo="Typo.caption" Color="Color.Default">Timestamp</MudText>
+                    <MudText Typo="Typo.body2" Class="mt-1">
+                        <MudIcon Icon="@Icons.Material.Filled.AccessTime" Size="Size.Small" Class="mr-1" />
+                        <strong>@Log.Timestamp.ToLocalTime().ToString("g")</strong>
+                    </MudText>
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudText Typo="Typo.caption" Color="Color.Default">Action</MudText>
+                    <div class="mt-1">
+                        <MudChip T="string"
+                                 Size="Size.Small"
+                                 Color="@GetActionColor(Log.Action)"
+                                 Icon="@GetActionIcon(Log.Action)">
+                            @Log.Action
+                        </MudChip>
+                    </div>
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudText Typo="Typo.caption" Color="Color.Default">Target Entity</MudText>
+                    <MudText Typo="Typo.body2" Class="mt-1">
+                        <MudIcon Icon="@Icons.Material.Filled.Label" Size="Size.Small" Class="mr-1" />
+                        <strong>@Log.EntityName</strong>
+                    </MudText>
+                </MudItem>
+            </MudGrid>
+        </MudPaper>
+
+        <MudText Typo="Typo.subtitle2" Class="mb-2">
+            <MudIcon Icon="@Icons.Material.Filled.Code" Size="Size.Small" Class="mr-1" />
+            Request Payload / Changes
+        </MudText>
+        <MudPaper Class="pa-3"
+                  Elevation="1"
+                  Style="max-height: 400px; overflow: auto; background-color: #1e1e1e; border-radius: 4px;">
+            <pre style="font-family: 'Courier New', monospace; font-size: 0.85rem; white-space: pre-wrap; color: #d4d4d4; margin: 0;">@FormatJson(Log.Changes)</pre>
+        </MudPaper>
     </DialogContent>
+
     <DialogActions>
-        <MudButton OnClick="Cancel">Close</MudButton>
+        <MudButton OnClick="Cancel"
+                   Variant="Variant.Text"
+                   StartIcon="@Icons.Material.Filled.Close">
+            Close
+        </MudButton>
     </DialogActions>
 </MudDialog>
 
 @code {
     [CascadingParameter]
-    IMudDialogInstance MudDialog { get; set; } = default!;
+    private IMudDialogInstance MudDialog { get; set; } = default!;
 
     [Parameter]
     public AuditLogDTO Log { get; set; } = default!;
 
     private void Cancel() => MudDialog.Cancel();
 
-    private Color GetColor(string action) => action switch
+    private Color GetActionColor(string action)
     {
-        "POST" => Color.Success,
-        "PUT" => Color.Warning,
-        "DELETE" => Color.Error,
-        "LOGIN" => Color.Info, // NEW: Handle LOGIN color
-        _ => Color.Default
-    };
+        if (action == "LOGIN") return Color.Dark;
+
+        if (action.StartsWith("USER-")) return Color.Tertiary;       // Purple for User Mgmt
+        if (action.StartsWith("CUSTOMER-")) return Color.Info;       // Blue for AR
+        if (action.StartsWith("VENDOR-")) return Color.Warning;      // Orange for AP
+        if (action.StartsWith("ACCOUNT-")) return Color.Success;     // Green for GL
+        if (action.StartsWith("BILL-")) return Color.Error;          // Red/Pink for Expenses
+        if (action.StartsWith("INVOICE-")) return Color.Primary;     // Primary for Revenue
+        if (action == "JOURNAL-ENTRY") return Color.Surface;         // Neutral for Journals
+
+        // Fallbacks for raw HTTP methods
+        return action switch
+        {
+            "POST" => Color.Success,
+            "PUT" => Color.Warning,
+            "DELETE" => Color.Error,
+            _ => Color.Default
+        };
+    }
+
+    private string GetActionIcon(string action)
+    {
+        if (action == "LOGIN") return Icons.Material.Filled.Login;
+
+        if (action.StartsWith("USER-")) return Icons.Material.Filled.Person;
+        if (action.StartsWith("CUSTOMER-")) return Icons.Material.Filled.Person;
+        if (action.StartsWith("VENDOR-")) return Icons.Material.Filled.Business;
+        if (action.StartsWith("ACCOUNT-")) return Icons.Material.Filled.AccountBalance;
+        if (action.StartsWith("BILL-")) return Icons.Material.Filled.Receipt;
+        if (action.StartsWith("INVOICE-")) return Icons.Material.Filled.Receipt;
+        if (action == "JOURNAL-ENTRY") return Icons.Material.Filled.Book;
+
+        // Fallbacks for raw HTTP methods
+        return action switch
+        {
+            "POST" => Icons.Material.Filled.Add,
+            "PUT" => Icons.Material.Filled.Edit,
+            "DELETE" => Icons.Material.Filled.Delete,
+            _ => Icons.Material.Filled.Circle
+        };
+    }
 
     private string FormatJson(string json)
     {
         if (string.IsNullOrEmpty(json)) return "No content";
+
         try
         {
-            // Simple prettify attempt
             var parsed = System.Text.Json.JsonDocument.Parse(json);
-            return System.Text.Json.JsonSerializer.Serialize(parsed, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+            return System.Text.Json.JsonSerializer.Serialize(
+                parsed,
+                new System.Text.Json.JsonSerializerOptions
+                {
+                    WriteIndented = true
+                });
         }
         catch
         {
-            return json; // Return raw if not valid JSON
+            return json;
         }
     }
 }
