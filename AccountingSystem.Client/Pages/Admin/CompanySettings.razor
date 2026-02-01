@@ -10,16 +10,64 @@
 <PageTitle>Company Settings</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.Medium" Class="mt-6">
-    <MudText Typo="Typo.h4" Color="Color.Primary" Class="mb-4">Company Profile</MudText>
-    <MudText Typo="Typo.body1" Class="mud-text-secondary mb-6">
-        Manage your organization's details used in financial reports and invoices.
-    </MudText>
+    <!-- HEADER -->
+    <MudPaper Class="page-header mb-6" Elevation="0">
+        <div class="d-flex justify-space-between align-center">
+            <div>
+                @if (isLoading)
+                {
+                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="180px" Height="32px" Class="mb-2" />
+                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="400px" Height="20px" />
+                }
+                else
+                {
+                    <MudText Typo="Typo.h5" Class="mb-2 page-header-title">
+                        Company Profile
+                    </MudText>
+                    <MudText Typo="Typo.body1" Class="page-header-subtitle">
+                        Manage your organization's details used in financial reports and invoices.
+                    </MudText>
+                }
+            </div>
+        </div>
+    </MudPaper>
 
     @if (isLoading)
     {
-        <div class="d-flex justify-center my-8">
-            <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
-        </div>
+        <!-- SKELETON FOR FORM -->
+        <MudCard Elevation="3">
+            <MudCardHeader>
+                <CardHeaderContent>
+                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="180px" Height="24px" />
+                </CardHeaderContent>
+            </MudCardHeader>
+            <MudCardContent>
+                <MudGrid>
+                    <MudItem xs="12">
+                        <MudSkeleton SkeletonType="SkeletonType.Text" Width="120px" Height="16px" Class="mb-2" />
+                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="56px" />
+                    </MudItem>
+
+                    <MudItem xs="12">
+                        <MudSkeleton SkeletonType="SkeletonType.Text" Width="140px" Height="16px" Class="mb-2" />
+                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="86px" />
+                    </MudItem>
+
+                    <MudItem xs="12" sm="6">
+                        <MudSkeleton SkeletonType="SkeletonType.Text" Width="100px" Height="16px" Class="mb-2" />
+                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="56px" />
+                    </MudItem>
+
+                    <MudItem xs="12" sm="6">
+                        <MudSkeleton SkeletonType="SkeletonType.Text" Width="110px" Height="16px" Class="mb-2" />
+                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="56px" />
+                    </MudItem>
+                </MudGrid>
+            </MudCardContent>
+            <MudCardActions Class="d-flex justify-end pa-4">
+                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="150px" Height="42px" />
+            </MudCardActions>
+        </MudCard>
     }
     else
     {

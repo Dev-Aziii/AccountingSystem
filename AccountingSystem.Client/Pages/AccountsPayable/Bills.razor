@@ -12,73 +12,137 @@
 
 <PageTitle>Create Bill</PageTitle>
 
-<MudContainer MaxWidth="MaxWidth.Medium">
-    <MudText Typo="Typo.h4" Color="Color.Primary" Class="mb-4">
-        New Vendor Bill
-    </MudText>
+<MudContainer MaxWidth="MaxWidth.Medium" Class="mt-6">
+    <!-- HEADER -->
+    <MudPaper Class="page-header mb-6" Elevation="0">
+        <div class="d-flex justify-space-between align-center">
+            <div>
+                @if (_initialLoading)
+                {
+                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="180px" Height="32px" Class="mb-2" />
+                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="380px" Height="20px" />
+                }
+                else
+                {
+                    <MudText Typo="Typo.h5" Class="mb-2 page-header-title">
+                        New Vendor Bill
+                    </MudText>
+                    <MudText Typo="Typo.body1" Class="page-header-subtitle">
+                        Record vendor invoices and track accounts payable obligations
+                    </MudText>
+                }
+            </div>
+        </div>
+    </MudPaper>
 
-    <EditForm Model="@bill" OnValidSubmit="HandleSubmit">
-        <DataAnnotationsValidator />
-
+    @if (_initialLoading)
+    {
+        <!-- SKELETON FOR BILL FORM -->
         <MudCard>
             <MudCardContent>
                 <MudGrid>
+                    <MudItem xs="12" sm="6">
+                        <MudSkeleton SkeletonType="SkeletonType.Text" Width="80px" Height="16px" Class="mb-2" />
+                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="56px" />
+                    </MudItem>
 
                     <MudItem xs="12" sm="6">
-                        <VendorSelect @bind-SelectedVendorId="bill.VendorId" />
-                        <ValidationMessage For="@(() => bill.VendorId)" />
-                    </MudItem>
-
-                    <MudItem xs="12" sm="6">
-                        <MudTextField Label="Reference Number"
-                                      @bind-Value="bill.ReferenceNumber"
-                                      Variant="Variant.Outlined" />
-                        <ValidationMessage For="@(() => bill.ReferenceNumber)" />
+                        <MudSkeleton SkeletonType="SkeletonType.Text" Width="140px" Height="16px" Class="mb-2" />
+                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="56px" />
                     </MudItem>
 
                     <MudItem xs="12" sm="4">
-                        <MudDatePicker Label="Due Date"
-                                       @bind-Date="billDate"
-                                       Variant="Variant.Outlined" />
+                        <MudSkeleton SkeletonType="SkeletonType.Text" Width="80px" Height="16px" Class="mb-2" />
+                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="56px" />
                     </MudItem>
 
                     <MudItem xs="12" sm="4">
-                        <MudNumericField Label="Amount (₱)"
-                                         @bind-Value="bill.Amount"
-                                         Format="N2"
-                                         Adornment="Adornment.Start"
-                                         AdornmentText="₱"
-                                         HideSpinButtons="true"
-                                         Variant="Variant.Outlined" />
+                        <MudSkeleton SkeletonType="SkeletonType.Text" Width="90px" Height="16px" Class="mb-2" />
+                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="56px" />
                     </MudItem>
 
                     <MudItem xs="12" sm="4">
-                        <AccountSelect @bind-SelectedAccountId="bill.ExpenseAccountId"
-                                       TypeFilter="Expense" />
-                        <ValidationMessage For="@(() => bill.ExpenseAccountId)" />
+                        <MudSkeleton SkeletonType="SkeletonType.Text" Width="120px" Height="16px" Class="mb-2" />
+                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="56px" />
                     </MudItem>
 
                     <MudItem xs="12">
-                        <MudTextField Label="Description"
-                                      @bind-Value="bill.Description"
-                                      Lines="3"
-                                      Variant="Variant.Outlined" />
+                        <MudSkeleton SkeletonType="SkeletonType.Text" Width="100px" Height="16px" Class="mb-2" />
+                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="86px" />
                     </MudItem>
-
                 </MudGrid>
             </MudCardContent>
 
             <MudCardActions Class="d-flex justify-end">
-                <MudButton ButtonType="ButtonType.Submit"
-                           Variant="Variant.Filled"
-                           Color="Color.Warning"
-                           Disabled="@isSubmitting"
-                           StartIcon="@Icons.Material.Filled.Save">
-                    @(isSubmitting ? "Saving..." : "Save Bill")
-                </MudButton>
+                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="130px" Height="42px" />
             </MudCardActions>
         </MudCard>
-    </EditForm>
+    }
+    else
+    {
+        <EditForm Model="@bill" OnValidSubmit="HandleSubmit">
+            <DataAnnotationsValidator />
+
+            <MudCard>
+                <MudCardContent>
+                    <MudGrid>
+
+                        <MudItem xs="12" sm="6">
+                            <VendorSelect @bind-SelectedVendorId="bill.VendorId" />
+                            <ValidationMessage For="@(() => bill.VendorId)" />
+                        </MudItem>
+
+                        <MudItem xs="12" sm="6">
+                            <MudTextField Label="Reference Number"
+                                          @bind-Value="bill.ReferenceNumber"
+                                          Variant="Variant.Outlined" />
+                            <ValidationMessage For="@(() => bill.ReferenceNumber)" />
+                        </MudItem>
+
+                        <MudItem xs="12" sm="4">
+                            <MudDatePicker Label="Due Date"
+                                           @bind-Date="billDate"
+                                           Variant="Variant.Outlined" />
+                        </MudItem>
+
+                        <MudItem xs="12" sm="4">
+                            <MudNumericField Label="Amount (₱)"
+                                             @bind-Value="bill.Amount"
+                                             Format="N2"
+                                             Adornment="Adornment.Start"
+                                             AdornmentText="₱"
+                                             HideSpinButtons="true"
+                                             Variant="Variant.Outlined" />
+                        </MudItem>
+
+                        <MudItem xs="12" sm="4">
+                            <AccountSelect @bind-SelectedAccountId="bill.ExpenseAccountId"
+                                           TypeFilter="Expense" />
+                            <ValidationMessage For="@(() => bill.ExpenseAccountId)" />
+                        </MudItem>
+
+                        <MudItem xs="12">
+                            <MudTextField Label="Description"
+                                          @bind-Value="bill.Description"
+                                          Lines="3"
+                                          Variant="Variant.Outlined" />
+                        </MudItem>
+
+                    </MudGrid>
+                </MudCardContent>
+
+                <MudCardActions Class="d-flex justify-end">
+                    <MudButton ButtonType="ButtonType.Submit"
+                               Variant="Variant.Filled"
+                               Class="save-btn"
+                               Disabled="@isSubmitting"
+                               StartIcon="@Icons.Material.Filled.Save">
+                        @(isSubmitting ? "Saving..." : "Save Bill")
+                    </MudButton>
+                </MudCardActions>
+            </MudCard>
+        </EditForm>
+    }
 </MudContainer>
 
 @code {
@@ -97,6 +161,15 @@
     }
 
     private bool isSubmitting = false;
+    private bool _initialLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Simulate initial load time for vendors/accounts
+        await Task.Delay(100);
+        _initialLoading = false;
+        StateHasChanged();
+    }
 
     private async Task HandleSubmit()
     {

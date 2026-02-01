@@ -17,134 +17,222 @@
     <MudPaper Class="page-header mb-6" Elevation="0">
         <div class="d-flex justify-space-between align-center">
             <div>
-                <MudText Typo="Typo.h5" Class="mb-2 page-header-title">
-                   New Journal Entry
-                </MudText>
-                <MudText Typo="Typo.body1" Class="page-header-subtitle">
-                    Create balanced debit and credit transactions for the general ledger
-                </MudText>
+                @if (_initialLoading)
+                {
+                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="200px" Height="32px" Class="mb-2" />
+                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="450px" Height="20px" />
+                }
+                else
+                {
+                    <MudText Typo="Typo.h5" Class="mb-2 page-header-title">
+                        New Journal Entry
+                    </MudText>
+                    <MudText Typo="Typo.body1" Class="page-header-subtitle">
+                        Create balanced debit and credit transactions for the general ledger
+                    </MudText>
+                }
             </div>
         </div>
     </MudPaper>
 
-    <EditForm Model="@entry" OnValidSubmit="HandleSubmit">
+    @if (_initialLoading)
+    {
+        <!-- SKELETON FOR ENTRY FORM -->
         <MudCard Class="mb-4">
             <MudCardContent>
                 <MudGrid>
                     <MudItem xs="12" sm="3">
-                        <MudDatePicker Label="Date"
-                                       @bind-Date="entryDate"
-                                       Variant="Variant.Outlined" />
+                        <MudSkeleton SkeletonType="SkeletonType.Text" Width="60px" Height="16px" Class="mb-2" />
+                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="56px" />
                     </MudItem>
 
                     <MudItem xs="12" sm="3">
-                        <MudTextField Label="Reference #"
-                                      @bind-Value="entry.Reference"
-                                      Variant="Variant.Outlined" />
+                        <MudSkeleton SkeletonType="SkeletonType.Text" Width="90px" Height="16px" Class="mb-2" />
+                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="56px" />
                     </MudItem>
 
                     <MudItem xs="12" sm="6">
-                        <MudTextField Label="Description"
-                                      @bind-Value="entry.Description"
-                                      Variant="Variant.Outlined" />
+                        <MudSkeleton SkeletonType="SkeletonType.Text" Width="100px" Height="16px" Class="mb-2" />
+                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="56px" />
                     </MudItem>
                 </MudGrid>
             </MudCardContent>
         </MudCard>
 
-        <!-- Journal Lines -->
-        <MudTable Items="@entry.Lines"
-                  Hover="true"
-                  Breakpoint="Breakpoint.Sm"
-                  Elevation="4">
+        <!-- SKELETON FOR TABLE -->
+        <MudCard Elevation="4">
+            <MudCardContent Class="pa-4">
+                <!-- Table Header Skeleton -->
+                <div class="d-flex justify-space-between mb-3">
+                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="100px" Height="20px" />
+                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="80px" Height="20px" />
+                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="80px" Height="20px" />
+                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="70px" Height="20px" />
+                </div>
 
-            <HeaderContent>
-                <MudTh>Account</MudTh>
-                <MudTh>Debit (₱)</MudTh>
-                <MudTh>Credit (₱)</MudTh>
-                <MudTh>Action</MudTh>
-            </HeaderContent>
+                <!-- Table Rows Skeleton (2 initial rows) -->
+                @for (int i = 0; i < 2; i++)
+                {
+                    <div class="d-flex justify-space-between align-center mb-3 pa-2" style="border-bottom: 1px solid rgba(0,0,0,0.05);">
+                        <div style="flex: 2;">
+                            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="40px" />
+                        </div>
+                        <div style="flex: 1; padding-left: 16px;">
+                            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="40px" />
+                        </div>
+                        <div style="flex: 1; padding-left: 16px;">
+                            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="40px" />
+                        </div>
+                        <div style="flex: 0.5; padding-left: 16px; text-align: center;">
+                            <MudSkeleton SkeletonType="SkeletonType.Circle" Width="40px" Height="40px" />
+                        </div>
+                    </div>
+                }
 
-            <RowTemplate Context="lineContext">
-                <MudTd DataLabel="Account">
-                    <AccountSelect @bind-SelectedAccountId="lineContext.AccountId" />
-                </MudTd>
+                <!-- Footer Skeleton -->
+                <div class="d-flex justify-space-between align-center mt-4 pt-3" style="border-top: 2px solid rgba(0,0,0,0.1);">
+                    <div style="flex: 2;">
+                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="120px" Height="36px" />
+                    </div>
+                    <div style="flex: 1; padding-left: 16px;">
+                        <MudSkeleton SkeletonType="SkeletonType.Text" Width="100px" Height="24px" />
+                    </div>
+                    <div style="flex: 1; padding-left: 16px;">
+                        <MudSkeleton SkeletonType="SkeletonType.Text" Width="100px" Height="24px" />
+                    </div>
+                    <div style="flex: 0.5; padding-left: 16px; text-align: center;">
+                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="90px" Height="24px" />
+                    </div>
+                </div>
+            </MudCardContent>
+        </MudCard>
 
-                <MudTd DataLabel="Debit">
-                    <MudNumericField @bind-Value="lineContext.Debit"
-                                     Format="N2"
-                                     HideSpinButtons="true"
-                                     Variant="Variant.Text" />
-                </MudTd>
-
-                <MudTd DataLabel="Credit">
-                    <MudNumericField @bind-Value="lineContext.Credit"
-                                     Format="N2"
-                                     HideSpinButtons="true"
-                                     Variant="Variant.Text" />
-                </MudTd>
-
-                <MudTd>
-                    <MudIconButton Icon="@Icons.Material.Filled.Delete"
-                                   Color="Color.Error"
-                                   OnClick="@(() => RemoveLine(lineContext))"
-                                   Disabled="@(entry.Lines.Count <= 2)" />
-                </MudTd>
-            </RowTemplate>
-
-            <!-- Totals -->
-            <FooterContent>
-                <MudTd>
-                    <MudButton StartIcon="@Icons.Material.Filled.Add"
-                               OnClick="AddLine"
-                               Variant="Variant.Text"
-                               Color="Color.Primary">
-                        Add Line
-                    </MudButton>
-                </MudTd>
-
-                <MudTd>
-                    <MudText Typo="Typo.subtitle1"
-                             Color="@(IsBalanced ? Color.Success : Color.Error)">
-                        @TotalDebit.ToString("C2", phCulture)
-                    </MudText>
-                </MudTd>
-
-                <MudTd>
-                    <MudText Typo="Typo.subtitle1"
-                             Color="@(IsBalanced ? Color.Success : Color.Error)">
-                        @TotalCredit.ToString("C2", phCulture)
-                    </MudText>
-                </MudTd>
-
-                <MudTd>
-                    @if (IsBalanced)
-                    {
-                        <MudChip T="string" Color="Color.Success" Size="Size.Small">
-                            Balanced
-                        </MudChip>
-                    }
-                    else
-                    {
-                        <MudChip T="string" Color="Color.Error" Size="Size.Small">
-                            Imbalanced
-                        </MudChip>
-                    }
-                </MudTd>
-            </FooterContent>
-        </MudTable>
-
+        <!-- Submit Button Skeleton -->
         <div class="d-flex justify-end mt-4">
-            <MudButton ButtonType="ButtonType.Submit"
-                       Variant="Variant.Filled"
-                       Class="create-btn"
-                       Disabled="@(!IsBalanced || isSubmitting)"
-                       Size="Size.Large"
-                       StartIcon="@Icons.Material.Filled.Check">
-                @(isSubmitting ? "Posting..." : "Post Entry")
-            </MudButton>
+            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="150px" Height="48px" />
         </div>
-    </EditForm>
+    }
+    else
+    {
+        <EditForm Model="@entry" OnValidSubmit="HandleSubmit">
+            <MudCard Class="mb-4">
+                <MudCardContent>
+                    <MudGrid>
+                        <MudItem xs="12" sm="3">
+                            <MudDatePicker Label="Date"
+                                           @bind-Date="entryDate"
+                                           Variant="Variant.Outlined" />
+                        </MudItem>
+
+                        <MudItem xs="12" sm="3">
+                            <MudTextField Label="Reference #"
+                                          @bind-Value="entry.Reference"
+                                          Variant="Variant.Outlined" />
+                        </MudItem>
+
+                        <MudItem xs="12" sm="6">
+                            <MudTextField Label="Description"
+                                          @bind-Value="entry.Description"
+                                          Variant="Variant.Outlined" />
+                        </MudItem>
+                    </MudGrid>
+                </MudCardContent>
+            </MudCard>
+
+            <!-- Journal Lines -->
+            <MudTable Items="@entry.Lines"
+                      Hover="true"
+                      Breakpoint="Breakpoint.Sm"
+                      Elevation="4">
+
+                <HeaderContent>
+                    <MudTh>Account</MudTh>
+                    <MudTh>Debit (₱)</MudTh>
+                    <MudTh>Credit (₱)</MudTh>
+                    <MudTh>Action</MudTh>
+                </HeaderContent>
+
+                <RowTemplate Context="lineContext">
+                    <MudTd DataLabel="Account">
+                        <AccountSelect @bind-SelectedAccountId="lineContext.AccountId" />
+                    </MudTd>
+
+                    <MudTd DataLabel="Debit">
+                        <MudNumericField @bind-Value="lineContext.Debit"
+                                         Format="N2"
+                                         HideSpinButtons="true"
+                                         Variant="Variant.Text" />
+                    </MudTd>
+
+                    <MudTd DataLabel="Credit">
+                        <MudNumericField @bind-Value="lineContext.Credit"
+                                         Format="N2"
+                                         HideSpinButtons="true"
+                                         Variant="Variant.Text" />
+                    </MudTd>
+
+                    <MudTd>
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                       Color="Color.Error"
+                                       OnClick="@(() => RemoveLine(lineContext))"
+                                       Disabled="@(entry.Lines.Count <= 2)" />
+                    </MudTd>
+                </RowTemplate>
+
+                <!-- Totals -->
+                <FooterContent>
+                    <MudTd>
+                        <MudButton StartIcon="@Icons.Material.Filled.Add"
+                                   OnClick="AddLine"
+                                   Variant="Variant.Text"
+                                   Color="Color.Primary">
+                            Add Line
+                        </MudButton>
+                    </MudTd>
+
+                    <MudTd>
+                        <MudText Typo="Typo.subtitle1"
+                                 Color="@(IsBalanced ? Color.Success : Color.Error)">
+                            @TotalDebit.ToString("C2", phCulture)
+                        </MudText>
+                    </MudTd>
+
+                    <MudTd>
+                        <MudText Typo="Typo.subtitle1"
+                                 Color="@(IsBalanced ? Color.Success : Color.Error)">
+                            @TotalCredit.ToString("C2", phCulture)
+                        </MudText>
+                    </MudTd>
+
+                    <MudTd>
+                        @if (IsBalanced)
+                        {
+                            <MudChip T="string" Color="Color.Success" Size="Size.Small">
+                                Balanced
+                            </MudChip>
+                        }
+                        else
+                        {
+                            <MudChip T="string" Color="Color.Error" Size="Size.Small">
+                                Imbalanced
+                            </MudChip>
+                        }
+                    </MudTd>
+                </FooterContent>
+            </MudTable>
+
+            <div class="d-flex justify-end mt-4">
+                <MudButton ButtonType="ButtonType.Submit"
+                           Variant="Variant.Filled"
+                           Class="create-btn"
+                           Disabled="@(!IsBalanced || isSubmitting)"
+                           Size="Size.Large"
+                           StartIcon="@Icons.Material.Filled.Check">
+                    @(isSubmitting ? "Posting..." : "Post Entry")
+                </MudButton>
+            </div>
+        </EditForm>
+    }
 </MudContainer>
 
 @code {
@@ -152,14 +240,14 @@
     private readonly CultureInfo phCulture = new("en-PH");
 
     private JournalEntryDTO entry = new JournalEntryDTO
-    {
-        Date = DateTime.Today,
-        Lines = new List<JournalEntryLineDTO>
+        {
+            Date = DateTime.Today,
+            Lines = new List<JournalEntryLineDTO>
         {
             new JournalEntryLineDTO(),
             new JournalEntryLineDTO()
         }
-    };
+        };
 
     private DateTime? entryDate
     {
@@ -168,6 +256,15 @@
     }
 
     private bool isSubmitting = false;
+    private bool _initialLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Simulate initial load time for accounts/setup
+        await Task.Delay(100);
+        _initialLoading = false;
+        StateHasChanged();
+    }
 
     private decimal TotalDebit => entry.Lines.Sum(l => l.Debit);
     private decimal TotalCredit => entry.Lines.Sum(l => l.Credit);

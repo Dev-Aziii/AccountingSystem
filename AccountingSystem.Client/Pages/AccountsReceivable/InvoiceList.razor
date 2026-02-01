@@ -12,66 +12,160 @@
 
 <PageTitle>Customer Invoices</PageTitle>
 
-<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
-    <MudTable Items="@invoices" Dense="true" Hover="true" Bordered="true" Striped="true" Filter="new Func<InvoiceDTO, bool>(FilterFunc)" Loading="@_loading">
-        <ToolBarContent>
-            <MudText Typo="Typo.h6">Customer Invoices</MudText>
-            <MudSpacer />
-            <MudTextField @bind-Value="searchString" Placeholder="Search invoices..." Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
-            <MudButton Variant="Variant.Filled" Color="Color.Info" StartIcon="@Icons.Material.Filled.Add" Href="/ar/invoices" Class="ml-3">Create Invoice</MudButton>
-        </ToolBarContent>
-        <HeaderContent>
-            <MudTh>ID</MudTh>
-            <MudTh>Customer</MudTh>
-            <MudTh>Due Date</MudTh>
-            <MudTh Style="text-align:right">Total</MudTh>
-            <MudTh Style="text-align:right">Balance</MudTh>
-            <MudTh>Status</MudTh>
-            <MudTh>Action</MudTh>
-        </HeaderContent>
-        <RowTemplate>
-            <MudTd DataLabel="ID">@context.Id</MudTd>
-            <MudTd DataLabel="Customer">@context.CustomerName</MudTd>
-            <MudTd DataLabel="Due Date">@context.DueDate.ToShortDateString()</MudTd>
-            <MudTd DataLabel="Total" Style="text-align:right">@context.TotalAmount.ToString("N2")</MudTd>
-            <MudTd DataLabel="Balance" Style="text-align:right; font-weight:bold;">@context.Balance.ToString("N2")</MudTd>
-            <MudTd DataLabel="Status">
-                @if (context.Status == DocumentStatus.Paid)
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-6">
+    <!-- HEADER -->
+    <MudPaper Class="page-header mb-6" Elevation="0">
+        <div class="d-flex justify-space-between align-center">
+            <div>
+                @if (_initialLoading)
                 {
-                    <MudChip T="string" Size="Size.Small" Color="Color.Success">Paid</MudChip>
-                }
-                else if (context.Status == DocumentStatus.PartiallyPaid)
-                {
-
-                    <MudChip T="string" Size="Size.Small" Color="Color.Warning">Partial</MudChip>
+                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="180px" Height="32px" Class="mb-2" />
+                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="420px" Height="20px" />
                 }
                 else
                 {
-
-                    <MudChip T="string" Size="Size.Small" Color="Color.Error">Unpaid</MudChip>
+                    <MudText Typo="Typo.h5" Class="mb-2 page-header-title">
+                        Customer Invoices
+                    </MudText>
+                    <MudText Typo="Typo.body1" Class="page-header-subtitle">
+                        Manage customer invoices and track payment collections
+                    </MudText>
                 }
-            </MudTd>
-            <MudTd>
-                <div class="d-flex gap-2">
-                    @if (context.Balance > 0)
-                    {
-                        <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Success" OnClick="@(() => OpenReceiveDialog(context))">Receive</MudButton>
-                    }
-                    <!-- NEW: Download PDF Button -->
-                    <MudIconButton Icon="@Icons.Material.Filled.PictureAsPdf" Color="Color.Error" Size="Size.Small" OnClick="@(() => DownloadPdf(context.Id))" title="Download PDF" />
+            </div>
+        </div>
+    </MudPaper>
+
+    @if (_initialLoading)
+    {
+        <!-- SKELETON FOR TABLE -->
+        <MudCard Elevation="3">
+            <!-- Toolbar Skeleton -->
+            <MudCardContent Class="pa-4">
+                <div class="d-flex justify-space-between align-center mb-4">
+                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="160px" Height="24px" />
+                    <div class="d-flex align-center">
+                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="300px" Height="40px" Class="mr-3" />
+                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="150px" Height="42px" />
+                    </div>
                 </div>
-            </MudTd>
-        </RowTemplate>
-        <PagerContent><MudTablePager /></PagerContent>
-    </MudTable>
+
+                <!-- Table Header Skeleton -->
+                <div class="d-flex justify-space-between mb-3 pa-2" style="border-bottom: 2px solid rgba(0,0,0,0.1);">
+                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="40px" Height="20px" />
+                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="100px" Height="20px" />
+                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="90px" Height="20px" />
+                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="70px" Height="20px" />
+                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="80px" Height="20px" />
+                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="70px" Height="20px" />
+                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="70px" Height="20px" />
+                </div>
+
+                <!-- Table Rows Skeleton -->
+                @for (int i = 0; i < 10; i++)
+                {
+                    <div class="d-flex justify-space-between align-center mb-3 pa-2" style="border-bottom: 1px solid rgba(0,0,0,0.05);">
+                        <div style="flex: 0.5;">
+                            <MudSkeleton SkeletonType="SkeletonType.Text" Width="30px" Height="16px" />
+                        </div>
+                        <div style="flex: 2;">
+                            <MudSkeleton SkeletonType="SkeletonType.Text" Width="140px" Height="16px" />
+                        </div>
+                        <div style="flex: 1;">
+                            <MudSkeleton SkeletonType="SkeletonType.Text" Width="90px" Height="16px" />
+                        </div>
+                        <div style="flex: 1; text-align: right;">
+                            <MudSkeleton SkeletonType="SkeletonType.Text" Width="80px" Height="16px" Style="margin-left: auto;" />
+                        </div>
+                        <div style="flex: 1; text-align: right;">
+                            <MudSkeleton SkeletonType="SkeletonType.Text" Width="80px" Height="16px" Style="margin-left: auto;" />
+                        </div>
+                        <div style="flex: 0.8;">
+                            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="70px" Height="24px" />
+                        </div>
+                        <div style="flex: 1;">
+                            <div class="d-flex gap-2">
+                                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="80px" Height="28px" />
+                                <MudSkeleton SkeletonType="SkeletonType.Circle" Width="32px" Height="32px" />
+                            </div>
+                        </div>
+                    </div>
+                }
+
+                <!-- Pagination Skeleton -->
+                <div class="d-flex justify-center mt-4">
+                    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="250px" Height="32px" />
+                </div>
+            </MudCardContent>
+        </MudCard>
+    }
+    else
+    {
+        <MudTable Items="@invoices" Dense="true" Hover="true" Bordered="true" Striped="true" Filter="new Func<InvoiceDTO, bool>(FilterFunc)" Loading="@_loading">
+            <ToolBarContent>
+                <MudText Typo="Typo.h6">Customer Invoices</MudText>
+                <MudSpacer />
+                <MudTextField @bind-Value="searchString" Placeholder="Search invoices..." Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+                <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" Href="/ar/invoices" Class="create-btn ml-3">Create Invoice</MudButton>
+            </ToolBarContent>
+            <HeaderContent>
+                <MudTh>ID</MudTh>
+                <MudTh>Customer</MudTh>
+                <MudTh>Due Date</MudTh>
+                <MudTh Style="text-align:right">Total</MudTh>
+                <MudTh Style="text-align:right">Balance</MudTh>
+                <MudTh>Status</MudTh>
+                <MudTh>Action</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="ID">@context.Id</MudTd>
+                <MudTd DataLabel="Customer">@context.CustomerName</MudTd>
+                <MudTd DataLabel="Due Date">@context.DueDate.ToShortDateString()</MudTd>
+                <MudTd DataLabel="Total" Style="text-align:right">@context.TotalAmount.ToString("N2")</MudTd>
+                <MudTd DataLabel="Balance" Style="text-align:right; font-weight:bold;">@context.Balance.ToString("N2")</MudTd>
+                <MudTd DataLabel="Status">
+                    @if (context.Status == DocumentStatus.Paid)
+                    {
+                        <MudChip T="string" Size="Size.Small" Color="Color.Success">Paid</MudChip>
+                    }
+                    else if (context.Status == DocumentStatus.PartiallyPaid)
+                    {
+
+                        <MudChip T="string" Size="Size.Small" Color="Color.Warning">Partial</MudChip>
+                    }
+                    else
+                    {
+
+                        <MudChip T="string" Size="Size.Small" Color="Color.Error">Unpaid</MudChip>
+                    }
+                </MudTd>
+                <MudTd>
+                    <div class="d-flex gap-2">
+                        @if (context.Balance > 0)
+                        {
+                            <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Success" OnClick="@(() => OpenReceiveDialog(context))">Receive</MudButton>
+                        }
+                        <!-- NEW: Download PDF Button -->
+                        <MudIconButton Icon="@Icons.Material.Filled.PictureAsPdf" Color="Color.Error" Size="Size.Small" OnClick="@(() => DownloadPdf(context.Id))" title="Download PDF" />
+                    </div>
+                </MudTd>
+            </RowTemplate>
+            <PagerContent><MudTablePager /></PagerContent>
+        </MudTable>
+    }
 </MudContainer>
 
 @code {
     private List<InvoiceDTO> invoices = new List<InvoiceDTO>();
     private string searchString = "";
     private bool _loading = true;
+    private bool _initialLoading = true;
 
-    protected override async Task OnInitializedAsync() => await LoadData();
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+        _initialLoading = false;
+        StateHasChanged();
+    }
 
     private async Task LoadData()
     {

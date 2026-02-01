@@ -11,75 +11,167 @@
 
 <PageTitle>Vendor Management</PageTitle>
 
-<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <MudText Typo="Typo.h4" Color="Color.Primary">Vendor Management</MudText>
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenAddDialog">
-            Add New Vendor
-        </MudButton>
-    </div>
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-6">
+    <!-- HEADER -->
+    <MudPaper Class="page-header mb-6" Elevation="0">
+        <div class="d-flex justify-space-between align-center">
+            <div>
+                @if (_initialLoading)
+                {
+                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="220px" Height="32px" Class="mb-2" />
+                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="420px" Height="20px" />
+                }
+                else
+                {
+                    <MudText Typo="Typo.h5" Class="mb-2 page-header-title">
+                        Vendor Management
+                    </MudText>
+                    <MudText Typo="Typo.body1" Class="page-header-subtitle">
+                        Manage supplier relationships and track accounts payable contacts
+                    </MudText>
+                }
+            </div>
+            @if (_initialLoading)
+            {
+                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="170px" Height="42px" />
+            }
+            else
+            {
+                <MudButton Variant="Variant.Filled" Class="create-btn" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenAddDialog">
+                    Add New Vendor
+                </MudButton>
+            }
+        </div>
+    </MudPaper>
 
-    <!-- TABS: Active vs Archived -->
-    <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-6">
-        <MudTabPanel Text="Active Vendors" OnClick="@(() => LoadList(false))">
-            <MudTable Items="@vendors" Dense="true" Hover="true" Bordered="true" Striped="true" Filter="new Func<VendorDTO, bool>(FilterFunc)" Loading="@_loading">
-                <ToolBarContent>
-                    <MudText Typo="Typo.h6">Active List</MudText>
-                    <MudSpacer />
-                    <MudTextField @bind-Value="searchString" Placeholder="Search..." Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
-                </ToolBarContent>
-                <HeaderContent>
-                    <MudTh>ID</MudTh>
-                    <MudTh>Name</MudTh>
-                    <MudTh>Email</MudTh>
-                    <MudTh>Contact Person</MudTh>
-                    <MudTh Style="text-align:right">Actions</MudTh>
-                </HeaderContent>
-                <RowTemplate>
-                    <MudTd DataLabel="ID">@context.Id</MudTd>
-                    <MudTd DataLabel="Name"><b>@context.Name</b></MudTd>
-                    <MudTd DataLabel="Email">@context.Email</MudTd>
-                    <MudTd DataLabel="Contact">@context.ContactPerson</MudTd>
-                    <MudTd DataLabel="Actions" Style="text-align:right">
-                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Secondary" OnClick="() => OpenEditDialog(context)" />
-                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="() => ConfirmDelete(context.Id)" />
-                    </MudTd>
-                </RowTemplate>
-                <PagerContent><MudTablePager /></PagerContent>
-            </MudTable>
-        </MudTabPanel>
+    @if (_initialLoading)
+    {
+        <!-- SKELETON FOR TABS AND TABLE -->
+        <MudCard Elevation="2">
+            <!-- Tabs Skeleton -->
+            <div class="d-flex pa-4" style="border-bottom: 1px solid rgba(0,0,0,0.12);">
+                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="140px" Height="36px" Class="mr-2" />
+                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="160px" Height="36px" />
+            </div>
 
-        <MudTabPanel Text="Archived Vendors" OnClick="@(() => LoadList(true))">
-            <MudTable Items="@vendors" Dense="true" Hover="true" Bordered="true" Striped="true" Filter="new Func<VendorDTO, bool>(FilterFunc)" Loading="@_loading">
-                <HeaderContent>
-                    <MudTh>ID</MudTh>
-                    <MudTh>Name</MudTh>
-                    <MudTh>Email</MudTh>
-                    <MudTh Style="text-align:right">Actions</MudTh>
-                </HeaderContent>
-                <RowTemplate>
-                    <MudTd DataLabel="ID">@context.Id</MudTd>
-                    <MudTd DataLabel="Name" Style="color:gray;">@context.Name</MudTd>
-                    <MudTd DataLabel="Email">@context.Email</MudTd>
-                    <MudTd DataLabel="Actions" Style="text-align:right">
-                        <MudTooltip Text="Restore Vendor">
-                            <MudIconButton Icon="@Icons.Material.Filled.RestoreFromTrash" Size="Size.Small" Color="Color.Success" OnClick="() => ConfirmRestore(context.Id)" />
-                        </MudTooltip>
-                    </MudTd>
-                </RowTemplate>
-                <PagerContent><MudTablePager /></PagerContent>
-            </MudTable>
-        </MudTabPanel>
-    </MudTabs>
+            <MudCardContent Class="pa-6">
+                <!-- Toolbar Skeleton -->
+                <div class="d-flex justify-space-between align-center mb-4">
+                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="120px" Height="24px" />
+                    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="300px" Height="40px" />
+                </div>
+
+                <!-- Table Header Skeleton -->
+                <div class="d-flex justify-space-between mb-3 pa-2" style="border-bottom: 2px solid rgba(0,0,0,0.1);">
+                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="40px" Height="20px" />
+                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="100px" Height="20px" />
+                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="120px" Height="20px" />
+                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="130px" Height="20px" />
+                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="80px" Height="20px" />
+                </div>
+
+                <!-- Table Rows Skeleton -->
+                @for (int i = 0; i < 8; i++)
+                {
+                    <div class="d-flex justify-space-between align-center mb-3 pa-2" style="border-bottom: 1px solid rgba(0,0,0,0.05);">
+                        <div style="flex: 0.5;">
+                            <MudSkeleton SkeletonType="SkeletonType.Text" Width="30px" Height="16px" />
+                        </div>
+                        <div style="flex: 2;">
+                            <MudSkeleton SkeletonType="SkeletonType.Text" Width="160px" Height="16px" />
+                        </div>
+                        <div style="flex: 2;">
+                            <MudSkeleton SkeletonType="SkeletonType.Text" Width="180px" Height="16px" />
+                        </div>
+                        <div style="flex: 2;">
+                            <MudSkeleton SkeletonType="SkeletonType.Text" Width="140px" Height="16px" />
+                        </div>
+                        <div style="flex: 1; text-align: right;">
+                            <div class="d-flex justify-end">
+                                <MudSkeleton SkeletonType="SkeletonType.Circle" Width="32px" Height="32px" Class="mr-2" />
+                                <MudSkeleton SkeletonType="SkeletonType.Circle" Width="32px" Height="32px" />
+                            </div>
+                        </div>
+                    </div>
+                }
+
+                <!-- Pagination Skeleton -->
+                <div class="d-flex justify-center mt-4">
+                    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="250px" Height="32px" />
+                </div>
+            </MudCardContent>
+        </MudCard>
+    }
+    else
+    {
+        <!-- TABS: Active vs Archived -->
+        <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-6">
+            <MudTabPanel Text="Active Vendors" OnClick="@(() => LoadList(false))">
+                <MudTable Items="@vendors" Dense="true" Hover="true" Bordered="true" Striped="true" Filter="new Func<VendorDTO, bool>(FilterFunc)" Loading="@_loading">
+                    <ToolBarContent>
+                        <MudText Typo="Typo.h6">Active List</MudText>
+                        <MudSpacer />
+                        <MudTextField @bind-Value="searchString" Placeholder="Search..." Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+                    </ToolBarContent>
+                    <HeaderContent>
+                        <MudTh>ID</MudTh>
+                        <MudTh>Name</MudTh>
+                        <MudTh>Email</MudTh>
+                        <MudTh>Contact Person</MudTh>
+                        <MudTh Style="text-align:right">Actions</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="ID">@context.Id</MudTd>
+                        <MudTd DataLabel="Name"><b>@context.Name</b></MudTd>
+                        <MudTd DataLabel="Email">@context.Email</MudTd>
+                        <MudTd DataLabel="Contact">@context.ContactPerson</MudTd>
+                        <MudTd DataLabel="Actions" Style="text-align:right">
+                            <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Secondary" OnClick="() => OpenEditDialog(context)" />
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="() => ConfirmDelete(context.Id)" />
+                        </MudTd>
+                    </RowTemplate>
+                    <PagerContent><MudTablePager /></PagerContent>
+                </MudTable>
+            </MudTabPanel>
+
+            <MudTabPanel Text="Archived Vendors" OnClick="@(() => LoadList(true))">
+                <MudTable Items="@vendors" Dense="true" Hover="true" Bordered="true" Striped="true" Filter="new Func<VendorDTO, bool>(FilterFunc)" Loading="@_loading">
+                    <HeaderContent>
+                        <MudTh>ID</MudTh>
+                        <MudTh>Name</MudTh>
+                        <MudTh>Email</MudTh>
+                        <MudTh Style="text-align:right">Actions</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="ID">@context.Id</MudTd>
+                        <MudTd DataLabel="Name" Style="color:gray;">@context.Name</MudTd>
+                        <MudTd DataLabel="Email">@context.Email</MudTd>
+                        <MudTd DataLabel="Actions" Style="text-align:right">
+                            <MudTooltip Text="Restore Vendor">
+                                <MudIconButton Icon="@Icons.Material.Filled.RestoreFromTrash" Size="Size.Small" Color="Color.Success" OnClick="() => ConfirmRestore(context.Id)" />
+                            </MudTooltip>
+                        </MudTd>
+                    </RowTemplate>
+                    <PagerContent><MudTablePager /></PagerContent>
+                </MudTable>
+            </MudTabPanel>
+        </MudTabs>
+    }
 </MudContainer>
 
 @code {
     private List<VendorDTO> vendors = new List<VendorDTO>();
     private string searchString = "";
     private bool _loading = true;
+    private bool _initialLoading = true;
     private bool _showArchived = false;
 
-    protected override async Task OnInitializedAsync() => await LoadList(false);
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadList(false);
+        _initialLoading = false;
+        StateHasChanged();
+    }
 
     private async Task LoadList(bool archived)
     {
