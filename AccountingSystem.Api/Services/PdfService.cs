@@ -9,15 +9,26 @@ namespace AccountingSystem.API.Services
 {
     public class PdfService : IPdfService
     {
+        // Color scheme for professional branding
+        private static class BrandColors
+        {
+            public static string Primary = "#1e40af"; // Professional blue
+            public static string Secondary = "#64748b"; // Slate gray
+            public static string Success = "#16a34a"; // Green
+            public static string Danger = "#dc2626"; // Red
+            public static string Light = "#f8fafc"; // Very light gray
+            public static string Dark = "#0f172a"; // Dark slate
+        }
+
         public byte[] GenerateInvoicePdf(InvoiceDTO invoice, CompanyDTO company, CustomerDTO customer)
         {
             var document = Document.Create(container =>
             {
                 container.Page(page =>
                 {
-                    page.Margin(40);
+                    page.Margin(50);
                     page.Size(PageSizes.A4);
-                    page.DefaultTextStyle(x => x.FontSize(10).FontFamily(Fonts.Arial));
+                    page.DefaultTextStyle(x => x.FontSize(10).FontFamily(Fonts.Arial).FontColor(BrandColors.Dark));
 
                     // Header
                     page.Header().Row(row =>
@@ -25,91 +36,207 @@ namespace AccountingSystem.API.Services
                         // Company Info (Left)
                         row.RelativeItem().Column(col =>
                         {
-                            col.Item().Text(company.Name).FontSize(20).Bold().FontColor(Colors.Blue.Darken2);
-                            col.Item().Text(company.Address ?? "No Address");
-                            col.Item().Text($"TIN: {company.TaxId ?? "N/A"}").FontColor(Colors.Grey.Darken1);
-                            col.Item().Text(company.Currency).FontColor(Colors.Grey.Darken1);
+                            col.Item().Text(company.Name)
+                                .FontSize(20)
+                                .Bold()
+                                .FontColor(BrandColors.Primary);
+
+                            col.Item().Text(company.Address ?? "No Address")
+                                .FontSize(10);
+
+                            col.Item().Text($"TIN: {company.TaxId ?? "N/A"}")
+                                .FontSize(10)
+                                .FontColor(BrandColors.Secondary);
+
+                            col.Item().Text(company.Currency)
+                                .FontSize(10)
+                                .FontColor(BrandColors.Secondary);
                         });
 
                         // Invoice Label (Right)
                         row.ConstantItem(200).Column(col =>
                         {
-                            col.Item().AlignRight().Text("INVOICE").FontSize(24).ExtraBold().FontColor(Colors.Grey.Lighten2);
-                            col.Item().AlignRight().Text($"#{invoice.Id}").FontSize(14).SemiBold();
-                            col.Item().AlignRight().Text($"Date: {invoice.DueDate:MMM dd, yyyy}");
+                            col.Item().AlignRight().Text("INVOICE")
+                                .FontSize(24)
+                                .ExtraBold()
+                                .FontColor(BrandColors.Primary);
 
-                            var statusColor = invoice.Status == DocumentStatus.Paid ? Colors.Green.Medium : Colors.Red.Medium;
+                            col.Item().AlignRight().Text($"#{invoice.Id}")
+                                .FontSize(14)
+                                .SemiBold();
+
+                            col.Item().AlignRight().Text($"Date: {invoice.DueDate:MMM dd, yyyy}")
+                                .FontSize(10);
+
+                            var statusColor = invoice.Status == DocumentStatus.Paid
+                                ? BrandColors.Success
+                                : BrandColors.Danger;
                             var statusText = invoice.Status == DocumentStatus.Paid ? "PAID" : "DUE";
-                            col.Item().AlignRight().Text(statusText).FontSize(16).Bold().FontColor(statusColor);
+
+                            col.Item().AlignRight().Text(statusText)
+                                .FontSize(16)
+                                .Bold()
+                                .FontColor(statusColor);
                         });
                     });
 
-                    // Content
-                    page.Content().PaddingVertical(30).Column(col =>
+                    // Content with improved spacing
+                    page.Content().PaddingVertical(25).Column(col =>
                     {
-                        // Bill To Section
-                        col.Item().Row(row =>
+                        // Bill To Section - Enhanced card-like design
+                        col.Item().Background(BrandColors.Light).Padding(15).Column(c =>
                         {
-                            row.RelativeItem().Column(c =>
-                            {
-                                c.Item().Text("Bill To:").FontSize(11).Bold().FontColor(Colors.Grey.Darken2);
-                                c.Item().Text(customer.Name).FontSize(12);
-                                c.Item().Text(customer.Email);
-                                c.Item().Text(customer.Phone);
-                            });
+                            c.Item().Text("BILL TO")
+                                .FontSize(10)
+                                .Bold()
+                                .FontColor(BrandColors.Secondary)
+                                .LetterSpacing(0.5f);
+
+                            c.Item().PaddingTop(8).Text(customer.Name)
+                                .FontSize(14)
+                                .Bold()
+                                .FontColor(BrandColors.Dark);
+
+                            c.Item().PaddingTop(3).Text(customer.Email)
+                                .FontSize(10)
+                                .FontColor(BrandColors.Secondary);
+
+                            c.Item().PaddingTop(2).Text(customer.Phone)
+                                .FontSize(10)
+                                .FontColor(BrandColors.Secondary);
                         });
 
-                        col.Item().Height(20);
+                        col.Item().Height(25);
 
-                        // Table
+                        // Items Table - Professional design
                         col.Item().Table(table =>
                         {
                             table.ColumnsDefinition(columns =>
                             {
-                                columns.RelativeColumn();
-                                columns.ConstantColumn(120);
+                                columns.RelativeColumn(3); // Description
+                                columns.ConstantColumn(140); // Amount
                             });
 
-                            // Header
+                            // Header with better styling
                             table.Header(header =>
                             {
-                                header.Cell().Element(HeaderStyle).Text("Description");
-                                header.Cell().Element(HeaderStyle).AlignRight().Text("Amount");
+                                header.Cell().Element(HeaderStyle).Text("DESCRIPTION")
+                                    .FontSize(10)
+                                    .Bold()
+                                    .LetterSpacing(0.3f);
+                                header.Cell().Element(HeaderStyle).AlignRight().Text("AMOUNT")
+                                    .FontSize(10)
+                                    .Bold()
+                                    .LetterSpacing(0.3f);
 
                                 static IContainer HeaderStyle(IContainer container)
                                 {
                                     return container
-                                        .Background(Colors.Grey.Lighten4)
-                                        .PaddingVertical(5)
-                                        .PaddingHorizontal(5)
-                                        .BorderBottom(1)
-                                        .BorderColor(Colors.Grey.Lighten2)
-                                        .DefaultTextStyle(x => x.SemiBold());
+                                        .Background(BrandColors.Primary)
+                                        .PaddingVertical(8)
+                                        .PaddingHorizontal(12)
+                                        .DefaultTextStyle(x => x.FontColor(Colors.White));
                                 }
                             });
 
-                            // Row
-                            table.Cell().Element(CellStyle).Text(invoice.Description);
-                            table.Cell().Element(CellStyle).AlignRight().Text($"{invoice.TotalAmount:N2}");
+                            // Row with better padding
+                            table.Cell().Element(CellStyle).Text(invoice.Description)
+                                .FontSize(11);
+                            table.Cell().Element(CellStyle).AlignRight().Text($"{company.Currency} {invoice.TotalAmount:N2}")
+                                .FontSize(11)
+                                .SemiBold();
 
                             static IContainer CellStyle(IContainer container)
                             {
-                                return container.PaddingVertical(5).PaddingHorizontal(5).BorderBottom(1).BorderColor(Colors.Grey.Lighten4);
+                                return container
+                                    .BorderBottom(1)
+                                    .BorderColor(Colors.Grey.Lighten3)
+                                    .PaddingVertical(10)
+                                    .PaddingHorizontal(12);
                             }
                         });
 
-                        col.Item().AlignRight().PaddingTop(10).Column(c =>
+                        // Summary section with better visual hierarchy
+                        col.Item().AlignRight().PaddingTop(20).Column(c =>
                         {
-                            c.Item().Text($"Total: {invoice.TotalAmount:N2}").FontSize(14).Bold();
-                            c.Item().Text($"Paid: {invoice.PaidAmount:N2}");
-                            c.Item().Text($"Balance Due: {invoice.Balance:N2}").FontSize(12).Bold().FontColor(invoice.Balance > 0 ? Colors.Red.Medium : Colors.Black);
+                            c.Item().Width(250).Column(summary =>
+                            {
+                                // Subtotal
+                                summary.Item().Row(r =>
+                                {
+                                    r.RelativeItem().Text("Subtotal:")
+                                        .FontSize(11)
+                                        .FontColor(BrandColors.Secondary);
+                                    r.ConstantItem(100).AlignRight().Text($"{company.Currency} {invoice.TotalAmount:N2}")
+                                        .FontSize(11)
+                                        .FontColor(BrandColors.Dark);
+                                });
+
+                                summary.Item().PaddingTop(6).Row(r =>
+                                {
+                                    r.RelativeItem().Text("Paid Amount:")
+                                        .FontSize(11)
+                                        .FontColor(BrandColors.Secondary);
+                                    r.ConstantItem(100).AlignRight().Text($"{company.Currency} {invoice.PaidAmount:N2}")
+                                        .FontSize(11)
+                                        .FontColor(BrandColors.Success);
+                                });
+
+                                summary.Item().PaddingTop(6).LineHorizontal(1).LineColor(Colors.Grey.Lighten2);
+
+                                // Balance Due - Prominent
+                                summary.Item().PaddingTop(8).Background(invoice.Balance > 0 ? "#fef2f2" : "#f0fdf4")
+                                    .PaddingVertical(10)
+                                    .PaddingHorizontal(10)
+                                    .Row(r =>
+                                    {
+                                        r.RelativeItem().Text("Balance Due:")
+                                            .FontSize(13)
+                                            .Bold()
+                                            .FontColor(BrandColors.Dark);
+                                        r.ConstantItem(100).AlignRight().Text($"{company.Currency} {invoice.Balance:N2}")
+                                            .FontSize(14)
+                                            .ExtraBold()
+                                            .FontColor(invoice.Balance > 0 ? BrandColors.Danger : BrandColors.Success);
+                                    });
+                            });
+                        });
+
+                        // Payment terms or notes section
+                        col.Item().PaddingTop(30).Column(c =>
+                        {
+                            c.Item().Text("PAYMENT TERMS")
+                                .FontSize(10)
+                                .Bold()
+                                .FontColor(BrandColors.Secondary)
+                                .LetterSpacing(0.5f);
+
+                            c.Item().PaddingTop(6).Text("Payment is due within 30 days. Please include invoice number with payment.")
+                                .FontSize(9)
+                                .FontColor(BrandColors.Secondary)
+                                .LineHeight(1.4f);
                         });
                     });
 
-                    page.Footer().AlignCenter().Text(x =>
+                    // Footer with better styling
+                    page.Footer().Column(col =>
                     {
-                        x.Span("Generated by Accounting System | Page ");
-                        x.CurrentPageNumber();
+                        col.Item().LineHorizontal(1).LineColor(Colors.Grey.Lighten2);
+                        col.Item().PaddingTop(10).AlignCenter().Row(r =>
+                        {
+                            r.RelativeItem().AlignCenter().Text(text =>
+                            {
+                                text.Span("Generated by Accounting System | ")
+                                    .FontSize(8)
+                                    .FontColor(BrandColors.Secondary);
+                                text.Span("Page ")
+                                    .FontSize(8)
+                                    .FontColor(BrandColors.Secondary);
+                                text.CurrentPageNumber()
+                                    .FontSize(8)
+                                    .FontColor(BrandColors.Secondary);
+                            });
+                        });
                     });
                 });
             });
@@ -129,11 +256,11 @@ namespace AccountingSystem.API.Services
                 return a.Credit - a.Debit;
             }
 
-            var revenue = tb.Accounts.Where(a => accountTypes[a.AccountCode] == "Revenue").ToList();
-            var expense = tb.Accounts.Where(a => accountTypes[a.AccountCode] == "Expense").ToList();
-            var assets = tb.Accounts.Where(a => accountTypes[a.AccountCode] == "Asset").ToList();
-            var liabilities = tb.Accounts.Where(a => accountTypes[a.AccountCode] == "Liability").ToList();
-            var equity = tb.Accounts.Where(a => accountTypes[a.AccountCode] == "Equity").ToList();
+            var revenue = tb.Accounts.Where(a => accountTypes.ContainsKey(a.AccountCode) && accountTypes[a.AccountCode] == "Revenue").ToList();
+            var expense = tb.Accounts.Where(a => accountTypes.ContainsKey(a.AccountCode) && accountTypes[a.AccountCode] == "Expense").ToList();
+            var assets = tb.Accounts.Where(a => accountTypes.ContainsKey(a.AccountCode) && accountTypes[a.AccountCode] == "Asset").ToList();
+            var liabilities = tb.Accounts.Where(a => accountTypes.ContainsKey(a.AccountCode) && accountTypes[a.AccountCode] == "Liability").ToList();
+            var equity = tb.Accounts.Where(a => accountTypes.ContainsKey(a.AccountCode) && accountTypes[a.AccountCode] == "Equity").ToList();
 
             var totalRevenue = revenue.Sum(GetNetBalance);
             var totalExpense = expense.Sum(GetNetBalance);
@@ -146,119 +273,310 @@ namespace AccountingSystem.API.Services
             {
                 container.Page(page =>
                 {
-                    page.Margin(40);
+                    page.Margin(50);
                     page.Size(PageSizes.A4);
-                    page.DefaultTextStyle(x => x.FontSize(10).FontFamily(Fonts.Arial));
+                    page.DefaultTextStyle(x => x.FontSize(10).FontFamily(Fonts.Arial).FontColor(BrandColors.Dark));
 
+                    // Header
                     page.Header().Column(col =>
                     {
-                        col.Item().AlignCenter().Text(company.Name).FontSize(20).Bold().FontColor(Colors.Blue.Darken2);
-                        col.Item().AlignCenter().Text("FINANCIAL STATEMENTS").FontSize(12).SemiBold().FontColor(Colors.Grey.Darken1).LetterSpacing(0.1f);
-                        col.Item().AlignCenter().Text($"As of {DateTime.Now:MMMM dd, yyyy}").FontSize(10).FontColor(Colors.Grey.Darken2);
-                        col.Item().PaddingTop(10).LineHorizontal(2).LineColor(Colors.Blue.Darken2);
+                        col.Item().AlignCenter().Text(company.Name)
+                            .FontSize(20)
+                            .Bold()
+                            .FontColor(BrandColors.Primary);
+
+                        col.Item().AlignCenter().Text("FINANCIAL STATEMENTS")
+                            .FontSize(12)
+                            .SemiBold()
+                            .FontColor(BrandColors.Secondary)
+                            .LetterSpacing(0.1f);
+
+                        col.Item().AlignCenter().Text($"As of {DateTime.Now:MMMM dd, yyyy}")
+                            .FontSize(10)
+                            .FontColor(BrandColors.Secondary);
+
+                        col.Item().PaddingTop(10).LineHorizontal(2).LineColor(BrandColors.Primary);
                     });
 
                     page.Content().PaddingVertical(20).Column(col =>
                     {
-                        // Style Helper
-                        IContainer SectionHeader(IContainer container) => container.PaddingTop(20).PaddingBottom(5).BorderBottom(1).BorderColor(Colors.Grey.Medium);
+                        // Section Header Style
+                        IContainer SectionHeader(IContainer container) => container
+                            .Background(BrandColors.Primary)
+                            .PaddingVertical(6)
+                            .PaddingHorizontal(10)
+                            .DefaultTextStyle(x => x.FontColor(Colors.White));
+
+                        IContainer SubsectionHeader(IContainer container) => container
+                            .PaddingTop(12)
+                            .PaddingBottom(4)
+                            .BorderBottom(1)
+                            .BorderColor(BrandColors.Secondary);
 
                         // --- INCOME STATEMENT ---
-                        col.Item().Element(SectionHeader).Text("Income Statement").FontSize(14).Bold().FontColor(Colors.Blue.Darken3);
+                        col.Item().Element(SectionHeader).Text("INCOME STATEMENT")
+                            .FontSize(13)
+                            .ExtraBold()
+                            .LetterSpacing(0.8f);
 
-                        col.Item().Table(table =>
+                        col.Item().PaddingTop(15).Table(table =>
                         {
-                            table.ColumnsDefinition(c => { c.RelativeColumn(); c.ConstantColumn(120); });
+                            table.ColumnsDefinition(c =>
+                            {
+                                c.RelativeColumn(3);
+                                c.ConstantColumn(140);
+                            });
 
-                            // Revenue
-                            table.Cell().PaddingTop(10).Text("REVENUE").Bold().FontColor(Colors.Grey.Darken3);
-                            table.Cell();
+                            // Revenue Section
+                            table.Cell().ColumnSpan(2).Element(SubsectionHeader)
+                                .Text("REVENUE")
+                                .FontSize(11)
+                                .Bold()
+                                .FontColor(BrandColors.Dark);
+
                             foreach (var item in revenue)
                             {
-                                table.Cell().PaddingLeft(15).Text(item.AccountName);
-                                table.Cell().AlignRight().Text($"{GetNetBalance(item):N2}");
+                                table.Cell().PaddingLeft(20).PaddingVertical(4).Text(item.AccountName)
+                                    .FontSize(10);
+                                table.Cell().PaddingVertical(4).AlignRight().Text($"{company.Currency} {GetNetBalance(item):N2}")
+                                    .FontSize(10);
                             }
-                            table.Cell().PaddingTop(5).Text("Total Revenue").SemiBold();
-                            table.Cell().PaddingTop(5).BorderTop(1).BorderColor(Colors.Grey.Lighten2).AlignRight().Text($"{totalRevenue:N2}").SemiBold();
 
-                            // Expenses
-                            table.Cell().PaddingTop(15).Text("OPERATING EXPENSES").Bold().FontColor(Colors.Grey.Darken3);
-                            table.Cell();
+                            // Total Revenue
+                            table.Cell().PaddingTop(8).PaddingLeft(20).BorderTop(1).BorderColor(Colors.Grey.Lighten2)
+                                .Text("Total Revenue")
+                                .FontSize(11)
+                                .Bold();
+                            table.Cell().PaddingTop(8).BorderTop(1).BorderColor(Colors.Grey.Lighten2)
+                                .AlignRight()
+                                .Text($"{company.Currency} {totalRevenue:N2}")
+                                .FontSize(11)
+                                .Bold()
+                                .FontColor(BrandColors.Success);
+
+                            // Expenses Section
+                            table.Cell().ColumnSpan(2).Element(SubsectionHeader)
+                                .Text("OPERATING EXPENSES")
+                                .FontSize(11)
+                                .Bold()
+                                .FontColor(BrandColors.Dark);
+
                             foreach (var item in expense)
                             {
-                                table.Cell().PaddingLeft(15).Text(item.AccountName);
-                                table.Cell().AlignRight().Text($"{GetNetBalance(item):N2}");
+                                table.Cell().PaddingLeft(20).PaddingVertical(4).Text(item.AccountName)
+                                    .FontSize(10);
+                                table.Cell().PaddingVertical(4).AlignRight().Text($"{company.Currency} {GetNetBalance(item):N2}")
+                                    .FontSize(10);
                             }
-                            table.Cell().PaddingTop(5).Text("Total Expenses").SemiBold();
-                            table.Cell().PaddingTop(5).BorderTop(1).BorderColor(Colors.Grey.Lighten2).AlignRight().Text($"({totalExpense:N2})").SemiBold();
 
-                            // Net Income
-                            table.Cell().PaddingTop(15).Text("NET INCOME").Bold().FontSize(12);
-                            table.Cell().PaddingTop(15).BorderTop(1).BorderColor(Colors.Black).AlignRight().Text($"{netIncome:N2}").Bold().FontSize(12);
-                            table.Cell(); // Empty filler
-                            table.Cell().PaddingTop(2).BorderTop(1).BorderColor(Colors.Black).Height(2); // Double underline effect manually
+                            // Total Expenses
+                            table.Cell().PaddingTop(8).PaddingLeft(20).BorderTop(1).BorderColor(Colors.Grey.Lighten2)
+                                .Text("Total Expenses")
+                                .FontSize(11)
+                                .Bold();
+                            table.Cell().PaddingTop(8).BorderTop(1).BorderColor(Colors.Grey.Lighten2)
+                                .AlignRight()
+                                .Text($"{company.Currency} ({totalExpense:N2})")
+                                .FontSize(11)
+                                .Bold()
+                                .FontColor(BrandColors.Danger);
+
+                            // Net Income - Highlighted
+                            table.Cell().ColumnSpan(2).PaddingTop(15);
+
+                            table.Cell().Background(netIncome >= 0 ? "#f0fdf4" : "#fef2f2")
+                                .Padding(10)
+                                .Text("NET INCOME")
+                                .FontSize(13)
+                                .ExtraBold();
+                            table.Cell().Background(netIncome >= 0 ? "#f0fdf4" : "#fef2f2")
+                                .Padding(10)
+                                .BorderTop(2)
+                                .BorderBottom(2)
+                                .BorderColor(BrandColors.Dark)
+                                .AlignRight()
+                                .Text($"{company.Currency} {netIncome:N2}")
+                                .FontSize(13)
+                                .ExtraBold()
+                                .FontColor(netIncome >= 0 ? BrandColors.Success : BrandColors.Danger);
                         });
 
                         col.Item().PageBreak();
 
                         // --- BALANCE SHEET ---
-                        col.Item().Element(SectionHeader).Text("Balance Sheet").FontSize(14).Bold().FontColor(Colors.Blue.Darken3);
+                        col.Item().Element(SectionHeader).Text("BALANCE SHEET")
+                            .FontSize(13)
+                            .ExtraBold()
+                            .LetterSpacing(0.8f);
 
-                        col.Item().Table(table =>
+                        col.Item().PaddingTop(15).Table(table =>
                         {
-                            table.ColumnsDefinition(c => { c.RelativeColumn(); c.ConstantColumn(120); });
+                            table.ColumnsDefinition(c =>
+                            {
+                                c.RelativeColumn(3);
+                                c.ConstantColumn(140);
+                            });
 
-                            // Assets
-                            table.Cell().PaddingTop(10).Text("ASSETS").Bold().FontColor(Colors.Grey.Darken3);
-                            table.Cell();
+                            // Assets Section
+                            table.Cell().ColumnSpan(2).Element(SubsectionHeader)
+                                .Text("ASSETS")
+                                .FontSize(11)
+                                .Bold()
+                                .FontColor(BrandColors.Dark);
+
                             foreach (var item in assets)
                             {
-                                table.Cell().PaddingLeft(15).Text(item.AccountName);
-                                table.Cell().AlignRight().Text($"{GetNetBalance(item):N2}");
+                                table.Cell().PaddingLeft(20).PaddingVertical(4).Text(item.AccountName)
+                                    .FontSize(10);
+                                table.Cell().PaddingVertical(4).AlignRight().Text($"{company.Currency} {GetNetBalance(item):N2}")
+                                    .FontSize(10);
                             }
-                            table.Cell().PaddingTop(5).Text("TOTAL ASSETS").Bold();
-                            table.Cell().PaddingTop(5).BorderTop(1).BorderColor(Colors.Black).AlignRight().Text($"{totalAssets:N2}").Bold();
-                            table.Cell();
-                            table.Cell().PaddingTop(2).BorderTop(1).BorderColor(Colors.Black).Height(2);
 
-                            // Liabilities
-                            table.Cell().PaddingTop(20).Text("LIABILITIES").Bold().FontColor(Colors.Grey.Darken3);
-                            table.Cell();
+                            // Total Assets - Emphasized
+                            table.Cell().PaddingTop(10).PaddingLeft(20).Background(BrandColors.Light)
+                                .PaddingVertical(6)
+                                .PaddingHorizontal(8)
+                                .BorderTop(2)
+                                .BorderBottom(2)
+                                .BorderColor(BrandColors.Dark)
+                                .Text("TOTAL ASSETS")
+                                .FontSize(12)
+                                .ExtraBold();
+                            table.Cell().PaddingTop(10).Background(BrandColors.Light)
+                                .PaddingVertical(6)
+                                .PaddingHorizontal(8)
+                                .BorderTop(2)
+                                .BorderBottom(2)
+                                .BorderColor(BrandColors.Dark)
+                                .AlignRight()
+                                .Text($"{company.Currency} {totalAssets:N2}")
+                                .FontSize(12)
+                                .ExtraBold();
+
+                            // Liabilities Section
+                            table.Cell().ColumnSpan(2).PaddingTop(20).Element(SubsectionHeader)
+                                .Text("LIABILITIES")
+                                .FontSize(11)
+                                .Bold()
+                                .FontColor(BrandColors.Dark);
+
                             foreach (var item in liabilities)
                             {
-                                table.Cell().PaddingLeft(15).Text(item.AccountName);
-                                table.Cell().AlignRight().Text($"{GetNetBalance(item):N2}");
+                                table.Cell().PaddingLeft(20).PaddingVertical(4).Text(item.AccountName)
+                                    .FontSize(10);
+                                table.Cell().PaddingVertical(4).AlignRight().Text($"{company.Currency} {GetNetBalance(item):N2}")
+                                    .FontSize(10);
                             }
-                            table.Cell().PaddingTop(5).Text("Total Liabilities").SemiBold();
-                            table.Cell().PaddingTop(5).BorderTop(1).BorderColor(Colors.Grey.Lighten2).AlignRight().Text($"{totalLiabilities:N2}").SemiBold();
 
-                            // Equity
-                            table.Cell().PaddingTop(15).Text("EQUITY").Bold().FontColor(Colors.Grey.Darken3);
-                            table.Cell();
+                            table.Cell().PaddingTop(8).PaddingLeft(20).BorderTop(1).BorderColor(Colors.Grey.Lighten2)
+                                .Text("Total Liabilities")
+                                .FontSize(11)
+                                .Bold();
+                            table.Cell().PaddingTop(8).BorderTop(1).BorderColor(Colors.Grey.Lighten2)
+                                .AlignRight()
+                                .Text($"{company.Currency} {totalLiabilities:N2}")
+                                .FontSize(11)
+                                .Bold();
+
+                            // Equity Section
+                            table.Cell().ColumnSpan(2).Element(SubsectionHeader)
+                                .Text("EQUITY")
+                                .FontSize(11)
+                                .Bold()
+                                .FontColor(BrandColors.Dark);
+
                             foreach (var item in equity)
                             {
-                                table.Cell().PaddingLeft(15).Text(item.AccountName);
-                                table.Cell().AlignRight().Text($"{GetNetBalance(item):N2}");
+                                table.Cell().PaddingLeft(20).PaddingVertical(4).Text(item.AccountName)
+                                    .FontSize(10);
+                                table.Cell().PaddingVertical(4).AlignRight().Text($"{company.Currency} {GetNetBalance(item):N2}")
+                                    .FontSize(10);
                             }
-                            table.Cell().PaddingLeft(15).Text("Net Income (Current Period)");
-                            table.Cell().AlignRight().Text($"{netIncome:N2}");
 
-                            table.Cell().PaddingTop(5).Text("Total Equity").SemiBold();
-                            table.Cell().PaddingTop(5).BorderTop(1).BorderColor(Colors.Grey.Lighten2).AlignRight().Text($"{totalEquity:N2}").SemiBold();
+                            table.Cell().PaddingLeft(20).PaddingVertical(4).Text("Net Income (Current Period)")
+                                .FontSize(10)
+                                .Italic();
+                            table.Cell().PaddingVertical(4).AlignRight().Text($"{company.Currency} {netIncome:N2}")
+                                .FontSize(10)
+                                .FontColor(netIncome >= 0 ? BrandColors.Success : BrandColors.Danger);
 
-                            // Total L+E
-                            table.Cell().PaddingTop(15).Text("TOTAL LIABILITIES & EQUITY").Bold();
-                            table.Cell().PaddingTop(15).BorderTop(1).BorderColor(Colors.Black).AlignRight().Text($"{totalLiabilities + totalEquity:N2}").Bold();
-                            table.Cell();
-                            table.Cell().PaddingTop(2).BorderTop(1).BorderColor(Colors.Black).Height(2);
+                            table.Cell().PaddingTop(8).PaddingLeft(20).BorderTop(1).BorderColor(Colors.Grey.Lighten2)
+                                .Text("Total Equity")
+                                .FontSize(11)
+                                .Bold();
+                            table.Cell().PaddingTop(8).BorderTop(1).BorderColor(Colors.Grey.Lighten2)
+                                .AlignRight()
+                                .Text($"{company.Currency} {totalEquity:N2}")
+                                .FontSize(11)
+                                .Bold();
+
+                            // Total Liabilities & Equity - Emphasized
+                            table.Cell().PaddingTop(12).PaddingLeft(20).Background(BrandColors.Light)
+                                .PaddingVertical(6)
+                                .PaddingHorizontal(8)
+                                .BorderTop(2)
+                                .BorderBottom(2)
+                                .BorderColor(BrandColors.Dark)
+                                .Text("TOTAL LIABILITIES & EQUITY")
+                                .FontSize(12)
+                                .ExtraBold();
+                            table.Cell().PaddingTop(12).Background(BrandColors.Light)
+                                .PaddingVertical(6)
+                                .PaddingHorizontal(8)
+                                .BorderTop(2)
+                                .BorderBottom(2)
+                                .BorderColor(BrandColors.Dark)
+                                .AlignRight()
+                                .Text($"{company.Currency} {totalLiabilities + totalEquity:N2}")
+                                .FontSize(12)
+                                .ExtraBold();
+
+                            // Balance check indicator
+                            var isBalanced = Math.Abs(totalAssets - (totalLiabilities + totalEquity)) < 0.01m;
+                            if (isBalanced)
+                            {
+                                table.Cell().ColumnSpan(2).PaddingTop(10).AlignCenter()
+                                    .Background("#f0fdf4")
+                                    .PaddingVertical(8)
+                                    .PaddingHorizontal(8)
+                                    .Text("✓ Balance Sheet is Balanced")
+                                    .FontSize(10)
+                                    .Bold()
+                                    .FontColor(BrandColors.Success);
+                            }
                         });
                     });
 
-                    page.Footer().AlignCenter().Text(x => {
-                        x.Span("Page ");
-                        x.CurrentPageNumber();
-                        x.Span(" of ");
-                        x.TotalPages();
+                    // Enhanced Footer
+                    page.Footer().Column(col =>
+                    {
+                        col.Item().LineHorizontal(1).LineColor(Colors.Grey.Lighten2);
+                        col.Item().PaddingTop(10).Row(r =>
+                        {
+                            r.RelativeItem().Text($"Generated: {DateTime.Now:yyyy-MM-dd HH:mm}")
+                                .FontSize(8)
+                                .FontColor(BrandColors.Secondary);
+
+                            r.RelativeItem().AlignCenter().Text(text =>
+                            {
+                                text.Span("Page ")
+                                    .FontSize(8)
+                                    .FontColor(BrandColors.Secondary);
+                                text.CurrentPageNumber()
+                                    .FontSize(8)
+                                    .FontColor(BrandColors.Secondary);
+                                text.Span(" of ")
+                                    .FontSize(8)
+                                    .FontColor(BrandColors.Secondary);
+                                text.TotalPages()
+                                    .FontSize(8)
+                                    .FontColor(BrandColors.Secondary);
+                            });
+
+                            r.RelativeItem().AlignRight().Text("Confidential")
+                                .FontSize(8)
+                                .FontColor(BrandColors.Secondary);
+                        });
                     });
                 });
             });

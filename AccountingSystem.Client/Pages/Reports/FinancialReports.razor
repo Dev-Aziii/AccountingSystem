@@ -12,25 +12,95 @@
 
 <PageTitle>Financial Reports</PageTitle>
 
-<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4 mb-8" id="printable-area">
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-6 mb-8" ID="printable-area">
 
-    <!-- Action Bar (Hidden when printing) -->
-    <div class="d-flex justify-space-between align-center mb-6 no-print">
-        <div>
-            <MudText Typo="Typo.h4" Color="Color.Primary" Class="mb-1"><b>Financial Statements</b></MudText>
-            <MudText Typo="Typo.body2" Class="mud-text-secondary">Real-time financial position and performance</MudText>
+    <!-- HEADER -->
+    <MudPaper Class="page-header mb-6 no-print" Elevation="0">
+        <div class="d-flex justify-space-between align-center">
+            <div>
+                @if (isLoading)
+                {
+                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="280px" Height="32px" Class="mb-2" />
+                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="460px" Height="20px" />
+                }
+                else
+                {
+                    <MudText Typo="Typo.h5" Class="mb-2 page-header-title">
+                        Financial Statements
+                    </MudText>
+                    <MudText Typo="Typo.body1" Class="page-header-subtitle">
+                        Real-time financial position and performance
+                    </MudText>
+                }
+            </div>
+            <div>
+                @if (isLoading)
+                {
+                    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="280px" Height="42px" />
+                }
+                else
+                {
+                    <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Refresh" OnClick="LoadData" Class="mr-2">Refresh</MudButton>
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.PictureAsPdf" OnClick="PrintReport">Download PDF</MudButton>
+                }
+            </div>
         </div>
-        <div>
-            <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Refresh" OnClick="LoadData" Class="mr-2">Refresh</MudButton>
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.PictureAsPdf" OnClick="PrintReport">Download PDF</MudButton>
-        </div>
-    </div>
+    </MudPaper>
 
     @if (isLoading)
     {
-        <div class="d-flex justify-center my-16">
-            <MudProgressCircular Color="Color.Primary" Size="Size.Large" Indeterminate="true" />
-        </div>
+        <!-- SKELETON FOR TABS AND CONTENT -->
+        <MudCard Elevation="2">
+            <!-- Tabs Skeleton -->
+            <div class="d-flex pa-4" style="border-bottom: 1px solid rgba(0,0,0,0.12);">
+                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="150px" Height="36px" Class="mr-2" />
+                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="170px" Height="36px" Class="mr-2" />
+                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="150px" Height="36px" />
+            </div>
+
+            <MudCardContent Class="pa-8">
+                <!-- Report Header Skeleton -->
+                <div class="text-center mb-8">
+                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="300px" Height="32px" Class="mx-auto mb-2" />
+                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="200px" Height="20px" Class="mx-auto mb-1" />
+                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="180px" Height="16px" Class="mx-auto mb-1" />
+                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="250px" Height="20px" Class="mx-auto mb-2" />
+                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="200px" Height="16px" Class="mx-auto" />
+                    <MudDivider Class="mt-4 mb-4 mx-auto" Style="width: 50%;" />
+                </div>
+
+                <!-- Table Header Skeleton -->
+                <div class="d-flex justify-space-between mb-3 pa-3" style="border-bottom: 2px solid rgba(0,0,0,0.1);">
+                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="120px" Height="20px" />
+                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="120px" Height="20px" />
+                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="120px" Height="20px" />
+                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="120px" Height="20px" />
+                </div>
+
+                <!-- Table Rows Skeleton -->
+                @for (int i = 0; i < 12; i++)
+                {
+                    <div class="d-flex justify-space-between align-center mb-3 pa-2" style="border-bottom: 1px solid rgba(0,0,0,0.05);">
+                        <div style="flex: 1;">
+                            <MudSkeleton SkeletonType="SkeletonType.Text" Width="@(i % 3 == 0 ? "140px" : "180px")" Height="16px" />
+                        </div>
+                        <div style="flex: 0 0 150px; text-align: right;">
+                            <MudSkeleton SkeletonType="SkeletonType.Text" Width="100px" Height="16px" Class="ml-auto" />
+                        </div>
+                    </div>
+                }
+
+                <!-- Summary Skeleton -->
+                <div class="mt-6">
+                    <div class="d-flex justify-end mb-2">
+                        <MudSkeleton SkeletonType="SkeletonType.Text" Width="200px" Height="24px" />
+                    </div>
+                    <div class="d-flex justify-end">
+                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="250px" Height="60px" />
+                    </div>
+                </div>
+            </MudCardContent>
+        </MudCard>
     }
     else if (trialBalance != null && currentCompany != null)
     {
@@ -60,7 +130,6 @@
                             <tr class="mud-theme-light">
                                 <th class="py-3"><b>ACCOUNT CODE</b></th>
                                 <th class="py-3"><b>ACCOUNT NAME</b></th>
-                                <!-- Fixed Alignment: Applied text-align:right directly to headers -->
                                 <th class="py-3" style="text-align:right"><b>DEBIT</b></th>
                                 <th class="py-3" style="text-align:right"><b>CREDIT</b></th>
                             </tr>
@@ -68,19 +137,35 @@
                         <tbody>
                             @foreach (var line in trialBalance.Accounts.OrderBy(a => a.AccountCode))
                             {
+                                // CALCULATE NET BALANCE
+                                var net = line.Debit - line.Credit;
+                                var displayDebit = net > 0 ? net : 0;
+                                var displayCredit = net < 0 ? Math.Abs(net) : 0;
+
                                 <tr>
                                     <td class="mud-text-secondary">@line.AccountCode</td>
                                     <td>@line.AccountName</td>
-                                    <td style="text-align:right; font-family: monospace;">@(line.Debit != 0 ? line.Debit.ToString("C2", _phCulture) : "-")</td>
-                                    <td style="text-align:right; font-family: monospace;">@(line.Credit != 0 ? line.Credit.ToString("C2", _phCulture) : "-")</td>
+                                    <!-- Display Net Debit -->
+                                    <td style="text-align:right; font-family: monospace;">
+                                        @displayDebit.ToString("C2", _phCulture)
+                                    </td>
+                                    <!-- Display Net Credit -->
+                                    <td style="text-align:right; font-family: monospace;">
+                                        @displayCredit.ToString("C2", _phCulture)
+                                    </td>
                                 </tr>
                             }
                         </tbody>
                         <tfoot>
+                            @{
+                                // Calculate Totals based on NET values displayed
+                                var totalNetDebit = trialBalance.Accounts.Sum(a => (a.Debit - a.Credit) > 0 ? (a.Debit - a.Credit) : 0);
+                                var totalNetCredit = trialBalance.Accounts.Sum(a => (a.Debit - a.Credit) < 0 ? Math.Abs(a.Debit - a.Credit) : 0);
+                            }
                             <tr style="border-top: 2px solid var(--mud-palette-text-primary);">
                                 <td colspan="2" class="py-4" style="text-align:right"><b>TOTALS:</b></td>
-                                <td class="py-4" style="text-align:right; font-family: monospace; border-bottom: 3px double black;"><b>@trialBalance.TotalDebit.ToString("C2", _phCulture)</b></td>
-                                <td class="py-4" style="text-align:right; font-family: monospace; border-bottom: 3px double black;"><b>@trialBalance.TotalCredit.ToString("C2", _phCulture)</b></td>
+                                <td class="py-4" style="text-align:right; font-family: monospace; border-bottom: 3px double black;"><b>@totalNetDebit.ToString("C2", _phCulture)</b></td>
+                                <td class="py-4" style="text-align:right; font-family: monospace; border-bottom: 3px double black;"><b>@totalNetCredit.ToString("C2", _phCulture)</b></td>
                             </tr>
                         </tfoot>
                     </MudSimpleTable>
@@ -254,8 +339,8 @@
 
 @code {
     private TrialBalanceDTO? trialBalance;
-    private CompanyDTO? currentCompany; // NEW: Hold company details
-    private Dictionary<string, string> accountTypes = new Dictionary<string, string>();
+    private CompanyDTO? currentCompany;
+    private Dictionary<string, string> accountTypes = new();
     private bool isLoading = false;
 
     // Philippine Culture for formatting "₱"
@@ -284,10 +369,8 @@
 
             trialBalance = tbTask.Result;
             currentCompany = companyTask.Result;
-
-            // Fix: Handle potential null from accountsTask.Result
             var accounts = accountsTask.Result;
-            accountTypes = accounts?.ToDictionary(a => a.Code, a => a.Type) ?? new Dictionary<string, string>();
+            accountTypes = accounts != null ? accounts.ToDictionary(a => a.Code, a => a.Type) : new Dictionary<string, string>();
         }
         catch (Exception ex) { Console.WriteLine(ex.Message); }
         finally { isLoading = false; }
