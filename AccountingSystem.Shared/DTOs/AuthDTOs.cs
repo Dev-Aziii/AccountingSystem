@@ -42,6 +42,8 @@ namespace AccountingSystem.Shared.DTOs
 
         [Required]
         public string Password { get; set; } = string.Empty;
+
+        public string RecaptchaToken { get; set; } = string.Empty;
     }
 
     public class RegisterDTO

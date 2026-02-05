@@ -1,0 +1,62 @@
+﻿using AccountingSystem.API.Services.Interfaces;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+
+namespace AccountingSystem.API.Services
+{
+    public class CaptchaService : ICaptchaService
+    {
+        private readonly HttpClient _httpClient;
+        private readonly IConfiguration _configuration;
+
+        public CaptchaService(HttpClient httpClient, IConfiguration configuration)
+        {
+            _httpClient = httpClient;
+            _configuration = configuration;
+        }
+
+        public async Task<bool> VerifyTokenAsync(string token)
+        {
+            try
+            {
+                var secretKey = _configuration["Recaptcha:SecretKey"];
+          
+                var response = await _httpClient.GetAsync($"https://www.google.com/recaptcha/api/siteverify?secret={secretKey}&response={token}");
+
+                if (!response.IsSuccessStatusCode) return false;
+
+                var jsonString = await response.Content.ReadAsStringAsync();
+                var result = JsonSerializer.Deserialize<GoogleCaptchaResponse>(jsonString);
+
+                if (result.Score.HasValue)
+                {
+                    var threshold = double.Parse(_configuration["Recaptcha:ScoreThreshold"] ?? "0.5");
+                    return result.Success && result.Score >= threshold;
+                }
+
+                return result.Success;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Captcha Verification Failed: {ex.Message}");
+                return false;
+            }
+        }
+
+        private class GoogleCaptchaResponse
+        {
+            [JsonPropertyName("success")]
+            public bool Success { get; set; }
+
+            // FIX: Made nullable so v2 responses don't default to 0.0 (Bot)
+            [JsonPropertyName("score")]
+            public double? Score { get; set; }
+
+            [JsonPropertyName("action")]
+            public string Action { get; set; }
+
+            [JsonPropertyName("error-codes")]
+            public string[] ErrorCodes { get; set; }
+        }
+    }
+}

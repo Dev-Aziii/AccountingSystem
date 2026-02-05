@@ -27,6 +27,8 @@ builder.Services.AddScoped<IPayableService, PayableService>();
 builder.Services.AddScoped<IReceivableService, ReceivableService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<IPdfService, PdfService>();
+builder.Services.AddHttpClient<ICaptchaService, CaptchaService>();
+builder.Services.AddScoped<ICaptchaService, CaptchaService>();
 
 // --- 3. Authentication Setup (JWT) ---
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");

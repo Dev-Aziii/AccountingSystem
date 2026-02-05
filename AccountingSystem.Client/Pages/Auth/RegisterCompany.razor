@@ -6,6 +6,7 @@
 @inject AuthService AuthService
 @inject NavigationManager NavManager
 @inject ISnackbar Snackbar
+@inject IJSRuntime JS
 
 <PageTitle>AccSys - Register</PageTitle>
 
@@ -63,6 +64,10 @@
                                   Class="mb-6 register-field"
                                   FullWidth="true"
                                   Style="border-radius: 12px;" />
+
+                    <div class="d-flex justify-center mb-4">
+                        <div id="recaptcha_container"></div>
+                    </div>
 
                     <MudButton ButtonType="ButtonType.Submit"
                                Variant="Variant.Filled"
@@ -381,15 +386,41 @@
     private CompanyRegisterDTO registerModel = new CompanyRegisterDTO();
     private bool isLoading = false;
 
+    // REPLACE with your actual v2 "I'm not a robot" SITE KEY from Google Console
+    private const string SiteKey = "6LcUNGEsAAAAAJKM0sgFbG3mKWAiYq-cXaz2Wv_8";
+
+    // FIX: Render the widget after the component has loaded the HTML
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // Small delay to ensure the Google script has initialized if coming from a fast reload
+            await Task.Delay(500);
+            await JS.InvokeVoidAsync("renderRecaptcha", "recaptcha_container", SiteKey);
+        }
+    }
+
     private async Task HandleRegistration()
     {
         isLoading = true;
         try
         {
-            await AuthService.RegisterCompany(registerModel);
-            Snackbar.Add("🎉 Company registered successfully! Welcome to the system.", Severity.Success);
+            // 1. Get Token from v2 Widget via JS
+            string token = await JS.InvokeAsync<string>("getCaptchaResponse");
 
-            // Delay to allow snackbar to show and for a better UX
+            if (string.IsNullOrEmpty(token))
+            {
+                Snackbar.Add("Please complete the CAPTCHA verification.", Severity.Warning);
+                isLoading = false;
+                return;
+            }
+
+            registerModel.RecaptchaToken = token;
+
+            // 2. Send to API
+            await AuthService.RegisterCompany(registerModel);
+
+            Snackbar.Add("Company registered successfully! Welcome.", Severity.Success);
             await Task.Delay(1500);
             NavManager.NavigateTo("/dashboard");
         }

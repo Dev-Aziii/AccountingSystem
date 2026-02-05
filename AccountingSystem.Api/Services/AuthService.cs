@@ -15,11 +15,12 @@ namespace AccountingSystem.API.Services
     {
         private readonly AccountingDbContext _context;
         private readonly IConfiguration _configuration;
-
-        public AuthService(AccountingDbContext context, IConfiguration configuration)
+        private readonly ICaptchaService _captchaService;
+        public AuthService(AccountingDbContext context, IConfiguration configuration, ICaptchaService captchaService)
         {
             _context = context;
             _configuration = configuration;
+            _captchaService = captchaService;
         }
 
         // --- NEW: Update Profile ---
@@ -72,6 +73,11 @@ namespace AccountingSystem.API.Services
 
         public async Task<AuthResponseDTO> RegisterCompanyAsync(CompanyRegisterDTO dto)
         {
+            if (!await _captchaService.VerifyTokenAsync(dto.RecaptchaToken))
+            {
+                throw new Exception("Security check failed. Automated activity detected.");
+            }
+
             if (await _context.Users.IgnoreQueryFilters().AnyAsync(u => u.Email == dto.AdminEmail))
                 throw new Exception("Email already exists.");
 
