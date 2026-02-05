@@ -99,14 +99,100 @@
     }
     else
     {
-        <MudTable Items="@auditLogs" Dense="true" Hover="true" Bordered="false" Striped="true"
-                  Filter="new Func<AuditLogDTO, bool>(FilterFunc)" Loading="@_loading" LoadingProgressColor="Color.Info" Elevation="3">
+        <!-- FILTERS PANEL -->
+        <MudPaper Elevation="2" Class="pa-4 mb-4">
+            <div class="d-flex align-center mb-2">
+                <MudIcon Icon="@Icons.Material.Filled.FilterList" Class="mr-2" />
+                <MudText Typo="Typo.h6">Filters</MudText>
+                <MudSpacer />
+                @if (HasActiveFilters())
+                {
+                    <MudChip T="string" Color="Color.Primary" Size="Size.Small" Class="mr-2">
+                        @GetActiveFilterCount() active filter(s)
+                    </MudChip>
+                    <MudButton Variant="Variant.Text" 
+                               Color="Color.Secondary" 
+                               Size="Size.Small" 
+                               OnClick="ClearAllFilters"
+                               StartIcon="@Icons.Material.Filled.Clear">
+                        Clear All
+                    </MudButton>
+                }
+            </div>
+            
+            <MudGrid>
+                <!-- Date Range Filter -->
+                <MudItem xs="12" md="3">
+                    <MudDateRangePicker Label="Date Range" 
+                                        @bind-DateRange="dateRange"
+                                        Clearable="true"
+                                        AutoClose="true"
+                                        Variant="Variant.Outlined"
+                                        Margin="Margin.Dense" />
+                </MudItem>
+
+                <!-- Action Type Filter -->
+                <MudItem xs="12" md="3">
+                    <MudSelect T="string" 
+                               Label="Action Type" 
+                               @bind-Value="selectedActionType"
+                               Clearable="true"
+                               Variant="Variant.Outlined"
+                               Margin="Margin.Dense"
+                               AnchorOrigin="Origin.BottomCenter">
+                        <MudSelectItem T="string" Value="@("LOGIN")">Login</MudSelectItem>
+                        <MudSelectItem T="string" Value="@("USER")">User Management</MudSelectItem>
+                        <MudSelectItem T="string" Value="@("CUSTOMER")">Customer (AR)</MudSelectItem>
+                        <MudSelectItem T="string" Value="@("VENDOR")">Vendor (AP)</MudSelectItem>
+                        <MudSelectItem T="string" Value="@("ACCOUNT")">Accounts (GL)</MudSelectItem>
+                        <MudSelectItem T="string" Value="@("BILL")">Bills/Expenses</MudSelectItem>
+                        <MudSelectItem T="string" Value="@("INVOICE")">Invoices</MudSelectItem>
+                        <MudSelectItem T="string" Value="@("JOURNAL")">Journal Entries</MudSelectItem>
+                    </MudSelect>
+                </MudItem>
+
+                <!-- User Filter -->
+                <MudItem xs="12" md="3">
+                    <MudAutocomplete T="string" 
+                                     Label="User" 
+                                     @bind-Value="selectedUser"
+                                     SearchFunc="SearchUsers"
+                                     Clearable="true"
+                                     Variant="Variant.Outlined"
+                                     Margin="Margin.Dense"
+                                     ResetValueOnEmptyText="true"
+                                     CoerceText="false"
+                                     DebounceInterval="300" />
+                </MudItem>
+
+                <!-- Search Box -->
+                <MudItem xs="12" md="3">
+                    <MudTextField @bind-Value="searchString" 
+                                  Label="Search" 
+                                  Placeholder="Search by keyword..."
+                                  Adornment="Adornment.Start" 
+                                  AdornmentIcon="@Icons.Material.Filled.Search"
+                                  Variant="Variant.Outlined"
+                                  Margin="Margin.Dense"
+                                  Clearable="true" />
+                </MudItem>
+            </MudGrid>
+        </MudPaper>
+
+        <!-- RESULTS SUMMARY -->
+        @if (FilteredLogs.Any())
+        {
+            <MudAlert Severity="Severity.Info" Class="mb-3" Dense="true" Elevation="0">
+                Showing <strong>@FilteredLogs.Count()</strong> of <strong>@auditLogs.Count</strong> total logs
+            </MudAlert>
+        }
+
+        <!-- TABLE -->
+        <MudTable Items="@FilteredLogs" Dense="true" Hover="true" Bordered="false" Striped="true"
+                  Loading="@_loading" LoadingProgressColor="Color.Info" Elevation="3">
             <ToolBarContent>
                 <MudText Typo="Typo.h6">Activity History</MudText>
                 <MudSpacer />
-                <MudTextField @bind-Value="searchString" Placeholder="Search by User, Action, or Target..."
-                              Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
-                              IconSize="Size.Medium" Class="mt-0"></MudTextField>
             </ToolBarContent>
             <HeaderContent>
                 <MudTh><MudTableSortLabel SortBy="new Func<AuditLogDTO, object>(x => x.Timestamp)">Date & Time</MudTableSortLabel></MudTh>
@@ -135,6 +221,11 @@
             <PagerContent>
                 <MudTablePager />
             </PagerContent>
+            <NoRecordsContent>
+                <MudText Typo="Typo.body1" Align="Align.Center" Class="py-8">
+                    No audit logs found matching your filters.
+                </MudText>
+            </NoRecordsContent>
         </MudTable>
     }
 </MudContainer>
@@ -144,6 +235,14 @@
     private string searchString = "";
     private bool _loading = true;
     private bool _initialLoading = true;
+
+    // Filter properties
+    private DateRange? dateRange = null;
+    private string? selectedActionType = null;
+    private string? selectedUser = null;
+
+    // Computed property for filtered logs
+    private IEnumerable<AuditLogDTO> FilteredLogs => ApplyFilters();
 
     protected override async Task OnInitializedAsync()
     {
@@ -157,7 +256,6 @@
         _loading = true;
         try
         {
-            // Fix: Handle potential null return value
             auditLogs = await AuditService.GetAuditLogsAsync() ?? new List<AuditLogDTO>();
         }
         catch (Exception ex)
@@ -170,16 +268,101 @@
         }
     }
 
-    private bool FilterFunc(AuditLogDTO log)
+    // Apply all filters
+    private IEnumerable<AuditLogDTO> ApplyFilters()
     {
-        if (string.IsNullOrWhiteSpace(searchString)) return true;
-        if (log.UserEmail.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
-        if (log.Action.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
-        if (log.EntityName.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
-        return false;
+        var filtered = auditLogs.AsEnumerable();
+
+        // Date range filter
+        if (dateRange?.Start != null && dateRange?.End != null)
+        {
+            filtered = filtered.Where(log => 
+                log.Timestamp.Date >= dateRange.Start.Value.Date && 
+                log.Timestamp.Date <= dateRange.End.Value.Date);
+        }
+
+        // Action type filter
+        if (!string.IsNullOrWhiteSpace(selectedActionType))
+        {
+            if (selectedActionType == "USER")
+                filtered = filtered.Where(log => log.Action.StartsWith("USER-", StringComparison.OrdinalIgnoreCase));
+            else if (selectedActionType == "CUSTOMER")
+                filtered = filtered.Where(log => log.Action.StartsWith("CUSTOMER-", StringComparison.OrdinalIgnoreCase));
+            else if (selectedActionType == "VENDOR")
+                filtered = filtered.Where(log => log.Action.StartsWith("VENDOR-", StringComparison.OrdinalIgnoreCase));
+            else if (selectedActionType == "ACCOUNT")
+                filtered = filtered.Where(log => log.Action.StartsWith("ACCOUNT-", StringComparison.OrdinalIgnoreCase));
+            else if (selectedActionType == "BILL")
+                filtered = filtered.Where(log => log.Action.StartsWith("BILL-", StringComparison.OrdinalIgnoreCase));
+            else if (selectedActionType == "INVOICE")
+                filtered = filtered.Where(log => log.Action.StartsWith("INVOICE-", StringComparison.OrdinalIgnoreCase));
+            else if (selectedActionType == "JOURNAL")
+                filtered = filtered.Where(log => log.Action.Contains("JOURNAL", StringComparison.OrdinalIgnoreCase));
+            else
+                filtered = filtered.Where(log => log.Action.Equals(selectedActionType, StringComparison.OrdinalIgnoreCase));
+        }
+
+        // User filter
+        if (!string.IsNullOrWhiteSpace(selectedUser))
+        {
+            filtered = filtered.Where(log => log.UserEmail.Equals(selectedUser, StringComparison.OrdinalIgnoreCase));
+        }
+
+        // Text search filter
+        if (!string.IsNullOrWhiteSpace(searchString))
+        {
+            filtered = filtered.Where(log => 
+                log.UserEmail.Contains(searchString, StringComparison.OrdinalIgnoreCase) ||
+                log.Action.Contains(searchString, StringComparison.OrdinalIgnoreCase) ||
+                log.EntityName.Contains(searchString, StringComparison.OrdinalIgnoreCase));
+        }
+
+        return filtered;
     }
 
-    // Fix: Changed from Show to ShowAsync
+    // User autocomplete search
+    private async Task<IEnumerable<string>> SearchUsers(string value, CancellationToken cancellationToken)
+    {
+        await Task.Delay(5, cancellationToken); // Small delay to simulate async
+        
+        var uniqueUsers = auditLogs.Select(log => log.UserEmail).Distinct().OrderBy(u => u);
+        
+        if (string.IsNullOrWhiteSpace(value))
+            return uniqueUsers;
+        
+        return uniqueUsers.Where(u => u.Contains(value, StringComparison.OrdinalIgnoreCase));
+    }
+
+    // Check if any filters are active
+    private bool HasActiveFilters()
+    {
+        return dateRange != null || 
+               !string.IsNullOrWhiteSpace(selectedActionType) || 
+               !string.IsNullOrWhiteSpace(selectedUser) ||
+               !string.IsNullOrWhiteSpace(searchString);
+    }
+
+    // Get count of active filters
+    private int GetActiveFilterCount()
+    {
+        int count = 0;
+        if (dateRange != null) count++;
+        if (!string.IsNullOrWhiteSpace(selectedActionType)) count++;
+        if (!string.IsNullOrWhiteSpace(selectedUser)) count++;
+        if (!string.IsNullOrWhiteSpace(searchString)) count++;
+        return count;
+    }
+
+    // Clear all filters
+    private void ClearAllFilters()
+    {
+        dateRange = null;
+        selectedActionType = null;
+        selectedUser = null;
+        searchString = "";
+        StateHasChanged();
+    }
+
     private async Task ViewDetails(AuditLogDTO log)
     {
         var parameters = new DialogParameters { ["Log"] = log };
@@ -187,7 +370,6 @@
         await DialogService.ShowAsync<AuditDetailsDialog>("Audit Log Details", parameters, options);
     }
 
-    // NEW: Centralized color logic for Action Types
     private Color GetActionColor(string action)
     {
         if (action == "LOGIN") return Color.Dark;
