@@ -1,6 +1,8 @@
 # AccSys: Web-Based Integrated Accounting & Financial Management System
 
-![AccSys Logo](path-to-your-logo-image.png)
+<p align="center">
+  <img src="AccountingSystem.Client/wwwroot/AccsysLogo.png" alt="AccSys Logo" width="150" height="150"/>
+</p>
 
 > A modern, comprehensive web-based accounting system that automates financial processes and provides real-time insights for businesses.
 
