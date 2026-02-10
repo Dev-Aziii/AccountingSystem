@@ -5,10 +5,12 @@
 @using Microsoft.AspNetCore.Authorization
 @using MudBlazor
 @using System.Globalization
+@using System.Text.RegularExpressions
 @attribute [Authorize(Roles = "Admin,Accounting")]
 @inject LedgerService LedgerService
 @inject NavigationManager NavManager
 @inject ISnackbar Snackbar
+@inject IJSRuntime JSRuntime
 
 <PageTitle>Journal Entries</PageTitle>
 
@@ -158,17 +160,27 @@
                     </MudTd>
 
                     <MudTd DataLabel="Debit">
-                        <MudNumericField @bind-Value="lineContext.Debit"
-                                         Format="N2"
-                                         HideSpinButtons="true"
-                                         Variant="Variant.Text" />
+                        <MudTextField @bind-Value="lineContext.Debit"
+                                      Label=""
+                                      Variant="Variant.Text"
+                                      InputType="InputType.Number"
+                                      Adornment="Adornment.Start"
+                                      AdornmentText="₱"
+                                      Immediate="true"
+                                      OnKeyDown="@((e) => ValidateNumericInput(e, lineContext, true))"
+                                      OnBlur="@(() => FormatDebitValue(lineContext))" />
                     </MudTd>
 
                     <MudTd DataLabel="Credit">
-                        <MudNumericField @bind-Value="lineContext.Credit"
-                                         Format="N2"
-                                         HideSpinButtons="true"
-                                         Variant="Variant.Text" />
+                        <MudTextField @bind-Value="lineContext.Credit"
+                                      Label=""
+                                      Variant="Variant.Text"
+                                      InputType="InputType.Number"
+                                      Adornment="Adornment.Start"
+                                      AdornmentText="₱"
+                                      Immediate="true"
+                                      OnKeyDown="@((e) => ValidateNumericInput(e, lineContext, false))"
+                                      OnBlur="@(() => FormatCreditValue(lineContext))" />
                     </MudTd>
 
                     <MudTd>
@@ -279,6 +291,43 @@
     {
         if (entry.Lines.Count > 2)
             entry.Lines.Remove(line);
+    }
+
+    /// <summary>
+    /// Validates keyboard input to allow only numeric characters and decimal point
+    /// </summary>
+    private async Task ValidateNumericInput(KeyboardEventArgs e, JournalEntryLineDTO line, bool isDebit)
+    {
+        // Allow: numbers (0-9), decimal point (.), backspace, delete, tab, enter, arrow keys
+        var allowedKeys = new[] { "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", ".", 
+                                  "Backspace", "Delete", "Tab", "Enter", "ArrowLeft", "ArrowRight", 
+                                  "ArrowUp", "ArrowDown", "Home", "End" };
+
+        // Prevent non-numeric input using JavaScript
+        if (!allowedKeys.Contains(e.Key))
+        {
+            await JSRuntime.InvokeVoidAsync("eval", "event.preventDefault()");
+        }
+    }
+
+    private void FormatDebitValue(JournalEntryLineDTO line)
+    {
+        // Ensure non-negative value
+        if (line.Debit < 0)
+            line.Debit = 0;
+
+        // Round to 2 decimal places
+        line.Debit = Math.Round(line.Debit, 2);
+    }
+
+    private void FormatCreditValue(JournalEntryLineDTO line)
+    {
+        // Ensure non-negative value
+        if (line.Credit < 0)
+            line.Credit = 0;
+
+        // Round to 2 decimal places
+        line.Credit = Math.Round(line.Credit, 2);
     }
 
     private async Task HandleSubmit()
