@@ -126,6 +126,16 @@ namespace AccountingSystem.API.Middleware
                     else if (path.Contains("/auth/profile")) action = "PROFILE-UPDATE";
                     else if (path.Contains("/auth/password")) action = "PASSWORD-CHANGE";
 
+                    // SuperAdmin actions
+                    else if (path.Contains("/superadmin/companies") && path.Contains("/status"))
+                    {
+                        action = "SUPERADMIN-COMPANY-STATUS";
+                    }
+                    else if (path.Contains("/superadmin/users") && path.Contains("/status"))
+                    {
+                        action = "SUPERADMIN-USER-STATUS";
+                    }
+
                     var auditLog = new AuditLog
                     {
                         UserId = userId,

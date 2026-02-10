@@ -1,0 +1,220 @@
+@page "/superadmin/audit-logs"
+@using AccountingSystem.Shared.DTOs
+@using AccountingSystem.Client.Services
+@using MudBlazor
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "SuperAdmin")]
+@inject SuperAdminService SuperAdminService
+@inject ISnackbar Snackbar
+
+<PageTitle>Super Admin Audit Logs</PageTitle>
+
+<style>
+    .audit-page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .audit-table-card {
+        background: white;
+        border-radius: 20px;
+        border: 1px solid rgba(22, 84, 127, 0.1);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+        overflow: hidden;
+    }
+
+    .audit-detail-row {
+        background: rgba(22, 84, 127, 0.03);
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
+        margin-top: 0.25rem;
+        font-size: 0.85rem;
+    }
+</style>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4 mb-10">
+    <!-- HEADER -->
+    <div class="audit-page-header">
+        <div>
+            <MudText Typo="Typo.h5" Style="font-weight: 800; color: rgb(22, 84, 127);">
+                Super Admin Audit Logs
+            </MudText>
+            <MudText Typo="Typo.body2" Style="color: rgb(56, 146, 147);">
+                Complete history of all administrative actions performed by Super Admins
+            </MudText>
+        </div>
+        <MudButton Variant="Variant.Filled"
+                   Style="background: linear-gradient(135deg, rgb(22, 84, 127) 0%, rgb(56, 146, 147) 100%); color: white; border-radius: 12px;"
+                   StartIcon="@Icons.Material.Filled.Refresh"                   Size="Size.Medium" OnClick="LoadData">
+            Refresh
+        </MudButton>
+    </div>
+
+    <!-- TABLE -->
+    <div class="audit-table-card">
+        <MudTable Items="@logs" Hover="true" Loading="@isLoading"
+                  Filter="new Func<SuperAdminAuditLogDTO, bool>(FilterFunc)"                  Dense="false" Elevation="0"
+                  Style="background: transparent;">
+            <ToolBarContent>
+                <MudText Typo="Typo.h6" Style="color: rgb(22, 84, 127); font-weight: 700;">Action History</MudText>
+                <MudSpacer />
+                <MudTextField @bind-Value="searchString" Placeholder="Search logs..."                              Adornment="Adornment.Start"
+                              AdornmentIcon="@Icons.Material.Filled.Search"                              IconSize="Size.Medium" Class="mt-0"
+                              Style="max-width: 300px;" />
+                <MudSelect T="string" @bind-Value="actionFilter" Label="Action" Class="ml-4" Style="max-width: 200px;">
+                    <MudSelectItem T="string" Value='@("All")'>All Actions</MudSelectItem>
+                    <MudSelectItem T="string" Value='@("COMPANY_STATUS_CHANGE")'>Company Status</MudSelectItem>
+                    <MudSelectItem T="string" Value='@("USER_STATUS_CHANGE")'>User Status</MudSelectItem>
+                </MudSelect>
+                <MudSelect T="string" @bind-Value="targetFilter" Label="Target" Class="ml-4" Style="max-width: 150px;">
+                    <MudSelectItem T="string" Value='@("All")'>All Targets</MudSelectItem>
+                    <MudSelectItem T="string" Value='@("Company")'>Companies</MudSelectItem>
+                    <MudSelectItem T="string" Value='@("User")'>Users</MudSelectItem>
+                </MudSelect>
+            </ToolBarContent>
+            <HeaderContent>
+                <MudTh>Timestamp</MudTh>
+                <MudTh>Admin</MudTh>
+                <MudTh>Action</MudTh>
+                <MudTh>Target Type</MudTh>
+                <MudTh>Target</MudTh>
+                <MudTh>Change</MudTh>
+                <MudTh>Details</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Timestamp">
+                    <div>
+                        <MudText Typo="Typo.body2">@context.Timestamp.ToString("MMM dd, yyyy")</MudText>
+                        <MudText Typo="Typo.caption" Color="Color.Tertiary">@context.Timestamp.ToString("HH:mm:ss")
+                        </MudText>
+                    </div>
+                </MudTd>
+                <MudTd DataLabel="Admin">
+                    <div class="d-flex align-center gap-2">
+                        <MudIcon Icon="@Icons.Material.Filled.Security" Size="Size.Small"
+                                 Style="color: rgb(22, 84, 127); opacity: 0.5;" />
+                        @context.AdminEmail
+                    </div>
+                </MudTd>
+                <MudTd DataLabel="Action">
+                    <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined"
+                             Color="@GetActionChipColor(context.Action)">
+                        @FormatActionName(context.Action)
+                    </MudChip>
+                </MudTd>
+                <MudTd DataLabel="Target Type">
+                    <MudChip T="string" Size="Size.Small" Variant="Variant.Text"
+                             Icon="@GetTargetIcon(context.TargetType)">
+                        @context.TargetType
+                    </MudChip>
+                </MudTd>
+                <MudTd DataLabel="Target">
+                    <b>@context.TargetName</b>
+                </MudTd>
+                <MudTd DataLabel="Change">
+                    @if (!string.IsNullOrEmpty(context.OldValue) && !string.IsNullOrEmpty(context.NewValue))
+                    {
+                        <div class="d-flex align-center gap-1">
+                            <MudChip T="string" Size="Size.Small" Color="@GetStatusColor(context.OldValue)"
+                                     Variant="Variant.Filled">
+                                @context.OldValue
+                            </MudChip>
+                            <MudIcon Icon="@Icons.Material.Filled.ArrowForward" Size="Size.Small" Style="opacity: 0.5;" />
+                            <MudChip T="string" Size="Size.Small" Color="@GetStatusColor(context.NewValue)"
+                                     Variant="Variant.Filled">
+                                @context.NewValue
+                            </MudChip>
+                        </div>
+                    }
+                    else
+                    {
+                        <MudText Typo="Typo.body2" Color="Color.Tertiary">—</MudText>
+                    }
+                </MudTd>
+                <MudTd DataLabel="Details">
+                    <MudTooltip Text="@context.Details">
+                        <MudIcon Icon="@Icons.Material.Filled.Info" Size="Size.Small"
+                                 Style="color: rgb(56, 146, 147); cursor: pointer;" />
+                    </MudTooltip>
+                </MudTd>
+            </RowTemplate>
+            <PagerContent>
+                <MudTablePager />
+            </PagerContent>
+        </MudTable>
+    </div>
+</MudContainer>
+
+@code {
+    private List<SuperAdminAuditLogDTO> logs = new List<SuperAdminAuditLogDTO>();
+    private bool isLoading = true;
+    private string searchString = "";
+    private string actionFilter = "All";
+    private string targetFilter = "All";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        isLoading = true;
+        try
+        {
+            logs = await SuperAdminService.GetAuditLogsAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private string FormatActionName(string action) => action switch
+    {
+        "COMPANY_STATUS_CHANGE" => "Company Status",
+        "USER_STATUS_CHANGE" => "User Status",
+        _ => action
+    };
+
+    private Color GetActionChipColor(string action) => action switch
+    {
+        "COMPANY_STATUS_CHANGE" => Color.Primary,
+        "USER_STATUS_CHANGE" => Color.Secondary,
+        _ => Color.Default
+    };
+
+    private string GetTargetIcon(string targetType) => targetType switch
+    {
+        "Company" => Icons.Material.Filled.Business,
+        "User" => Icons.Material.Filled.Person,
+        _ => Icons.Material.Filled.Info
+    };
+
+    private Color GetStatusColor(string status) => status switch
+    {
+        "Active" => Color.Success,
+        "Suspended" => Color.Warning,
+        "Restricted" => Color.Warning,
+        "Blocked" => Color.Error,
+        _ => Color.Default
+    };
+
+    private bool FilterFunc(SuperAdminAuditLogDTO element)
+    {
+        bool matchesSearch = string.IsNullOrWhiteSpace(searchString) ||
+            element.AdminEmail.Contains(searchString, StringComparison.OrdinalIgnoreCase) ||
+            element.TargetName.Contains(searchString, StringComparison.OrdinalIgnoreCase) ||
+            element.Details.Contains(searchString, StringComparison.OrdinalIgnoreCase);
+
+        bool matchesAction = actionFilter == "All" || element.Action == actionFilter;
+        bool matchesTarget = targetFilter == "All" || element.TargetType == targetFilter;
+
+        return matchesSearch && matchesAction && matchesTarget;
+    }
+}

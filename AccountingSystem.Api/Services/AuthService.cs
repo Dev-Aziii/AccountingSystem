@@ -159,24 +159,38 @@ namespace AccountingSystem.API.Services
 
         public async Task<AuthResponseDTO> LoginAsync(LoginDTO loginDto)
         {
+            // Ignore filters to find user regardless of tenant context (since we aren't logged in yet)
             var user = await _context.Users
                 .IgnoreQueryFilters()
                 .Include(u => u.Role)
                 .FirstOrDefaultAsync(u => u.Email == loginDto.Email);
 
-            if (user == null || user.IsDeleted || !user.IsActive)
+            if (user == null || user.IsDeleted)
                 throw new Exception("Invalid email or password.");
 
-            // Check for null PasswordSalt before conversion
-            if (string.IsNullOrEmpty(user.PasswordSalt))
-                throw new Exception("Invalid email or password.");
+            // 1. Check User Status (granular: Active, Restricted, Blocked)
+            if (user.Status == "Blocked")
+                throw new Exception("Your account has been blocked. Please contact the System Administrator.");
+
+            if (!user.IsActive)
+                throw new Exception("Your account has been deactivated. Please contact your administrator.");
 
             if (!VerifyPasswordHash(loginDto.Password, Convert.FromBase64String(user.PasswordHash), Convert.FromBase64String(user.PasswordSalt)))
                 throw new Exception("Invalid email or password.");
 
-            var company = await _context.Companies.FindAsync(user.CompanyId);
-            if (company == null || !company.IsActive)
-                throw new Exception("Company account is inactive.");
+            // 2. Check Company Status (The "Kill Switch")
+            var company = await _context.Companies.IgnoreQueryFilters().FirstOrDefaultAsync(c => c.Id == user.CompanyId);
+            if (company == null) throw new Exception("Company data not found.");
+
+            // Allow SuperAdmin to login even if their "SaaS Operations" company is technically inactive (failsafe), 
+            // but block everyone else if their company is suspended or blocked.
+            if (user.Role.Name != "SuperAdmin")
+            {
+                if (company.Status == "Blocked")
+                    throw new Exception("This organization has been permanently blocked. Please contact the System Owner.");
+                if (company.Status == "Suspended" || !company.IsActive)
+                    throw new Exception("This organization's access has been suspended. Please contact the System Owner.");
+            }
 
             var token = GenerateJwtToken(user, company);
 
@@ -187,7 +201,7 @@ namespace AccountingSystem.API.Services
                 Role = user.Role.Name,
                 CompanyId = company.Id,
                 CompanyName = company.Name,
-                ExpiresAt = DateTime.UtcNow.AddMinutes(int.Parse(_configuration["JwtSettings:ExpiryMinutes"]!))
+                ExpiresAt = DateTime.UtcNow.AddMinutes(int.Parse(_configuration["JwtSettings:ExpiryMinutes"]))
             };
         }
 

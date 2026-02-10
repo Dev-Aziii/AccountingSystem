@@ -4,12 +4,29 @@
 <div class="simple-nav-wrapper">
     <MudNavMenu Dense="false" Class="simple-nav-menu">
 
-        <!-- DASHBOARD -->
-        <MudNavLink Href="dashboard"
-                    Match="NavLinkMatch.All"
-                    Icon="@Icons.Material.Filled.Dashboard">
-            Dashboard
-        </MudNavLink>
+
+        <AuthorizeView Roles="SuperAdmin">
+            <!-- DASHBOARD -->
+            <MudNavLink Href="superadmin/dashboard"       Match="NavLinkMatch.All"              Icon="@Icons.Material.Filled.Security">
+                System Overview
+            </MudNavLink>
+            <MudNavLink Href="superadmin/tenants"  Match="NavLinkMatch.All"        Icon="@Icons.Material.Filled.Business">
+                Tenant Manager
+            </MudNavLink>
+            <MudNavLink Href="superadmin/users"               Match="NavLinkMatch.All"   Icon="@Icons.Material.Filled.Group">
+                Global Users
+            </MudNavLink>
+            <MudNavLink Href="superadmin/audit-logs"         Match="NavLinkMatch.All"                Icon="@Icons.Material.Filled.History">
+                Admin Audit Logs
+            </MudNavLink>
+        </AuthorizeView>
+
+        <AuthorizeView Roles="Admin,Accounting,Management">
+            <!-- DASHBOARD -->
+            <MudNavLink Href="dashboard"        Match="NavLinkMatch.All"                    Icon="@Icons.Material.Filled.Dashboard">
+                Dashboard
+            </MudNavLink>
+        </AuthorizeView>
 
         <!-- ADMIN -->
         <AuthorizeView Roles="Admin">
@@ -19,16 +36,13 @@
                 <div class="separator-line"></div>
             </div>
 
-            <MudNavLink Href="admin/users"
-                        Icon="@Icons.Material.Filled.People">
+            <MudNavLink Href="admin/users" Icon="@Icons.Material.Filled.People">
                 User Management
             </MudNavLink>
-            <MudNavLink Href="admin/audit-logs"
-                        Icon="@Icons.Material.Filled.History">
+            <MudNavLink Href="admin/audit-logs"              Icon="@Icons.Material.Filled.History">
                 Audit Logs
             </MudNavLink>
-            <MudNavLink Href="admin/company-settings" 
-                        Icon="@Icons.Material.Filled.Business">
+            <MudNavLink Href="admin/company-settings"   Icon="@Icons.Material.Filled.Business">
                 Company Settings
             </MudNavLink>
         </AuthorizeView>
@@ -41,13 +55,11 @@
                 <div class="separator-line"></div>
             </div>
 
-            <MudNavLink Href="gl/journal"
-                        Icon="@Icons.Material.Filled.EditNote">
+            <MudNavLink Href="gl/journal"         Icon="@Icons.Material.Filled.EditNote">
                 Journal Entries
             </MudNavLink>
 
-            <MudNavLink Href="gl/accounts"
-                        Icon="@Icons.Material.Filled.AccountTree">
+            <MudNavLink Href="gl/accounts"                Icon="@Icons.Material.Filled.AccountTree">
                 Chart of Accounts
             </MudNavLink>
 
@@ -58,18 +70,15 @@
                 <div class="separator-line"></div>
             </div>
 
-            <MudNavLink Href="ap/bills"
-                        Icon="@Icons.Material.Filled.NoteAdd">
+            <MudNavLink Href="ap/bills"    Icon="@Icons.Material.Filled.NoteAdd">
                 Create Vendor Bill
             </MudNavLink>
 
-            <MudNavLink Href="ap/bills/list"
-                        Icon="@Icons.Material.Filled.ListAlt">
+            <MudNavLink Href="ap/bills/list"           Icon="@Icons.Material.Filled.ListAlt">
                 Bills List
             </MudNavLink>
 
-            <MudNavLink Href="ap/vendors"
-                        Icon="@Icons.Material.Filled.Store">
+            <MudNavLink Href="ap/vendors"                  Icon="@Icons.Material.Filled.Store">
                 Vendors
             </MudNavLink>
 
@@ -80,18 +89,15 @@
                 <div class="separator-line"></div>
             </div>
 
-            <MudNavLink Href="ar/invoices"
-                        Icon="@Icons.Material.Filled.NoteAdd">
+            <MudNavLink Href="ar/invoices"      Icon="@Icons.Material.Filled.NoteAdd">
                 Create Invoice
             </MudNavLink>
 
-            <MudNavLink Href="ar/invoices/list"
-                        Icon="@Icons.Material.Filled.ListAlt">
+            <MudNavLink Href="ar/invoices/list"            Icon="@Icons.Material.Filled.ListAlt">
                 Invoice List
             </MudNavLink>
 
-            <MudNavLink Href="ar/customers"
-                        Icon="@Icons.Material.Filled.Groups">
+            <MudNavLink Href="ar/customers"                   Icon="@Icons.Material.Filled.Groups">
                 Customers
             </MudNavLink>
         </AuthorizeView>
@@ -104,8 +110,7 @@
                 <div class="separator-line"></div>
             </div>
 
-            <MudNavLink Href="reports/financials"
-                        Icon="@Icons.Material.Filled.Analytics">
+            <MudNavLink Href="reports/financials"       Icon="@Icons.Material.Filled.Analytics">
                 Financial Statements
             </MudNavLink>
         </AuthorizeView>
@@ -149,7 +154,7 @@
     .separator-line {
         flex: 1;
         height: 1px;
-        background: linear-gradient( 90deg, var(--theme-primary) 0%, rgba(0, 0, 0, 0.05) 100% );
+        background: linear-gradient(90deg, var(--theme-primary) 0%, rgba(0, 0, 0, 0.05) 100%);
         margin-left: 2px;
     }
 
@@ -161,14 +166,14 @@
         margin-left: 8px !important;
     }
 
-        .simple-nav-menu .mud-nav-link:hover {
-            background-color: var(--theme-primary-light) !important;
-        }
+    .simple-nav-menu .mud-nav-link:hover {
+        background-color: var(--theme-primary-light) !important;
+    }
 
-        .simple-nav-menu .mud-nav-link.active {
-            background-color: var(--theme-secondary) !important;
-            color: white !important;
-        }
+    .simple-nav-menu .mud-nav-link.active {
+        background-color: var(--theme-secondary) !important;
+        color: white !important;
+    }
 
     /* Icon colors */
     .simple-nav-menu .mud-nav-link-icon {

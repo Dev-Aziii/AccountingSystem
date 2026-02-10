@@ -31,6 +31,7 @@ builder.Services.AddScoped<ReceivableService>();
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<CompanyService>();
 builder.Services.AddScoped<AuditLogService>();
+builder.Services.AddScoped<SuperAdminService>();
 builder.Services.AddScoped<PaymentClientService>();
 builder.Services.AddScoped<WorldBankService>();
 builder.Services.AddScoped<FrankfurterService>();

@@ -23,5 +23,8 @@ namespace AccountingSystem.API.Models
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public bool IsActive { get; set; } = true;
+
+        [MaxLength(20)]
+        public string Status { get; set; } = "Active"; // Active, Suspended, Blocked
     }
 }

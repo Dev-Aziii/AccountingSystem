@@ -134,6 +134,7 @@ app.UseCors("AllowBlazorClient");
 
 app.UseAuthentication();
 app.UseMiddleware<JwtMiddleware>();
+app.UseMiddleware<TenantAccessMiddleware>(); // Block suspended/blocked tenants & users
 app.UseAuthorization();
 app.UseMiddleware<AuditMiddleware>();
 

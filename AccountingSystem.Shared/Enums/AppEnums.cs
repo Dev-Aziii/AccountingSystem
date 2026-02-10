@@ -27,4 +27,20 @@ namespace AccountingSystem.Shared.Enums
         Online, // PayMongo
         Other
     }
+
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+    public enum CompanyStatus
+    {
+        Active,
+        Suspended,
+        Blocked
+    }
+
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+    public enum UserAccountStatus
+    {
+        Active,
+        Restricted,
+        Blocked
+    }
 }

@@ -33,29 +33,16 @@
                 <DataAnnotationsValidator />
 
                 <div class="login-form">
-                    <MudTextField Label="Email Address"
-                                  @bind-Value="loginModel.Email"
-                                  For="@(() => loginModel.Email)"
-                                  Variant="Variant.Outlined"
-                                  Class="mb-4 login-field"
-                                  FullWidth="true"
+                    <MudTextField Label="Email Address"   @bind-Value="loginModel.Email"      For="@(() => loginModel.Email)"
+                                  Variant="Variant.Outlined"                   Class="mb-4 login-field"                      FullWidth="true"
                                   Style="border-radius: 12px;" />
 
-                    <MudTextField Label="Password"
-                                  @bind-Value="loginModel.Password"
-                                  For="@(() => loginModel.Password)"
-                                  Variant="Variant.Outlined"
-                                  InputType="InputType.Password"
-                                  Class="mb-6 login-field"
-                                  FullWidth="true"
-                                  Style="border-radius: 12px;" />
+                    <MudTextField Label="Password"  @bind-Value="loginModel.Password"     For="@(() => loginModel.Password)"
+                                  Variant="Variant.Outlined"                  InputType="InputType.Password"                                  Class="mb-6 login-field"
+                                  FullWidth="true"                                  Style="border-radius: 12px;" />
 
-                    <MudButton ButtonType="ButtonType.Submit"
-                               Variant="Variant.Filled"
-                               Class="login-button"
-                               FullWidth="true"
-                               Disabled="@isLoading"
-                               Size="Size.Large"
+                    <MudButton ButtonType="ButtonType.Submit"                               Variant="Variant.Filled" Class="login-button"
+                               FullWidth="true" Disabled="@isLoading" Size="Size.Large"
                                Starticon="@(!isLoading ? Icons.Material.Filled.Login : "")">
                         @if (isLoading)
                         {
@@ -120,24 +107,24 @@
         overflow: hidden;
     }
 
-        /* Glass card overlay for extra depth */
-        .login-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient( 135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 50%, rgba(255, 255, 255, 0.1) 100% );
-            pointer-events: none;
-            border-radius: 24px;
-        }
+    /* Glass card overlay for extra depth */
+    .login-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 50%, rgba(255, 255, 255, 0.1) 100%);
+        pointer-events: none;
+        border-radius: 24px;
+    }
 
-        .login-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 16px 48px rgba(22, 84, 127, 0.15), 0 4px 16px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.5);
-            border: 1px solid rgba(255, 255, 255, 0.4);
-        }
+    .login-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 16px 48px rgba(22, 84, 127, 0.15), 0 4px 16px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+        border: 1px solid rgba(255, 255, 255, 0.4);
+    }
 
     .login-header {
         padding-bottom: 2rem;
@@ -160,10 +147,10 @@
         transition: all 0.3s ease;
     }
 
-        .logo-image:hover {
-            transform: scale(1.05);
-            filter: drop-shadow(0 6px 16px rgba(22, 84, 127, 0.3));
-        }
+    .logo-image:hover {
+        transform: scale(1.05);
+        filter: drop-shadow(0 6px 16px rgba(22, 84, 127, 0.3));
+    }
 
     /* Main AccSys Title Styling */
     .main-title {
@@ -210,27 +197,27 @@
         margin-bottom: 1.5rem;
     }
 
-        .login-field .mud-input-control {
-            border-radius: 12px;
-        }
+    .login-field .mud-input-control {
+        border-radius: 12px;
+    }
 
-        .login-field .mud-input-outlined {
-            border-radius: 12px;
-            background: rgba(255, 255, 255, 0.4);
-            backdrop-filter: blur(10px);
-        }
+    .login-field .mud-input-outlined {
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.4);
+        backdrop-filter: blur(10px);
+    }
 
-            .login-field .mud-input-outlined:hover {
-                border-color: var(--theme-primary);
-                background: rgba(255, 255, 255, 0.5);
-                box-shadow: 0 2px 8px rgba(22, 84, 127, 0.1);
-            }
+    .login-field .mud-input-outlined:hover {
+        border-color: var(--theme-primary);
+        background: rgba(255, 255, 255, 0.5);
+        box-shadow: 0 2px 8px rgba(22, 84, 127, 0.1);
+    }
 
-            .login-field .mud-input-outlined.mud-input-focused {
-                border-color: var(--theme-primary);
-                box-shadow: 0 0 0 2px rgba(22, 84, 127, 0.2), 0 4px 12px rgba(22, 84, 127, 0.15);
-                background: rgba(255, 255, 255, 0.6);
-            }
+    .login-field .mud-input-outlined.mud-input-focused {
+        border-color: var(--theme-primary);
+        box-shadow: 0 0 0 2px rgba(22, 84, 127, 0.2), 0 4px 12px rgba(22, 84, 127, 0.15);
+        background: rgba(255, 255, 255, 0.6);
+    }
 
     .login-button {
         background: linear-gradient(135deg, var(--theme-primary) 0%, var(--theme-secondary) 100%) !important;
@@ -247,17 +234,17 @@
         backdrop-filter: blur(10px);
     }
 
-        .login-button:hover {
-            transform: translateY(-2px) !important;
-            box-shadow: 0 12px 32px rgba(22, 84, 127, 0.4), 0 4px 16px rgba(0, 0, 0, 0.15) !important;
-            background: linear-gradient(135deg, var(--theme-primary-dark) 0%, var(--theme-secondary-dark) 100%) !important;
-            border: 1px solid rgba(255, 255, 255, 0.3) !important;
-        }
+    .login-button:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: 0 12px 32px rgba(22, 84, 127, 0.4), 0 4px 16px rgba(0, 0, 0, 0.15) !important;
+        background: linear-gradient(135deg, var(--theme-primary-dark) 0%, var(--theme-secondary-dark) 100%) !important;
+        border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    }
 
-        .login-button:disabled {
-            opacity: 0.7;
-            transform: none !important;
-        }
+    .login-button:disabled {
+        opacity: 0.7;
+        transform: none !important;
+    }
 
     .login-footer {
         padding-top: 2rem;
@@ -273,11 +260,11 @@
         transition: all 0.3s ease;
     }
 
-        .register-link:hover {
-            color: var(--theme-secondary-dark) !important;
-            text-decoration: underline !important;
-            text-shadow: 0 2px 4px rgba(56, 146, 147, 0.2);
-        }
+    .register-link:hover {
+        color: var(--theme-secondary-dark) !important;
+        text-decoration: underline !important;
+        text-shadow: 0 2px 4px rgba(56, 146, 147, 0.2);
+    }
 
     .login-help-text {
         color: rgba(22, 84, 127, 0.7) !important;
@@ -339,10 +326,10 @@
         background: rgba(211, 47, 47, 0.05);
     }
 
-        .login-field .mud-input-outlined.mud-input-error:hover {
-            border-color: #d32f2f;
-            background: rgba(211, 47, 47, 0.08);
-        }
+    .login-field .mud-input-outlined.mud-input-error:hover {
+        border-color: #d32f2f;
+        background: rgba(211, 47, 47, 0.08);
+    }
 </style>
 
 @code {
@@ -354,7 +341,8 @@
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         if (authState.User.Identity != null && authState.User.Identity.IsAuthenticated)
         {
-            NavManager.NavigateTo("/dashboard");
+            var role = authState.User.FindFirst("role")?.Value;
+            NavManager.NavigateTo(role == "SuperAdmin" ? "/superadmin/dashboard" : "/dashboard");
         }
     }
 
@@ -363,9 +351,9 @@
         isLoading = true;
         try
         {
-            await AuthService.Login(loginModel);
+            var result = await AuthService.Login(loginModel);
             Snackbar.Add("Welcome back! Login successful.", Severity.Success);
-            NavManager.NavigateTo("/dashboard");
+            NavManager.NavigateTo(result.Role == "SuperAdmin" ? "/superadmin/dashboard" : "/dashboard");
         }
         catch (Exception ex)
         {

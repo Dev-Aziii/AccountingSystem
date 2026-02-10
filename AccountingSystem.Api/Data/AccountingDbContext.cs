@@ -14,52 +14,37 @@ namespace AccountingSystem.API.Data
             _tenantService = tenantService;
         }
 
-        // Tenants
         public DbSet<Company> Companies { get; set; }
-
-        // Auth
         public DbSet<User> Users { get; set; }
         public DbSet<Role> Roles { get; set; }
-
-        // General Ledger
         public DbSet<Account> Accounts { get; set; }
         public DbSet<JournalEntry> JournalEntries { get; set; }
         public DbSet<JournalEntryLine> JournalEntryLines { get; set; }
-
-        // Partners & Operations
         public DbSet<Vendor> Vendors { get; set; }
         public DbSet<Customer> Customers { get; set; }
         public DbSet<Bill> Bills { get; set; }
         public DbSet<Invoice> Invoices { get; set; }
         public DbSet<Payment> Payments { get; set; }
-
         public DbSet<AuditLog> AuditLogs { get; set; }
+        public DbSet<SuperAdminAuditLog> SuperAdminAuditLogs { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
             // --- Multi-Tenancy Global Filters ---
-
             modelBuilder.Entity<User>().HasQueryFilter(e => !e.IsDeleted && e.CompanyId == _tenantService.GetCurrentTenant());
-
-            // Added !e.IsDeleted to Account filter
             modelBuilder.Entity<Account>().HasQueryFilter(e => !e.IsDeleted && e.CompanyId == _tenantService.GetCurrentTenant());
-
             modelBuilder.Entity<JournalEntry>().HasQueryFilter(e => e.CompanyId == _tenantService.GetCurrentTenant());
-
             modelBuilder.Entity<Vendor>().HasQueryFilter(e => !e.IsDeleted && e.CompanyId == _tenantService.GetCurrentTenant());
             modelBuilder.Entity<Customer>().HasQueryFilter(e => !e.IsDeleted && e.CompanyId == _tenantService.GetCurrentTenant());
             modelBuilder.Entity<Bill>().HasQueryFilter(e => !e.IsDeleted && e.CompanyId == _tenantService.GetCurrentTenant());
             modelBuilder.Entity<Invoice>().HasQueryFilter(e => !e.IsDeleted && e.CompanyId == _tenantService.GetCurrentTenant());
             modelBuilder.Entity<Payment>().HasQueryFilter(e => !e.IsDeleted && e.CompanyId == _tenantService.GetCurrentTenant());
-
             modelBuilder.Entity<AuditLog>().HasQueryFilter(e => e.CompanyId == _tenantService.GetCurrentTenant());
 
-            // Prevent AuditLog.CompanyId from being a Foreign Key ---
-            modelBuilder.Entity<AuditLog>()
-                .Property(a => a.CompanyId)
-                .IsRequired();
+            // --- AuditLog Config ---
+            modelBuilder.Entity<AuditLog>().Property(a => a.CompanyId).IsRequired();
 
             // --- Enums & Conversions ---
             modelBuilder.Entity<Bill>().Property(b => b.Status).HasConversion<string>();
@@ -80,10 +65,12 @@ namespace AccountingSystem.API.Data
             modelBuilder.Entity<User>().HasIndex(u => u.Email).IsUnique();
             modelBuilder.Entity<Account>().HasIndex(a => new { a.Code, a.CompanyId }).IsUnique();
 
+            // --- UPDATED ROLES ---
             modelBuilder.Entity<Role>().HasData(
                 new Role { Id = 1, Name = "Admin" },
                 new Role { Id = 2, Name = "Accounting" },
-                new Role { Id = 3, Name = "Management" }
+                new Role { Id = 3, Name = "Management" },
+                new Role { Id = 4, Name = "SuperAdmin" } // NEW: System Owner Role
             );
         }
 

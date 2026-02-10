@@ -1,0 +1,518 @@
+﻿@page "/superadmin/dashboard"
+@using AccountingSystem.Shared.DTOs
+@using AccountingSystem.Client.Services
+@using MudBlazor
+@using MudBlazor.Charts
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "SuperAdmin")]
+@inject SuperAdminService SuperAdminService
+@inject NavigationManager NavManager
+
+<PageTitle>System Overview</PageTitle>
+
+<style>
+    .sa-dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(12, 1fr);
+        gap: 1.5rem;
+    }
+
+    .sa-span-3 { grid-column: span 3; }
+    .sa-span-4 { grid-column: span 4; }
+    .sa-span-6 { grid-column: span 6; }
+    .sa-span-8 { grid-column: span 8; }
+    .sa-span-12 { grid-column: span 12; }
+
+    @@media (max-width: 1400px) {
+        .sa-span-3 { grid-column: span 6; }
+        .sa-span-4 { grid-column: span 6; }
+    }
+
+    @@media (max-width: 768px) {
+        .sa-span-3, .sa-span-4, .sa-span-6, .sa-span-8 { grid-column: span 12; }
+    }
+
+    .sa-metric-card {
+        padding: 1.25rem;
+        background: white;
+        border-radius: 16px;
+        border: 1px solid rgba(22, 84, 127, 0.1);
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+        cursor: pointer;
+    }
+
+    .sa-metric-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 24px rgba(22, 84, 127, 0.12);
+        border-color: var(--theme-primary);
+    }
+
+    .sa-metric-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        flex-shrink: 0;
+    }
+
+    .sa-metric-value {
+        font-size: 1.75rem;
+        font-weight: 800;
+        background: linear-gradient(135deg, rgb(22, 84, 127) 0%, rgb(56, 146, 147) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        line-height: 1.2;
+    }
+
+    .sa-metric-label {
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: rgb(22, 84, 127);
+        opacity: 0.7;
+    }
+
+    .sa-featured-card {
+        background: white;
+        border-radius: 20px;
+        padding: 1.5rem;
+        border: 1px solid rgba(22, 84, 127, 0.1);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .sa-featured-card:hover {
+        box-shadow: 0 16px 40px rgba(22, 84, 127, 0.12);
+    }
+
+    .sa-section-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .sa-section-title {
+        font-size: 0.85rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: rgb(22, 84, 127);
+    }
+
+    .sa-status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 6px;
+    }
+
+    .sa-log-item {
+        padding: 0.75rem 0;
+        border-bottom: 1px solid rgba(0,0,0,0.06);
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+
+    .sa-log-item:last-child {
+        border-bottom: none;
+    }
+
+    .sa-chart-container {
+        flex: 1;
+        min-height: 250px;
+    }
+</style>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4 mb-10">
+    <!-- HEADER -->
+    <div class="d-flex justify-space-between align-center mb-6">
+        <div>
+            @if (isLoading)
+            {
+                <MudSkeleton SkeletonType="SkeletonType.Text" Width="280px" Height="28px" Class="mb-1" />
+                <MudSkeleton SkeletonType="SkeletonType.Text" Width="200px" Height="16px" />
+            }
+            else
+            {
+                <MudText Typo="Typo.h5" Style="font-weight: 800; color: rgb(22, 84, 127);">
+                    System Overview
+                </MudText>
+                <MudText Typo="Typo.body2" Style="color: rgb(56, 146, 147);">
+                    @DateTime.Now.ToString("dddd, MMMM dd, yyyy") &mdash; Super Administrator Dashboard
+                </MudText>
+            }
+        </div>
+        @if (!isLoading)
+        {
+            <MudButton Variant="Variant.Filled"
+                       Style="background: linear-gradient(135deg, rgb(22, 84, 127) 0%, rgb(56, 146, 147) 100%); color: white; border-radius: 12px;"
+                       StartIcon="@Icons.Material.Filled.Refresh"
+                       Size="Size.Medium" OnClick="LoadData">
+                Refresh
+            </MudButton>
+        }
+    </div>
+
+    @if (isLoading)
+    {
+        <div class="sa-dashboard-grid">
+            @for (int i = 0; i < 4; i++)
+            {
+                <div class="sa-span-3">
+                    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="90px" Style="border-radius: 16px;" />
+                </div>
+            }
+            <div class="sa-span-6">
+                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="350px" Style="border-radius: 20px;" />
+            </div>
+            <div class="sa-span-6">
+                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="350px" Style="border-radius: 20px;" />
+            </div>
+        </div>
+    }
+    else if (stats != null)
+    {
+        <div class="sa-dashboard-grid">
+            <!-- ROW 1: KPI METRIC CARDS -->
+            <div class="sa-span-3">
+                <div class="sa-metric-card" @onclick='() => NavManager.NavigateTo("/superadmin/tenants")'>
+                    <div class="sa-metric-icon" style="background: linear-gradient(135deg, #1565C0, #42A5F5);">
+                        <MudIcon Icon="@Icons.Material.Filled.Business" Size="Size.Medium" />
+                    </div>
+                    <div>
+                        <div class="sa-metric-value">@stats.TotalCompanies</div>
+                        <div class="sa-metric-label">Total Tenants</div>
+                    </div>
+                </div>
+            </div>
+            <div class="sa-span-3">
+                <div class="sa-metric-card" @onclick='() => NavManager.NavigateTo("/superadmin/tenants")'>
+                    <div class="sa-metric-icon" style="background: linear-gradient(135deg, #2E7D32, #66BB6A);">
+                        <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Medium" />
+                    </div>
+                    <div>
+                        <div class="sa-metric-value">@stats.ActiveCompanies</div>
+                        <div class="sa-metric-label">Active Tenants</div>
+                    </div>
+                </div>
+            </div>
+            <div class="sa-span-3">
+                <div class="sa-metric-card" @onclick='() => NavManager.NavigateTo("/superadmin/users")'>
+                    <div class="sa-metric-icon" style="background: linear-gradient(135deg, #6A1B9A, #AB47BC);">
+                        <MudIcon Icon="@Icons.Material.Filled.People" Size="Size.Medium" />
+                    </div>
+                    <div>
+                        <div class="sa-metric-value">@stats.TotalUsers</div>
+                        <div class="sa-metric-label">Total Users</div>
+                    </div>
+                </div>
+            </div>
+            <div class="sa-span-3">
+                <div class="sa-metric-card" @onclick='() => NavManager.NavigateTo("/superadmin/users")'>
+                    <div class="sa-metric-icon" style="background: linear-gradient(135deg, #C62828, #EF5350);">
+                        <MudIcon Icon="@Icons.Material.Filled.Block" Size="Size.Medium" />
+                    </div>
+                    <div>
+                        <div class="sa-metric-value">@(stats.SuspendedCompanies + stats.BlockedCompanies)</div>
+                        <div class="sa-metric-label">Issues</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ROW 2: STATUS BREAKDOWN CARDS -->
+            <div class="sa-span-6">
+                <div class="sa-featured-card">
+                    <div class="sa-section-header">
+                        <MudIcon Icon="@Icons.Material.Filled.Business" Size="Size.Small" Style="color: rgb(22, 84, 127);" />
+                        <span class="sa-section-title">Tenant Status Breakdown</span>
+                    </div>
+                    <div class="d-flex gap-4 mb-4">
+                        <div class="d-flex align-center gap-2">
+                            <span class="sa-status-dot" style="background: #4CAF50;"></span>
+                            <MudText Typo="Typo.body2"><b>@stats.ActiveCompanies</b> Active</MudText>
+                        </div>
+                        <div class="d-flex align-center gap-2">
+                            <span class="sa-status-dot" style="background: #FF9800;"></span>
+                            <MudText Typo="Typo.body2"><b>@stats.SuspendedCompanies</b> Suspended</MudText>
+                        </div>
+                        <div class="d-flex align-center gap-2">
+                            <span class="sa-status-dot" style="background: #F44336;"></span>
+                            <MudText Typo="Typo.body2"><b>@stats.BlockedCompanies</b> Blocked</MudText>
+                        </div>
+                    </div>
+                    <div class="sa-chart-container">
+                        @if (stats.TotalCompanies > 0)
+                        {
+                            <MudChart ChartType="ChartType.Donut"
+                                      InputData="@tenantChartData"
+                                      InputLabels="@tenantChartLabels"
+                                      Width="100%" Height="250px"
+                                      ChartOptions="@donutOptions" />
+                        }
+                        else
+                        {
+                            <div class="d-flex align-center justify-center" style="height: 250px;">
+                                <MudText Typo="Typo.body2" Color="Color.Tertiary">No tenants registered yet</MudText>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <div class="sa-span-6">
+                <div class="sa-featured-card">
+                    <div class="sa-section-header">
+                        <MudIcon Icon="@Icons.Material.Filled.People" Size="Size.Small" Style="color: rgb(22, 84, 127);" />
+                        <span class="sa-section-title">User Status Breakdown</span>
+                    </div>
+                    <div class="d-flex gap-4 mb-4">
+                        <div class="d-flex align-center gap-2">
+                            <span class="sa-status-dot" style="background: #4CAF50;"></span>
+                            <MudText Typo="Typo.body2"><b>@stats.ActiveUsers</b> Active</MudText>
+                        </div>
+                        <div class="d-flex align-center gap-2">
+                            <span class="sa-status-dot" style="background: #FF9800;"></span>
+                            <MudText Typo="Typo.body2"><b>@stats.RestrictedUsers</b> Restricted</MudText>
+                        </div>
+                        <div class="d-flex align-center gap-2">
+                            <span class="sa-status-dot" style="background: #F44336;"></span>
+                            <MudText Typo="Typo.body2"><b>@stats.BlockedUsers</b> Blocked</MudText>
+                        </div>
+                    </div>
+                    <div class="sa-chart-container">
+                        @if (stats.TotalUsers > 0)
+                        {
+                            <MudChart ChartType="ChartType.Donut"
+                                      InputData="@userChartData"
+                                      InputLabels="@userChartLabels"
+                                      Width="100%" Height="250px"
+                                      ChartOptions="@donutOptions" />
+                        }
+                        else
+                        {
+                            <div class="d-flex align-center justify-center" style="height: 250px;">
+                                <MudText Typo="Typo.body2" Color="Color.Tertiary">No users registered yet</MudText>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- ROW 3: TREND CHARTS -->
+            <div class="sa-span-6">
+                <div class="sa-featured-card">
+                    <div class="sa-section-header">
+                        <MudIcon Icon="@Icons.Material.Filled.TrendingUp" Size="Size.Small" Style="color: rgb(22, 84, 127);" />
+                        <span class="sa-section-title">Tenant Registrations (12 Months)</span>
+                    </div>
+                    <div class="sa-chart-container">
+                        <MudChart ChartType="ChartType.Bar"
+                                  InputData="@registrationChartData"
+                                  InputLabels="@registrationChartLabels"
+                                  XAxisLabels="@registrationChartLabels"
+                                  Width="100%" Height="250px"
+                                  ChartOptions="@barOptions" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="sa-span-6">
+                <div class="sa-featured-card">
+                    <div class="sa-section-header">
+                        <MudIcon Icon="@Icons.Material.Filled.GroupAdd" Size="Size.Small" Style="color: rgb(22, 84, 127);" />
+                        <span class="sa-section-title">User Growth (12 Months)</span>
+                    </div>
+                    <div class="sa-chart-container">
+                        <MudChart ChartType="ChartType.Line"
+                                  InputData="@userGrowthChartData"
+                                  InputLabels="@userGrowthChartLabels"
+                                  XAxisLabels="@userGrowthChartLabels"
+                                  Width="100%" Height="250px"
+                                  ChartOptions="@lineOptions" />
+                    </div>
+                </div>
+            </div>
+
+            <!-- ROW 4: RECENT ACTIVITY -->
+            <div class="sa-span-12">
+                <div class="sa-featured-card">
+                    <div class="sa-section-header">
+                        <MudIcon Icon="@Icons.Material.Filled.History" Size="Size.Small" Style="color: rgb(22, 84, 127);" />
+                        <span class="sa-section-title">Recent Super Admin Actions</span>
+                        <MudSpacer />
+                        <MudButton Variant="Variant.Text" Size="Size.Small"
+                                   StartIcon="@Icons.Material.Filled.OpenInNew"
+                                   OnClick='() => NavManager.NavigateTo("/superadmin/audit-logs")'
+                                   Style="color: rgb(56, 146, 147);">
+                            View All
+                        </MudButton>
+                    </div>
+                    @if (stats.RecentActions.Any())
+                    {
+                        @foreach (var log in stats.RecentActions.Take(5))
+                        {
+                            <div class="sa-log-item">
+                                <MudIcon Icon="@GetActionIcon(log.Action)" Size="Size.Small"
+                                         Style="@($"color: {GetActionColor(log.Action)}; margin-top: 2px;")" />
+                                <div style="flex: 1;">
+                                    <MudText Typo="Typo.body2">
+                                        <b>@log.AdminEmail</b> @FormatAction(log.Action)
+                                        <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined"
+                                                 Style="font-size: 0.7rem;">@log.TargetType</MudChip>
+                                        <b>@log.TargetName</b>
+                                    </MudText>
+                                    @if (!string.IsNullOrEmpty(log.OldValue) && !string.IsNullOrEmpty(log.NewValue))
+                                    {
+                                        <MudText Typo="Typo.caption" Color="Color.Tertiary">
+                                            @log.OldValue &rarr; @log.NewValue
+                                        </MudText>
+                                    }
+                                </div>
+                                <MudText Typo="Typo.caption" Color="Color.Tertiary" Style="white-space: nowrap;">
+                                    @log.Timestamp.ToString("MMM dd, HH:mm")
+                                </MudText>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="d-flex align-center justify-center pa-6">
+                            <MudText Typo="Typo.body2" Color="Color.Tertiary">No recent actions recorded.</MudText>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- ROW 5: SYSTEM HEALTH -->
+            <div class="sa-span-12">
+                <div class="sa-featured-card" style="background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%); border-color: rgba(76, 175, 80, 0.3);">
+                    <div class="d-flex align-center gap-3">
+                        <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" Size="Size.Large" />
+                        <div>
+                            <MudText Typo="Typo.h6" Style="color: #2E7D32; font-weight: 700;">System Operational</MudText>
+                            <MudText Typo="Typo.body2" Style="color: #388E3C;">
+                                All services running normally &bull; @stats.TotalCompanies tenants &bull; @stats.TotalUsers users
+                            </MudText>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</MudContainer>
+
+@code {
+    private SystemDashboardDTO? stats;
+    private bool isLoading = true;
+
+    // Chart data
+    private double[] tenantChartData = Array.Empty<double>();
+    private string[] tenantChartLabels = Array.Empty<string>();
+    private double[] userChartData = Array.Empty<double>();
+    private string[] userChartLabels = Array.Empty<string>();
+    private double[] registrationChartData = Array.Empty<double>();
+    private string[] registrationChartLabels = Array.Empty<string>();
+    private double[] userGrowthChartData = Array.Empty<double>();
+    private string[] userGrowthChartLabels = Array.Empty<string>();
+
+    private ChartOptions donutOptions = new()
+    {
+    };
+
+    private ChartOptions barOptions = new()
+    {
+        YAxisTicks = 1
+    };
+
+    private ChartOptions lineOptions = new()
+    {
+        YAxisTicks = 1
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        isLoading = true;
+        try
+        {
+            stats = await SuperAdminService.GetDashboardStatsAsync();
+            PrepareChartData();
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void PrepareChartData()
+    {
+        if (stats == null) return;
+
+        // Tenant donut chart
+        tenantChartData = new double[] { stats.ActiveCompanies, stats.SuspendedCompanies, stats.BlockedCompanies };
+        tenantChartLabels = new string[] { "Active", "Suspended", "Blocked" };
+
+        // User donut chart 
+        userChartData = new double[] { stats.ActiveUsers, stats.RestrictedUsers, stats.BlockedUsers };
+        userChartLabels = new string[] { "Active", "Restricted", "Blocked" };
+
+        // Registration bar chart
+        if (stats.MonthlyRegistrations.Any())
+        {
+            registrationChartData = stats.MonthlyRegistrations.Select(m => (double)m.Count).ToArray();
+            registrationChartLabels = stats.MonthlyRegistrations.Select(m => FormatMonthLabel(m.Month)).ToArray();
+        }
+
+        // User growth line chart
+        if (stats.MonthlyUserGrowth.Any())
+        {
+            userGrowthChartData = stats.MonthlyUserGrowth.Select(m => (double)m.Count).ToArray();
+            userGrowthChartLabels = stats.MonthlyUserGrowth.Select(m => FormatMonthLabel(m.Month)).ToArray();
+        }
+    }
+
+    private string FormatMonthLabel(string yearMonth)
+    {
+        if (DateTime.TryParse(yearMonth + "-01", out var date))
+            return date.ToString("MMM");
+        return yearMonth;
+    }
+
+    private string GetActionIcon(string action) => action switch
+    {
+        "COMPANY_STATUS_CHANGE" => Icons.Material.Filled.Business,
+        "USER_STATUS_CHANGE" => Icons.Material.Filled.Person,
+        _ => Icons.Material.Filled.Info
+    };
+
+    private string GetActionColor(string action) => action switch
+    {
+        "COMPANY_STATUS_CHANGE" => "#1565C0",
+        "USER_STATUS_CHANGE" => "#6A1B9A",
+        _ => "#757575"
+    };
+
+    private string FormatAction(string action) => action switch
+    {
+        "COMPANY_STATUS_CHANGE" => "changed status of",
+        "USER_STATUS_CHANGE" => "changed status of",
+        _ => "performed action on"
+    };
+}
