@@ -3,6 +3,7 @@ using AccountingSystem.API.Middleware;
 using AccountingSystem.API.Services;
 using AccountingSystem.API.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Components.WebAssembly.Server;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -11,16 +12,17 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// --- 1. License Setup ---
 QuestPDF.Settings.License = LicenseType.Community;
 
 builder.Services.AddHttpContextAccessor(); // REQUIRED for TenantService
 builder.Services.AddScoped<ITenantService, TenantService>();
 
-// --- 1. Database Context Setup ---
+// --- 2. Database Context Setup ---
 builder.Services.AddDbContext<AccountingDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// --- 2. Dependency Injection (Register Services) ---
+// --- 3. Dependency Injection (Register Services) ---
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ILedgerService, LedgerService>();
 builder.Services.AddScoped<IPayableService, PayableService>();
@@ -30,7 +32,7 @@ builder.Services.AddScoped<IPdfService, PdfService>();
 builder.Services.AddHttpClient<ICaptchaService, CaptchaService>();
 builder.Services.AddScoped<ICaptchaService, CaptchaService>();
 
-// --- 3. Authentication Setup (JWT) ---
+// --- 4. Authentication Setup (JWT) ---
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var secret = jwtSettings["Secret"] ?? throw new InvalidOperationException("JWT Secret is not configured in appsettings.json");
 var key = Encoding.ASCII.GetBytes(secret);
@@ -70,7 +72,7 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddControllers();
 
-// --- 4. Swagger Configuration (OpenAPI) ---
+// --- 5. Swagger Configuration (OpenAPI) ---
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
@@ -102,16 +104,15 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
-// --- 5. DATA SEEDING (NEW) ---
-// This block automatically runs migration and seeds data on startup
+// --- 6. DATA SEEDING ---
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
     try
     {
         var context = services.GetRequiredService<AccountingDbContext>();
-        context.Database.Migrate(); // Ensures Database is created and updated
-        await DataSeeder.SeedDataAsync(context); // Adds sample data
+        context.Database.Migrate();
+        await DataSeeder.SeedDataAsync(context);
     }
     catch (Exception ex)
     {
@@ -120,24 +121,37 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-// --- 6. HTTP Request Pipeline ---
+// --- 7. HTTP Request Pipeline ---
 
 if (app.Environment.IsDevelopment())
 {
+    app.UseWebAssemblyDebugging(); // Enable WASM debugging locally
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
 app.UseHttpsRedirection();
-app.UseCors("AllowBlazorClient");
 
+// --- CRITICAL DEPLOYMENT SETTINGS START ---
+// 1. Serve the Blazor WebAssembly framework files (.wasm, .dll)
+app.UseBlazorFrameworkFiles();
+
+// 2. Serve static files (css, images, js)
+app.UseStaticFiles();
+// --- CRITICAL DEPLOYMENT SETTINGS END ---
+
+app.UseCors("AllowBlazorClient");
 
 app.UseAuthentication();
 app.UseMiddleware<JwtMiddleware>();
-app.UseMiddleware<TenantAccessMiddleware>(); // Block suspended/blocked tenants & users
+app.UseMiddleware<TenantAccessMiddleware>();
 app.UseAuthorization();
 app.UseMiddleware<AuditMiddleware>();
 
 app.MapControllers();
+
+// --- CRITICAL FALLBACK ROUTING ---
+// 3. If the user requests a page that isn't an API endpoint (like /dashboard), load the Blazor app.
+app.MapFallbackToFile("index.html");
 
 app.Run();

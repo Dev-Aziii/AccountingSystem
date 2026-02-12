@@ -38,6 +38,6 @@ builder.Services.AddScoped<FrankfurterService>();
 builder.Services.AddScoped<IPaymentClientService>(sp => sp.GetRequiredService<PaymentClientService>());
 
 // 4. HTTP Configuration
-builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("https://localhost:7273") });
+builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
 
 await builder.Build().RunAsync();
