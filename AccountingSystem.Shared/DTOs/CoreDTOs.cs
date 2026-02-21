@@ -10,6 +10,7 @@ namespace AccountingSystem.Shared.DTOs
         public string Reference { get; set; } = string.Empty;
         public DateTime Date { get; set; }
         public List<JournalEntryLineDTO> Lines { get; set; } = new();
+        public bool IsSystemGenerated { get; set; }
     }
 
     public class JournalEntryLineDTO
@@ -22,6 +23,8 @@ namespace AccountingSystem.Shared.DTOs
     public class TrialBalanceDTO
     {
         public DateTime GeneratedAt { get; set; }
+        public DateTime? From { get; set; }
+        public DateTime? To { get; set; }
         public List<AccountBalanceDTO> Accounts { get; set; } = new();
         public decimal TotalDebit { get; set; }
         public decimal TotalCredit { get; set; }

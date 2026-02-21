@@ -11,11 +11,13 @@ namespace AccountingSystem.API.Services
     {
         private readonly AccountingDbContext _context;
         private readonly ILedgerService _ledgerService;
+        private readonly IFiscalYearService _fiscalYearService;
 
-        public PayableService(AccountingDbContext context, ILedgerService ledgerService)
+        public PayableService(AccountingDbContext context, ILedgerService ledgerService, IFiscalYearService fiscalYearService)
         {
             _context = context;
             _ledgerService = ledgerService;
+            _fiscalYearService = fiscalYearService;
         }
 
         public async Task<List<VendorDTO>> GetVendorsAsync(bool includeArchived = false)
@@ -111,6 +113,7 @@ namespace AccountingSystem.API.Services
 
         public async Task<Bill> CreateBillAsync(CreateBillDTO billDto)
         {
+            await _fiscalYearService.EnsureDateOpenAsync(billDto.DueDate);
             var bill = new Bill
             {
                 VendorId = billDto.VendorId,
@@ -128,7 +131,7 @@ namespace AccountingSystem.API.Services
 
             var entry = new JournalEntryDTO
             {
-                Date = DateTime.UtcNow,
+                Date = billDto.DueDate,
                 Description = $"Bill #{billDto.ReferenceNumber}: {billDto.Description}",
                 Reference = billDto.ReferenceNumber,
                 Lines = new List<JournalEntryLineDTO>
@@ -145,6 +148,7 @@ namespace AccountingSystem.API.Services
 
         public async Task<Payment> PayBillAsync(RecordPaymentDTO paymentDto, string userId)
         {
+            await _fiscalYearService.EnsureDateOpenAsync(paymentDto.PaymentDate);
             var bill = await _context.Bills.FindAsync(paymentDto.ReferenceId);
             if (bill == null) throw new Exception("Bill not found");
 
@@ -198,12 +202,14 @@ namespace AccountingSystem.API.Services
         private readonly AccountingDbContext _context;
         private readonly ILedgerService _ledgerService;
         private readonly IPaymentService _paymentService;
+        private readonly IFiscalYearService _fiscalYearService;
 
-        public ReceivableService(AccountingDbContext context, ILedgerService ledgerService, IPaymentService paymentService)
+        public ReceivableService(AccountingDbContext context, ILedgerService ledgerService, IPaymentService paymentService, IFiscalYearService fiscalYearService)
         {
             _context = context;
             _ledgerService = ledgerService;
             _paymentService = paymentService;
+            _fiscalYearService = fiscalYearService;
         }
 
         public async Task<List<CustomerDTO>> GetCustomersAsync(bool includeArchived = false)
@@ -298,6 +304,7 @@ namespace AccountingSystem.API.Services
 
         public async Task<Invoice> CreateInvoiceAsync(CreateInvoiceDTO invoiceDto)
         {
+            await _fiscalYearService.EnsureDateOpenAsync(invoiceDto.DueDate);
             var invoice = new Invoice
             {
                 CustomerId = invoiceDto.CustomerId,
@@ -314,7 +321,7 @@ namespace AccountingSystem.API.Services
 
             var entry = new JournalEntryDTO
             {
-                Date = DateTime.UtcNow,
+                Date = billDto.DueDate,
                 Description = $"Invoice #{invoice.Id}: {invoiceDto.Description}",
                 Reference = invoice.Id.ToString(),
                 Lines = new List<JournalEntryLineDTO>
@@ -331,6 +338,7 @@ namespace AccountingSystem.API.Services
 
         public async Task<Payment> ReceivePaymentAsync(RecordPaymentDTO paymentDto, string userId)
         {
+            await _fiscalYearService.EnsureDateOpenAsync(paymentDto.PaymentDate);
             var invoice = await _context.Invoices.FindAsync(paymentDto.ReferenceId);
             if (invoice == null) throw new Exception("Invoice not found");
 

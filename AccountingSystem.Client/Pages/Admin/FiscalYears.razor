@@ -1,0 +1,37 @@
+@page "/admin/fiscal-years"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles="Admin")]
+@using AccountingSystem.Client.Services
+@using AccountingSystem.Shared.DTOs
+@inject FiscalYearService FiscalYearService
+@inject ISnackbar Snackbar
+
+<MudText Typo="Typo.h5" Class="mb-4">Fiscal Years</MudText>
+<MudGrid>
+    <MudItem xs="12" md="4">
+        <MudTextField @bind-Value="model.Name" Label="Name" />
+        <MudDatePicker Label="Start" Date="@model.StartDate" DateChanged="@(d => model.StartDate = d ?? DateTime.Today)" />
+        <MudDatePicker Label="End" Date="@model.EndDate" DateChanged="@(d => model.EndDate = d ?? DateTime.Today)" />
+        <MudButton Color="Color.Primary" OnClick="Create">Create Fiscal Year</MudButton>
+    </MudItem>
+    <MudItem xs="12" md="8">
+        <MudTable Items="@years">
+            <HeaderContent><MudTh>Name</MudTh><MudTh>Range</MudTh><MudTh>Status</MudTh><MudTh></MudTh></HeaderContent>
+            <RowTemplate>
+                <MudTd>@context.Name</MudTd>
+                <MudTd>@context.StartDate.ToString("yyyy-MM-dd") - @context.EndDate.ToString("yyyy-MM-dd")</MudTd>
+                <MudTd>@(context.IsClosed?"Closed":"Open")</MudTd>
+                <MudTd>@if(!context.IsClosed){<MudButton Color="Color.Error" OnClick="@(()=>Close(context.Id))">Close</MudButton>}</MudTd>
+            </RowTemplate>
+        </MudTable>
+    </MudItem>
+</MudGrid>
+
+@code {
+    private List<FiscalYearDTO> years = new();
+    private CreateFiscalYearDTO model = new() { StartDate = DateTime.Today, EndDate = DateTime.Today.AddYears(1).AddDays(-1), Name = "FY" + DateTime.Today.Year };
+
+    protected override async Task OnInitializedAsync() => await Load();
+    private async Task Load() => years = await FiscalYearService.GetAllAsync() ?? new();
+    private async Task Create(){ try { await FiscalYearService.CreateAsync(model); await Load(); Snackbar.Add("Created", Severity.Success);} catch(Exception ex){ Snackbar.Add(ex.Message, Severity.Error);} }
+    private async Task Close(int id){ try { await FiscalYearService.CloseAsync(id); await Load(); Snackbar.Add("Closed", Severity.Success);} catch(Exception ex){ Snackbar.Add(ex.Message, Severity.Error);} }
+}

@@ -26,6 +26,7 @@ namespace AccountingSystem.API.Data
         public DbSet<Invoice> Invoices { get; set; }
         public DbSet<Payment> Payments { get; set; }
         public DbSet<AuditLog> AuditLogs { get; set; }
+        public DbSet<FiscalYear> FiscalYears { get; set; }
         public DbSet<SuperAdminAuditLog> SuperAdminAuditLogs { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -42,6 +43,7 @@ namespace AccountingSystem.API.Data
             modelBuilder.Entity<Invoice>().HasQueryFilter(e => !e.IsDeleted && e.CompanyId == _tenantService.GetCurrentTenant());
             modelBuilder.Entity<Payment>().HasQueryFilter(e => !e.IsDeleted && e.CompanyId == _tenantService.GetCurrentTenant());
             modelBuilder.Entity<AuditLog>().HasQueryFilter(e => e.CompanyId == _tenantService.GetCurrentTenant());
+            modelBuilder.Entity<FiscalYear>().HasQueryFilter(e => !e.IsDeleted && e.CompanyId == _tenantService.GetCurrentTenant());
 
             // --- AuditLog Config ---
             modelBuilder.Entity<AuditLog>().Property(a => a.CompanyId).IsRequired();
@@ -64,8 +66,15 @@ namespace AccountingSystem.API.Data
             // --- Constraints ---
             modelBuilder.Entity<User>().HasIndex(u => u.Email).IsUnique();
             modelBuilder.Entity<Account>().HasIndex(a => new { a.Code, a.CompanyId }).IsUnique();
+            modelBuilder.Entity<FiscalYear>().HasIndex(f => new { f.CompanyId, f.Name }).IsUnique();
 
             // --- UPDATED ROLES ---
+            modelBuilder.Entity<Company>()
+                .HasMany(c => c.FiscalYears)
+                .WithOne()
+                .HasForeignKey(f => f.CompanyId)
+                .OnDelete(DeleteBehavior.Cascade);
+
             modelBuilder.Entity<Role>().HasData(
                 new Role { Id = 1, Name = "Admin" },
                 new Role { Id = 2, Name = "Accounting" },
