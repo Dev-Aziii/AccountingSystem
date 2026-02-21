@@ -4,6 +4,7 @@
 @using AccountingSystem.Shared.Enums
 @using MudBlazor
 @using Blazored.LocalStorage
+@using System.Globalization
 @inject ReceivableService ReceivableService
 @inject PaymentClientService PaymentService
 @inject ISnackbar Snackbar
@@ -28,7 +29,7 @@
                 </MudItem>
                 <MudItem xs="12" sm="6">
                     <MudText Typo="Typo.body2" Color="Color.Success" Class="text-right">
-                        <strong>Balance:</strong> @Invoice.Balance.ToString("C2")
+                        <strong>Balance:</strong> @Invoice.Balance.ToString("C2", _phCulture)
                     </MudText>
                 </MudItem>
             </MudGrid>
@@ -71,9 +72,9 @@
                                      Required="true"
                                      RequiredError="Amount is required"
                                      immediate="true"
-                                     HelperText="@($"Maximum: {Invoice.Balance:C2}")"
-                                     Adornment="Adornment.Start"
-                                     AdornmentIcon="@Icons.Material.Filled.AttachMoney" />
+                                     HelperText="@($"Maximum: {Invoice.Balance.ToString("C2", _phCulture)}")"
+                                     AdornmentText="₱"
+                                     Adornment="Adornment.Start" />
                 </MudItem>
 
                 <MudItem xs="12">
@@ -158,6 +159,7 @@
     private MudForm form = default!;
     private bool success;
     private bool isSubmitting;
+    private readonly CultureInfo _phCulture = CultureInfo.GetCultureInfo("en-PH");
 
     protected override void OnInitialized()
     {

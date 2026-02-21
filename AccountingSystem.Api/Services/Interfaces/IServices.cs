@@ -1,5 +1,6 @@
 ﻿using AccountingSystem.API.Models;
 using AccountingSystem.Shared.DTOs;
+using AccountingSystem.Shared.Enums;
 
 namespace AccountingSystem.API.Services.Interfaces
 {
@@ -7,7 +8,10 @@ namespace AccountingSystem.API.Services.Interfaces
     {
         Task<JournalEntry> CreateJournalEntryAsync(JournalEntryDTO entryDto, string userId);
         Task<List<Account>> GetChartOfAccountsAsync(bool includeArchived = false); // Updated
-        Task<TrialBalanceDTO> GetTrialBalanceAsync();
+        Task<TrialBalanceDTO> GetTrialBalanceAsync(
+            DateTime? fromDate = null,
+            DateTime? toDate = null,
+            bool excludeClosingEntries = false);
 
         // Account Management
         Task<Account> CreateAccountAsync(CreateAccountDTO dto);
@@ -15,6 +19,16 @@ namespace AccountingSystem.API.Services.Interfaces
         Task DeleteAccountAsync(int id);
         Task RestoreAccountAsync(int id); // New
     }
+
+    public interface IYearEndCloseService
+    {
+        Task<List<FiscalYearSummaryDTO>> GetFiscalYearSummariesAsync(int lookbackYears = 10);
+        Task<RunYearEndCloseResultDTO> CloseFiscalYearAsync(int fiscalYear, string userName);
+        Task EnsurePostingDateIsOpenAsync(DateTime postingDate);
+        FiscalPeriod ResolveFiscalPeriod(int fiscalYear);
+    }
+
+    public record FiscalPeriod(int FiscalYear, DateTime StartDate, DateTime EndDate);
 
     public interface IPayableService
     {
@@ -27,7 +41,7 @@ namespace AccountingSystem.API.Services.Interfaces
         Task RestoreVendorAsync(int id); // New
 
         // Bills
-        Task<List<BillDTO>> GetBillsAsync();
+        Task<List<BillDTO>> GetBillsAsync(int? fiscalYear = null, DocumentStatus? status = null);
         Task<Bill> CreateBillAsync(CreateBillDTO billDto);
         Task<Payment> PayBillAsync(RecordPaymentDTO paymentDto, string userId);
     }
@@ -43,7 +57,7 @@ namespace AccountingSystem.API.Services.Interfaces
         Task RestoreCustomerAsync(int id); // New
 
         // Invoices
-        Task<List<InvoiceDTO>> GetInvoicesAsync();
+        Task<List<InvoiceDTO>> GetInvoicesAsync(int? fiscalYear = null, DocumentStatus? status = null);
         Task<Invoice> CreateInvoiceAsync(CreateInvoiceDTO invoiceDto);
         Task<Payment> ReceivePaymentAsync(RecordPaymentDTO paymentDto, string userId);
     }

@@ -4,6 +4,9 @@ namespace AccountingSystem.Client.Services.Interfaces
 {
     public interface IReportService
     {
-        Task<TrialBalanceDTO> GetTrialBalance();
+        Task<TrialBalanceDTO?> GetTrialBalance(
+            DateTime? fromDate = null,
+            DateTime? toDate = null,
+            bool excludeClosingEntries = false);
     }
 }

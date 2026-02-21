@@ -16,13 +16,20 @@ namespace AccountingSystem.API.Controllers
         private readonly IPdfService _pdfService;
         private readonly ITenantService _tenantService;
         private readonly ILedgerService _ledgerService; // Needed for TB & Accounts
+        private readonly IYearEndCloseService _yearEndCloseService;
 
-        public ReportsController(AccountingDbContext context, IPdfService pdfService, ITenantService tenantService, ILedgerService ledgerService)
+        public ReportsController(
+            AccountingDbContext context,
+            IPdfService pdfService,
+            ITenantService tenantService,
+            ILedgerService ledgerService,
+            IYearEndCloseService yearEndCloseService)
         {
             _context = context;
             _pdfService = pdfService;
             _tenantService = tenantService;
             _ledgerService = ledgerService;
+            _yearEndCloseService = yearEndCloseService;
         }
 
         [HttpGet("invoices/{id}/pdf")]
@@ -66,8 +73,10 @@ namespace AccountingSystem.API.Controllers
 
         // NEW: Financial Reports Endpoint
         [HttpGet("financials/pdf")]
-        public async Task<IActionResult> DownloadFinancialsPdf()
+        public async Task<IActionResult> DownloadFinancialsPdf([FromQuery] int fiscalYear)
         {
+            if (fiscalYear <= 0) return BadRequest("A valid fiscalYear query parameter is required.");
+
             var tenantId = _tenantService.GetCurrentTenant();
             var company = await _context.Companies.FindAsync(tenantId);
             if (company == null) return BadRequest("Company profile missing.");
@@ -80,8 +89,11 @@ namespace AccountingSystem.API.Controllers
                 Currency = company.Currency ?? string.Empty
             };
 
+            var period = _yearEndCloseService.ResolveFiscalPeriod(fiscalYear);
+
             // Fetch Data
-            var tb = await _ledgerService.GetTrialBalanceAsync();
+            var incomeTb = await _ledgerService.GetTrialBalanceAsync(period.StartDate, period.EndDate, excludeClosingEntries: true);
+            var balanceTb = await _ledgerService.GetTrialBalanceAsync(null, period.EndDate);
             var accounts = await _ledgerService.GetChartOfAccountsAsync();
             var accountDtos = accounts.Select(a => new AccountDTO
             {
@@ -90,8 +102,15 @@ namespace AccountingSystem.API.Controllers
                 Type = a.Type ?? string.Empty
             }).ToList();
 
-            var pdfBytes = _pdfService.GenerateFinancialReportPdf(tb, accountDtos, companyDto);
-            return File(pdfBytes, "application/pdf", $"Financials-{DateTime.Now:yyyy-MM-dd}.pdf");
+            var pdfBytes = _pdfService.GenerateFinancialReportPdf(
+                incomeTb,
+                balanceTb,
+                accountDtos,
+                companyDto,
+                period.StartDate,
+                period.EndDate);
+
+            return File(pdfBytes, "application/pdf", $"Financials-FY{fiscalYear}.pdf");
         }
     }
 }

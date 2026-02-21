@@ -9,6 +9,7 @@ namespace AccountingSystem.Shared.DTOs
         public string Address { get; set; } = string.Empty;
         public string TaxId { get; set; } = string.Empty;
         public string Currency { get; set; } = "PHP";
+        public int FiscalYearStartMonth { get; set; } = 1;
     }
 
     public class UpdateCompanyDTO
@@ -25,5 +26,8 @@ namespace AccountingSystem.Shared.DTOs
 
         [MaxLength(10)]
         public string Currency { get; set; } = "PHP";
+
+        [Range(1, 12)]
+        public int FiscalYearStartMonth { get; set; } = 1;
     }
 }

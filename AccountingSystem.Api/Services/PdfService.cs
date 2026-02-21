@@ -244,7 +244,13 @@ namespace AccountingSystem.API.Services
             return document.GeneratePdf();
         }
 
-        public byte[] GenerateFinancialReportPdf(TrialBalanceDTO tb, List<AccountDTO> accounts, CompanyDTO company)
+        public byte[] GenerateFinancialReportPdf(
+            TrialBalanceDTO incomeTb,
+            TrialBalanceDTO balanceTb,
+            List<AccountDTO> accounts,
+            CompanyDTO company,
+            DateTime periodStart,
+            DateTime periodEnd)
         {
             var accountTypes = accounts.ToDictionary(a => a.Code, a => a.Type);
 
@@ -256,11 +262,11 @@ namespace AccountingSystem.API.Services
                 return a.Credit - a.Debit;
             }
 
-            var revenue = tb.Accounts.Where(a => accountTypes.ContainsKey(a.AccountCode) && accountTypes[a.AccountCode] == "Revenue").ToList();
-            var expense = tb.Accounts.Where(a => accountTypes.ContainsKey(a.AccountCode) && accountTypes[a.AccountCode] == "Expense").ToList();
-            var assets = tb.Accounts.Where(a => accountTypes.ContainsKey(a.AccountCode) && accountTypes[a.AccountCode] == "Asset").ToList();
-            var liabilities = tb.Accounts.Where(a => accountTypes.ContainsKey(a.AccountCode) && accountTypes[a.AccountCode] == "Liability").ToList();
-            var equity = tb.Accounts.Where(a => accountTypes.ContainsKey(a.AccountCode) && accountTypes[a.AccountCode] == "Equity").ToList();
+            var revenue = incomeTb.Accounts.Where(a => accountTypes.ContainsKey(a.AccountCode) && accountTypes[a.AccountCode] == "Revenue").ToList();
+            var expense = incomeTb.Accounts.Where(a => accountTypes.ContainsKey(a.AccountCode) && accountTypes[a.AccountCode] == "Expense").ToList();
+            var assets = balanceTb.Accounts.Where(a => accountTypes.ContainsKey(a.AccountCode) && accountTypes[a.AccountCode] == "Asset").ToList();
+            var liabilities = balanceTb.Accounts.Where(a => accountTypes.ContainsKey(a.AccountCode) && accountTypes[a.AccountCode] == "Liability").ToList();
+            var equity = balanceTb.Accounts.Where(a => accountTypes.ContainsKey(a.AccountCode) && accountTypes[a.AccountCode] == "Equity").ToList();
 
             var totalRevenue = revenue.Sum(GetNetBalance);
             var totalExpense = expense.Sum(GetNetBalance);
@@ -291,7 +297,11 @@ namespace AccountingSystem.API.Services
                             .FontColor(BrandColors.Secondary)
                             .LetterSpacing(0.1f);
 
-                        col.Item().AlignCenter().Text($"As of {DateTime.Now:MMMM dd, yyyy}")
+                        col.Item().AlignCenter().Text($"Income Statement Period: {periodStart:MMM dd, yyyy} - {periodEnd:MMM dd, yyyy}")
+                            .FontSize(10)
+                            .FontColor(BrandColors.Secondary);
+
+                        col.Item().AlignCenter().Text($"Balance Sheet As of {periodEnd:MMMM dd, yyyy}")
                             .FontSize(10)
                             .FontColor(BrandColors.Secondary);
 

@@ -55,5 +55,22 @@ namespace AccountingSystem.Client.Services
             }
             return await response.Content.ReadFromJsonAsync<JournalEntryDTO>();
         }
+
+        public async Task<List<FiscalYearSummaryDTO>?> GetFiscalYearSummariesAsync(int lookbackYears = 10)
+        {
+            return await _api.GetAsync<List<FiscalYearSummaryDTO>>($"api/ledger/fiscal-years?lookbackYears={lookbackYears}");
+        }
+
+        public async Task<RunYearEndCloseResultDTO?> RunYearEndCloseAsync(int fiscalYear)
+        {
+            var response = await _api.PostAsync<object?>($"api/ledger/fiscal-years/{fiscalYear}/close", null);
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                throw new Exception(error);
+            }
+
+            return await response.Content.ReadFromJsonAsync<RunYearEndCloseResultDTO>();
+        }
     }
 }

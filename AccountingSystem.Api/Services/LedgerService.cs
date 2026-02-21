@@ -9,10 +9,12 @@ namespace AccountingSystem.API.Services
     public class LedgerService : ILedgerService
     {
         private readonly AccountingDbContext _context;
+        private readonly IYearEndCloseService _yearEndCloseService;
 
-        public LedgerService(AccountingDbContext context)
+        public LedgerService(AccountingDbContext context, IYearEndCloseService yearEndCloseService)
         {
             _context = context;
+            _yearEndCloseService = yearEndCloseService;
         }
 
         public async Task<List<Account>> GetChartOfAccountsAsync(bool includeArchived = false)
@@ -35,6 +37,8 @@ namespace AccountingSystem.API.Services
             if (totalDebit != totalCredit)
                 throw new InvalidOperationException($"Transaction is not balanced. Debit: {totalDebit}, Credit: {totalCredit}");
 
+            await _yearEndCloseService.EnsurePostingDateIsOpenAsync(entryDto.Date);
+
             var entry = new JournalEntry
             {
                 Date = entryDto.Date,
@@ -55,9 +59,31 @@ namespace AccountingSystem.API.Services
             return entry;
         }
 
-        public async Task<TrialBalanceDTO> GetTrialBalanceAsync()
+        public async Task<TrialBalanceDTO> GetTrialBalanceAsync(
+            DateTime? fromDate = null,
+            DateTime? toDate = null,
+            bool excludeClosingEntries = false)
         {
-            var balances = await _context.JournalEntryLines
+            var linesQuery = _context.JournalEntryLines.AsQueryable();
+
+            if (fromDate.HasValue)
+            {
+                var from = fromDate.Value.Date;
+                linesQuery = linesQuery.Where(l => l.JournalEntry.Date >= from);
+            }
+
+            if (toDate.HasValue)
+            {
+                var toExclusive = toDate.Value.Date.AddDays(1);
+                linesQuery = linesQuery.Where(l => l.JournalEntry.Date < toExclusive);
+            }
+
+            if (excludeClosingEntries)
+            {
+                linesQuery = linesQuery.Where(l => !EF.Functions.Like(l.JournalEntry.Reference, "YE-CLOSE-%"));
+            }
+
+            var balances = await linesQuery
                 .GroupBy(l => new { l.Account.Code, l.Account.Name })
                 .Select(g => new AccountBalanceDTO
                 {

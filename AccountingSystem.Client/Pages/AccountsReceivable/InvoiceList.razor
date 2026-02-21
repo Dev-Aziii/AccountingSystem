@@ -4,9 +4,11 @@
 @using AccountingSystem.Client.Shared.Dialogs
 @using AccountingSystem.Shared.Enums
 @using MudBlazor
+@using System.Globalization
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin,Accounting")]
 @inject ReceivableService ReceivableService
 @inject ReportService ReportService
+@inject LedgerService LedgerService
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
 
@@ -100,11 +102,78 @@
     }
     else
     {
+        <MudPaper Elevation="2" Class="pa-4 mb-4">
+            <div class="d-flex align-center mb-2">
+                <MudIcon Icon="@Icons.Material.Filled.FilterList" Class="mr-2" />
+                <MudText Typo="Typo.h6">Filters</MudText>
+                <MudSpacer />
+                @if (HasActiveFilters())
+                {
+                    <MudChip T="string" Color="Color.Primary" Size="Size.Small" Class="mr-2">
+                        @GetActiveFilterCount() active filter(s)
+                    </MudChip>
+                    <MudButton Variant="Variant.Text"
+                               Color="Color.Secondary"
+                               Size="Size.Small"
+                               OnClick="ClearFilters"
+                               StartIcon="@Icons.Material.Filled.Clear"
+                               Disabled="_loading">
+                        Clear All
+                    </MudButton>
+                }
+            </div>
+
+            <MudGrid>
+                <MudItem xs="12" md="3">
+                    <MudSelect T="int"
+                               Value="selectedFiscalYear"
+                               ValueChanged="OnFiscalYearChanged"
+                               Label="Fiscal Year"
+                               Variant="Variant.Outlined"
+                               Margin="Margin.Dense"
+                               Dense="true"
+                               Disabled="_loading">
+                        <MudSelectItem T="int" Value="0">All Years</MudSelectItem>
+                        @foreach (var year in fiscalYears)
+                        {
+                            <MudSelectItem T="int" Value="@year.FiscalYear">FY @year.FiscalYear</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" md="3">
+                    <MudSelect T="string"
+                               Value="selectedStatus"
+                               ValueChanged="OnStatusChanged"
+                               Label="Status"
+                               Variant="Variant.Outlined"
+                               Margin="Margin.Dense"
+                               Dense="true"
+                               Disabled="_loading">
+                        <MudSelectItem T="string" Value="@AllStatusValue">All Statuses</MudSelectItem>
+                        <MudSelectItem T="string" Value="@nameof(DocumentStatus.Unpaid)">Unpaid</MudSelectItem>
+                        <MudSelectItem T="string" Value="@nameof(DocumentStatus.PartiallyPaid)">Partially Paid</MudSelectItem>
+                        <MudSelectItem T="string" Value="@nameof(DocumentStatus.Paid)">Paid</MudSelectItem>
+                        <MudSelectItem T="string" Value="@nameof(DocumentStatus.Void)">Void</MudSelectItem>
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudTextField @bind-Value="searchString"
+                                  Label="Search"
+                                  Placeholder="Search by customer or invoice id..."
+                                  Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Filled.Search"
+                                  Variant="Variant.Outlined"
+                                  Margin="Margin.Dense"
+                                  Clearable="true"
+                                  Disabled="_loading" />
+                </MudItem>
+            </MudGrid>
+        </MudPaper>
+
         <MudTable Items="@invoices" Dense="true" Hover="true" Bordered="true" Striped="true" Filter="new Func<InvoiceDTO, bool>(FilterFunc)" Loading="@_loading">
             <ToolBarContent>
                 <MudText Typo="Typo.h6">Customer Invoices</MudText>
                 <MudSpacer />
-                <MudTextField @bind-Value="searchString" Placeholder="Search invoices..." Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
                 <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" Href="/ar/invoices" Class="create-btn ml-3">Create Invoice</MudButton>
             </ToolBarContent>
             <HeaderContent>
@@ -120,23 +189,10 @@
                 <MudTd DataLabel="ID">@context.Id</MudTd>
                 <MudTd DataLabel="Customer">@context.CustomerName</MudTd>
                 <MudTd DataLabel="Due Date">@context.DueDate.ToShortDateString()</MudTd>
-                <MudTd DataLabel="Total" Style="text-align:right">@context.TotalAmount.ToString("N2")</MudTd>
-                <MudTd DataLabel="Balance" Style="text-align:right; font-weight:bold;">@context.Balance.ToString("N2")</MudTd>
+                <MudTd DataLabel="Total" Style="text-align:right">@context.TotalAmount.ToString("C2", _phCulture)</MudTd>
+                <MudTd DataLabel="Balance" Style="text-align:right; font-weight:bold;">@context.Balance.ToString("C2", _phCulture)</MudTd>
                 <MudTd DataLabel="Status">
-                    @if (context.Status == DocumentStatus.Paid)
-                    {
-                        <MudChip T="string" Size="Size.Small" Color="Color.Success">Paid</MudChip>
-                    }
-                    else if (context.Status == DocumentStatus.PartiallyPaid)
-                    {
-
-                        <MudChip T="string" Size="Size.Small" Color="Color.Warning">Partial</MudChip>
-                    }
-                    else
-                    {
-
-                        <MudChip T="string" Size="Size.Small" Color="Color.Error">Unpaid</MudChip>
-                    }
+                    <MudChip T="string" Size="Size.Small" Color="@GetStatusColor(context.Status)">@GetStatusLabel(context.Status)</MudChip>
                 </MudTd>
                 <MudTd>
                     <div class="d-flex gap-2">
@@ -156,15 +212,48 @@
 
 @code {
     private List<InvoiceDTO> invoices = new List<InvoiceDTO>();
+    private List<FiscalYearSummaryDTO> fiscalYears = new List<FiscalYearSummaryDTO>();
+    private const string AllStatusValue = "__ALL__";
     private string searchString = "";
+    private int selectedFiscalYear;
+    private int currentFiscalYear;
+    private string selectedStatus = AllStatusValue;
     private bool _loading = true;
     private bool _initialLoading = true;
+    private readonly CultureInfo _phCulture = CultureInfo.GetCultureInfo("en-PH");
 
     protected override async Task OnInitializedAsync()
     {
+        await LoadFiscalYears();
         await LoadData();
         _initialLoading = false;
         StateHasChanged();
+    }
+
+    private async Task LoadFiscalYears()
+    {
+        try
+        {
+            fiscalYears = (await LedgerService.GetFiscalYearSummariesAsync() ?? new List<FiscalYearSummaryDTO>())
+                .OrderByDescending(f => f.FiscalYear)
+                .ToList();
+
+            var today = DateTime.Today;
+            currentFiscalYear = fiscalYears
+                .FirstOrDefault(f => f.PeriodStart.Date <= today && today <= f.PeriodEnd.Date)?.FiscalYear
+                ?? fiscalYears.FirstOrDefault()?.FiscalYear
+                ?? 0;
+
+            if (selectedFiscalYear == 0 && currentFiscalYear > 0)
+            {
+                selectedFiscalYear = currentFiscalYear;
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to load fiscal years: {ex.Message}", Severity.Error);
+            fiscalYears = new List<FiscalYearSummaryDTO>();
+        }
     }
 
     private async Task LoadData()
@@ -172,11 +261,43 @@
         _loading = true;
         try
         {
-            // Fix: Handle potential null return value
-            invoices = await ReceivableService.GetInvoicesAsync() ?? new List<InvoiceDTO>();
+            int? fiscalYear = selectedFiscalYear > 0 ? selectedFiscalYear : null;
+            invoices = await ReceivableService.GetInvoicesAsync(fiscalYear, ParseStatusFilter(selectedStatus)) ?? new List<InvoiceDTO>();
         }
         catch (Exception ex) { Snackbar.Add(ex.Message, Severity.Error); }
         finally { _loading = false; }
+    }
+
+    private async Task OnFiscalYearChanged(int fiscalYear)
+    {
+        selectedFiscalYear = fiscalYear;
+        await LoadData();
+    }
+
+    private async Task OnStatusChanged(string status)
+    {
+        selectedStatus = status;
+        await LoadData();
+    }
+
+    private bool HasActiveFilters()
+        => selectedFiscalYear != currentFiscalYear || selectedStatus != AllStatusValue || !string.IsNullOrWhiteSpace(searchString);
+
+    private int GetActiveFilterCount()
+    {
+        int count = 0;
+        if (selectedFiscalYear != currentFiscalYear) count++;
+        if (selectedStatus != AllStatusValue) count++;
+        if (!string.IsNullOrWhiteSpace(searchString)) count++;
+        return count;
+    }
+
+    private async Task ClearFilters()
+    {
+        selectedFiscalYear = currentFiscalYear;
+        selectedStatus = AllStatusValue;
+        searchString = string.Empty;
+        await LoadData();
     }
 
     private async Task OpenReceiveDialog(InvoiceDTO invoice)
@@ -204,7 +325,31 @@
         }
     }
 
+    private static DocumentStatus? ParseStatusFilter(string statusValue)
+        => statusValue == AllStatusValue
+            ? null
+            : Enum.TryParse<DocumentStatus>(statusValue, out var status)
+            ? status
+            : null;
+
+    private static Color GetStatusColor(DocumentStatus status)
+        => status switch
+        {
+            DocumentStatus.Paid => Color.Success,
+            DocumentStatus.PartiallyPaid => Color.Warning,
+            DocumentStatus.Void => Color.Secondary,
+            _ => Color.Error
+        };
+
+    private static string GetStatusLabel(DocumentStatus status)
+        => status switch
+        {
+            DocumentStatus.PartiallyPaid => "Partial",
+            _ => status.ToString()
+        };
+
     private bool FilterFunc(InvoiceDTO element) =>
         string.IsNullOrWhiteSpace(searchString) ||
-        element.CustomerName.Contains(searchString, StringComparison.OrdinalIgnoreCase);
+        element.CustomerName.Contains(searchString, StringComparison.OrdinalIgnoreCase) ||
+        element.Id.ToString().Contains(searchString, StringComparison.OrdinalIgnoreCase);
 }
