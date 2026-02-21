@@ -9,29 +9,27 @@ namespace AccountingSystem.API.Services
     public class LedgerService : ILedgerService
     {
         private readonly AccountingDbContext _context;
+        private readonly IFiscalYearService _fiscalYearService;
 
-        public LedgerService(AccountingDbContext context)
+        public LedgerService(AccountingDbContext context, IFiscalYearService fiscalYearService)
         {
             _context = context;
+            _fiscalYearService = fiscalYearService;
         }
 
         public async Task<List<Account>> GetChartOfAccountsAsync(bool includeArchived = false)
         {
             var query = _context.Accounts.AsQueryable();
-
-            if (includeArchived)
-            {
-                query = query.IgnoreQueryFilters();
-            }
-
+            if (includeArchived) query = query.IgnoreQueryFilters();
             return await query.OrderBy(a => a.Code).ToListAsync();
         }
 
         public async Task<JournalEntry> CreateJournalEntryAsync(JournalEntryDTO entryDto, string userId)
         {
+            await _fiscalYearService.EnsureDateOpenAsync(entryDto.Date);
+
             var totalDebit = entryDto.Lines.Sum(l => l.Debit);
             var totalCredit = entryDto.Lines.Sum(l => l.Credit);
-
             if (totalDebit != totalCredit)
                 throw new InvalidOperationException($"Transaction is not balanced. Debit: {totalDebit}, Credit: {totalCredit}");
 
@@ -42,6 +40,7 @@ namespace AccountingSystem.API.Services
                 Reference = entryDto.Reference,
                 CreatedBy = userId,
                 IsPosted = true,
+                IsSystemGenerated = entryDto.IsSystemGenerated,
                 Lines = entryDto.Lines.Select(l => new JournalEntryLine
                 {
                     AccountId = l.AccountId,
@@ -55,9 +54,14 @@ namespace AccountingSystem.API.Services
             return entry;
         }
 
-        public async Task<TrialBalanceDTO> GetTrialBalanceAsync()
+        public async Task<TrialBalanceDTO> GetTrialBalanceAsync(DateTime? from = null, DateTime? to = null, bool postClosing = true)
         {
-            var balances = await _context.JournalEntryLines
+            var query = _context.JournalEntryLines.AsQueryable();
+            if (from.HasValue) query = query.Where(l => l.JournalEntry.Date >= from.Value.Date);
+            if (to.HasValue) query = query.Where(l => l.JournalEntry.Date <= to.Value.Date);
+            if (!postClosing) query = query.Where(l => !(l.JournalEntry.IsSystemGenerated && l.JournalEntry.Reference.StartsWith("FY-CLOSE-")));
+
+            var balances = await query
                 .GroupBy(l => new { l.Account.Code, l.Account.Name })
                 .Select(g => new AccountBalanceDTO
                 {
@@ -71,25 +75,19 @@ namespace AccountingSystem.API.Services
             return new TrialBalanceDTO
             {
                 GeneratedAt = DateTime.UtcNow,
+                From = from,
+                To = to,
                 Accounts = balances,
                 TotalDebit = balances.Sum(x => x.Debit),
                 TotalCredit = balances.Sum(x => x.Credit)
             };
         }
 
-        // --- Account CRUD ---
         public async Task<Account> CreateAccountAsync(CreateAccountDTO dto)
         {
             if (await _context.Accounts.AnyAsync(a => a.Code == dto.Code))
                 throw new Exception($"Account Code '{dto.Code}' already exists.");
-
-            var account = new Account
-            {
-                Code = dto.Code,
-                Name = dto.Name,
-                Type = dto.Type,
-                IsActive = true
-            };
+            var account = new Account { Code = dto.Code, Name = dto.Name, Type = dto.Type, IsActive = true };
             _context.Accounts.Add(account);
             await _context.SaveChangesAsync();
             return account;
@@ -99,10 +97,8 @@ namespace AccountingSystem.API.Services
         {
             var account = await _context.Accounts.FindAsync(id);
             if (account == null) throw new Exception("Account not found");
-
             if (account.Code != dto.Code && await _context.Accounts.AnyAsync(a => a.Code == dto.Code))
                 throw new Exception($"Account Code '{dto.Code}' already exists.");
-
             account.Code = dto.Code;
             account.Name = dto.Name;
             account.Type = dto.Type;
@@ -113,11 +109,8 @@ namespace AccountingSystem.API.Services
         {
             var account = await _context.Accounts.FindAsync(id);
             if (account == null) throw new Exception("Account not found");
-
             if (await _context.JournalEntryLines.AnyAsync(l => l.AccountId == id))
                 throw new Exception("Cannot delete account. It has associated journal entries.");
-
-            // Soft Delete logic
             account.IsDeleted = true;
             account.IsActive = false;
             await _context.SaveChangesAsync();
@@ -127,7 +120,6 @@ namespace AccountingSystem.API.Services
         {
             var account = await _context.Accounts.IgnoreQueryFilters().FirstOrDefaultAsync(a => a.Id == id);
             if (account == null) throw new Exception("Account not found");
-
             account.IsDeleted = false;
             account.IsActive = true;
             await _context.SaveChangesAsync();

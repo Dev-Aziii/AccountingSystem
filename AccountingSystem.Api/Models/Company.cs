@@ -26,5 +26,7 @@ namespace AccountingSystem.API.Models
 
         [MaxLength(20)]
         public string Status { get; set; } = "Active"; // Active, Suspended, Blocked
+
+        public ICollection<FiscalYear> FiscalYears { get; set; } = new List<FiscalYear>();
     }
 }
