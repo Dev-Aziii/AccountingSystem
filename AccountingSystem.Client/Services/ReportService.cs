@@ -11,9 +11,12 @@ namespace AccountingSystem.Client.Services
             _api = api;
         }
 
-        public async Task<TrialBalanceDTO?> GetTrialBalance()
+        public async Task<TrialBalanceDTO?> GetTrialBalance(DateTime? from = null, DateTime? to = null, string view = "post")
         {
-            return await _api.GetAsync<TrialBalanceDTO>("api/ledger/trial-balance");
+            var qs = $"api/ledger/trial-balance?view={view}";
+            if (from.HasValue) qs += $"&from={from.Value:yyyy-MM-dd}";
+            if (to.HasValue) qs += $"&to={to.Value:yyyy-MM-dd}";
+            return await _api.GetAsync<TrialBalanceDTO>(qs);
         }
 
         public async Task DownloadInvoicePdf(int invoiceId)
@@ -22,9 +25,14 @@ namespace AccountingSystem.Client.Services
         }
 
         // NEW: Financials PDF
-        public async Task DownloadFinancialsPdf()
+        public async Task DownloadFinancialsPdf(DateTime? from = null, DateTime? to = null)
         {
-            await _api.DownloadFileAsync($"api/reports/financials/pdf", $"FinancialStatements.pdf");
+            var qs = "api/reports/financials/pdf";
+            var p = new List<string>();
+            if (from.HasValue) p.Add($"from={from.Value:yyyy-MM-dd}");
+            if (to.HasValue) p.Add($"to={to.Value:yyyy-MM-dd}");
+            if (p.Any()) qs += "?" + string.Join("&", p);
+            await _api.DownloadFileAsync(qs, $"FinancialStatements.pdf");
         }
     }
 }

@@ -7,7 +7,7 @@ namespace AccountingSystem.API.Services.Interfaces
     {
         Task<JournalEntry> CreateJournalEntryAsync(JournalEntryDTO entryDto, string userId);
         Task<List<Account>> GetChartOfAccountsAsync(bool includeArchived = false); // Updated
-        Task<TrialBalanceDTO> GetTrialBalanceAsync();
+        Task<TrialBalanceDTO> GetTrialBalanceAsync(DateTime? from = null, DateTime? to = null, bool postClosing = true);
 
         // Account Management
         Task<Account> CreateAccountAsync(CreateAccountDTO dto);
@@ -48,3 +48,11 @@ namespace AccountingSystem.API.Services.Interfaces
         Task<Payment> ReceivePaymentAsync(RecordPaymentDTO paymentDto, string userId);
     }
 }
+    public interface IFiscalYearService
+    {
+        Task<List<FiscalYearDTO>> GetFiscalYearsAsync();
+        Task<FiscalYearDTO?> GetCurrentFiscalYearAsync();
+        Task<FiscalYearDTO> CreateFiscalYearAsync(CreateFiscalYearDTO dto);
+        Task<FiscalYearDTO> CloseFiscalYearAsync(int fiscalYearId, int? userId);
+        Task EnsureDateOpenAsync(DateTime date);
+    }

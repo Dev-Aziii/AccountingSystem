@@ -66,7 +66,7 @@ namespace AccountingSystem.API.Controllers
 
         // NEW: Financial Reports Endpoint
         [HttpGet("financials/pdf")]
-        public async Task<IActionResult> DownloadFinancialsPdf()
+        public async Task<IActionResult> DownloadFinancialsPdf([FromQuery] DateTime? from = null, [FromQuery] DateTime? to = null)
         {
             var tenantId = _tenantService.GetCurrentTenant();
             var company = await _context.Companies.FindAsync(tenantId);
@@ -81,7 +81,7 @@ namespace AccountingSystem.API.Controllers
             };
 
             // Fetch Data
-            var tb = await _ledgerService.GetTrialBalanceAsync();
+            var tb = await _ledgerService.GetTrialBalanceAsync(from, to);
             var accounts = await _ledgerService.GetChartOfAccountsAsync();
             var accountDtos = accounts.Select(a => new AccountDTO
             {

@@ -40,6 +40,13 @@
                 }
                 else
                 {
+                    
+                    <MudDatePicker Label="From" Date="@fromDate" DateChanged="@(d => fromDate = d)" Class="mr-2" />
+                    <MudDatePicker Label="To" Date="@toDate" DateChanged="@(d => toDate = d)" Class="mr-2" />
+                    <MudSelect T="string" Label="Trial Balance View" Value="@tbView" ValueChanged="@(v => tbView = v)" Class="mr-2" Style="min-width:180px">
+                        <MudSelectItem Value="@("post")">Post-closing</MudSelectItem>
+                        <MudSelectItem Value="@("pre")">Pre-closing</MudSelectItem>
+                    </MudSelect>
                     <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Refresh" OnClick="LoadData" Class="mr-2">Refresh</MudButton>
                     <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.PictureAsPdf" OnClick="PrintReport">Download PDF</MudButton>
                 }
@@ -342,6 +349,9 @@
     private CompanyDTO? currentCompany;
     private Dictionary<string, string> accountTypes = new();
     private bool isLoading = false;
+    private DateTime? fromDate;
+    private DateTime? toDate;
+    private string tbView = "post";
 
     // Philippine Culture for formatting "₱"
     private CultureInfo _phCulture = CultureInfo.GetCultureInfo("en-PH");
@@ -361,7 +371,7 @@
         isLoading = true;
         try
         {
-            var tbTask = ReportService.GetTrialBalance();
+            var tbTask = ReportService.GetTrialBalance(fromDate, toDate, tbView);
             var accountsTask = LedgerService.GetAccountsAsync();
             var companyTask = CompanyService.GetCurrentCompanyAsync();
 
@@ -387,7 +397,7 @@
         try
         {
             Snackbar.Add("Generating Financial Report PDF...", Severity.Info);
-            await ReportService.DownloadFinancialsPdf();
+            await ReportService.DownloadFinancialsPdf(fromDate, toDate);
             Snackbar.Add("Download started.", Severity.Success);
         }
         catch (Exception ex)

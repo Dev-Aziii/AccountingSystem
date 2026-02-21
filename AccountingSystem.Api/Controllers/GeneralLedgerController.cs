@@ -84,9 +84,9 @@ namespace AccountingSystem.API.Controllers
 
         [HttpGet("trial-balance")]
         [Authorize(Roles = "Admin,Accounting,Management")]
-        public async Task<IActionResult> GetTrialBalance()
+        public async Task<IActionResult> GetTrialBalance([FromQuery] DateTime? from = null, [FromQuery] DateTime? to = null, [FromQuery] string view = "post")
         {
-            var tb = await _ledgerService.GetTrialBalanceAsync();
+            var tb = await _ledgerService.GetTrialBalanceAsync(from, to, !string.Equals(view, "pre", StringComparison.OrdinalIgnoreCase));
             return Ok(tb);
         }
 
