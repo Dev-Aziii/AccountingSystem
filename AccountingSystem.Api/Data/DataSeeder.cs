@@ -68,7 +68,7 @@ namespace AccountingSystem.API.Data
                     new User
                     {
                         CompanyId = company.Id,
-                        Email = "superadmin@accsys.com",
+                        Email = "admin@accsys.com",
                         FullName = "System Administrator",
                         RoleId = 1,
                         PasswordHash = Convert.ToBase64String(adminHash),
