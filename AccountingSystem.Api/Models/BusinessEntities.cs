@@ -62,6 +62,26 @@ namespace AccountingSystem.API.Models
         public decimal Credit { get; set; } = 0;
     }
 
+    public class FiscalYearClose : BaseEntity
+    {
+        public int FiscalYear { get; set; }
+
+        public DateTime PeriodStart { get; set; }
+
+        public DateTime PeriodEnd { get; set; }
+
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal NetIncome { get; set; }
+
+        public int ClosingJournalEntryId { get; set; }
+        public JournalEntry ClosingJournalEntry { get; set; } = default!;
+
+        public DateTime ClosedAtUtc { get; set; }
+
+        [MaxLength(100)]
+        public string? ClosedBy { get; set; }
+    }
+
     // --- PARTNERS ---
     public class Vendor : BaseEntity
     {

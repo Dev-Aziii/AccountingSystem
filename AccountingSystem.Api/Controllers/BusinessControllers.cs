@@ -1,5 +1,6 @@
 ﻿using AccountingSystem.API.Services.Interfaces;
 using AccountingSystem.Shared.DTOs;
+using AccountingSystem.Shared.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -54,9 +55,9 @@ namespace AccountingSystem.API.Controllers
         }
 
         [HttpGet("bills")]
-        public async Task<IActionResult> GetBills()
+        public async Task<IActionResult> GetBills([FromQuery] int? fiscalYear = null, [FromQuery] DocumentStatus? status = null)
         {
-            var bills = await _payableService.GetBillsAsync();
+            var bills = await _payableService.GetBillsAsync(fiscalYear, status);
             return Ok(bills);
         }
 
@@ -126,9 +127,9 @@ namespace AccountingSystem.API.Controllers
         }
 
         [HttpGet("invoices")]
-        public async Task<IActionResult> GetInvoices()
+        public async Task<IActionResult> GetInvoices([FromQuery] int? fiscalYear = null, [FromQuery] DocumentStatus? status = null)
         {
-            var invoices = await _receivableService.GetInvoicesAsync();
+            var invoices = await _receivableService.GetInvoicesAsync(fiscalYear, status);
             return Ok(invoices);
         }
 

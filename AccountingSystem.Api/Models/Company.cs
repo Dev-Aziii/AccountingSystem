@@ -20,6 +20,9 @@ namespace AccountingSystem.API.Models
         [MaxLength(10)]
         public string Currency { get; set; } = "PHP";
 
+        [Range(1, 12)]
+        public int FiscalYearStartMonth { get; set; } = 1;
+
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public bool IsActive { get; set; } = true;

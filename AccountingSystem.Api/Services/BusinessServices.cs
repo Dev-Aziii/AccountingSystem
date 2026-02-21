@@ -11,11 +11,16 @@ namespace AccountingSystem.API.Services
     {
         private readonly AccountingDbContext _context;
         private readonly ILedgerService _ledgerService;
+        private readonly IYearEndCloseService _yearEndCloseService;
 
-        public PayableService(AccountingDbContext context, ILedgerService ledgerService)
+        public PayableService(
+            AccountingDbContext context,
+            ILedgerService ledgerService,
+            IYearEndCloseService yearEndCloseService)
         {
             _context = context;
             _ledgerService = ledgerService;
+            _yearEndCloseService = yearEndCloseService;
         }
 
         public async Task<List<VendorDTO>> GetVendorsAsync(bool includeArchived = false)
@@ -89,10 +94,25 @@ namespace AccountingSystem.API.Services
         }
         // -------------------
 
-        public async Task<List<BillDTO>> GetBillsAsync()
+        public async Task<List<BillDTO>> GetBillsAsync(int? fiscalYear = null, DocumentStatus? status = null)
         {
-            return await _context.Bills
+            var query = _context.Bills
                 .Include(b => b.Vendor)
+                .AsQueryable();
+
+            if (fiscalYear.HasValue)
+            {
+                var period = _yearEndCloseService.ResolveFiscalPeriod(fiscalYear.Value);
+                var periodEndExclusive = period.EndDate.Date.AddDays(1);
+                query = query.Where(b => b.DueDate >= period.StartDate && b.DueDate < periodEndExclusive);
+            }
+
+            if (status.HasValue)
+            {
+                query = query.Where(b => b.Status == status.Value);
+            }
+
+            return await query
                 .Select(b => new BillDTO
                 {
                     Id = b.Id,
@@ -198,12 +218,18 @@ namespace AccountingSystem.API.Services
         private readonly AccountingDbContext _context;
         private readonly ILedgerService _ledgerService;
         private readonly IPaymentService _paymentService;
+        private readonly IYearEndCloseService _yearEndCloseService;
 
-        public ReceivableService(AccountingDbContext context, ILedgerService ledgerService, IPaymentService paymentService)
+        public ReceivableService(
+            AccountingDbContext context,
+            ILedgerService ledgerService,
+            IPaymentService paymentService,
+            IYearEndCloseService yearEndCloseService)
         {
             _context = context;
             _ledgerService = ledgerService;
             _paymentService = paymentService;
+            _yearEndCloseService = yearEndCloseService;
         }
 
         public async Task<List<CustomerDTO>> GetCustomersAsync(bool includeArchived = false)
@@ -277,10 +303,25 @@ namespace AccountingSystem.API.Services
         }
         // ---------------------
 
-        public async Task<List<InvoiceDTO>> GetInvoicesAsync()
+        public async Task<List<InvoiceDTO>> GetInvoicesAsync(int? fiscalYear = null, DocumentStatus? status = null)
         {
-            return await _context.Invoices
+            var query = _context.Invoices
                 .Include(i => i.Customer)
+                .AsQueryable();
+
+            if (fiscalYear.HasValue)
+            {
+                var period = _yearEndCloseService.ResolveFiscalPeriod(fiscalYear.Value);
+                var periodEndExclusive = period.EndDate.Date.AddDays(1);
+                query = query.Where(i => i.DueDate >= period.StartDate && i.DueDate < periodEndExclusive);
+            }
+
+            if (status.HasValue)
+            {
+                query = query.Where(i => i.Status == status.Value);
+            }
+
+            return await query
                 .Select(i => new InvoiceDTO
                 {
                     Id = i.Id,

@@ -36,7 +36,8 @@ namespace AccountingSystem.API.Controllers
                 Name = company.Name,
                 Address = company.Address ?? string.Empty, 
                 TaxId = company.TaxId ?? string.Empty,     
-                Currency = company.Currency
+                Currency = company.Currency,
+                FiscalYearStartMonth = company.FiscalYearStartMonth
             });
         }
 
@@ -54,6 +55,7 @@ namespace AccountingSystem.API.Controllers
             company.Address = dto.Address;
             company.TaxId = dto.TaxId;
             company.Currency = dto.Currency;
+            company.FiscalYearStartMonth = dto.FiscalYearStartMonth;
 
             await _context.SaveChangesAsync();
 

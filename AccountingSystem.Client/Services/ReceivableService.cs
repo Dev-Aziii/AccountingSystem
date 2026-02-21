@@ -1,4 +1,5 @@
 ﻿using AccountingSystem.Shared.DTOs;
+using AccountingSystem.Shared.Enums;
 using System.Net.Http.Json;
 
 namespace AccountingSystem.Client.Services
@@ -26,9 +27,16 @@ namespace AccountingSystem.Client.Services
         }
 
         // ... Existing methods ...
-        public async Task<List<InvoiceDTO>?> GetInvoicesAsync()
+        public async Task<List<InvoiceDTO>?> GetInvoicesAsync(int? fiscalYear = null, DocumentStatus? status = null)
         {
-            return await _api.GetAsync<List<InvoiceDTO>>("api/receivables/invoices");
+            var queryParams = new List<string>();
+            if (fiscalYear.HasValue)
+                queryParams.Add($"fiscalYear={fiscalYear.Value}");
+            if (status.HasValue)
+                queryParams.Add($"status={status.Value}");
+
+            var query = queryParams.Count > 0 ? "?" + string.Join("&", queryParams) : string.Empty;
+            return await _api.GetAsync<List<InvoiceDTO>>($"api/receivables/invoices{query}");
         }
 
         public async Task CreateInvoiceAsync(CreateInvoiceDTO invoiceDto)

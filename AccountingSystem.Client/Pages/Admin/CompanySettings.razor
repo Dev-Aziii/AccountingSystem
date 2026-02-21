@@ -3,152 +3,214 @@
 @using AccountingSystem.Client.Services
 @using Microsoft.AspNetCore.Authorization
 @using MudBlazor
+@using System.Globalization
 @attribute [Authorize(Roles = "Admin")]
 @inject CompanyService CompanyService
+@inject LedgerService LedgerService
 @inject ISnackbar Snackbar
+@inject IDialogService DialogService
 
 <PageTitle>Company Settings</PageTitle>
 
-<MudContainer MaxWidth="MaxWidth.Medium" Class="mt-6">
-    <!-- HEADER -->
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-6 mb-8">
     <MudPaper Class="page-header mb-6" Elevation="0">
-        <div class="d-flex justify-space-between align-center">
-            <div>
-                @if (isLoading)
-                {
-                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="180px" Height="32px" Class="mb-2" />
-                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="400px" Height="20px" />
-                }
-                else
-                {
-                    <MudText Typo="Typo.h5" Class="mb-2 page-header-title">
-                        Company Profile
-                    </MudText>
-                    <MudText Typo="Typo.body1" Class="page-header-subtitle">
-                        Manage your organization's details used in financial reports and invoices.
-                    </MudText>
-                }
-            </div>
-        </div>
+        <MudText Typo="Typo.h5" Class="mb-2 page-header-title">
+            Company Settings
+        </MudText>
+        <MudText Typo="Typo.body1" Class="page-header-subtitle">
+            Manage company profile and fiscal year closing.
+        </MudText>
     </MudPaper>
 
     @if (isLoading)
     {
-        <!-- SKELETON FOR FORM -->
-        <MudCard Elevation="3">
-            <MudCardHeader>
-                <CardHeaderContent>
-                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="180px" Height="24px" />
-                </CardHeaderContent>
-            </MudCardHeader>
-            <MudCardContent>
-                <MudGrid>
-                    <MudItem xs="12">
-                        <MudSkeleton SkeletonType="SkeletonType.Text" Width="120px" Height="16px" Class="mb-2" />
-                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="56px" />
-                    </MudItem>
-
-                    <MudItem xs="12">
-                        <MudSkeleton SkeletonType="SkeletonType.Text" Width="140px" Height="16px" Class="mb-2" />
-                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="86px" />
-                    </MudItem>
-
-                    <MudItem xs="12" sm="6">
-                        <MudSkeleton SkeletonType="SkeletonType.Text" Width="100px" Height="16px" Class="mb-2" />
-                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="56px" />
-                    </MudItem>
-
-                    <MudItem xs="12" sm="6">
-                        <MudSkeleton SkeletonType="SkeletonType.Text" Width="110px" Height="16px" Class="mb-2" />
-                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="56px" />
-                    </MudItem>
-                </MudGrid>
-            </MudCardContent>
-            <MudCardActions Class="d-flex justify-end pa-4">
-                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="150px" Height="42px" />
-            </MudCardActions>
-        </MudCard>
+        <MudPaper Class="pa-6" Elevation="2">
+            <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Large" />
+            <MudText Class="mt-3">Loading settings...</MudText>
+        </MudPaper>
     }
     else
     {
-        <EditForm Model="@model" OnValidSubmit="HandleSubmit">
-            <DataAnnotationsValidator />
-            <MudCard Elevation="3">
-                <MudCardHeader>
-                    <CardHeaderContent>
-                        <MudText Typo="Typo.h6">General Information</MudText>
-                    </CardHeaderContent>
-                </MudCardHeader>
-                <MudCardContent>
-                    <MudGrid>
-                        <MudItem xs="12">
-                            <MudTextField Label="Company Name"
-                                          @bind-Value="model.Name"
-                                          For="@(() => model.Name)"
-                                          Variant="Variant.Outlined"
-                                          Required="true" />
-                        </MudItem>
+        <MudTabs Rounded="true" Elevation="1" PanelClass="pa-4">
+            <MudTabPanel Text="Company Profile">
+                <EditForm Model="@model" OnValidSubmit="HandleSubmit">
+                    <DataAnnotationsValidator />
+                    <MudCard Elevation="2">
+                        <MudCardHeader>
+                            <CardHeaderContent>
+                                <MudText Typo="Typo.h6">General Information</MudText>
+                            </CardHeaderContent>
+                        </MudCardHeader>
+                        <MudCardContent>
+                            <MudGrid>
+                                <MudItem xs="12">
+                                    <MudTextField Label="Company Name"
+                                                  @bind-Value="model.Name"
+                                                  For="@(() => model.Name)"
+                                                  Variant="Variant.Outlined"
+                                                  Required="true" />
+                                </MudItem>
 
-                        <MudItem xs="12">
-                            <MudTextField Label="Business Address"
-                                          @bind-Value="model.Address"
-                                          For="@(() => model.Address)"
-                                          Variant="Variant.Outlined"
-                                          Lines="3" />
-                        </MudItem>
+                                <MudItem xs="12">
+                                    <MudTextField Label="Business Address"
+                                                  @bind-Value="model.Address"
+                                                  For="@(() => model.Address)"
+                                                  Variant="Variant.Outlined"
+                                                  Lines="3" />
+                                </MudItem>
 
-                        <MudItem xs="12" sm="6">
-                            <MudTextField Label="Tax ID / TIN"
-                                          @bind-Value="model.TaxId"
-                                          For="@(() => model.TaxId)"
-                                          Variant="Variant.Outlined" />
-                        </MudItem>
+                                <MudItem xs="12" sm="4">
+                                    <MudTextField Label="Tax ID / TIN"
+                                                  @bind-Value="model.TaxId"
+                                                  For="@(() => model.TaxId)"
+                                                  Variant="Variant.Outlined" />
+                                </MudItem>
 
-                        <MudItem xs="12" sm="6">
-                            <MudTextField Label="Currency Code"
-                                          @bind-Value="model.Currency"
-                                          For="@(() => model.Currency)"
-                                          Variant="Variant.Outlined"
-                                          HelperText="e.g. PHP, USD" />
-                        </MudItem>
-                    </MudGrid>
-                </MudCardContent>
-                <MudCardActions Class="d-flex justify-end pa-4">
-                    <MudButton ButtonType="ButtonType.Submit"
-                               Variant="Variant.Filled"
-                               Class="save-btn"
-                               Disabled="@isSubmitting"
-                               StartIcon="@Icons.Material.Filled.Save">
-                        @(isSubmitting ? "Saving..." : "Save Changes")
-                    </MudButton>
-                </MudCardActions>
-            </MudCard>
-        </EditForm>
+                                <MudItem xs="12" sm="4">
+                                    <MudTextField Label="Currency Code"
+                                                  @bind-Value="model.Currency"
+                                                  For="@(() => model.Currency)"
+                                                  Variant="Variant.Outlined"
+                                                  HelperText="e.g. PHP, USD" />
+                                </MudItem>
+
+                                <MudItem xs="12" sm="4">
+                                    <MudSelect T="int"
+                                               Label="Fiscal Year Start Month"
+                                               @bind-Value="model.FiscalYearStartMonth"
+                                               Variant="Variant.Outlined"
+                                               HelperText="Defines fiscal-year boundaries">
+                                        @foreach (var month in fiscalMonthOptions)
+                                        {
+                                            <MudSelectItem T="int" Value="@month.Key">@month.Value</MudSelectItem>
+                                        }
+                                    </MudSelect>
+                                </MudItem>
+                            </MudGrid>
+                        </MudCardContent>
+                        <MudCardActions Class="d-flex justify-end pa-4">
+                            <MudButton ButtonType="ButtonType.Submit"
+                                       Variant="Variant.Filled"
+                                       Class="save-btn"
+                                       Disabled="@isSubmitting"
+                                       StartIcon="@Icons.Material.Filled.Save">
+                                @(isSubmitting ? "Saving..." : "Save Changes")
+                            </MudButton>
+                        </MudCardActions>
+                    </MudCard>
+                </EditForm>
+            </MudTabPanel>
+
+            <MudTabPanel Text="Fiscal Year Management">
+                <MudPaper Class="pa-4" Elevation="1">
+                    <MudText Typo="Typo.subtitle1" Class="mb-2">
+                        Past fiscal years with activity are eligible for year-end closing.
+                    </MudText>
+
+                    @if (fiscalYears.Count == 0)
+                    {
+                        <MudAlert Severity="Severity.Info">No fiscal-year activity found yet.</MudAlert>
+                    }
+                    else
+                    {
+                        <MudTable Items="fiscalYears" Dense="true" Hover="true" Elevation="0">
+                            <HeaderContent>
+                                <MudTh>Fiscal Year</MudTh>
+                                <MudTh>Period</MudTh>
+                                <MudTh style="text-align:right;">Net Income</MudTh>
+                                <MudTh>Status</MudTh>
+                                <MudTh>Closed At (UTC)</MudTh>
+                                <MudTh>Action</MudTh>
+                            </HeaderContent>
+                            <RowTemplate>
+                                <MudTd DataLabel="Fiscal Year">FY @context.FiscalYear</MudTd>
+                                <MudTd DataLabel="Period">@context.PeriodStart.ToString("yyyy-MM-dd") to @context.PeriodEnd.ToString("yyyy-MM-dd")</MudTd>
+                                <MudTd DataLabel="Net Income" style="text-align:right; font-family: monospace;">@context.NetIncome.ToString("C2", _phCulture)</MudTd>
+                                <MudTd DataLabel="Status">
+                                    @if (context.IsClosed)
+                                    {
+                                        <MudChip T="string" Color="Color.Success" Size="Size.Small">Closed</MudChip>
+                                    }
+                                    else
+                                    {
+                                        <MudChip T="string" Color="Color.Warning" Size="Size.Small">Open</MudChip>
+                                    }
+                                </MudTd>
+                                <MudTd DataLabel="Closed At (UTC)">@(context.ClosedAtUtc.HasValue ? context.ClosedAtUtc.Value.ToString("yyyy-MM-dd HH:mm") : "-")</MudTd>
+                                <MudTd DataLabel="Action">
+                                    <MudButton Variant="Variant.Filled"
+                                               Color="Color.Primary"
+                                               Size="Size.Small"
+                                               Disabled="@(!context.CanClose || closingYear == context.FiscalYear)"
+                                               OnClick="@(() => RunYearEndCloseAsync(context.FiscalYear))">
+                                        @(closingYear == context.FiscalYear ? "Closing..." : "Run Year-End Close")
+                                    </MudButton>
+                                </MudTd>
+                            </RowTemplate>
+                        </MudTable>
+                    }
+                </MudPaper>
+            </MudTabPanel>
+        </MudTabs>
     }
 </MudContainer>
 
 @code {
-    private UpdateCompanyDTO model = new UpdateCompanyDTO();
+    private UpdateCompanyDTO model = new();
+    private List<FiscalYearSummaryDTO> fiscalYears = new();
+
     private bool isLoading = true;
-    private bool isSubmitting = false;
+    private bool isSubmitting;
+    private int closingYear;
+    private readonly CultureInfo _phCulture = CultureInfo.GetCultureInfo("en-PH");
+
+    private readonly Dictionary<int, string> fiscalMonthOptions = new()
+    {
+        { 1, "1 - January" },
+        { 2, "2 - February" },
+        { 3, "3 - March" },
+        { 4, "4 - April" },
+        { 5, "5 - May" },
+        { 6, "6 - June" },
+        { 7, "7 - July" },
+        { 8, "8 - August" },
+        { 9, "9 - September" },
+        { 10, "10 - October" },
+        { 11, "11 - November" },
+        { 12, "12 - December" }
+    };
 
     protected override async Task OnInitializedAsync()
     {
+        await LoadPageDataAsync();
+    }
+
+    private async Task LoadPageDataAsync()
+    {
+        isLoading = true;
         try
         {
-            var current = await CompanyService.GetCurrentCompanyAsync();
+            var companyTask = CompanyService.GetCurrentCompanyAsync();
+            var fiscalYearsTask = LedgerService.GetFiscalYearSummariesAsync();
+            await Task.WhenAll(companyTask, fiscalYearsTask);
+
+            var current = companyTask.Result;
             if (current != null)
             {
-                // Map CompanyDTO to UpdateCompanyDTO
                 model.Name = current.Name;
                 model.Address = current.Address;
                 model.TaxId = current.TaxId;
                 model.Currency = current.Currency;
+                model.FiscalYearStartMonth = current.FiscalYearStartMonth;
             }
             else
             {
                 Snackbar.Add("No company profile found.", Severity.Warning);
             }
+
+            fiscalYears = (fiscalYearsTask.Result ?? new List<FiscalYearSummaryDTO>())
+                .OrderByDescending(f => f.FiscalYear)
+                .ToList();
         }
         catch (Exception ex)
         {
@@ -167,6 +229,7 @@
         {
             await CompanyService.UpdateCompanyAsync(model);
             Snackbar.Add("Company profile updated successfully.", Severity.Success);
+            await ReloadFiscalYearsAsync();
         }
         catch (Exception ex)
         {
@@ -175,6 +238,50 @@
         finally
         {
             isSubmitting = false;
+        }
+    }
+
+    private async Task ReloadFiscalYearsAsync()
+    {
+        try
+        {
+            fiscalYears = (await LedgerService.GetFiscalYearSummariesAsync() ?? new List<FiscalYearSummaryDTO>())
+                .OrderByDescending(f => f.FiscalYear)
+                .ToList();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to load fiscal years: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task RunYearEndCloseAsync(int fiscalYear)
+    {
+        var confirm = await DialogService.ShowMessageBox(
+            "Confirm Year-End Close",
+            $"Run year-end close for FY {fiscalYear}? This action marks the year as closed for new postings.",
+            yesText: "Run Close",
+            cancelText: "Cancel");
+
+        if (confirm != true)
+            return;
+
+        closingYear = fiscalYear;
+        try
+        {
+            var result = await LedgerService.RunYearEndCloseAsync(fiscalYear);
+            Snackbar.Add(
+                $"FY {fiscalYear} closed successfully. Closing JE #{result?.ClosingJournalEntryId} posted.",
+                Severity.Success);
+            await ReloadFiscalYearsAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Year-end close failed: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            closingYear = 0;
         }
     }
 }

@@ -11,9 +11,21 @@ namespace AccountingSystem.Client.Services
             _api = api;
         }
 
-        public async Task<TrialBalanceDTO?> GetTrialBalance()
+        public async Task<TrialBalanceDTO?> GetTrialBalance(
+            DateTime? fromDate = null,
+            DateTime? toDate = null,
+            bool excludeClosingEntries = false)
         {
-            return await _api.GetAsync<TrialBalanceDTO>("api/ledger/trial-balance");
+            var queryParams = new List<string>();
+            if (fromDate.HasValue)
+                queryParams.Add($"fromDate={fromDate.Value:yyyy-MM-dd}");
+            if (toDate.HasValue)
+                queryParams.Add($"toDate={toDate.Value:yyyy-MM-dd}");
+            if (excludeClosingEntries)
+                queryParams.Add("excludeClosingEntries=true");
+
+            var query = queryParams.Count > 0 ? "?" + string.Join("&", queryParams) : string.Empty;
+            return await _api.GetAsync<TrialBalanceDTO>($"api/ledger/trial-balance{query}");
         }
 
         public async Task DownloadInvoicePdf(int invoiceId)
@@ -22,9 +34,9 @@ namespace AccountingSystem.Client.Services
         }
 
         // NEW: Financials PDF
-        public async Task DownloadFinancialsPdf()
+        public async Task DownloadFinancialsPdf(int fiscalYear)
         {
-            await _api.DownloadFileAsync($"api/reports/financials/pdf", $"FinancialStatements.pdf");
+            await _api.DownloadFileAsync($"api/reports/financials/pdf?fiscalYear={fiscalYear}", $"FinancialStatements-FY{fiscalYear}.pdf");
         }
     }
 }

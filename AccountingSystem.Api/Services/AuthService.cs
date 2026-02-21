@@ -89,7 +89,8 @@ namespace AccountingSystem.API.Services
                     Name = dto.CompanyName,
                     CreatedAt = DateTime.UtcNow,
                     IsActive = true,
-                    Currency = "PHP"
+                    Currency = "PHP",
+                    FiscalYearStartMonth = 1
                 };
                 _context.Companies.Add(company);
                 await _context.SaveChangesAsync();

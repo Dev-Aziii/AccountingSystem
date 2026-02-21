@@ -20,6 +20,7 @@ namespace AccountingSystem.API.Data
         public DbSet<Account> Accounts { get; set; }
         public DbSet<JournalEntry> JournalEntries { get; set; }
         public DbSet<JournalEntryLine> JournalEntryLines { get; set; }
+        public DbSet<FiscalYearClose> FiscalYearCloses { get; set; }
         public DbSet<Vendor> Vendors { get; set; }
         public DbSet<Customer> Customers { get; set; }
         public DbSet<Bill> Bills { get; set; }
@@ -36,6 +37,7 @@ namespace AccountingSystem.API.Data
             modelBuilder.Entity<User>().HasQueryFilter(e => !e.IsDeleted && e.CompanyId == _tenantService.GetCurrentTenant());
             modelBuilder.Entity<Account>().HasQueryFilter(e => !e.IsDeleted && e.CompanyId == _tenantService.GetCurrentTenant());
             modelBuilder.Entity<JournalEntry>().HasQueryFilter(e => e.CompanyId == _tenantService.GetCurrentTenant());
+            modelBuilder.Entity<FiscalYearClose>().HasQueryFilter(e => e.CompanyId == _tenantService.GetCurrentTenant());
             modelBuilder.Entity<Vendor>().HasQueryFilter(e => !e.IsDeleted && e.CompanyId == _tenantService.GetCurrentTenant());
             modelBuilder.Entity<Customer>().HasQueryFilter(e => !e.IsDeleted && e.CompanyId == _tenantService.GetCurrentTenant());
             modelBuilder.Entity<Bill>().HasQueryFilter(e => !e.IsDeleted && e.CompanyId == _tenantService.GetCurrentTenant());
@@ -64,6 +66,13 @@ namespace AccountingSystem.API.Data
             // --- Constraints ---
             modelBuilder.Entity<User>().HasIndex(u => u.Email).IsUnique();
             modelBuilder.Entity<Account>().HasIndex(a => new { a.Code, a.CompanyId }).IsUnique();
+            modelBuilder.Entity<FiscalYearClose>().HasIndex(f => new { f.CompanyId, f.FiscalYear }).IsUnique();
+            modelBuilder.Entity<JournalEntry>().HasIndex(j => new { j.CompanyId, j.Date });
+            modelBuilder.Entity<FiscalYearClose>()
+                .HasOne(f => f.ClosingJournalEntry)
+                .WithMany()
+                .HasForeignKey(f => f.ClosingJournalEntryId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             // --- UPDATED ROLES ---
             modelBuilder.Entity<Role>().HasData(

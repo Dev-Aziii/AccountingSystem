@@ -24,6 +24,7 @@ builder.Services.AddDbContext<AccountingDbContext>(options =>
 
 // --- 3. Dependency Injection (Register Services) ---
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IYearEndCloseService, YearEndCloseService>();
 builder.Services.AddScoped<ILedgerService, LedgerService>();
 builder.Services.AddScoped<IPayableService, PayableService>();
 builder.Services.AddScoped<IReceivableService, ReceivableService>();

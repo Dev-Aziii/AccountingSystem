@@ -7,6 +7,12 @@ namespace AccountingSystem.API.Services.Interfaces
         byte[] GenerateInvoicePdf(InvoiceDTO invoice, CompanyDTO company, CustomerDTO customer);
 
         // NEW: Financial Reports
-        byte[] GenerateFinancialReportPdf(TrialBalanceDTO tb, List<AccountDTO> accounts, CompanyDTO company);
+        byte[] GenerateFinancialReportPdf(
+            TrialBalanceDTO incomeTb,
+            TrialBalanceDTO balanceTb,
+            List<AccountDTO> accounts,
+            CompanyDTO company,
+            DateTime periodStart,
+            DateTime periodEnd);
     }
 }

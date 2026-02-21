@@ -10,10 +10,12 @@ namespace AccountingSystem.API.Controllers
     public class GeneralLedgerController : ControllerBase
     {
         private readonly ILedgerService _ledgerService;
+        private readonly IYearEndCloseService _yearEndCloseService;
 
-        public GeneralLedgerController(ILedgerService ledgerService)
+        public GeneralLedgerController(ILedgerService ledgerService, IYearEndCloseService yearEndCloseService)
         {
             _ledgerService = ledgerService;
+            _yearEndCloseService = yearEndCloseService;
         }
 
         [HttpGet("accounts")]
@@ -84,10 +86,43 @@ namespace AccountingSystem.API.Controllers
 
         [HttpGet("trial-balance")]
         [Authorize(Roles = "Admin,Accounting,Management")]
-        public async Task<IActionResult> GetTrialBalance()
+        public async Task<IActionResult> GetTrialBalance(
+            [FromQuery] DateTime? fromDate = null,
+            [FromQuery] DateTime? toDate = null,
+            [FromQuery] bool excludeClosingEntries = false)
         {
-            var tb = await _ledgerService.GetTrialBalanceAsync();
+            if (fromDate.HasValue && toDate.HasValue && fromDate.Value.Date > toDate.Value.Date)
+                return BadRequest(new { error = "fromDate cannot be later than toDate." });
+
+            var tb = await _ledgerService.GetTrialBalanceAsync(fromDate, toDate, excludeClosingEntries);
             return Ok(tb);
+        }
+
+        [HttpGet("fiscal-years")]
+        [Authorize(Roles = "Admin,Accounting,Management")]
+        public async Task<IActionResult> GetFiscalYears([FromQuery] int lookbackYears = 10)
+        {
+            var years = await _yearEndCloseService.GetFiscalYearSummariesAsync(lookbackYears);
+            return Ok(years);
+        }
+
+        [HttpPost("fiscal-years/{fiscalYear:int}/close")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> CloseFiscalYear(int fiscalYear)
+        {
+            var userName = User.Identity?.Name ?? "System";
+            try
+            {
+                var result = await _yearEndCloseService.CloseFiscalYearAsync(fiscalYear, userName);
+                return Ok(result);
+            }
+            catch (InvalidOperationException ex)
+            {
+                if (ex.Message.Contains("already closed", StringComparison.OrdinalIgnoreCase))
+                    return Conflict(new { error = ex.Message });
+
+                return BadRequest(new { error = ex.Message });
+            }
         }
 
         [HttpPost("journal")]
