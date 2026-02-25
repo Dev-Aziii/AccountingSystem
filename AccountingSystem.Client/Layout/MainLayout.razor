@@ -7,8 +7,6 @@
 
 <MudLayout Class="main-layout">
     <MudAppBar Class="app-bar" Elevation="0">
-
-        <!-- Logo and Company Info -->
         <div class="app-bar-content">
             <MudIconButton Icon="@Icons.Material.Outlined.Menu"
                            Color="Color.Inherit"
@@ -34,7 +32,6 @@
 
             <MudSpacer />
 
-            <!-- User Section -->
             <AuthorizeView>
                 <Authorized Context="authContext">
                     <div class="user-section">
@@ -113,3 +110,18 @@
         </div>
     </MudMainContent>
 </MudLayout>
+
+@code {
+    bool _drawerOpen = true;
+
+    void DrawerToggle()
+    {
+        _drawerOpen = !_drawerOpen;
+    }
+
+    private async Task Logout()
+    {
+        await AuthService.Logout();
+        NavManager.NavigateTo("/");
+    }
+}

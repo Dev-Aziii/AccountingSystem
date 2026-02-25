@@ -1,119 +1,95 @@
-﻿@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
 @using MudBlazor
 
 <div class="simple-nav-wrapper">
     <MudNavMenu Dense="false" Class="simple-nav-menu">
-
-
         <AuthorizeView Roles="SuperAdmin">
-            <!-- DASHBOARD -->
-            <MudNavLink Href="superadmin/dashboard"       Match="NavLinkMatch.All"              Icon="@Icons.Material.Outlined.Security">
-                System Overview
-            </MudNavLink>
-            <MudNavLink Href="superadmin/tenants"  Match="NavLinkMatch.All"        Icon="@Icons.Material.Outlined.Business">
-                Tenant Manager
-            </MudNavLink>
-            <MudNavLink Href="superadmin/users"               Match="NavLinkMatch.All"   Icon="@Icons.Material.Outlined.Group">
-                Global Users
-            </MudNavLink>
-            <MudNavLink Href="superadmin/audit-logs"         Match="NavLinkMatch.All"                Icon="@Icons.Material.Outlined.History">
-                Admin Audit Logs
-            </MudNavLink>
+            <div class="nav-group">
+                <div class="nav-group-label">System</div>
+                <MudNavLink Href="superadmin/dashboard" Match="NavLinkMatch.All" Icon="@Icons.Material.Outlined.Security">
+                    System Overview
+                </MudNavLink>
+                <MudNavLink Href="superadmin/tenants" Match="NavLinkMatch.All" Icon="@Icons.Material.Outlined.Business">
+                    Tenant Manager
+                </MudNavLink>
+                <MudNavLink Href="superadmin/users" Match="NavLinkMatch.All" Icon="@Icons.Material.Outlined.Group">
+                    Global Users
+                </MudNavLink>
+                <MudNavLink Href="superadmin/audit-logs" Match="NavLinkMatch.All" Icon="@Icons.Material.Outlined.History">
+                    Admin Audit Logs
+                </MudNavLink>
+            </div>
         </AuthorizeView>
 
         <AuthorizeView Roles="Admin,Accounting,Management">
-            <!-- DASHBOARD -->
-            <MudNavLink Href="dashboard"        Match="NavLinkMatch.All"                    Icon="@Icons.Material.Outlined.Dashboard">
-                Dashboard
-            </MudNavLink>
+            <div class="nav-group">
+                <div class="nav-group-label">Overview</div>
+                <MudNavLink Href="dashboard" Match="NavLinkMatch.All" Icon="@Icons.Material.Outlined.Dashboard">
+                    Dashboard
+                </MudNavLink>
+            </div>
         </AuthorizeView>
 
-        <!-- ADMIN -->
         <AuthorizeView Roles="Admin">
-            <div class="nav-separator">
-                <MudIcon Icon="@Icons.Material.Outlined.AdminPanelSettings" Class="separator-icon" />
-                <span class="separator-text">Administration</span>
-                <div class="separator-line"></div>
+            <div class="nav-group">
+                <div class="nav-group-label">Administration</div>
+                <MudNavLink Href="admin/users" Icon="@Icons.Material.Outlined.People">
+                    User Management
+                </MudNavLink>
+                <MudNavLink Href="admin/audit-logs" Icon="@Icons.Material.Outlined.History">
+                    Audit Logs
+                </MudNavLink>
+                <MudNavLink Href="admin/company-settings" Icon="@Icons.Material.Outlined.Business">
+                    Company Settings
+                </MudNavLink>
             </div>
-
-            <MudNavLink Href="admin/users" Icon="@Icons.Material.Outlined.People">
-                User Management
-            </MudNavLink>
-            <MudNavLink Href="admin/audit-logs"              Icon="@Icons.Material.Outlined.History">
-                Audit Logs
-            </MudNavLink>
-            <MudNavLink Href="admin/company-settings"   Icon="@Icons.Material.Outlined.Business">
-                Company Settings
-            </MudNavLink>
         </AuthorizeView>
 
-        <!-- GENERAL LEDGER -->
         <AuthorizeView Roles="Admin,Accounting">
-            <div class="nav-separator">
-                <MudIcon Icon="@Icons.Material.Outlined.AccountBalance" Class="separator-icon" />
-                <span class="separator-text">General Ledger</span>
-                <div class="separator-line"></div>
+            <div class="nav-group">
+                <div class="nav-group-label">General Ledger</div>
+                <MudNavLink Href="gl/journal" Icon="@Icons.Material.Outlined.EditNote">
+                    Journal Entries
+                </MudNavLink>
+                <MudNavLink Href="gl/accounts" Icon="@Icons.Material.Outlined.AccountTree">
+                    Chart of Accounts
+                </MudNavLink>
             </div>
 
-            <MudNavLink Href="gl/journal"         Icon="@Icons.Material.Outlined.EditNote">
-                Journal Entries
-            </MudNavLink>
-
-            <MudNavLink Href="gl/accounts"                Icon="@Icons.Material.Outlined.AccountTree">
-                Chart of Accounts
-            </MudNavLink>
-
-            <!-- ACCOUNTS PAYABLE -->
-            <div class="nav-separator">
-                <MudIcon Icon="@Icons.Material.Outlined.ShoppingCart" Class="separator-icon" />
-                <span class="separator-text">Accounts Payable</span>
-                <div class="separator-line"></div>
+            <div class="nav-group">
+                <div class="nav-group-label">Accounts Payable</div>
+                <MudNavLink Href="ap/bills" Match="NavLinkMatch.All" Icon="@Icons.Material.Outlined.NoteAdd">
+                    Create Vendor Bill
+                </MudNavLink>
+                <MudNavLink Href="ap/bills/list" Match="NavLinkMatch.All" Icon="@Icons.Material.Outlined.ListAlt">
+                    Bills List
+                </MudNavLink>
+                <MudNavLink Href="ap/vendors" Icon="@Icons.Material.Outlined.Store">
+                    Vendors
+                </MudNavLink>
             </div>
 
-            <MudNavLink Href="ap/bills" Match="NavLinkMatch.All" Icon="@Icons.Material.Outlined.NoteAdd">
-                Create Vendor Bill
-            </MudNavLink>
-
-            <MudNavLink Href="ap/bills/list" Match="NavLinkMatch.All" Icon="@Icons.Material.Outlined.ListAlt">
-                Bills List
-            </MudNavLink>
-
-            <MudNavLink Href="ap/vendors"                  Icon="@Icons.Material.Outlined.Store">
-                Vendors
-            </MudNavLink>
-
-            <!-- ACCOUNTS RECEIVABLE -->
-            <div class="nav-separator">
-                <MudIcon Icon="@Icons.Material.Outlined.Sell" Class="separator-icon" />
-                <span class="separator-text">Accounts Receivable</span>
-                <div class="separator-line"></div>
+            <div class="nav-group">
+                <div class="nav-group-label">Accounts Receivable</div>
+                <MudNavLink Href="ar/invoices" Match="NavLinkMatch.All" Icon="@Icons.Material.Outlined.NoteAdd">
+                    Create Invoice
+                </MudNavLink>
+                <MudNavLink Href="ar/invoices/list" Match="NavLinkMatch.All" Icon="@Icons.Material.Outlined.ListAlt">
+                    Invoice List
+                </MudNavLink>
+                <MudNavLink Href="ar/customers" Icon="@Icons.Material.Outlined.Groups">
+                    Customers
+                </MudNavLink>
             </div>
-
-            <MudNavLink Href="ar/invoices" Match="NavLinkMatch.All" Icon="@Icons.Material.Outlined.NoteAdd">
-                Create Invoice
-            </MudNavLink>
-
-            <MudNavLink Href="ar/invoices/list" Match="NavLinkMatch.All" Icon="@Icons.Material.Outlined.ListAlt">
-                Invoice List
-            </MudNavLink>
-
-            <MudNavLink Href="ar/customers"                   Icon="@Icons.Material.Outlined.Groups">
-                Customers
-            </MudNavLink>
         </AuthorizeView>
 
-        <!-- REPORTS -->
         <AuthorizeView Roles="Admin,Accounting,Management">
-            <div class="nav-separator">
-                <MudIcon Icon="@Icons.Material.Outlined.Assessment" Class="separator-icon" />
-                <span class="separator-text">Reporting</span>
-                <div class="separator-line"></div>
+            <div class="nav-group">
+                <div class="nav-group-label">Reporting</div>
+                <MudNavLink Href="reports/financials" Icon="@Icons.Material.Outlined.Analytics">
+                    Financial Statements
+                </MudNavLink>
             </div>
-
-            <MudNavLink Href="reports/financials"       Icon="@Icons.Material.Outlined.Analytics">
-                Financial Statements
-            </MudNavLink>
         </AuthorizeView>
-
     </MudNavMenu>
 </div>
