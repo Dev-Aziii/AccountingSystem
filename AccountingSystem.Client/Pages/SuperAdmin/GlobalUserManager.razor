@@ -9,70 +9,21 @@
 
 <PageTitle>Global User Management</PageTitle>
 
-<style>
-    .user-page-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 1.5rem;
-    }
 
-    .user-stats-row {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-        gap: 1rem;
-        margin-bottom: 1.5rem;
-    }
-
-    .user-stat-card {
-        padding: 1rem 1.25rem;
-        background: white;
-        border-radius: 14px;
-        border: 1px solid rgba(22, 84, 127, 0.1);
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-    }
-
-    .user-stat-value {
-        font-size: 1.5rem;
-        font-weight: 800;
-        color: rgb(22, 84, 127);
-        line-height: 1.2;
-    }
-
-    .user-stat-label {
-        font-size: 0.7rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.3px;
-        color: rgb(22, 84, 127);
-        opacity: 0.65;
-    }
-
-    .user-table-card {
-        background: white;
-        border-radius: 20px;
-        border: 1px solid rgba(22, 84, 127, 0.1);
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
-        overflow: hidden;
-    }
-</style>
 
 <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4 mb-10">
     <!-- HEADER -->
     <div class="user-page-header">
         <div>
-            <MudText Typo="Typo.h5" Style="font-weight: 800; color: rgb(22, 84, 127);">
+            <MudText Typo="Typo.h5">
                 Global User Directory
             </MudText>
-            <MudText Typo="Typo.body2" Style="color: rgb(56, 146, 147);">
+            <MudText Typo="Typo.body2">
                 Manage all users across all tenant companies
             </MudText>
         </div>
-        <MudButton Variant="Variant.Filled"
-                   Style="background: linear-gradient(135deg, rgb(22, 84, 127) 0%, rgb(56, 146, 147) 100%); color: white; border-radius: 12px;"
+        <MudButton Variant="Variant.Outlined"
+                  
                    StartIcon="@Icons.Material.Filled.Refresh"                   Size="Size.Medium" OnClick="LoadData">
             Refresh
         </MudButton>
@@ -81,35 +32,35 @@
     <!-- QUICK STATS -->
     <div class="user-stats-row">
         <div class="user-stat-card">
-            <MudIcon Icon="@Icons.Material.Filled.People" Style="color: #1565C0;" />
+            <MudIcon Icon="@Icons.Material.Filled.People" />
             <div>
                 <div class="user-stat-value">@users.Count</div>
                 <div class="user-stat-label">Total Users</div>
             </div>
         </div>
         <div class="user-stat-card">
-            <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Style="color: #4CAF50;" />
+            <MudIcon Icon="@Icons.Material.Filled.CheckCircle" />
             <div>
                 <div class="user-stat-value">@users.Count(u => u.Status == "Active")</div>
                 <div class="user-stat-label">Active</div>
             </div>
         </div>
         <div class="user-stat-card">
-            <MudIcon Icon="@Icons.Material.Filled.Warning" Style="color: #FF9800;" />
+            <MudIcon Icon="@Icons.Material.Filled.Warning" />
             <div>
                 <div class="user-stat-value">@users.Count(u => u.Status == "Restricted")</div>
                 <div class="user-stat-label">Restricted</div>
             </div>
         </div>
         <div class="user-stat-card">
-            <MudIcon Icon="@Icons.Material.Filled.Block" Style="color: #F44336;" />
+            <MudIcon Icon="@Icons.Material.Filled.Block" />
             <div>
                 <div class="user-stat-value">@users.Count(u => u.Status == "Blocked")</div>
                 <div class="user-stat-label">Blocked</div>
             </div>
         </div>
         <div class="user-stat-card">
-            <MudIcon Icon="@Icons.Material.Filled.Business" Style="color: #6A1B9A;" />
+            <MudIcon Icon="@Icons.Material.Filled.Business" />
             <div>
                 <div class="user-stat-value">@users.Select(u => u.CompanyName).Distinct().Count()</div>
                 <div class="user-stat-label">Companies</div>
@@ -120,20 +71,20 @@
     <!-- TABLE -->
     <div class="user-table-card">
         <MudTable Items="@users" Hover="true" Loading="@isLoading" Filter="new Func<GlobalUserDTO, bool>(FilterFunc)"
-                  Dense="false" Elevation="0" Style="background: transparent;">
+                  Dense="false" Elevation="0">
             <ToolBarContent>
-                <MudText Typo="Typo.h6" Style="color: rgb(22, 84, 127); font-weight: 700;">All System Users</MudText>
+                <MudText Typo="Typo.h6">All System Users</MudText>
                 <MudSpacer />
                 <MudTextField @bind-Value="searchString" Placeholder="Search users or companies..."
                               Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"                              IconSize="Size.Medium"
-                              Class="mt-0" Style="max-width: 300px;" />
-                <MudSelect T="string" @bind-Value="statusFilter" Label="Status" Class="ml-4" Style="max-width: 150px;">
+                              Class="mt-0" />
+                <MudSelect T="string" @bind-Value="statusFilter" Label="Status" Class="ml-4">
                     <MudSelectItem T="string" Value='@("All")'>All</MudSelectItem>
                     <MudSelectItem T="string" Value='@("Active")'>Active</MudSelectItem>
                     <MudSelectItem T="string" Value='@("Restricted")'>Restricted</MudSelectItem>
                     <MudSelectItem T="string" Value='@("Blocked")'>Blocked</MudSelectItem>
                 </MudSelect>
-                <MudSelect T="string" @bind-Value="roleFilter" Label="Role" Class="ml-4" Style="max-width: 150px;">
+                <MudSelect T="string" @bind-Value="roleFilter" Label="Role" Class="ml-4">
                     <MudSelectItem T="string" Value='@("All")'>All Roles</MudSelectItem>
                     <MudSelectItem T="string" Value='@("Admin")'>Admin</MudSelectItem>
                     <MudSelectItem T="string" Value='@("Accounting")'>Accounting</MudSelectItem>
@@ -147,13 +98,13 @@
                 <MudTh>Role</MudTh>
                 <MudTh>Joined</MudTh>
                 <MudTh>Status</MudTh>
-                <MudTh Style="text-align: center;">Actions</MudTh>
+                <MudTh>Actions</MudTh>
             </HeaderContent>
             <RowTemplate>
                 <MudTd DataLabel="Company">
                     <div class="d-flex align-center gap-2">
                         <MudIcon Icon="@Icons.Material.Filled.Business" Size="Size.Small"
-                                 Style="color: rgb(22, 84, 127); opacity: 0.5;" />
+                                 />
                         <b>@context.CompanyName</b>
                     </div>
                 </MudTd>
@@ -170,22 +121,22 @@
                     @switch (context.Status)
                     {
                         case "Active":
-                            <MudChip T="string" Color="Color.Success" Size="Size.Small" Variant="Variant.Filled">Active
+                            <MudChip T="string" Color="Color.Success" Size="Size.Small" Variant="Variant.Outlined">Active
                             </MudChip>
                             break;
                         case "Restricted":
-                            <MudChip T="string" Color="Color.Warning" Size="Size.Small" Variant="Variant.Filled">Restricted
+                            <MudChip T="string" Color="Color.Warning" Size="Size.Small" Variant="Variant.Outlined">Restricted
                             </MudChip>
                             break;
                         case "Blocked":
-                            <MudChip T="string" Color="Color.Error" Size="Size.Small" Variant="Variant.Filled">Blocked</MudChip>
+                            <MudChip T="string" Color="Color.Error" Size="Size.Small" Variant="Variant.Outlined">Blocked</MudChip>
                             break;
                         default:
                             <MudChip T="string" Color="Color.Default" Size="Size.Small">@context.Status</MudChip>
                             break;
                     }
                 </MudTd>
-                <MudTd DataLabel="Actions" Style="text-align: center;">
+                <MudTd DataLabel="Actions">
                     <MudMenu Icon="@Icons.Material.Filled.MoreVert" Dense="true" AnchorOrigin="Origin.BottomRight">
                         @if (context.Status != "Active")
                         {

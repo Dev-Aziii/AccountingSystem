@@ -3,7 +3,7 @@
 @using MudBlazor
 
 <CascadingAuthenticationState>
-    <MudThemeProvider />
+    <MudThemeProvider Theme="@AppTheme.Default" />
     <MudPopoverProvider />
     <MudDialogProvider />
     <MudSnackbarProvider />
@@ -19,10 +19,9 @@
                     else
                     {
                         <LayoutView Layout="@typeof(MainLayout)">
-                            <div class="alert alert-danger m-4">
-                                <h4>Access Denied</h4>
-                                <p>You are logged in, but you do not have permission to access this page.</p>
-                            </div>
+                            <MudAlert Severity="Severity.Error" Dense="true" Class="ma-4">
+                                Access denied. You are logged in but do not have permission to access this page.
+                            </MudAlert>
                         </LayoutView>
                     }
                 </NotAuthorized>

@@ -48,7 +48,7 @@
         </MudButton>
         <MudButton Color="Color.Primary"
                    OnClick="Submit"
-                   Variant="Variant.Filled"
+                   Variant="Variant.Outlined"
                    Disabled="isSubmitting"
                    StartIcon="@(isSubmitting ? null : (Vendor?.Id > 0 ? Icons.Material.Filled.Save : Icons.Material.Filled.Add))">
             @if (isSubmitting)

@@ -90,7 +90,7 @@
                         </MudCardContent>
                         <MudCardActions Class="d-flex justify-end pa-4">
                             <MudButton ButtonType="ButtonType.Submit"
-                                       Variant="Variant.Filled"
+                                       Variant="Variant.Outlined"
                                        Class="save-btn"
                                        Disabled="@isSubmitting"
                                        StartIcon="@Icons.Material.Filled.Save">
@@ -117,7 +117,7 @@
                             <HeaderContent>
                                 <MudTh>Fiscal Year</MudTh>
                                 <MudTh>Period</MudTh>
-                                <MudTh style="text-align:right;">Net Income</MudTh>
+                                <MudTh>Net Income</MudTh>
                                 <MudTh>Status</MudTh>
                                 <MudTh>Closed At (UTC)</MudTh>
                                 <MudTh>Action</MudTh>
@@ -125,7 +125,7 @@
                             <RowTemplate>
                                 <MudTd DataLabel="Fiscal Year">FY @context.FiscalYear</MudTd>
                                 <MudTd DataLabel="Period">@context.PeriodStart.ToString("yyyy-MM-dd") to @context.PeriodEnd.ToString("yyyy-MM-dd")</MudTd>
-                                <MudTd DataLabel="Net Income" style="text-align:right; font-family: monospace;">@context.NetIncome.ToString("C2", _phCulture)</MudTd>
+                                <MudTd DataLabel="Net Income">@context.NetIncome.ToString("C2", _phCulture)</MudTd>
                                 <MudTd DataLabel="Status">
                                     @if (context.IsClosed)
                                     {
@@ -138,7 +138,7 @@
                                 </MudTd>
                                 <MudTd DataLabel="Closed At (UTC)">@(context.ClosedAtUtc.HasValue ? context.ClosedAtUtc.Value.ToString("yyyy-MM-dd HH:mm") : "-")</MudTd>
                                 <MudTd DataLabel="Action">
-                                    <MudButton Variant="Variant.Filled"
+                                    <MudButton Variant="Variant.Outlined"
                                                Color="Color.Primary"
                                                Size="Size.Small"
                                                Disabled="@(!context.CanClose || closingYear == context.FiscalYear)"

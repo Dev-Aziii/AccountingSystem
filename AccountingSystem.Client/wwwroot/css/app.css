@@ -107,12 +107,12 @@ code {
    ======================================== */
 
 :root {
-    --theme-primary: rgb(22, 84, 127);
-    --theme-secondary: rgb(56, 146, 147);
-    --theme-primary-light: rgba(22, 84, 127, 0.1);
-    --theme-secondary-light: rgba(56, 146, 147, 0.1);
-    --theme-primary-dark: rgb(16, 62, 94);
-    --theme-secondary-dark: rgb(42, 110, 111);
+    --theme-primary: #379391;
+    --theme-secondary: #2f7f7d;
+    --theme-primary-light: rgba(55, 147, 145, 0.12);
+    --theme-secondary-light: rgba(47, 127, 125, 0.1);
+    --theme-primary-dark: #276d6b;
+    --theme-secondary-dark: #245f5d;
 }
 
 .custom-bg-gradient {
@@ -556,4 +556,141 @@ code {
 
 .stats-grid {
     gap: 24px;
+}
+
+
+/* ===== Uniform MudBlazor UI Overrides ===== */
+body {
+    background-color: #f3f4f6;
+    color: #1f2937;
+}
+
+.mud-paper.uniform-card {
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    background: #ffffff;
+}
+
+.mud-button-root {
+    border-radius: 10px;
+}
+
+.mud-button-root.mud-button-filled {
+    background: transparent;
+    border: 1px solid #379391;
+    color: #379391;
+}
+
+.mud-button-root.mud-button-filled:hover,
+.mud-button-root.mud-button-outlined:hover,
+.mud-button-root.mud-button-text:hover {
+    background: rgba(55, 147, 145, 0.08);
+}
+
+.payment-status-icon {
+    font-size: 5rem;
+}
+
+.dashboard-shell .mud-table-root {
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+}
+
+.dashboard-shell .mud-chip {
+    border-radius: 999px;
+}
+
+.text-secondary {
+    color: #6b7280;
+}
+
+/* ===== Layout and Navigation ===== */
+.main-layout {
+    min-height: 100vh;
+    background: #f3f4f6;
+}
+
+.app-bar {
+    background: #ffffff !important;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.app-bar-content {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.brand-section,
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.app-logo {
+    height: 30px;
+}
+
+.app-title,
+.user-name,
+.drawer-title,
+.separator-text {
+    color: #1f2937;
+}
+
+.company-name,
+.page-header-subtitle {
+    color: #6b7280;
+}
+
+.nav-drawer {
+    border-right: 1px solid #e5e7eb;
+    background: #ffffff !important;
+}
+
+.drawer-content {
+    padding: 0.75rem;
+}
+
+.main-content {
+    background: #f3f4f6;
+}
+
+.page-wrapper {
+    padding: 1.5rem;
+}
+
+.simple-nav-wrapper {
+    padding: 0.5rem;
+}
+
+.simple-nav-menu .mud-nav-link {
+    border-radius: 10px;
+    color: #374151 !important;
+}
+
+.simple-nav-menu .mud-nav-link:hover,
+.simple-nav-menu .mud-nav-link.active {
+    background: rgba(55, 147, 145, 0.1) !important;
+    color: #1f2937 !important;
+}
+
+.nav-separator {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0.75rem 0 0.25rem;
+}
+
+.separator-line {
+    flex: 1;
+    height: 1px;
+    background: #e5e7eb;
+}
+
+.login-layout {
+    min-height: 100vh;
+    background: #f3f4f6;
 }

@@ -10,7 +10,7 @@
     </TitleContent>
 
     <DialogContent>
-        <MudPaper Elevation="0" Class="pa-4 mb-4" Style="background-color: var(--mud-palette-background-grey);">
+        <MudPaper Elevation="0" Class="pa-4 mb-4">
             <MudGrid Spacing="3">
                 <MudItem xs="12" sm="6">
                     <MudText Typo="Typo.caption" Color="Color.Default">User</MudText>
@@ -53,8 +53,8 @@
         </MudText>
         <MudPaper Class="pa-3"
                   Elevation="1"
-                  Style="max-height: 400px; overflow: auto; background-color: #1e1e1e; border-radius: 4px;">
-            <pre style="font-family: 'Courier New', monospace; font-size: 0.85rem; white-space: pre-wrap; color: #d4d4d4; margin: 0;">@FormatJson(Log.Changes)</pre>
+                 >
+            <pre>@FormatJson(Log.Changes)</pre>
         </MudPaper>
     </DialogContent>
 
@@ -115,7 +115,7 @@
         {
             "POST" => Icons.Material.Filled.Add,
             "PUT" => Icons.Material.Filled.Edit,
-            "DELETE" => Icons.Material.Filled.Delete,
+            "DELETE" => Icons.Material.Filled.Archive,
             _ => Icons.Material.Filled.Circle
         };
     }

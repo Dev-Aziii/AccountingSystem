@@ -20,7 +20,7 @@
     </TitleContent>
 
     <DialogContent>
-        <MudPaper Elevation="0" Class="pa-4 mb-4" Style="background-color: var(--mud-palette-background-grey);">
+        <MudPaper Elevation="0" Class="pa-4 mb-4">
             <MudGrid Spacing="2">
                 <MudItem xs="12" sm="6">
                     <MudText Typo="Typo.body2" Color="Color.Default">
@@ -127,7 +127,7 @@
         </MudButton>
         <MudButton Color="Color.Success"
                    OnClick="Submit"
-                   Variant="Variant.Filled"
+                   Variant="Variant.Outlined"
                    Disabled="@(!success || isSubmitting)"
                    StartIcon="@(isSubmitting ? null : (model.PaymentMethod == PaymentMethod.Online ? Icons.Material.Filled.Link : Icons.Material.Filled.Payment))">
             @if (isSubmitting)
