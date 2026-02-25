@@ -557,3 +557,182 @@ code {
 .stats-grid {
     gap: 24px;
 }
+
+/* ========================================
+   MUD LAYOUT - APP BAR
+   ======================================== */
+
+:root {
+    --layout-app-background: var(--mud-palette-surface);
+    --layout-app-border-color: var(--mud-palette-lines-default);
+    --layout-app-text-color: var(--mud-palette-text-primary);
+    --layout-app-icon-background: var(--theme-primary-light);
+    --layout-app-icon-background-hover: var(--theme-secondary-light);
+}
+
+.main-layout {
+    min-height: 100vh;
+    background: var(--mud-palette-background);
+}
+
+.app-bar {
+    background: var(--layout-app-background) !important;
+    border-bottom: 1px solid var(--layout-app-border-color);
+    color: var(--layout-app-text-color) !important;
+    box-shadow: none !important;
+}
+
+.app-bar-content {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    padding: 0 var(--mud-default-borderradius);
+}
+
+.menu-toggle {
+    margin-right: var(--mud-default-borderradius);
+    background: var(--layout-app-icon-background) !important;
+}
+
+.menu-toggle:hover {
+    background: var(--layout-app-icon-background-hover) !important;
+}
+
+.brand-section {
+    display: flex;
+    align-items: center;
+    gap: var(--mud-default-borderradius);
+}
+
+.app-logo {
+    height: var(--layout-logo-height);
+    width: auto;
+}
+
+.brand-text .app-title,
+.brand-text .company-name,
+.user-name {
+    color: var(--layout-app-text-color) !important;
+}
+
+.auth-buttons {
+    display: flex;
+    align-items: center;
+    gap: var(--layout-button-gap);
+}
+
+/* ========================================
+   MUD LAYOUT - DRAWER
+   ======================================== */
+
+:root {
+    --layout-drawer-width: 280px;
+    --layout-drawer-background: var(--theme-primary-dark);
+    --layout-drawer-text-color: var(--mud-palette-white);
+    --layout-drawer-border-color: var(--theme-primary);
+}
+
+.nav-drawer {
+    width: var(--layout-drawer-width) !important;
+}
+
+.nav-drawer .mud-drawer-content {
+    background: var(--layout-drawer-background);
+    color: var(--layout-drawer-text-color);
+    border-right: 1px solid var(--layout-drawer-border-color);
+}
+
+.drawer-content {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.drawer-header {
+    padding: var(--layout-drawer-header-padding);
+    border-bottom: 1px solid var(--layout-drawer-border-color);
+}
+
+.drawer-title {
+    color: var(--layout-drawer-text-color) !important;
+}
+
+.nav-drawer .simple-nav-menu .mud-nav-link {
+    color: var(--layout-drawer-text-color) !important;
+}
+
+.nav-drawer .simple-nav-menu .mud-nav-link.active {
+    background: var(--theme-secondary) !important;
+    color: var(--mud-palette-white) !important;
+}
+
+.nav-drawer .separator-icon,
+.nav-drawer .separator-text {
+    color: var(--layout-drawer-text-color) !important;
+}
+
+/* ========================================
+   MUD LAYOUT - MAIN CONTENT
+   ======================================== */
+
+:root {
+    --layout-main-padding: 0;
+    --layout-logo-height: 40px;
+    --layout-button-gap: 12px;
+    --layout-drawer-header-padding: 1.5rem 1rem 1rem;
+}
+
+.main-content {
+    background: var(--mud-palette-background);
+}
+
+.page-wrapper {
+    padding: var(--layout-main-padding);
+    min-height: 100%;
+}
+
+/* ========================================
+   MUD LAYOUT - RESPONSIVE
+   ======================================== */
+
+@media (max-width: 768px) {
+    .user-text {
+        display: none;
+    }
+
+    .auth-buttons {
+        gap: var(--layout-button-gap-mobile);
+    }
+
+    .login-button,
+    .register-button {
+        padding: var(--layout-button-padding-mobile) !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .app-bar-content {
+        padding: 0 var(--layout-content-padding-mobile);
+    }
+
+    .brand-section {
+        gap: var(--layout-brand-gap-mobile);
+    }
+
+    .app-logo {
+        height: var(--layout-logo-height-mobile);
+    }
+
+    .brand-text .company-name {
+        display: none;
+    }
+}
+
+:root {
+    --layout-button-gap-mobile: 8px;
+    --layout-button-padding-mobile: 6px 12px;
+    --layout-content-padding-mobile: 0.5rem;
+    --layout-brand-gap-mobile: 8px;
+    --layout-logo-height-mobile: 32px;
+}
+
