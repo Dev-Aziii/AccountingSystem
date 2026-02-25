@@ -8,7 +8,7 @@
 
 <Microsoft.AspNetCore.Components.Authorization.AuthorizeView Roles="Admin,Accounting">
     <MudSelect T="int" Label="Account" @bind-Value="InternalAccountId"
-               Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Add" OnAdornmentClick="OpenAddDialog"
+               Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Outlined.Add" OnAdornmentClick="OpenAddDialog"
                Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter"
                Dense="true" Disabled="@(accounts == null)" Clearable="true">
         <MudSelectItem Value="0" Disabled="true">-- Select Account --</MudSelectItem>
