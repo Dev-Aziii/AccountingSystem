@@ -7,23 +7,23 @@
 
         <AuthorizeView Roles="SuperAdmin">
             <!-- DASHBOARD -->
-            <MudNavLink Href="superadmin/dashboard"       Match="NavLinkMatch.All"              Icon="@Icons.Material.Filled.Security">
+            <MudNavLink Href="superadmin/dashboard"       Match="NavLinkMatch.All"              Icon="@Icons.Material.Outlined.Security">
                 System Overview
             </MudNavLink>
-            <MudNavLink Href="superadmin/tenants"  Match="NavLinkMatch.All"        Icon="@Icons.Material.Filled.Business">
+            <MudNavLink Href="superadmin/tenants"  Match="NavLinkMatch.All"        Icon="@Icons.Material.Outlined.Business">
                 Tenant Manager
             </MudNavLink>
-            <MudNavLink Href="superadmin/users"               Match="NavLinkMatch.All"   Icon="@Icons.Material.Filled.Group">
+            <MudNavLink Href="superadmin/users"               Match="NavLinkMatch.All"   Icon="@Icons.Material.Outlined.Group">
                 Global Users
             </MudNavLink>
-            <MudNavLink Href="superadmin/audit-logs"         Match="NavLinkMatch.All"                Icon="@Icons.Material.Filled.History">
+            <MudNavLink Href="superadmin/audit-logs"         Match="NavLinkMatch.All"                Icon="@Icons.Material.Outlined.History">
                 Admin Audit Logs
             </MudNavLink>
         </AuthorizeView>
 
         <AuthorizeView Roles="Admin,Accounting,Management">
             <!-- DASHBOARD -->
-            <MudNavLink Href="dashboard"        Match="NavLinkMatch.All"                    Icon="@Icons.Material.Filled.Dashboard">
+            <MudNavLink Href="dashboard"        Match="NavLinkMatch.All"                    Icon="@Icons.Material.Outlined.Dashboard">
                 Dashboard
             </MudNavLink>
         </AuthorizeView>
@@ -31,18 +31,18 @@
         <!-- ADMIN -->
         <AuthorizeView Roles="Admin">
             <div class="nav-separator">
-                <MudIcon Icon="@Icons.Material.Filled.AdminPanelSettings" Class="separator-icon" />
+                <MudIcon Icon="@Icons.Material.Outlined.AdminPanelSettings" Class="separator-icon" />
                 <span class="separator-text">Administration</span>
                 <div class="separator-line"></div>
             </div>
 
-            <MudNavLink Href="admin/users" Icon="@Icons.Material.Filled.People">
+            <MudNavLink Href="admin/users" Icon="@Icons.Material.Outlined.People">
                 User Management
             </MudNavLink>
-            <MudNavLink Href="admin/audit-logs"              Icon="@Icons.Material.Filled.History">
+            <MudNavLink Href="admin/audit-logs"              Icon="@Icons.Material.Outlined.History">
                 Audit Logs
             </MudNavLink>
-            <MudNavLink Href="admin/company-settings"   Icon="@Icons.Material.Filled.Business">
+            <MudNavLink Href="admin/company-settings"   Icon="@Icons.Material.Outlined.Business">
                 Company Settings
             </MudNavLink>
         </AuthorizeView>
@@ -50,54 +50,54 @@
         <!-- GENERAL LEDGER -->
         <AuthorizeView Roles="Admin,Accounting">
             <div class="nav-separator">
-                <MudIcon Icon="@Icons.Material.Filled.AccountBalance" Class="separator-icon" />
+                <MudIcon Icon="@Icons.Material.Outlined.AccountBalance" Class="separator-icon" />
                 <span class="separator-text">General Ledger</span>
                 <div class="separator-line"></div>
             </div>
 
-            <MudNavLink Href="gl/journal"         Icon="@Icons.Material.Filled.EditNote">
+            <MudNavLink Href="gl/journal"         Icon="@Icons.Material.Outlined.EditNote">
                 Journal Entries
             </MudNavLink>
 
-            <MudNavLink Href="gl/accounts"                Icon="@Icons.Material.Filled.AccountTree">
+            <MudNavLink Href="gl/accounts"                Icon="@Icons.Material.Outlined.AccountTree">
                 Chart of Accounts
             </MudNavLink>
 
             <!-- ACCOUNTS PAYABLE -->
             <div class="nav-separator">
-                <MudIcon Icon="@Icons.Material.Filled.ShoppingCart" Class="separator-icon" />
+                <MudIcon Icon="@Icons.Material.Outlined.ShoppingCart" Class="separator-icon" />
                 <span class="separator-text">Accounts Payable</span>
                 <div class="separator-line"></div>
             </div>
 
-            <MudNavLink Href="ap/bills" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.NoteAdd">
+            <MudNavLink Href="ap/bills" Match="NavLinkMatch.All" Icon="@Icons.Material.Outlined.NoteAdd">
                 Create Vendor Bill
             </MudNavLink>
 
-            <MudNavLink Href="ap/bills/list" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.ListAlt">
+            <MudNavLink Href="ap/bills/list" Match="NavLinkMatch.All" Icon="@Icons.Material.Outlined.ListAlt">
                 Bills List
             </MudNavLink>
 
-            <MudNavLink Href="ap/vendors"                  Icon="@Icons.Material.Filled.Store">
+            <MudNavLink Href="ap/vendors"                  Icon="@Icons.Material.Outlined.Store">
                 Vendors
             </MudNavLink>
 
             <!-- ACCOUNTS RECEIVABLE -->
             <div class="nav-separator">
-                <MudIcon Icon="@Icons.Material.Filled.Sell" Class="separator-icon" />
+                <MudIcon Icon="@Icons.Material.Outlined.Sell" Class="separator-icon" />
                 <span class="separator-text">Accounts Receivable</span>
                 <div class="separator-line"></div>
             </div>
 
-            <MudNavLink Href="ar/invoices" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.NoteAdd">
+            <MudNavLink Href="ar/invoices" Match="NavLinkMatch.All" Icon="@Icons.Material.Outlined.NoteAdd">
                 Create Invoice
             </MudNavLink>
 
-            <MudNavLink Href="ar/invoices/list" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.ListAlt">
+            <MudNavLink Href="ar/invoices/list" Match="NavLinkMatch.All" Icon="@Icons.Material.Outlined.ListAlt">
                 Invoice List
             </MudNavLink>
 
-            <MudNavLink Href="ar/customers"                   Icon="@Icons.Material.Filled.Groups">
+            <MudNavLink Href="ar/customers"                   Icon="@Icons.Material.Outlined.Groups">
                 Customers
             </MudNavLink>
         </AuthorizeView>
@@ -105,12 +105,12 @@
         <!-- REPORTS -->
         <AuthorizeView Roles="Admin,Accounting,Management">
             <div class="nav-separator">
-                <MudIcon Icon="@Icons.Material.Filled.Assessment" Class="separator-icon" />
+                <MudIcon Icon="@Icons.Material.Outlined.Assessment" Class="separator-icon" />
                 <span class="separator-text">Reporting</span>
                 <div class="separator-line"></div>
             </div>
 
-            <MudNavLink Href="reports/financials"       Icon="@Icons.Material.Filled.Analytics">
+            <MudNavLink Href="reports/financials"       Icon="@Icons.Material.Outlined.Analytics">
                 Financial Statements
             </MudNavLink>
         </AuthorizeView>
@@ -118,65 +118,3 @@
     </MudNavMenu>
 </div>
 
-<style>
-    .simple-nav-wrapper {
-        padding: 0.75rem;
-    }
-
-    .simple-nav-menu {
-        padding: 0 !important;
-    }
-
-    /* Navigation separators - subtle */
-    .nav-separator {
-        display: flex;
-        align-items: center;
-        margin: 8px 0 6px 0;
-        gap: 6px;
-        opacity: 0.7;
-    }
-
-    .separator-icon {
-        color: var(--theme-primary);
-        font-size: 0.9rem !important;
-        flex-shrink: 0;
-    }
-
-    .separator-text {
-        color: var(--theme-primary);
-        font-size: 0.7rem;
-        font-weight: 500;
-        text-transform: uppercase;
-        letter-spacing: 0.3px;
-        flex-shrink: 0;
-    }
-
-    .separator-line {
-        flex: 1;
-        height: 1px;
-        background: linear-gradient(90deg, var(--theme-primary) 0%, rgba(0, 0, 0, 0.05) 100%);
-        margin-left: 2px;
-    }
-
-    /* Basic color improvements */
-    .simple-nav-menu .mud-nav-link {
-        color: var(--theme-primary) !important;
-        margin: 1px 0 !important;
-        border-radius: 3px !important;
-        margin-left: 8px !important;
-    }
-
-    .simple-nav-menu .mud-nav-link:hover {
-        background-color: var(--theme-primary-light) !important;
-    }
-
-    .simple-nav-menu .mud-nav-link.active {
-        background-color: var(--theme-secondary) !important;
-        color: white !important;
-    }
-
-    /* Icon colors */
-    .simple-nav-menu .mud-nav-link-icon {
-        color: inherit !important;
-    }
-</style>

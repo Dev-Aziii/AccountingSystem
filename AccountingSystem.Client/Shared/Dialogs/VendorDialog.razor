@@ -8,7 +8,7 @@
 <MudDialog>
     <TitleContent>
         <MudText Typo="Typo.h6">
-            <MudIcon Icon="@Icons.Material.Filled.Business" Class="mr-2" />
+            <MudIcon Icon="@Icons.Material.Outlined.Business" Class="mr-2" />
             @(Vendor?.Id > 0 ? "Edit Vendor" : "Create New Vendor")
         </MudText>
     </TitleContent>
@@ -50,7 +50,7 @@
                    OnClick="Submit"
                    Variant="Variant.Filled"
                    Disabled="isSubmitting"
-                   StartIcon="@(isSubmitting ? null : (Vendor?.Id > 0 ? Icons.Material.Filled.Save : Icons.Material.Filled.Add))">
+                   StartIcon="@(isSubmitting ? null : (Vendor?.Id > 0 ? Icons.Material.Outlined.Save : Icons.Material.Outlined.Add))">
             @if (isSubmitting)
             {
                 <MudProgressCircular Class="mr-2" Size="Size.Small" Indeterminate="true" />
