@@ -137,13 +137,13 @@
     }
 
     .separator-icon {
-        color: var(--theme-primary);
+        color: var(--mud-palette-drawer-text);
         font-size: 0.9rem !important;
         flex-shrink: 0;
     }
 
     .separator-text {
-        color: var(--theme-primary);
+        color: var(--mud-palette-drawer-text);
         font-size: 0.7rem;
         font-weight: 500;
         text-transform: uppercase;
@@ -154,25 +154,25 @@
     .separator-line {
         flex: 1;
         height: 1px;
-        background: linear-gradient(90deg, var(--theme-primary) 0%, rgba(0, 0, 0, 0.05) 100%);
+        background: linear-gradient(90deg, var(--mud-palette-primary) 0%, rgba(var(--mud-palette-divider-rgb), 0.35) 100%);
         margin-left: 2px;
     }
 
     /* Basic color improvements */
     .simple-nav-menu .mud-nav-link {
-        color: var(--theme-primary) !important;
+        color: var(--mud-palette-drawer-text) !important;
         margin: 1px 0 !important;
         border-radius: 3px !important;
         margin-left: 8px !important;
     }
 
     .simple-nav-menu .mud-nav-link:hover {
-        background-color: var(--theme-primary-light) !important;
+        background-color: rgba(var(--mud-palette-primary-rgb), 0.1) !important;
     }
 
     .simple-nav-menu .mud-nav-link.active {
-        background-color: var(--theme-secondary) !important;
-        color: white !important;
+        background-color: var(--mud-palette-secondary) !important;
+        color: var(--mud-palette-secondary-contrast-text) !important;
     }
 
     /* Icon colors */
