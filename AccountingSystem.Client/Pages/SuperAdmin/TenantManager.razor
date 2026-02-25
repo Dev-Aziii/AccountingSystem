@@ -12,19 +12,19 @@
 
 <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4 mb-10">
     <!-- HEADER -->
-    <div class="tenant-page-header">
+    <div class="page-header-row tenant-page-header">
         <div>
-            <MudText Typo="Typo.h5" Style="font-weight: 800; color: rgb(22, 84, 127);">
+            <MudText Typo="Typo.h5" Class="page-header-title">
                 Tenant Management
             </MudText>
-            <MudText Typo="Typo.body2" Style="color: rgb(56, 146, 147);">
+            <MudText Typo="Typo.body2" Class="page-header-subtitle">
                 Manage all registered companies in the system
             </MudText>
         </div>
         <MudButton Variant="Variant.Filled"
-                   Style="background: linear-gradient(135deg, rgb(22, 84, 127) 0%, rgb(56, 146, 147) 100%); color: white; border-radius: 12px;"
+                   Class="refresh-btn"
                    StartIcon="@Icons.Material.Outlined.Refresh"                   Size="Size.Medium" OnClick="LoadData">
-            Refresh
+            <span class="action-button-label">Refresh</span>
         </MudButton>
     </div>
 

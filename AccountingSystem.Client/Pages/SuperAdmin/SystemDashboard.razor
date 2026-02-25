@@ -12,7 +12,7 @@
 
 <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4 mb-10">
     <!-- HEADER -->
-    <div class="d-flex justify-space-between align-center mb-6">
+    <div class="page-header-row d-flex justify-space-between align-center mb-6">
         <div>
             @if (isLoading)
             {
@@ -21,10 +21,10 @@
             }
             else
             {
-                <MudText Typo="Typo.h5" Style="font-weight: 800; color: rgb(22, 84, 127);">
+                <MudText Typo="Typo.h5" Class="page-header-title">
                     System Overview
                 </MudText>
-                <MudText Typo="Typo.body2" Style="color: rgb(56, 146, 147);">
+                <MudText Typo="Typo.body2" Class="page-header-subtitle">
                     @DateTime.Now.ToString("dddd, MMMM dd, yyyy") &mdash; Super Administrator Dashboard
                 </MudText>
             }
@@ -32,10 +32,10 @@
         @if (!isLoading)
         {
             <MudButton Variant="Variant.Filled"
-                       Style="background: linear-gradient(135deg, rgb(22, 84, 127) 0%, rgb(56, 146, 147) 100%); color: white; border-radius: 12px;"
+                       Class="refresh-btn"
                        StartIcon="@Icons.Material.Outlined.Refresh"
                        Size="Size.Medium" OnClick="LoadData">
-                Refresh
+                <span class="action-button-label">Refresh</span>
             </MudButton>
         }
     </div>
@@ -230,7 +230,7 @@
                         <MudButton Variant="Variant.Text" Size="Size.Small"
                                    StartIcon="@Icons.Material.Outlined.OpenInNew"
                                    OnClick='() => NavManager.NavigateTo("/superadmin/audit-logs")'
-                                   Style="color: rgb(56, 146, 147);">
+                                   Class="text-muted-action">
                             View All
                         </MudButton>
                     </div>

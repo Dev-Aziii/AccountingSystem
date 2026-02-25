@@ -18,7 +18,7 @@
 <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4 mb-10">
 
     <!-- COMPACT HEADER -->
-    <div class="d-flex justify-space-between align-center mb-6">
+    <div class="page-header-row d-flex justify-space-between align-center mb-6">
         <div>
             @if (isLoading)
             {
@@ -27,10 +27,10 @@
             }
             else
             {
-                <MudText Typo="Typo.h5" Style="font-weight: 800; color: rgb(22, 84, 127);">
+                <MudText Typo="Typo.h5" Class="page-header-title">
                     Financial Dashboard
                 </MudText>
-                <MudText Typo="Typo.body2" Style="color: rgb(56, 146, 147);">
+                <MudText Typo="Typo.body2" Class="page-header-subtitle">
                     @DateTime.Now.ToString("dddd, MMMM dd, yyyy")
                 </MudText>
             }
@@ -39,7 +39,7 @@
         {
             <MudButton Variant="Variant.Filled" Class="refresh-btn" StartIcon="@Icons.Material.Outlined.Refresh"
                 Size="Size.Medium" OnClick="LoadData">
-                Refresh
+                <span class="action-button-label">Refresh</span>
             </MudButton>
         }
     </div>
@@ -208,7 +208,7 @@
                                 Year-to-Date Overview</div>
                         </div>
                         <MudIcon Icon="@Icons.Material.Outlined.AccountBalance" Size="Size.Small"
-                            Style="color: rgb(56, 146, 147);" />
+                            Style="color: var(--mud-palette-text-secondary);" />
                     </div>
 
                     <!-- Revenue & Expenses Bars -->
@@ -299,7 +299,7 @@
                             style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: rgb(22, 84, 127); opacity: 0.7;">Active
                             Transactions</span>
                         <MudIcon Icon="@Icons.Material.Outlined.SwapHoriz" Size="Size.Small"
-                            Style="color: rgb(56, 146, 147);" />
+                            Style="color: var(--mud-palette-text-secondary);" />
                     </div>
                     <div class="featured-value-large">@ActiveTransactions</div>
                     <div style="font-size: 0.8rem; color: #6b7280; margin-top: 0.25rem;">Pending payments & collections

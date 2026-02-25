@@ -2005,3 +2005,534 @@ code {
 .mud-icon-button:hover .mud-icon-root {
     color: var(--ui-icon-hover);
 }
+
+/* ========================================
+   UI POLISH PASS - SHADCN INSPIRED REFINEMENT
+   ======================================== */
+
+:root {
+    --font-size-xs: 0.75rem;
+    --font-size-sm: 0.8125rem;
+    --font-size-base: 0.9375rem;
+    --font-size-md: 1rem;
+    --font-size-lg: 1.125rem;
+    --font-size-xl: 1.375rem;
+    --font-size-2xl: 1.75rem;
+
+    --space-1: 0.25rem;
+    --space-2: 0.5rem;
+    --space-3: 0.75rem;
+    --space-4: 1rem;
+    --space-5: 1.25rem;
+    --space-6: 1.5rem;
+    --space-8: 2rem;
+
+    --radius-sm: 0.5rem;
+    --radius-md: 0.75rem;
+    --radius-lg: 1rem;
+    --radius-xl: 1.25rem;
+
+    --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.04);
+    --shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.06);
+    --shadow-md: 0 6px 18px rgba(15, 23, 42, 0.08);
+
+    --transition-fast: 140ms ease;
+    --transition-base: 180ms ease;
+    --ring-color: rgba(22, 84, 127, 0.24);
+    --surface-border: rgba(22, 84, 127, 0.12);
+    --surface-muted: rgba(22, 84, 127, 0.04);
+    --text-muted: rgba(22, 84, 127, 0.68);
+}
+
+html,
+body,
+.main-layout,
+.main-content {
+    background: #f8f9fa;
+    color: rgba(17, 24, 39, 0.95);
+    font-size: var(--font-size-base);
+}
+
+.page-wrapper,
+.mud-main-content {
+    padding: var(--space-4);
+}
+
+.page-header-title,
+.header-title,
+.main-title,
+.mud-typography-h5,
+.mud-typography-h6 {
+    letter-spacing: -0.015em;
+}
+
+.page-header-title,
+.header-title {
+    font-weight: 800;
+}
+
+.page-header-subtitle,
+.header-subtitle,
+.section-title,
+.kpi-label,
+.worldbank-label,
+.user-stat-label,
+.tenant-stat-label,
+.sa-metric-label,
+.mud-table-head .mud-table-cell,
+.mud-input-label {
+    font-size: var(--font-size-xs) !important;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--text-muted) !important;
+}
+
+.section-title {
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    margin-bottom: var(--space-4);
+}
+
+.mud-paper,
+.content-section,
+.calendar-section,
+.ledger-section,
+.featured-card,
+.sa-featured-card,
+.user-table-card,
+.tenant-table-card,
+.audit-table-card,
+.worldbank-chart-section,
+.register-card,
+.login-card {
+    border: 1px solid var(--surface-border) !important;
+    border-radius: var(--radius-lg) !important;
+    background: #fff !important;
+    box-shadow: var(--shadow-xs) !important;
+    transition: box-shadow var(--transition-base), transform var(--transition-base), border-color var(--transition-base);
+}
+
+.mud-paper:hover,
+.featured-card:hover,
+.sa-featured-card:hover,
+.user-table-card:hover,
+.tenant-table-card:hover,
+.audit-table-card:hover,
+.worldbank-card:hover,
+.kpi-card:hover,
+.sa-metric-card:hover,
+.metric-card-compact:hover,
+.user-stat-card:hover,
+.tenant-stat-card:hover {
+    box-shadow: var(--shadow-md) !important;
+    transform: translateY(-2px);
+    border-color: rgba(22, 84, 127, 0.2) !important;
+}
+
+.kpi-card,
+.worldbank-card,
+.metric-card-compact,
+.sa-metric-card,
+.user-stat-card,
+.tenant-stat-card,
+.legend-item {
+    border-radius: var(--radius-md) !important;
+    border: 1px solid var(--surface-border) !important;
+    background: #fff !important;
+    box-shadow: var(--shadow-xs) !important;
+}
+
+.kpi-card::before,
+.worldbank-card::before,
+.section-title::after,
+.create-btn::before,
+.save-btn::before {
+    display: none !important;
+}
+
+.kpi-value,
+.worldbank-value,
+.metric-value-compact,
+.sa-metric-value,
+.user-stat-value,
+.tenant-stat-value,
+.featured-value-huge,
+.featured-value-large,
+.inflation-kpi-value {
+    background: none !important;
+    -webkit-text-fill-color: currentColor;
+    color: var(--theme-primary) !important;
+}
+
+.custom-button,
+.create-btn,
+.save-btn,
+.refresh-btn,
+.login-button,
+.register-button,
+.mud-button-root {
+    min-height: 2.5rem;
+    border-radius: var(--radius-md) !important;
+    font-weight: 600 !important;
+    text-transform: none !important;
+    padding: 0.5rem 0.95rem !important;
+    box-shadow: none !important;
+    transition: background-color var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast);
+}
+
+.custom-button,
+.create-btn,
+.save-btn,
+.refresh-btn,
+.login-button,
+.register-button,
+.mud-button-filled {
+    background: var(--theme-primary) !important;
+    color: #fff !important;
+    border: 1px solid var(--theme-primary) !important;
+}
+
+.mud-button-filled:hover,
+.custom-button:hover,
+.create-btn:hover,
+.save-btn:hover,
+.refresh-btn:hover,
+.login-button:hover,
+.register-button:hover {
+    background: var(--theme-primary-dark) !important;
+    border-color: var(--theme-primary-dark) !important;
+    transform: none !important;
+}
+
+.mud-button-outlined {
+    border: 1px solid var(--surface-border) !important;
+    background: transparent !important;
+}
+
+.mud-button-outlined:hover {
+    border-color: rgba(22, 84, 127, 0.28) !important;
+    background: transparent !important;
+}
+
+.mud-button-text:hover {
+    background: var(--surface-muted) !important;
+}
+
+.mud-button-root:focus-visible,
+.mud-input-control .mud-input-root:focus-within,
+.mud-nav-link:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--ring-color) !important;
+}
+
+.custom-table,
+.mud-table {
+    border-radius: var(--radius-md);
+    overflow: hidden;
+}
+
+.custom-table .mud-table-head,
+.mud-table-head {
+    background: transparent !important;
+}
+
+.custom-table .mud-table-head .mud-table-cell,
+.mud-table-head .mud-table-cell {
+    border-bottom: 1px solid var(--surface-border) !important;
+    font-weight: 600 !important;
+}
+
+.custom-table .mud-table-row,
+.mud-table-row {
+    min-height: 3.1rem;
+    border-bottom: 1px solid rgba(22, 84, 127, 0.1);
+    transition: background-color var(--transition-fast);
+}
+
+.custom-table .mud-table-row:hover,
+.mud-table-row:hover {
+    background: var(--surface-muted) !important;
+}
+
+.mud-table-container {
+    overflow-x: auto;
+}
+
+.empty-state,
+.mud-table-empty-text {
+    color: var(--text-muted);
+    text-align: center;
+    padding: var(--space-8) var(--space-4);
+}
+
+.mud-input-control {
+    margin-bottom: var(--space-4);
+}
+
+.mud-input-label {
+    margin-bottom: var(--space-2);
+}
+
+.mud-input-outlined,
+.mud-select,
+.mud-input-root,
+.converter-input {
+    border-radius: var(--radius-md) !important;
+    border: 1px solid var(--surface-border) !important;
+    background: #fff !important;
+    box-shadow: none !important;
+}
+
+.converter-input:focus {
+    border-color: rgba(22, 84, 127, 0.3) !important;
+    box-shadow: 0 0 0 3px var(--ring-color) !important;
+}
+
+.nav-drawer {
+    box-shadow: none !important;
+    border-right: 1px solid var(--surface-border);
+}
+
+.drawer-header {
+    border-bottom: 1px solid var(--surface-border);
+    background: #fff;
+}
+
+.simple-nav-menu .mud-nav-link {
+    margin: 0 0 var(--space-1) 0 !important;
+    border-radius: var(--radius-sm) !important;
+    padding: 0.55rem 0.65rem !important;
+    color: var(--text-muted) !important;
+    transition: background-color var(--transition-fast), color var(--transition-fast);
+}
+
+.simple-nav-menu .mud-nav-link:hover {
+    background: var(--surface-muted) !important;
+    color: var(--theme-primary) !important;
+}
+
+.simple-nav-menu .mud-nav-link.active {
+    background: rgba(22, 84, 127, 0.12) !important;
+    color: rgba(17, 24, 39, 0.92) !important;
+}
+
+.separator-text {
+    font-size: 0.68rem;
+    letter-spacing: 0.11em;
+}
+
+.page-header-row {
+    gap: var(--space-3);
+    flex-wrap: wrap;
+}
+
+.action-button-label {
+    display: inline;
+}
+
+@media (max-width: 960px) {
+    .page-wrapper,
+    .mud-main-content {
+        padding: var(--space-3);
+    }
+
+    .dashboard-grid,
+    .sa-dashboard-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .span-3,
+    .span-4,
+    .sa-span-3,
+    .sa-span-4 {
+        grid-column: span 1;
+    }
+
+    .span-6,
+    .span-8,
+    .span-12,
+    .sa-span-6,
+    .sa-span-8,
+    .sa-span-12 {
+        grid-column: span 2;
+    }
+
+    .brand-text .company-name {
+        display: none;
+    }
+}
+
+@media (max-width: 600px) {
+    .dashboard-grid,
+    .sa-dashboard-grid,
+    .top-metrics-grid,
+    .user-stats-row,
+    .tenant-stats-row {
+        grid-template-columns: 1fr !important;
+    }
+
+    .span-3,
+    .span-4,
+    .span-6,
+    .span-8,
+    .span-12,
+    .sa-span-3,
+    .sa-span-4,
+    .sa-span-6,
+    .sa-span-8,
+    .sa-span-12 {
+        grid-column: span 1 !important;
+    }
+
+    .menu-toggle,
+    .user-button,
+    .login-button,
+    .register-button {
+        border-radius: var(--radius-sm) !important;
+    }
+
+    .action-button-label,
+    .brand-text .company-name,
+    .user-text {
+        display: none;
+    }
+
+    .mud-dialog {
+        width: calc(100vw - 1rem) !important;
+        margin: 0.5rem !important;
+    }
+
+    .mud-dialog-content,
+    .mud-dialog-actions {
+        padding: var(--space-3) !important;
+    }
+}
+
+/* ========================================
+   FOLLOW-UP POLISH: PALETTE-ALIGNED HEADER + UNIFORM PAGE HEADERS
+   ======================================== */
+
+:root {
+    --surface-bg: var(--mud-palette-background, #f5f5f5);
+    --surface-card: var(--mud-palette-surface, #ffffff);
+    --text-primary: var(--mud-palette-text-primary, rgba(0,0,0,0.87));
+    --text-secondary: var(--mud-palette-text-secondary, rgba(0,0,0,0.6));
+    --line-color: var(--mud-palette-lines-default, rgba(0,0,0,0.12));
+    --primary-color: var(--mud-palette-primary, #594ae2);
+    --primary-hover: var(--mud-palette-primary-darken, #3f36a8);
+}
+
+html,
+body,
+.main-layout,
+.main-content {
+    background: var(--surface-bg);
+    color: var(--text-primary);
+}
+
+.app-bar {
+    background: var(--surface-card) !important;
+    color: var(--text-primary) !important;
+    border-bottom: 1px solid var(--line-color) !important;
+    box-shadow: none !important;
+}
+
+.app-bar .mud-icon-root,
+.app-bar .mud-typography,
+.app-bar .mud-button-label,
+.app-bar .mud-icon-button-label {
+    color: var(--text-primary) !important;
+}
+
+.menu-toggle,
+.user-button {
+    background: transparent !important;
+    border: 1px solid var(--line-color) !important;
+    border-radius: var(--radius-sm) !important;
+}
+
+.menu-toggle:hover,
+.user-button:hover {
+    background: rgba(0, 0, 0, 0.03) !important;
+    border-color: rgba(0, 0, 0, 0.2) !important;
+}
+
+.brand-text .app-title {
+    color: var(--text-primary) !important;
+    font-weight: 700;
+    text-shadow: none;
+}
+
+.brand-text .company-name,
+.user-role {
+    color: var(--text-secondary) !important;
+}
+
+.main-content {
+    margin-top: var(--mud-appbar-height, 64px);
+    min-height: calc(100vh - var(--mud-appbar-height, 64px));
+}
+
+.page-header-row,
+.user-page-header,
+.tenant-page-header,
+.audit-page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    margin-bottom: var(--space-6);
+    flex-wrap: wrap;
+}
+
+.page-header-title {
+    font-size: var(--font-size-2xl) !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.02em;
+    color: var(--text-primary) !important;
+    margin-bottom: var(--space-1) !important;
+}
+
+.page-header-subtitle {
+    font-size: var(--font-size-md) !important;
+    font-weight: 400 !important;
+    letter-spacing: 0;
+    text-transform: none;
+    color: var(--text-secondary) !important;
+}
+
+.refresh-btn,
+.mud-button-filled.refresh-btn {
+    background: var(--primary-color) !important;
+    border-color: var(--primary-color) !important;
+}
+
+.refresh-btn:hover,
+.mud-button-filled.refresh-btn:hover {
+    background: var(--primary-hover) !important;
+    border-color: var(--primary-hover) !important;
+}
+
+@media (max-width: 600px) {
+    .page-header-title {
+        font-size: var(--font-size-xl) !important;
+    }
+
+    .page-header-subtitle {
+        font-size: var(--font-size-sm) !important;
+    }
+
+    .main-content {
+        margin-top: 56px;
+        min-height: calc(100vh - 56px);
+    }
+}
+
+.text-muted-action {
+    color: var(--text-secondary) !important;
+}
+
+.text-muted-action:hover {
+    color: var(--primary-color) !important;
+    background: transparent !important;
+}
