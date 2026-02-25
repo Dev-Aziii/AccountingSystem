@@ -38,7 +38,7 @@
             {
                 <MudButton Variant="Variant.Filled"
                            Class="refresh-btn"
-                           StartIcon="@Icons.Material.Filled.Refresh"
+                           StartIcon="@Icons.Material.Outlined.Refresh"
                            Size="Size.Large"
                            OnClick="() => LoadUsers(false)">
                     Refresh Users
@@ -103,7 +103,7 @@
                                 <MudTd DataLabel="Actions" Style="text-align:right">
                                     @if (!string.IsNullOrEmpty(context.Email) && !context.Email.StartsWith("admin"))
                                     {
-                                        <MudIconButton Icon="@Icons.Material.Filled.Archive" Size="Size.Medium" Color="Color.Default" Class="archive-hover" OnClick="() => ConfirmDelete(context.Id)" />
+                                        <MudIconButton Icon="@Icons.Material.Outlined.Archive" Size="Size.Medium" Color="Color.Default" Class="archive-hover" OnClick="() => ConfirmDelete(context.Id)" />
                                     }
                                 </MudTd>
                             </RowTemplate>
@@ -123,7 +123,7 @@
                                 <MudTd DataLabel="Role">@context.RoleName</MudTd>
                                 <MudTd DataLabel="Actions" Style="text-align:right">
                                     <MudTooltip Text="Restore User">
-                                        <MudIconButton Icon="@Icons.Material.Filled.RestoreFromTrash" Size="Size.Medium" Color="Color.Default" Class="restore-hover" OnClick="() => ConfirmRestore(context.Id)" />
+                                        <MudIconButton Icon="@Icons.Material.Outlined.RestoreFromTrash" Size="Size.Medium" Color="Color.Default" Class="restore-hover" OnClick="() => ConfirmRestore(context.Id)" />
                                     </MudTooltip>
                                 </MudTd>
                             </RowTemplate>
@@ -194,7 +194,7 @@
                             }
                         </MudCardContent>
                         <MudCardActions>
-                            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Class="create-btn" StartIcon="@Icons.Material.Filled.Add" Size="Size.Large" FullWidth="true" Disabled="@isSubmitting">
+                            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Class="create-btn" StartIcon="@Icons.Material.Outlined.Add" Size="Size.Large" FullWidth="true" Disabled="@isSubmitting">
                                 @(isSubmitting ? "Creating..." : "Create Account")
                             </MudButton>
                         </MudCardActions>

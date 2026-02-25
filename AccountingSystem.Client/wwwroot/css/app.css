@@ -115,6 +115,19 @@ code {
     --theme-secondary-dark: var(--mud-palette-secondary-darken);
 }
 
+.mud-icon-root {
+    color: var(--mud-palette-text-secondary);
+    transition: color 0.2s ease-in-out;
+}
+
+.mud-button-root:hover .mud-icon-root,
+.mud-icon-button:hover .mud-icon-root,
+.mud-nav-link:hover .mud-icon-root,
+.mud-list-item:hover .mud-icon-root,
+.mud-icon-root:hover {
+    color: var(--theme-primary);
+}
+
 .custom-bg-gradient {
     background: linear-gradient(135deg, var(--theme-primary) 0%, var(--theme-secondary) 100%);
 }

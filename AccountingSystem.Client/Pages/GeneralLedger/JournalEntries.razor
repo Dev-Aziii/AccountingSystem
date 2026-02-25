@@ -184,7 +184,7 @@
                     </MudTd>
 
                     <MudTd>
-                        <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                        <MudIconButton Icon="@Icons.Material.Outlined.Delete"
                                        Color="Color.Error"
                                        OnClick="@(() => RemoveLine(lineContext))"
                                        Disabled="@(entry.Lines.Count <= 2)" />
@@ -194,7 +194,7 @@
                 <!-- Totals -->
                 <FooterContent>
                     <MudTd>
-                        <MudButton StartIcon="@Icons.Material.Filled.Add"
+                        <MudButton StartIcon="@Icons.Material.Outlined.Add"
                                    OnClick="AddLine"
                                    Variant="Variant.Text"
                                    Color="Color.Primary">
@@ -239,7 +239,7 @@
                            Class="create-btn"
                            Disabled="@(!IsBalanced || isSubmitting)"
                            Size="Size.Large"
-                           StartIcon="@Icons.Material.Filled.Check">
+                           StartIcon="@Icons.Material.Outlined.Check">
                     @(isSubmitting ? "Posting..." : "Post Entry")
                 </MudButton>
             </div>

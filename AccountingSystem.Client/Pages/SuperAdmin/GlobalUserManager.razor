@@ -21,7 +21,7 @@
         </div>
         <MudButton Variant="Variant.Filled"
                    Style="background: linear-gradient(135deg, rgb(22, 84, 127) 0%, rgb(56, 146, 147) 100%); color: white; border-radius: 12px;"
-                   StartIcon="@Icons.Material.Filled.Refresh"                   Size="Size.Medium" OnClick="LoadData">
+                   StartIcon="@Icons.Material.Outlined.Refresh"                   Size="Size.Medium" OnClick="LoadData">
             Refresh
         </MudButton>
     </div>
@@ -29,35 +29,35 @@
     <!-- QUICK STATS -->
     <div class="user-stats-row">
         <div class="user-stat-card">
-            <MudIcon Icon="@Icons.Material.Filled.People" Style="color: #1565C0;" />
+            <MudIcon Icon="@Icons.Material.Outlined.People" />
             <div>
                 <div class="user-stat-value">@users.Count</div>
                 <div class="user-stat-label">Total Users</div>
             </div>
         </div>
         <div class="user-stat-card">
-            <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Style="color: #4CAF50;" />
+            <MudIcon Icon="@Icons.Material.Outlined.CheckCircle" />
             <div>
                 <div class="user-stat-value">@users.Count(u => u.Status == "Active")</div>
                 <div class="user-stat-label">Active</div>
             </div>
         </div>
         <div class="user-stat-card">
-            <MudIcon Icon="@Icons.Material.Filled.Warning" Style="color: #FF9800;" />
+            <MudIcon Icon="@Icons.Material.Outlined.Warning" />
             <div>
                 <div class="user-stat-value">@users.Count(u => u.Status == "Restricted")</div>
                 <div class="user-stat-label">Restricted</div>
             </div>
         </div>
         <div class="user-stat-card">
-            <MudIcon Icon="@Icons.Material.Filled.Block" Style="color: #F44336;" />
+            <MudIcon Icon="@Icons.Material.Outlined.Block" />
             <div>
                 <div class="user-stat-value">@users.Count(u => u.Status == "Blocked")</div>
                 <div class="user-stat-label">Blocked</div>
             </div>
         </div>
         <div class="user-stat-card">
-            <MudIcon Icon="@Icons.Material.Filled.Business" Style="color: #6A1B9A;" />
+            <MudIcon Icon="@Icons.Material.Outlined.Business" />
             <div>
                 <div class="user-stat-value">@users.Select(u => u.CompanyName).Distinct().Count()</div>
                 <div class="user-stat-label">Companies</div>
@@ -73,7 +73,7 @@
                 <MudText Typo="Typo.h6" Style="color: rgb(22, 84, 127); font-weight: 700;">All System Users</MudText>
                 <MudSpacer />
                 <MudTextField @bind-Value="searchString" Placeholder="Search users or companies..."
-                              Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"                              IconSize="Size.Medium"
+                              Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Outlined.Search"                              IconSize="Size.Medium"
                               Class="mt-0" Style="max-width: 300px;" />
                 <MudSelect T="string" @bind-Value="statusFilter" Label="Status" Class="ml-4" Style="max-width: 150px;">
                     <MudSelectItem T="string" Value='@("All")'>All</MudSelectItem>
@@ -100,8 +100,8 @@
             <RowTemplate>
                 <MudTd DataLabel="Company">
                     <div class="d-flex align-center gap-2">
-                        <MudIcon Icon="@Icons.Material.Filled.Business" Size="Size.Small"
-                                 Style="color: rgb(22, 84, 127); opacity: 0.5;" />
+                        <MudIcon Icon="@Icons.Material.Outlined.Business" Size="Size.Small"
+                                 Style="opacity: 0.5;" />
                         <b>@context.CompanyName</b>
                     </div>
                 </MudTd>
@@ -134,24 +134,24 @@
                     }
                 </MudTd>
                 <MudTd DataLabel="Actions" Style="text-align: center;">
-                    <MudMenu Icon="@Icons.Material.Filled.MoreVert" Dense="true" AnchorOrigin="Origin.BottomRight">
+                    <MudMenu Icon="@Icons.Material.Outlined.MoreVert" Dense="true" AnchorOrigin="Origin.BottomRight">
                         @if (context.Status != "Active")
                         {
-                            <MudMenuItem Icon="@Icons.Material.Filled.CheckCircle" IconColor="Color.Success"
+                            <MudMenuItem Icon="@Icons.Material.Outlined.CheckCircle" IconColor="Color.Success"
                                          OnClick="@(() => ChangeUserStatus(context, "Active"))">
                                 Activate
                             </MudMenuItem>
                         }
                         @if (context.Status != "Restricted")
                         {
-                            <MudMenuItem Icon="@Icons.Material.Filled.Warning" IconColor="Color.Warning"
+                            <MudMenuItem Icon="@Icons.Material.Outlined.Warning" IconColor="Color.Warning"
                                          OnClick="@(() => ChangeUserStatus(context, "Restricted"))">
                                 Restrict
                             </MudMenuItem>
                         }
                         @if (context.Status != "Blocked")
                         {
-                            <MudMenuItem Icon="@Icons.Material.Filled.Block" IconColor="Color.Error"
+                            <MudMenuItem Icon="@Icons.Material.Outlined.Block" IconColor="Color.Error"
                                          OnClick="@(() => ConfirmBlockUser(context))">
                                 Block
                             </MudMenuItem>
