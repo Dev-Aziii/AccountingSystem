@@ -39,7 +39,7 @@
             {
                 <MudButton Variant="Variant.Filled"
                            Class="refresh-btn"
-                           StartIcon="@Icons.Material.Filled.Refresh"
+                           StartIcon="@Icons.Material.Outlined.Refresh"
                            Size="Size.Large"
                            OnClick="LoadLogs">
                     Refresh Logs
@@ -71,20 +71,20 @@
                 <!-- Table Rows Skeleton -->
                 @for (int i = 0; i < 10; i++)
                 {
-                    <div class="d-flex justify-space-between align-center mb-3 pa-2" style="border-bottom: 1px solid rgba(0,0,0,0.05);">
-                        <div style="flex: 1;">
+                    <div class="d-flex justify-space-between align-center mb-3 pa-2 ux-097">
+                        <div class="ux-004">
                             <MudSkeleton SkeletonType="SkeletonType.Text" Width="140px" Height="16px" />
                         </div>
-                        <div style="flex: 1;">
+                        <div class="ux-004">
                             <MudSkeleton SkeletonType="SkeletonType.Text" Width="160px" Height="16px" />
                         </div>
-                        <div style="flex: 1;">
+                        <div class="ux-004">
                             <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="80px" Height="24px" />
                         </div>
-                        <div style="flex: 1;">
+                        <div class="ux-004">
                             <MudSkeleton SkeletonType="SkeletonType.Text" Width="120px" Height="16px" />
                         </div>
-                        <div style="flex: 1; text-align: center;">
+                        <div class="ux-098">
                             <MudSkeleton SkeletonType="SkeletonType.Circle" Width="32px" Height="32px" />
                         </div>
                     </div>
@@ -102,7 +102,7 @@
         <!-- FILTERS PANEL -->
         <MudPaper Elevation="0" Class="pa-4 mb-4 app-card">
             <div class="d-flex align-center mb-2">
-                <MudIcon Icon="@Icons.Material.Filled.FilterList" Class="mr-2" />
+                <MudIcon Icon="@Icons.Material.Outlined.FilterList" Class="mr-2" />
                 <MudText Typo="Typo.h6">Filters</MudText>
                 <MudSpacer />
                 @if (HasActiveFilters())
@@ -114,7 +114,7 @@
                                Color="Color.Default" 
                                Size="Size.Small" 
                                OnClick="ClearAllFilters"
-                               StartIcon="@Icons.Material.Filled.Clear">
+                               StartIcon="@Icons.Material.Outlined.Clear">
                         Clear All
                     </MudButton>
                 }
@@ -171,7 +171,7 @@
                                   Label="Search" 
                                   Placeholder="Search by keyword..."
                                   Adornment="Adornment.Start" 
-                                  AdornmentIcon="@Icons.Material.Filled.Search"
+                                  AdornmentIcon="@Icons.Material.Outlined.Search"
                                   Variant="Variant.Outlined"
                                   Margin="Margin.Dense"
                                   Clearable="true" />
@@ -212,7 +212,7 @@
                     <MudChip T="string" Color="@GetActionColor(context.Action)" Size="Size.Small">@context.Action</MudChip>
                 </MudTd>
                 <MudTd DataLabel="Target">
-                    <code style="font-size: 0.8em">@context.EntityName</code>
+                    <code class="ux-099">@context.EntityName</code>
                 </MudTd>
                 <MudTd DataLabel="Details" Style="text-align:center">
                     <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small" Color="Color.Default" OnClick="@(async () => await ViewDetails(context))" />
