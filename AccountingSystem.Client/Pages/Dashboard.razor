@@ -256,7 +256,7 @@
         </div>
         @if (!isLoading)
         {
-            <MudButton Variant="Variant.Filled" Class="refresh-btn" StartIcon="@Icons.Material.Filled.Refresh"
+            <MudButton Variant="Variant.Filled" Class="refresh-btn" StartIcon="@Icons.Material.Outlined.Refresh"
                 Size="Size.Medium" OnClick="LoadData">
                 Refresh
             </MudButton>
@@ -426,8 +426,8 @@
                                 style="font-size: 0.85rem; color: rgb(56, 146, 147); font-weight: 500; margin-top: 0.25rem;">
                                 Year-to-Date Overview</div>
                         </div>
-                        <MudIcon Icon="@Icons.Material.Filled.AccountBalance" Size="Size.Small"
-                            Style="color: rgb(56, 146, 147);" />
+                        <MudIcon Icon="@Icons.Material.Outlined.AccountBalance" Size="Size.Small"
+                            />
                     </div>
 
                     <!-- Revenue & Expenses Bars -->
@@ -473,7 +473,7 @@
                             <div
                                 style="width: 60px; height: 60px; border-radius: 50%; background: @(NetProfit >= 0 ? "linear-gradient(135deg, #4CAF50 0%, #81C784 100%)" : "linear-gradient(135deg, #F44336 0%, #E57373 100%)"); display: flex; align-items: center; justify-content: center;">
                                 <MudIcon
-                                    Icon="@(NetProfit >= 0 ? Icons.Material.Filled.TrendingUp : Icons.Material.Filled.TrendingDown)"
+                                    Icon="@(NetProfit >= 0 ? Icons.Material.Outlined.TrendingUp : Icons.Material.Outlined.TrendingDown)"
                                     Size="Size.Large" Style="color: white;" />
                             </div>
                         </div>
@@ -517,8 +517,8 @@
                         <span
                             style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: rgb(22, 84, 127); opacity: 0.7;">Active
                             Transactions</span>
-                        <MudIcon Icon="@Icons.Material.Filled.SwapHoriz" Size="Size.Small"
-                            Style="color: rgb(56, 146, 147);" />
+                        <MudIcon Icon="@Icons.Material.Outlined.SwapHoriz" Size="Size.Small"
+                            />
                     </div>
                     <div class="featured-value-large">@ActiveTransactions</div>
                     <div style="font-size: 0.8rem; color: #6b7280; margin-top: 0.25rem;">Pending payments & collections
@@ -543,7 +543,7 @@
                         style="display: flex; gap: 0.75rem; margin-top: auto; padding-top: 0.75rem; border-top: 1px solid rgba(22, 84, 127, 0.1);">
                         <div
                             style="flex: 1; display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; background: rgba(255, 193, 7, 0.08); border-radius: 8px; border-left: 3px solid #FFC107;">
-                            <MudIcon Icon="@Icons.Material.Filled.RequestQuote" Size="Size.Small" Style="color: #FF9800;" />
+                            <MudIcon Icon="@Icons.Material.Outlined.RequestQuote" Size="Size.Small" />
                             <div>
                                 <div style="font-size: 0.95rem; font-weight: 700; color: #FF9800;">
                                     ₱@FormatCompact(ArOutstanding)</div>
@@ -553,7 +553,7 @@
                         </div>
                         <div
                             style="flex: 1; display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; background: rgba(255, 87, 34, 0.08); border-radius: 8px; border-left: 3px solid #FF5722;">
-                            <MudIcon Icon="@Icons.Material.Filled.Payment" Size="Size.Small" Style="color: #FF5722;" />
+                            <MudIcon Icon="@Icons.Material.Outlined.Payment" Size="Size.Small" />
                             <div>
                                 <div style="font-size: 0.95rem; font-weight: 700; color: #FF5722;">
                                     ₱@FormatCompact(ApOutstanding)</div>
@@ -570,7 +570,7 @@
                 <div class="featured-card forex-featured">
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
                         <span style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: rgb(33, 150, 243); opacity: 0.8;">USD to PHP</span>
-                        <MudIcon Icon="@Icons.Material.Filled.CurrencyExchange" Size="Size.Small" Style="color: rgb(33, 150, 243);" />
+                        <MudIcon Icon="@Icons.Material.Outlined.CurrencyExchange" Size="Size.Small" />
                     </div>
                     <div style="font-size: 0.85rem; color: rgb(33, 150, 243); font-weight: 500; margin-bottom: 1rem;">Live Currency Converter</div>
 
@@ -580,7 +580,7 @@
                         <div style="background: linear-gradient(135deg, rgba(33, 150, 243, 0.15) 0%, rgba(33, 150, 243, 0.05) 100%); border-radius: 16px; padding: 1rem; margin-bottom: 1rem; border: 2px solid rgba(33, 150, 243, 0.3); text-align: center;">
                             <div style="display: flex; justify-content: center; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
                                 <div style="width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, #1976D2 0%, #2196F3 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 1rem; font-weight: 800;">$</div>
-                                <MudIcon Icon="@Icons.Material.Filled.ArrowForward" Size="Size.Small" Style="color: #2196F3;" />
+                                <MudIcon Icon="@Icons.Material.Outlined.ArrowForward" Size="Size.Small" />
                                 <div style="width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, #FFC107 0%, #FFD54F 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 1rem; font-weight: 800;">₱</div>
                             </div>
                             <div class="usd-php-pulse" style="font-size: 1.75rem; font-weight: 800; color: #1976D2; line-height: 1;">@usdToPhpRate.ToString("F2")</div>
@@ -605,7 +605,7 @@
                             </div>
 
                             <!-- Arrow -->
-                            <MudIcon Icon="@Icons.Material.Filled.ArrowForward" Style="color: #2196F3; margin-top: 1.25rem;" Size="Size.Small" />
+                            <MudIcon Icon="@Icons.Material.Outlined.ArrowForward" Style="margin-top: 1.25rem;" Size="Size.Small" />
 
                             <!-- PHP Result -->
                             <div style="flex: 1;">
@@ -635,7 +635,7 @@
                         <!-- Last Updated Footer -->
                         <div style="padding-top: 0.5rem; border-top: 1px solid rgba(33, 150, 243, 0.1); text-align: center;">
                             <div style="font-size: 0.65rem; color: #6b7280; display: flex; align-items: center; justify-content: center; gap: 0.25rem;">
-                                <MudIcon Icon="@Icons.Material.Filled.Update" Size="Size.Small" Style="color: #6b7280; font-size: 0.9rem;" />
+                                <MudIcon Icon="@Icons.Material.Outlined.Update" Size="Size.Small" Style="font-size: 0.9rem;" />
                                 Live Rate • @DateTime.Now.ToString("MMM dd, HH:mm")
                             </div>
                         </div>
@@ -643,7 +643,7 @@
                     else
                     {
                         <div style="text-align: center; padding: 2rem; color: #9ca3af;">
-                            <MudIcon Icon="@Icons.Material.Filled.CloudOff" Size="Size.Large" />
+                            <MudIcon Icon="@Icons.Material.Outlined.CloudOff" Size="Size.Large" />
                             <div style="margin-top: 0.5rem; font-size: 0.9rem;">Loading forex data...</div>
                         </div>
                     }
@@ -732,7 +732,7 @@
                     else
                     {
                         <div style="text-align: center; padding: 3rem; color: #9ca3af;">
-                            <MudIcon Icon="@Icons.Material.Filled.CloudOff" Size="Size.Large" />
+                            <MudIcon Icon="@Icons.Material.Outlined.CloudOff" Size="Size.Large" />
                             <div style="margin-top: 0.5rem; font-size: 0.9rem;">Loading inflation data...</div>
                         </div>
                     }
@@ -775,8 +775,8 @@
                                         @if (prevVal.HasValue)
                                         {
                                             <MudIcon
-                                                Icon="@(isUp ? Icons.Material.Filled.ArrowUpward : Icons.Material.Filled.ArrowDownward)"
-                                                Size="Size.Small" Style="@($"color: {(isUp ? "#F44336" : "#4CAF50")};")" />
+                                                Icon="@(isUp ? Icons.Material.Outlined.ArrowUpward : Icons.Material.Outlined.ArrowDownward)"
+                                                Size="Size.Small" />
                                         }
                                     </div>
                                     <div style="display: flex; align-items: center; gap: 1rem;">
@@ -821,7 +821,7 @@
                     else
                     {
                         <div style="text-align: center; padding: 2rem; color: #9ca3af;">
-                            <MudIcon Icon="@Icons.Material.Filled.CloudOff" Size="Size.Large" />
+                            <MudIcon Icon="@Icons.Material.Outlined.CloudOff" Size="Size.Large" />
                             <div style="margin-top: 0.5rem;">Loading inflation data...</div>
                         </div>
                     }
@@ -833,11 +833,11 @@
                 <div class="featured-card">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                         <div style="display: flex; align-items: center; gap: 0.5rem;">
-                            <MudIcon Icon="@Icons.Material.Filled.ListAlt" Size="Size.Medium" Style="color: rgb(22, 84, 127);" />
+                            <MudIcon Icon="@Icons.Material.Outlined.ListAlt" Size="Size.Medium" />
                             <span style="font-size: 1.1rem; font-weight: 700; color: rgb(22, 84, 127);">Account Ledger Snapshot</span>
                         </div>
                         <MudButton Variant="Variant.Filled" Href="reports/financials"
-                            StartIcon="@Icons.Material.Filled.Assessment" Size="Size.Small"
+                            StartIcon="@Icons.Material.Outlined.Assessment" Size="Size.Small"
                             Style="background: linear-gradient(135deg, rgb(22, 84, 127) 0%, rgb(56, 146, 147) 100%); color: white;">
                             View Financial Reports
                         </MudButton>
@@ -892,17 +892,17 @@
             <div class="span-12">
                 <div class="featured-card">
                     <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
-                        <MudIcon Icon="@Icons.Material.Filled.CalendarMonth" Size="Size.Medium" Style="color: rgb(22, 84, 127);" />
+                        <MudIcon Icon="@Icons.Material.Outlined.CalendarMonth" Size="Size.Medium" />
                         <span style="font-size: 1.1rem; font-weight: 700; color: rgb(22, 84, 127);">Payment & Collection Schedule</span>
                     </div>
 
                     <div class="d-flex gap-3 mb-4">
                         <div style="display: flex; align-items: center; gap: 0.5rem; padding: 6px 12px; background: rgba(76, 175, 80, 0.1); border-radius: 8px;">
-                            <MudIcon Icon="@Icons.Material.Filled.Circle" Style="color: #4CAF50;" Size="Size.Small" />
+                            <MudIcon Icon="@Icons.Material.Outlined.Circle" Size="Size.Small" />
                             <span style="font-size: 0.8rem; color: #4CAF50; font-weight: 500;">Invoices Due</span>
                         </div>
                         <div style="display: flex; align-items: center; gap: 0.5rem; padding: 6px 12px; background: rgba(244, 67, 54, 0.1); border-radius: 8px;">
-                            <MudIcon Icon="@Icons.Material.Filled.Circle" Style="color: #F44336;" Size="Size.Small" />
+                            <MudIcon Icon="@Icons.Material.Outlined.Circle" Size="Size.Small" />
                             <span style="font-size: 0.8rem; color: #F44336; font-weight: 500;">Bills Due</span>
                         </div>
                     </div>
