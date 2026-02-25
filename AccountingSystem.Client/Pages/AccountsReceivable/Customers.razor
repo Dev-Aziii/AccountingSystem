@@ -132,7 +132,7 @@
                         <AuthorizeView Roles="Admin,Accounting" Context="authContext">
                             <MudTd DataLabel="Actions" Style="text-align:right">
                                 <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Secondary" OnClick="() => OpenEditDialog(context)" />
-                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="() => ConfirmDelete(context.Id)" />
+                                <MudIconButton Icon="@Icons.Material.Outlined.Archive" Size="Size.Small" Color="Color.Error" OnClick="() => ConfirmDelete(context.Id)" />
                             </MudTd>
                         </AuthorizeView>
                     </RowTemplate>

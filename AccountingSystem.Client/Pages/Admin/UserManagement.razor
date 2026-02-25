@@ -103,7 +103,7 @@
                                 <MudTd DataLabel="Actions" Style="text-align:right">
                                     @if (!string.IsNullOrEmpty(context.Email) && !context.Email.StartsWith("admin"))
                                     {
-                                        <MudIconButton Icon="@Icons.Material.Filled.Archive" Size="Size.Medium" Color="Color.Default" Class="archive-hover" OnClick="() => ConfirmDelete(context.Id)" />
+                                        <MudIconButton Icon="@Icons.Material.Outlined.Archive" Size="Size.Medium" Color="Color.Default" Class="archive-hover" OnClick="() => ConfirmDelete(context.Id)" />
                                     }
                                 </MudTd>
                             </RowTemplate>
