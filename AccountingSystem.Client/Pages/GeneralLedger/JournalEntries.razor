@@ -142,10 +142,10 @@
             </MudCard>
 
             <!-- Journal Lines -->
-            <MudTable Items="@entry.Lines"
+            <MudTable Dense="true" Items="@entry.Lines"
                       Hover="true"
                       Breakpoint="Breakpoint.Sm"
-                      Elevation="4">
+                      Elevation="0">
 
                 <HeaderContent>
                     <MudTh>Account</MudTh>
@@ -184,8 +184,8 @@
                     </MudTd>
 
                     <MudTd>
-                        <MudIconButton Icon="@Icons.Material.Outlined.Archive"
-                                       Color="Color.Error"
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                       Color="Color.Default"
                                        OnClick="@(() => RemoveLine(lineContext))"
                                        Disabled="@(entry.Lines.Count <= 2)" />
                     </MudTd>
@@ -219,13 +219,13 @@
                     <MudTd>
                         @if (IsBalanced)
                         {
-                            <MudChip T="string" Color="Color.Success" Size="Size.Small">
+                            <MudChip T="string" Color="Color.Default" Size="Size.Small">
                                 Balanced
                             </MudChip>
                         }
                         else
                         {
-                            <MudChip T="string" Color="Color.Error" Size="Size.Small">
+                            <MudChip T="string" Color="Color.Default" Size="Size.Small">
                                 Imbalanced
                             </MudChip>
                         }
@@ -235,11 +235,11 @@
 
             <div class="d-flex justify-end mt-4">
                 <MudButton ButtonType="ButtonType.Submit"
-                           Variant="Variant.Filled"
+                           Variant="Variant.Filled" Color="Color.Primary"
                            Class="create-btn"
                            Disabled="@(!IsBalanced || isSubmitting)"
-                           Size="Size.Large"
-                           StartIcon="@Icons.Material.Outlined.Check">
+                           Size="Size.Small"
+                           StartIcon="@Icons.Material.Filled.Check">
                     @(isSubmitting ? "Posting..." : "Post Entry")
                 </MudButton>
             </div>

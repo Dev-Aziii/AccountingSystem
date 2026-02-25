@@ -20,21 +20,21 @@
         </div>
         <MudButton Variant="Variant.Filled"
                    Style="background: linear-gradient(135deg, rgb(22, 84, 127) 0%, rgb(56, 146, 147) 100%); color: white; border-radius: 12px;"
-                   StartIcon="@Icons.Material.Outlined.Refresh"                   Size="Size.Medium" OnClick="LoadData">
+                   StartIcon="@Icons.Material.Filled.Refresh"                   Size="Size.Small" OnClick="LoadData">
             Refresh
         </MudButton>
     </div>
 
     <!-- TABLE -->
     <div class="audit-table-card">
-        <MudTable Items="@logs" Hover="true" Loading="@isLoading"
-                  Filter="new Func<SuperAdminAuditLogDTO, bool>(FilterFunc)"                  Dense="false" Elevation="0"
+        <MudTable Elevation="0" Dense="true" Items="@logs" Hover="true" Loading="@isLoading"
+                  Filter="new Func<SuperAdminAuditLogDTO, bool>(FilterFunc)"                 
                   Style="background: transparent;">
             <ToolBarContent>
                 <MudText Typo="Typo.h6" Style="color: rgb(22, 84, 127); font-weight: 700;">Action History</MudText>
                 <MudSpacer />
                 <MudTextField @bind-Value="searchString" Placeholder="Search logs..."                              Adornment="Adornment.Start"
-                              AdornmentIcon="@Icons.Material.Outlined.Search"                              IconSize="Size.Medium" Class="mt-0"
+                              AdornmentIcon="@Icons.Material.Filled.Search"                              IconSize="Size.Small" Class="mt-0"
                               Style="max-width: 300px;" />
                 <MudSelect T="string" @bind-Value="actionFilter" Label="Action" Class="ml-4" Style="max-width: 200px;">
                     <MudSelectItem T="string" Value='@("All")'>All Actions</MudSelectItem>

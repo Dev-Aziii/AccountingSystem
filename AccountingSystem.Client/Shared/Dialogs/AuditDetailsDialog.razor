@@ -10,7 +10,7 @@
     </TitleContent>
 
     <DialogContent>
-        <MudPaper Elevation="0" Class="pa-4 mb-4" Style="background-color: var(--mud-palette-background-grey);">
+        <MudPaper Elevation="0" Class="pa-4 mb-4 app-card" Style="background-color: var(--mud-palette-background-grey);">
             <MudGrid Spacing="3">
                 <MudItem xs="12" sm="6">
                     <MudText Typo="Typo.caption" Color="Color.Default">User</MudText>
@@ -51,8 +51,8 @@
             <MudIcon Icon="@Icons.Material.Outlined.Code" Size="Size.Small" Class="mr-1" />
             Request Payload / Changes
         </MudText>
-        <MudPaper Class="pa-3"
-                  Elevation="1"
+        <MudPaper Class="pa-3 app-card"
+                  Elevation="0"
                   Style="max-height: 400px; overflow: auto; background-color: #1e1e1e; border-radius: 4px;">
             <pre class="ux-001">@FormatJson(Log.Changes)</pre>
         </MudPaper>

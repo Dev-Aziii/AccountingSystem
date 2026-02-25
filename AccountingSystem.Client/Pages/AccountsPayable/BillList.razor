@@ -98,7 +98,7 @@
     }
     else
     {
-        <MudPaper Elevation="2" Class="pa-4 mb-4">
+        <MudPaper Elevation="0" Class="pa-4 mb-4 app-card">
             <div class="d-flex align-center mb-2">
                 <MudIcon Icon="@Icons.Material.Outlined.FilterList" Class="mr-2" />
                 <MudText Typo="Typo.h6">Filters</MudText>
@@ -108,8 +108,8 @@
                     <MudChip T="string" Color="Color.Primary" Size="Size.Small" Class="mr-2">
                         @GetActiveFilterCount() active filter(s)
                     </MudChip>
-                    <MudButton Variant="Variant.Text"
-                               Color="Color.Secondary"
+                    <MudButton Variant="Variant.Outlined"
+                               Color="Color.Default"
                                Size="Size.Small"
                                OnClick="ClearFilters"
                                StartIcon="@Icons.Material.Outlined.Clear"
@@ -166,11 +166,11 @@
             </MudGrid>
         </MudPaper>
 
-        <MudTable Items="@bills" Dense="true" Hover="true" Bordered="true" Striped="true" Filter="new Func<BillDTO, bool>(FilterFunc)" Loading="@_loading">
+        <MudTable Elevation="0" Items="@bills" Dense="true" Hover="true" Filter="new Func<BillDTO, bool>(FilterFunc)" Loading="@_loading">
             <ToolBarContent>
                 <MudText Typo="Typo.h6">Vendor Bills</MudText>
                 <MudSpacer />
-                <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Outlined.Add" Href="/ap/bills" Class="create-btn ml-3">Create Bill</MudButton>
+                <MudButton Variant="Variant.Filled" Size="Size.Small" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" Href="/ap/bills" Class="create-btn ml-3">Create Bill</MudButton>
             </ToolBarContent>
             <HeaderContent>
                 <MudTh>Ref #</MudTh>
@@ -188,12 +188,12 @@
                 <MudTd DataLabel="Total" Style="text-align:right">@context.Amount.ToString("C2", _phCulture)</MudTd>
                 <MudTd DataLabel="Balance" Style="text-align:right; font-weight:bold;">@context.Balance.ToString("C2", _phCulture)</MudTd>
                 <MudTd DataLabel="Status">
-                    <MudChip T="string" Size="Size.Small" Color="@GetStatusColor(context.Status)">@GetStatusLabel(context.Status)</MudChip>
+                    <MudChip T="string" Size="Size.Small" Color="Color.Default" Variant="Variant.Outlined" Class="@GetStatusClass(context.Status)">@GetStatusLabel(context.Status)</MudChip>
                 </MudTd>
                 <MudTd>
                     @if (context.Balance > 0)
                     {
-                        <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Warning" OnClick="@(() => OpenPayDialog(context))">Pay</MudButton>
+                        <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" OnClick="@(() => OpenPayDialog(context))">Pay</MudButton>
                     }
                 </MudTd>
             </RowTemplate>
@@ -310,13 +310,13 @@
             ? status
             : null;
 
-    private static Color GetStatusColor(DocumentStatus status)
+    private static string GetStatusClass(DocumentStatus status)
         => status switch
         {
-            DocumentStatus.Paid => Color.Success,
-            DocumentStatus.PartiallyPaid => Color.Warning,
-            DocumentStatus.Void => Color.Secondary,
-            _ => Color.Error
+            DocumentStatus.Paid => "status-chip status-chip--success",
+            DocumentStatus.PartiallyPaid => "status-chip status-chip--warning",
+            DocumentStatus.Void => "status-chip status-chip--neutral",
+            _ => "status-chip status-chip--danger"
         };
 
     private static string GetStatusLabel(DocumentStatus status)

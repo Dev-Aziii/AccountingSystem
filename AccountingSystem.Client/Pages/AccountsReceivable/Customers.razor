@@ -39,7 +39,7 @@
             else
             {
                 <AuthorizeView Roles="Admin,Accounting" Context="authContext">
-                    <MudButton Variant="Variant.Filled" Class="create-btn" StartIcon="@Icons.Material.Outlined.Add" OnClick="OpenAddDialog">
+                    <MudButton Variant="Variant.Filled" Size="Size.Small" Color="Color.Primary" Class="create-btn" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenAddDialog">
                         Add New Customer
                     </MudButton>
                 </AuthorizeView>
@@ -109,11 +109,11 @@
     {
         <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-6">
             <MudTabPanel Text="Active Customers" OnClick="@(() => LoadList(false))">
-                <MudTable Items="@customers" Dense="true" Hover="true" Bordered="true" Striped="true" Filter="new Func<CustomerDTO, bool>(FilterFunc)" Loading="@_loading">
+                <MudTable Elevation="0" Items="@customers" Dense="true" Hover="true" Filter="new Func<CustomerDTO, bool>(FilterFunc)" Loading="@_loading">
                     <ToolBarContent>
                         <MudText Typo="Typo.h6">Active List</MudText>
                         <MudSpacer />
-                        <MudTextField @bind-Value="searchString" Placeholder="Search..." Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Outlined.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+                        <MudTextField @bind-Value="searchString" Placeholder="Search..." Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Small" Class="mt-0"></MudTextField>
                     </ToolBarContent>
                     <HeaderContent>
                         <MudTh>ID</MudTh>
@@ -131,8 +131,8 @@
                         <MudTd DataLabel="Phone">@context.Phone</MudTd>
                         <AuthorizeView Roles="Admin,Accounting" Context="authContext">
                             <MudTd DataLabel="Actions" Style="text-align:right">
-                                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Secondary" OnClick="() => OpenEditDialog(context)" />
-                                <MudIconButton Icon="@Icons.Material.Outlined.Archive" Size="Size.Small" Color="Color.Error" OnClick="() => ConfirmDelete(context.Id)" />
+                                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Default" OnClick="() => OpenEditDialog(context)" />
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Default" OnClick="() => ConfirmDelete(context.Id)" />
                             </MudTd>
                         </AuthorizeView>
                     </RowTemplate>
@@ -142,7 +142,7 @@
 
             <AuthorizeView Roles="Admin,Accounting" Context="authContext">
                 <MudTabPanel Text="Archived Customers" OnClick="@(() => LoadList(true))">
-                    <MudTable Items="@customers" Dense="true" Hover="true" Bordered="true" Striped="true" Filter="new Func<CustomerDTO, bool>(FilterFunc)" Loading="@_loading">
+                    <MudTable Elevation="0" Items="@customers" Dense="true" Hover="true" Filter="new Func<CustomerDTO, bool>(FilterFunc)" Loading="@_loading">
                         <HeaderContent>
                             <MudTh>ID</MudTh>
                             <MudTh>Name</MudTh>
@@ -155,7 +155,7 @@
                             <MudTd DataLabel="Email">@context.Email</MudTd>
                             <MudTd DataLabel="Actions" Style="text-align:right">
                                 <MudTooltip Text="Restore Customer">
-                                    <MudIconButton Icon="@Icons.Material.Outlined.RestoreFromTrash" Size="Size.Small" Color="Color.Success" OnClick="() => ConfirmRestore(context.Id)" />
+                                    <MudIconButton Icon="@Icons.Material.Filled.RestoreFromTrash" Size="Size.Small" Color="Color.Default" OnClick="() => ConfirmRestore(context.Id)" />
                                 </MudTooltip>
                             </MudTd>
                         </RowTemplate>
