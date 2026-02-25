@@ -107,12 +107,12 @@ code {
    ======================================== */
 
 :root {
-    --theme-primary: rgb(22, 84, 127);
-    --theme-secondary: rgb(56, 146, 147);
-    --theme-primary-light: rgba(22, 84, 127, 0.1);
-    --theme-secondary-light: rgba(56, 146, 147, 0.1);
-    --theme-primary-dark: rgb(16, 62, 94);
-    --theme-secondary-dark: rgb(42, 110, 111);
+    --theme-primary: var(--mud-palette-primary);
+    --theme-secondary: var(--mud-palette-secondary);
+    --theme-primary-light: rgba(var(--mud-palette-primary-rgb), 0.1);
+    --theme-secondary-light: rgba(var(--mud-palette-secondary-rgb), 0.1);
+    --theme-primary-dark: var(--mud-palette-primary-darken);
+    --theme-secondary-dark: var(--mud-palette-secondary-darken);
 }
 
 .custom-bg-gradient {

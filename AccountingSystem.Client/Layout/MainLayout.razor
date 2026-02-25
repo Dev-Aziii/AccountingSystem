@@ -118,13 +118,13 @@
     /* Main Layout Styles */
     .main-layout {
         min-height: 100vh;
-        background: #f8f9fa;
+        background: var(--mud-palette-background);
     }
 
     /* App Bar Styles */
     .app-bar {
-        background: linear-gradient(135deg, var(--theme-primary) 0%, var(--theme-secondary) 100%) !important;
-        box-shadow: 0 2px 20px rgba(22, 84, 127, 0.15) !important;
+        background: linear-gradient(135deg, var(--mud-palette-primary) 0%, var(--mud-palette-secondary) 100%) !important;
+        box-shadow: 0 2px 20px rgba(var(--mud-palette-primary-rgb), 0.15) !important;
         backdrop-filter: blur(10px);
         border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     }
@@ -245,13 +245,13 @@
     }
 
         .menu-item:hover {
-            background: var(--theme-primary-light) !important;
-            color: var(--theme-primary) !important;
+            background: rgba(var(--mud-palette-primary-rgb), 0.1) !important;
+            color: var(--mud-palette-primary) !important;
         }
 
     .logout-item:hover {
-        background: rgba(244, 67, 54, 0.1) !important;
-        color: #f44336 !important;
+        background: rgba(var(--mud-palette-error-rgb), 0.1) !important;
+        color: var(--mud-palette-error) !important;
     }
 
     /* Auth Buttons */
@@ -263,7 +263,7 @@
 
     .login-button {
         background: rgba(255, 255, 255, 0.9) !important;
-        color: var(--theme-primary) !important;
+        color: var(--mud-palette-primary) !important;
         border-radius: 12px !important;
         font-weight: 600 !important;
         padding: 8px 20px !important;
@@ -293,8 +293,8 @@
 
     /* Navigation Drawer */
     .nav-drawer {
-        background: white !important;
-        border-right: 1px solid rgba(22, 84, 127, 0.1);
+        background: var(--mud-palette-drawer-background) !important;
+        border-right: 1px solid var(--mud-palette-divider);
         box-shadow: 4px 0 20px rgba(0, 0, 0, 0.05) !important;
     }
 
@@ -306,12 +306,12 @@
 
     .drawer-header {
         padding: 1.5rem 1rem 1rem;
-        border-bottom: 1px solid rgba(22, 84, 127, 0.1);
-        background: linear-gradient(135deg, var(--theme-primary-light) 0%, var(--theme-secondary-light) 100%);
+        border-bottom: 1px solid var(--mud-palette-divider);
+        background: linear-gradient(135deg, rgba(var(--mud-palette-primary-rgb), 0.1) 0%, rgba(var(--mud-palette-secondary-rgb), 0.1) 100%);
     }
 
     .drawer-title {
-        color: var(--theme-primary) !important;
+        color: var(--mud-palette-drawer-text) !important;
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 1px;
@@ -320,7 +320,7 @@
 
     /* Main Content */
     .main-content {
-        background: #f8f9fa;
+        background: var(--mud-palette-background);
         min-height: calc(100vh - 64px);
     }
 
@@ -330,7 +330,7 @@
     }
 
     /* Responsive Design */
-    media (max-width: 768px) {
+    @media (max-width: 768px) {
         .brand-text .app-title
 
     {
@@ -353,7 +353,7 @@
 
     }
 
-    media (max-width: 480px) {
+    @media (max-width: 480px) {
         .app-bar-content
 
     {
