@@ -7,7 +7,7 @@
 <MudDialog>
     <TitleContent>
         <MudText Typo="Typo.h6">
-            <MudIcon Icon="@Icons.Material.Filled.AccountBalance" Class="mr-2" />
+            <MudIcon Icon="@Icons.Material.Outlined.AccountBalance" Class="mr-2" />
             @(Account?.Id > 0 ? "Edit Account" : "Create New Account")
         </MudText>
     </TitleContent>
@@ -43,19 +43,19 @@
                        AnchorOrigin="Origin.BottomCenter"
                        HelperText="Select the classification of this account">
                 <MudSelectItem Value="@("Asset")">
-                    <MudIcon Icon="@Icons.Material.Filled.TrendingUp" Size="Size.Small" Class="mr-2" />Asset
+                    <MudIcon Icon="@Icons.Material.Outlined.TrendingUp" Size="Size.Small" Class="mr-2" />Asset
                 </MudSelectItem>
                 <MudSelectItem Value="@("Liability")">
-                    <MudIcon Icon="@Icons.Material.Filled.TrendingDown" Size="Size.Small" Class="mr-2" />Liability
+                    <MudIcon Icon="@Icons.Material.Outlined.TrendingDown" Size="Size.Small" Class="mr-2" />Liability
                 </MudSelectItem>
                 <MudSelectItem Value="@("Equity")">
-                    <MudIcon Icon="@Icons.Material.Filled.Balance" Size="Size.Small" Class="mr-2" />Equity
+                    <MudIcon Icon="@Icons.Material.Outlined.Balance" Size="Size.Small" Class="mr-2" />Equity
                 </MudSelectItem>
                 <MudSelectItem Value="@("Revenue")">
-                    <MudIcon Icon="@Icons.Material.Filled.Paid" Size="Size.Small" Class="mr-2" />Revenue
+                    <MudIcon Icon="@Icons.Material.Outlined.Paid" Size="Size.Small" Class="mr-2" />Revenue
                 </MudSelectItem>
                 <MudSelectItem Value="@("Expense")">
-                    <MudIcon Icon="@Icons.Material.Filled.ShoppingCart" Size="Size.Small" Class="mr-2" />Expense
+                    <MudIcon Icon="@Icons.Material.Outlined.ShoppingCart" Size="Size.Small" Class="mr-2" />Expense
                 </MudSelectItem>
             </MudSelect>
         </MudForm>
@@ -70,7 +70,7 @@
                    OnClick="Submit"
                    Variant="Variant.Filled"
                    Disabled="isSubmitting"
-                   StartIcon="@(isSubmitting ? null : (Account?.Id > 0 ? Icons.Material.Filled.Save : Icons.Material.Filled.Add))">
+                   StartIcon="@(isSubmitting ? null : (Account?.Id > 0 ? Icons.Material.Outlined.Save : Icons.Material.Outlined.Add))">
             @if (isSubmitting)
             {
                 <MudProgressCircular Class="mr-2" Size="Size.Small" Indeterminate="true" />

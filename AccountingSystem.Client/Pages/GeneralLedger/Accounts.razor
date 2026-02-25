@@ -39,7 +39,7 @@
             else
             {
                 <AuthorizeView Roles="Admin,Accounting" Context="authContext">
-                    <MudButton Variant="Variant.Filled" Class="create-btn" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenAddDialog">
+                    <MudButton Variant="Variant.Filled" Class="create-btn" StartIcon="@Icons.Material.Outlined.Add" OnClick="OpenAddDialog">
                         Add new Account
                     </MudButton>
                 </AuthorizeView>
@@ -52,7 +52,7 @@
         <!-- SKELETON FOR TABS AND TABLE -->
         <MudCard Elevation="2">
             <!-- Tabs Skeleton -->
-            <div class="d-flex pa-4" style="border-bottom: 1px solid rgba(0,0,0,0.12);">
+            <div class="d-flex pa-4">
                 <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="140px" Height="36px" Class="mr-2" />
                 <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="160px" Height="36px" />
             </div>
@@ -65,7 +65,7 @@
                 </div>
 
                 <!-- Table Header Skeleton -->
-                <div class="d-flex justify-space-between mb-3 pa-2" style="border-bottom: 2px solid rgba(0,0,0,0.1);">
+                <div class="d-flex justify-space-between mb-3 pa-2">
                     <MudSkeleton SkeletonType="SkeletonType.Text" Width="80px" Height="20px" />
                     <MudSkeleton SkeletonType="SkeletonType.Text" Width="100px" Height="20px" />
                     <MudSkeleton SkeletonType="SkeletonType.Text" Width="90px" Height="20px" />
@@ -75,17 +75,17 @@
                 <!-- Table Rows Skeleton -->
                 @for (int i = 0; i < 8; i++)
                 {
-                    <div class="d-flex justify-space-between align-center mb-3 pa-2" style="border-bottom: 1px solid rgba(0,0,0,0.05);">
-                        <div style="flex: 1;">
+                    <div class="d-flex justify-space-between align-center mb-3 pa-2">
+                        <div>
                             <MudSkeleton SkeletonType="SkeletonType.Text" Width="80px" Height="16px" />
                         </div>
-                        <div style="flex: 2;">
+                        <div>
                             <MudSkeleton SkeletonType="SkeletonType.Text" Width="180px" Height="16px" />
                         </div>
-                        <div style="flex: 1;">
+                        <div>
                             <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="90px" Height="24px" />
                         </div>
-                        <div style="flex: 1; text-align: right;">
+                        <div>
                             <div class="d-flex justify-end">
                                 <MudSkeleton SkeletonType="SkeletonType.Circle" Width="32px" Height="32px" Class="mr-2" />
                                 <MudSkeleton SkeletonType="SkeletonType.Circle" Width="32px" Height="32px" />
@@ -110,14 +110,14 @@
                     <ToolBarContent>
                         <MudText Typo="Typo.h6">Active List</MudText>
                         <MudSpacer />
-                        <MudTextField @bind-Value="searchString" Placeholder="Search..." Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+                        <MudTextField @bind-Value="searchString" Placeholder="Search..." Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Outlined.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
                     </ToolBarContent>
                     <HeaderContent>
                         <MudTh>Code</MudTh>
                         <MudTh>Name</MudTh>
                         <MudTh>Type</MudTh>
                         <AuthorizeView Roles="Admin,Accounting" Context="authContext">
-                            <MudTh Style="text-align:right">Actions</MudTh>
+                            <MudTh>Actions</MudTh>
                         </AuthorizeView>
                     </HeaderContent>
                     <RowTemplate>
@@ -152,9 +152,9 @@
                             }
                         </MudTd>
                         <AuthorizeView Roles="Admin,Accounting" Context="authContext">
-                            <MudTd DataLabel="Actions" Style="text-align:right">
-                                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Secondary" OnClick="() => OpenEditDialog(context)" />
-                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="() => ConfirmDelete(context.Id)" />
+                            <MudTd DataLabel="Actions">
+                                <MudIconButton Icon="@Icons.Material.Outlined.Edit" Size="Size.Small" Color="Color.Secondary" OnClick="() => OpenEditDialog(context)" />
+                                <MudIconButton Icon="@Icons.Material.Outlined.Archive" Size="Size.Small" Color="Color.Default" OnClick="() => ConfirmDelete(context.Id)" />
                             </MudTd>
                         </AuthorizeView>
                     </RowTemplate>
@@ -170,15 +170,15 @@
                             <MudTh>Code</MudTh>
                             <MudTh>Name</MudTh>
                             <MudTh>Type</MudTh>
-                            <MudTh Style="text-align:right">Actions</MudTh>
+                            <MudTh>Actions</MudTh>
                         </HeaderContent>
                         <RowTemplate>
                             <MudTd DataLabel="Code">@context.Code</MudTd>
-                            <MudTd DataLabel="Name" Style="color:gray;">@context.Name</MudTd>
+                            <MudTd DataLabel="Name">@context.Name</MudTd>
                             <MudTd DataLabel="Type">@context.Type</MudTd>
-                            <MudTd DataLabel="Actions" Style="text-align:right">
+                            <MudTd DataLabel="Actions">
                                 <MudTooltip Text="Restore Account">
-                                    <MudIconButton Icon="@Icons.Material.Filled.RestoreFromTrash" Size="Size.Small" Color="Color.Success" OnClick="() => ConfirmRestore(context.Id)" />
+                                    <MudIconButton Icon="@Icons.Material.Outlined.Unarchive" Size="Size.Small" Color="Color.Success" OnClick="() => ConfirmRestore(context.Id)" />
                                 </MudTooltip>
                             </MudTd>
                         </RowTemplate>

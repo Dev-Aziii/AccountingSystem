@@ -8,45 +8,19 @@
 
 <PageTitle>Super Admin Audit Logs</PageTitle>
 
-<style>
-    .audit-page-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 1.5rem;
-    }
-
-    .audit-table-card {
-        background: white;
-        border-radius: 20px;
-        border: 1px solid rgba(22, 84, 127, 0.1);
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
-        overflow: hidden;
-    }
-
-    .audit-detail-row {
-        background: rgba(22, 84, 127, 0.03);
-        padding: 0.75rem 1rem;
-        border-radius: 8px;
-        margin-top: 0.25rem;
-        font-size: 0.85rem;
-    }
-</style>
-
 <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4 mb-10">
     <!-- HEADER -->
     <div class="audit-page-header">
         <div>
-            <MudText Typo="Typo.h5" Style="font-weight: 800; color: rgb(22, 84, 127);">
+            <MudText Typo="Typo.h5">
                 Super Admin Audit Logs
             </MudText>
-            <MudText Typo="Typo.body2" Style="color: rgb(56, 146, 147);">
+            <MudText Typo="Typo.body2">
                 Complete history of all administrative actions performed by Super Admins
             </MudText>
         </div>
         <MudButton Variant="Variant.Filled"
-                   Style="background: linear-gradient(135deg, rgb(22, 84, 127) 0%, rgb(56, 146, 147) 100%); color: white; border-radius: 12px;"
-                   StartIcon="@Icons.Material.Filled.Refresh"                   Size="Size.Medium" OnClick="LoadData">
+                   StartIcon="@Icons.Material.Outlined.Refresh"                   Size="Size.Medium" OnClick="LoadData">
             Refresh
         </MudButton>
     </div>
@@ -54,20 +28,18 @@
     <!-- TABLE -->
     <div class="audit-table-card">
         <MudTable Items="@logs" Hover="true" Loading="@isLoading"
-                  Filter="new Func<SuperAdminAuditLogDTO, bool>(FilterFunc)"                  Dense="false" Elevation="0"
-                  Style="background: transparent;">
+                  Filter="new Func<SuperAdminAuditLogDTO, bool>(FilterFunc)"                  Dense="false" Elevation="0">
             <ToolBarContent>
-                <MudText Typo="Typo.h6" Style="color: rgb(22, 84, 127); font-weight: 700;">Action History</MudText>
+                <MudText Typo="Typo.h6">Action History</MudText>
                 <MudSpacer />
                 <MudTextField @bind-Value="searchString" Placeholder="Search logs..."                              Adornment="Adornment.Start"
-                              AdornmentIcon="@Icons.Material.Filled.Search"                              IconSize="Size.Medium" Class="mt-0"
-                              Style="max-width: 300px;" />
-                <MudSelect T="string" @bind-Value="actionFilter" Label="Action" Class="ml-4" Style="max-width: 200px;">
+                              AdornmentIcon="@Icons.Material.Outlined.Search"                              IconSize="Size.Medium" Class="mt-0" />
+                <MudSelect T="string" @bind-Value="actionFilter" Label="Action" Class="ml-4">
                     <MudSelectItem T="string" Value='@("All")'>All Actions</MudSelectItem>
                     <MudSelectItem T="string" Value='@("COMPANY_STATUS_CHANGE")'>Company Status</MudSelectItem>
                     <MudSelectItem T="string" Value='@("USER_STATUS_CHANGE")'>User Status</MudSelectItem>
                 </MudSelect>
-                <MudSelect T="string" @bind-Value="targetFilter" Label="Target" Class="ml-4" Style="max-width: 150px;">
+                <MudSelect T="string" @bind-Value="targetFilter" Label="Target" Class="ml-4">
                     <MudSelectItem T="string" Value='@("All")'>All Targets</MudSelectItem>
                     <MudSelectItem T="string" Value='@("Company")'>Companies</MudSelectItem>
                     <MudSelectItem T="string" Value='@("User")'>Users</MudSelectItem>
@@ -92,8 +64,7 @@
                 </MudTd>
                 <MudTd DataLabel="Admin">
                     <div class="d-flex align-center gap-2">
-                        <MudIcon Icon="@Icons.Material.Filled.Security" Size="Size.Small"
-                                 Style="color: rgb(22, 84, 127); opacity: 0.5;" />
+                        <MudIcon Icon="@Icons.Material.Outlined.Security" Size="Size.Small" />
                         @context.AdminEmail
                     </div>
                 </MudTd>
@@ -120,7 +91,7 @@
                                      Variant="Variant.Filled">
                                 @context.OldValue
                             </MudChip>
-                            <MudIcon Icon="@Icons.Material.Filled.ArrowForward" Size="Size.Small" Style="opacity: 0.5;" />
+                            <MudIcon Icon="@Icons.Material.Outlined.ArrowForward" Size="Size.Small" />
                             <MudChip T="string" Size="Size.Small" Color="@GetStatusColor(context.NewValue)"
                                      Variant="Variant.Filled">
                                 @context.NewValue
@@ -134,8 +105,7 @@
                 </MudTd>
                 <MudTd DataLabel="Details">
                     <MudTooltip Text="@context.Details">
-                        <MudIcon Icon="@Icons.Material.Filled.Info" Size="Size.Small"
-                                 Style="color: rgb(56, 146, 147); cursor: pointer;" />
+                        <MudIcon Icon="@Icons.Material.Outlined.Info" Size="Size.Small" />
                     </MudTooltip>
                 </MudTd>
             </RowTemplate>
@@ -191,9 +161,9 @@
 
     private string GetTargetIcon(string targetType) => targetType switch
     {
-        "Company" => Icons.Material.Filled.Business,
-        "User" => Icons.Material.Filled.Person,
-        _ => Icons.Material.Filled.Info
+        "Company" => Icons.Material.Outlined.Business,
+        "User" => Icons.Material.Outlined.Person,
+        _ => Icons.Material.Outlined.Info
     };
 
     private Color GetStatusColor(string status) => status switch

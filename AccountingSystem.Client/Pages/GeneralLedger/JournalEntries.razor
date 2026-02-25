@@ -75,34 +75,34 @@
                 <!-- Table Rows Skeleton (2 initial rows) -->
                 @for (int i = 0; i < 2; i++)
                 {
-                    <div class="d-flex justify-space-between align-center mb-3 pa-2" style="border-bottom: 1px solid rgba(0,0,0,0.05);">
-                        <div style="flex: 2;">
+                    <div class="d-flex justify-space-between align-center mb-3 pa-2">
+                        <div>
                             <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="40px" />
                         </div>
-                        <div style="flex: 1; padding-left: 16px;">
+                        <div>
                             <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="40px" />
                         </div>
-                        <div style="flex: 1; padding-left: 16px;">
+                        <div>
                             <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="40px" />
                         </div>
-                        <div style="flex: 0.5; padding-left: 16px; text-align: center;">
+                        <div>
                             <MudSkeleton SkeletonType="SkeletonType.Circle" Width="40px" Height="40px" />
                         </div>
                     </div>
                 }
 
                 <!-- Footer Skeleton -->
-                <div class="d-flex justify-space-between align-center mt-4 pt-3" style="border-top: 2px solid rgba(0,0,0,0.1);">
-                    <div style="flex: 2;">
+                <div class="d-flex justify-space-between align-center mt-4 pt-3">
+                    <div>
                         <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="120px" Height="36px" />
                     </div>
-                    <div style="flex: 1; padding-left: 16px;">
+                    <div>
                         <MudSkeleton SkeletonType="SkeletonType.Text" Width="100px" Height="24px" />
                     </div>
-                    <div style="flex: 1; padding-left: 16px;">
+                    <div>
                         <MudSkeleton SkeletonType="SkeletonType.Text" Width="100px" Height="24px" />
                     </div>
-                    <div style="flex: 0.5; padding-left: 16px; text-align: center;">
+                    <div>
                         <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="90px" Height="24px" />
                     </div>
                 </div>
@@ -184,7 +184,7 @@
                     </MudTd>
 
                     <MudTd>
-                        <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                        <MudIconButton Icon="@Icons.Material.Outlined.Archive"
                                        Color="Color.Error"
                                        OnClick="@(() => RemoveLine(lineContext))"
                                        Disabled="@(entry.Lines.Count <= 2)" />
@@ -194,7 +194,7 @@
                 <!-- Totals -->
                 <FooterContent>
                     <MudTd>
-                        <MudButton StartIcon="@Icons.Material.Filled.Add"
+                        <MudButton StartIcon="@Icons.Material.Outlined.Add"
                                    OnClick="AddLine"
                                    Variant="Variant.Text"
                                    Color="Color.Primary">
@@ -239,7 +239,7 @@
                            Class="create-btn"
                            Disabled="@(!IsBalanced || isSubmitting)"
                            Size="Size.Large"
-                           StartIcon="@Icons.Material.Filled.Check">
+                           StartIcon="@Icons.Material.Outlined.Check">
                     @(isSubmitting ? "Posting..." : "Post Entry")
                 </MudButton>
             </div>

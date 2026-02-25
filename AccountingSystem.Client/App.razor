@@ -3,7 +3,7 @@
 @using MudBlazor
 
 <CascadingAuthenticationState>
-    <MudThemeProvider />
+    <MudThemeProvider Theme="@AppTheme" />
     <MudPopoverProvider />
     <MudDialogProvider />
     <MudSnackbarProvider />
@@ -37,3 +37,54 @@
         </NotFound>
     </Router>
 </CascadingAuthenticationState>
+
+@code {
+    private static readonly MudTheme AppTheme = new()
+    {
+        PaletteLight = new PaletteLight
+        {
+            Primary = "#1F8A8A",
+            Secondary = "#2F5D7C",
+            Tertiary = "#4B5563",
+            Background = "#F3F5F7",
+            Surface = "#FFFFFF",
+            AppbarBackground = "#FFFFFF",
+            AppbarText = "#111827",
+            DrawerBackground = "#1F2937",
+            DrawerText = "#F9FAFB",
+            DrawerIcon = "#9CA3AF",
+            TextPrimary = "#111827",
+            TextSecondary = "#6B7280",
+            ActionDefault = "#6B7280",
+            ActionDisabled = "#9CA3AF",
+            ActionDisabledBackground = "#E5E7EB",
+            Divider = "#D9DEE5",
+            DividerLight = "#E5E7EB",
+            TableLines = "#E5E7EB",
+            LinesDefault = "#D9DEE5",
+            GrayDefault = "#9CA3AF",
+            GrayLight = "#E5E7EB",
+            GrayLighter = "#F3F4F6",
+            Info = "#2563EB",
+            Success = "#2E7D32",
+            Warning = "#B7791F",
+            Error = "#C53030"
+        },
+        Typography = new Typography
+        {
+            Default = new DefaultTypography
+            {
+                FontFamily = new[] { "Inter", "Segoe UI", "Roboto", "Helvetica Neue", "Arial", "sans-serif" }
+            },
+            Button = new ButtonTypography
+            {
+                TextTransform = "none",
+                FontFamily = new[] { "Inter", "Segoe UI", "Roboto", "Helvetica Neue", "Arial", "sans-serif" }
+            }
+        },
+        LayoutProperties = new LayoutProperties
+        {
+            DefaultBorderRadius = "10px"
+        }
+    };
+}
