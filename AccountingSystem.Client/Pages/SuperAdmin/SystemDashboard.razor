@@ -8,134 +8,6 @@
 @inject NavigationManager NavManager
 
 <PageTitle>System Overview</PageTitle>
-
-<style>
-    .sa-dashboard-grid {
-        display: grid;
-        grid-template-columns: repeat(12, 1fr);
-        gap: 1.5rem;
-    }
-
-    .sa-span-3 { grid-column: span 3; }
-    .sa-span-4 { grid-column: span 4; }
-    .sa-span-6 { grid-column: span 6; }
-    .sa-span-8 { grid-column: span 8; }
-    .sa-span-12 { grid-column: span 12; }
-
-    @@media (max-width: 1400px) {
-        .sa-span-3 { grid-column: span 6; }
-        .sa-span-4 { grid-column: span 6; }
-    }
-
-    @@media (max-width: 768px) {
-        .sa-span-3, .sa-span-4, .sa-span-6, .sa-span-8 { grid-column: span 12; }
-    }
-
-    .sa-metric-card {
-        padding: 1.25rem;
-        background: white;
-        border-radius: 16px;
-        border: 1px solid rgba(22, 84, 127, 0.1);
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
-        cursor: pointer;
-    }
-
-    .sa-metric-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 12px 24px rgba(22, 84, 127, 0.12);
-        border-color: var(--theme-primary);
-    }
-
-    .sa-metric-icon {
-        width: 48px;
-        height: 48px;
-        border-radius: 14px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        flex-shrink: 0;
-    }
-
-    .sa-metric-value {
-        font-size: 1.75rem;
-        font-weight: 800;
-        background: linear-gradient(135deg, rgb(22, 84, 127) 0%, rgb(56, 146, 147) 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        line-height: 1.2;
-    }
-
-    .sa-metric-label {
-        font-size: 0.7rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        color: rgb(22, 84, 127);
-        opacity: 0.7;
-    }
-
-    .sa-featured-card {
-        background: white;
-        border-radius: 20px;
-        padding: 1.5rem;
-        border: 1px solid rgba(22, 84, 127, 0.1);
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-    }
-
-    .sa-featured-card:hover {
-        box-shadow: 0 16px 40px rgba(22, 84, 127, 0.12);
-    }
-
-    .sa-section-header {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        margin-bottom: 1rem;
-    }
-
-    .sa-section-title {
-        font-size: 0.85rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        color: rgb(22, 84, 127);
-    }
-
-    .sa-status-dot {
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        display: inline-block;
-        margin-right: 6px;
-    }
-
-    .sa-log-item {
-        padding: 0.75rem 0;
-        border-bottom: 1px solid rgba(0,0,0,0.06);
-        display: flex;
-        align-items: flex-start;
-        gap: 0.75rem;
-    }
-
-    .sa-log-item:last-child {
-        border-bottom: none;
-    }
-
-    .sa-chart-container {
-        flex: 1;
-        min-height: 250px;
-    }
-</style>
-
 <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4 mb-10">
     <!-- HEADER -->
     <div class="d-flex justify-space-between align-center mb-6">
@@ -241,15 +113,15 @@
                     </div>
                     <div class="d-flex gap-4 mb-4">
                         <div class="d-flex align-center gap-2">
-                            <span class="sa-status-dot" style="background: #4CAF50;"></span>
+                            <span class="sa-status-dot ux-113"></span>
                             <MudText Typo="Typo.body2"><b>@stats.ActiveCompanies</b> Active</MudText>
                         </div>
                         <div class="d-flex align-center gap-2">
-                            <span class="sa-status-dot" style="background: #FF9800;"></span>
+                            <span class="sa-status-dot ux-114"></span>
                             <MudText Typo="Typo.body2"><b>@stats.SuspendedCompanies</b> Suspended</MudText>
                         </div>
                         <div class="d-flex align-center gap-2">
-                            <span class="sa-status-dot" style="background: #F44336;"></span>
+                            <span class="sa-status-dot ux-115"></span>
                             <MudText Typo="Typo.body2"><b>@stats.BlockedCompanies</b> Blocked</MudText>
                         </div>
                     </div>
@@ -264,7 +136,7 @@
                         }
                         else
                         {
-                            <div class="d-flex align-center justify-center" style="height: 250px;">
+                            <div class="d-flex align-center justify-center ux-116">
                                 <MudText Typo="Typo.body2" Color="Color.Tertiary">No tenants registered yet</MudText>
                             </div>
                         }
@@ -280,15 +152,15 @@
                     </div>
                     <div class="d-flex gap-4 mb-4">
                         <div class="d-flex align-center gap-2">
-                            <span class="sa-status-dot" style="background: #4CAF50;"></span>
+                            <span class="sa-status-dot ux-113"></span>
                             <MudText Typo="Typo.body2"><b>@stats.ActiveUsers</b> Active</MudText>
                         </div>
                         <div class="d-flex align-center gap-2">
-                            <span class="sa-status-dot" style="background: #FF9800;"></span>
+                            <span class="sa-status-dot ux-114"></span>
                             <MudText Typo="Typo.body2"><b>@stats.RestrictedUsers</b> Restricted</MudText>
                         </div>
                         <div class="d-flex align-center gap-2">
-                            <span class="sa-status-dot" style="background: #F44336;"></span>
+                            <span class="sa-status-dot ux-115"></span>
                             <MudText Typo="Typo.body2"><b>@stats.BlockedUsers</b> Blocked</MudText>
                         </div>
                     </div>
@@ -303,7 +175,7 @@
                         }
                         else
                         {
-                            <div class="d-flex align-center justify-center" style="height: 250px;">
+                            <div class="d-flex align-center justify-center ux-116">
                                 <MudText Typo="Typo.body2" Color="Color.Tertiary">No users registered yet</MudText>
                             </div>
                         }
@@ -398,7 +270,7 @@
 
             <!-- ROW 5: SYSTEM HEALTH -->
             <div class="sa-span-12">
-                <div class="sa-featured-card" style="background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%); border-color: rgba(76, 175, 80, 0.3);">
+                <div class="sa-featured-card ux-117">
                     <div class="d-flex align-center gap-3">
                         <MudIcon Icon="@Icons.Material.Outlined.CheckCircle" Size="Size.Large" />
                         <div>

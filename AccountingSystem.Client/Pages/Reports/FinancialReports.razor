@@ -14,7 +14,7 @@
 <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-6 mb-8" id="printable-area">
 
     <MudPaper Class="page-header mb-6 no-print" Elevation="0">
-        <div class="d-flex justify-space-between align-center flex-wrap" style="gap: 12px;">
+        <div class="d-flex justify-space-between align-center flex-wrap ux-118">
             <div>
                 <MudText Typo="Typo.h5" Class="mb-2 page-header-title">
                     Financial Statements
@@ -23,7 +23,7 @@
                     Fiscal-year financial position and performance
                 </MudText>
             </div>
-            <div class="d-flex align-center flex-wrap" style="gap: 8px;">
+            <div class="d-flex align-center flex-wrap ux-119">
                 <MudSelect T="int"
                            Value="selectedFiscalYear"
                            ValueChanged="OnFiscalYearChanged"
@@ -85,8 +85,8 @@
                             <tr class="mud-theme-light">
                                 <th class="py-3"><b>ACCOUNT CODE</b></th>
                                 <th class="py-3"><b>ACCOUNT NAME</b></th>
-                                <th class="py-3" style="text-align:right"><b>DEBIT</b></th>
-                                <th class="py-3" style="text-align:right"><b>CREDIT</b></th>
+                                <th class="py-3 ux-120"><b>DEBIT</b></th>
+                                <th class="py-3 ux-120"><b>CREDIT</b></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -99,8 +99,8 @@
                                 <tr>
                                     <td class="mud-text-secondary">@line.AccountCode</td>
                                     <td>@line.AccountName</td>
-                                    <td style="text-align:right; font-family: monospace;">@displayDebit.ToString("C2", _phCulture)</td>
-                                    <td style="text-align:right; font-family: monospace;">@displayCredit.ToString("C2", _phCulture)</td>
+                                    <td class="ux-101">@displayDebit.ToString("C2", _phCulture)</td>
+                                    <td class="ux-101">@displayCredit.ToString("C2", _phCulture)</td>
                                 </tr>
                             }
                         </tbody>
@@ -109,10 +109,10 @@
                                 var totalNetDebit = balanceTrialBalance.Accounts.Sum(a => (a.Debit - a.Credit) > 0 ? (a.Debit - a.Credit) : 0);
                                 var totalNetCredit = balanceTrialBalance.Accounts.Sum(a => (a.Debit - a.Credit) < 0 ? Math.Abs(a.Debit - a.Credit) : 0);
                             }
-                            <tr style="border-top: 2px solid var(--mud-palette-text-primary);">
-                                <td colspan="2" class="py-4" style="text-align:right"><b>TOTALS:</b></td>
-                                <td class="py-4" style="text-align:right; font-family: monospace; border-bottom: 3px double black;"><b>@totalNetDebit.ToString("C2", _phCulture)</b></td>
-                                <td class="py-4" style="text-align:right; font-family: monospace; border-bottom: 3px double black;"><b>@totalNetCredit.ToString("C2", _phCulture)</b></td>
+                            <tr>
+                                <td colspan="2" class="py-4 ux-120"><b>TOTALS:</b></td>
+                                <td class="py-4 ux-122"><b>@totalNetDebit.ToString("C2", _phCulture)</b></td>
+                                <td class="py-4 ux-122"><b>@totalNetCredit.ToString("C2", _phCulture)</b></td>
                             </tr>
                         </tfoot>
                     </MudSimpleTable>
@@ -139,31 +139,31 @@
 
                     <MudSimpleTable Elevation="0" Dense="true">
                         <tbody>
-                            <tr class="mud-table-row" style="background-color: var(--mud-palette-background-grey);"><td colspan="2" class="py-2"><b>REVENUE</b></td></tr>
+                            <tr class="mud-table-row ux-123"><td colspan="2" class="py-2"><b>REVENUE</b></td></tr>
                             @foreach (var line in GetAccountsByType(incomeTrialBalance, "Revenue"))
                             {
-                                <tr><td class="pl-8">@line.AccountName</td><td style="text-align:right; font-family: monospace;">@((line.Credit - line.Debit).ToString("C2", _phCulture))</td></tr>
+                                <tr><td class="pl-8">@line.AccountName</td><td class="ux-101">@((line.Credit - line.Debit).ToString("C2", _phCulture))</td></tr>
                             }
-                            <tr style="border-top:1px solid #ccc">
-                                <td style="text-align:right" class="pr-4"><b>Total Revenue</b></td>
-                                <td style="text-align:right; font-family: monospace;"><b>@TotalRevenue.ToString("C2", _phCulture)</b></td>
+                            <tr class="ux-124">
+                                <td class="pr-4 ux-120"><b>Total Revenue</b></td>
+                                <td class="ux-101"><b>@TotalRevenue.ToString("C2", _phCulture)</b></td>
                             </tr>
 
                             <tr><td colspan="2" class="py-2"></td></tr>
-                            <tr class="mud-table-row" style="background-color: var(--mud-palette-background-grey);"><td colspan="2" class="py-2"><b>OPERATING EXPENSES</b></td></tr>
+                            <tr class="mud-table-row ux-123"><td colspan="2" class="py-2"><b>OPERATING EXPENSES</b></td></tr>
                             @foreach (var line in GetAccountsByType(incomeTrialBalance, "Expense"))
                             {
-                                <tr><td class="pl-8">@line.AccountName</td><td style="text-align:right; font-family: monospace;">@((line.Debit - line.Credit).ToString("C2", _phCulture))</td></tr>
+                                <tr><td class="pl-8">@line.AccountName</td><td class="ux-101">@((line.Debit - line.Credit).ToString("C2", _phCulture))</td></tr>
                             }
-                            <tr style="border-top:1px solid #ccc">
-                                <td style="text-align:right" class="pr-4"><b>Total Expenses</b></td>
-                                <td style="text-align:right; font-family: monospace;"><b>(@TotalExpense.ToString("C2", _phCulture))</b></td>
+                            <tr class="ux-124">
+                                <td class="pr-4 ux-120"><b>Total Expenses</b></td>
+                                <td class="ux-101"><b>(@TotalExpense.ToString("C2", _phCulture))</b></td>
                             </tr>
 
                             <tr><td colspan="2" class="py-4"></td></tr>
-                            <tr style="background-color: #e3f2fd;">
+                            <tr class="ux-125">
                                 <td class="py-4 pl-4"><MudText Typo="Typo.h6"><b>NET INCOME</b></MudText></td>
-                                <td class="py-4 text-right" style="font-family: monospace; border-bottom: 3px double black;"><MudText Typo="Typo.h6"><b>@NetIncome.ToString("C2", _phCulture)</b></MudText></td>
+                                <td class="py-4 text-right ux-126"><MudText Typo="Typo.h6"><b>@NetIncome.ToString("C2", _phCulture)</b></MudText></td>
                             </tr>
                         </tbody>
                     </MudSimpleTable>
@@ -190,43 +190,43 @@
 
                     <MudSimpleTable Elevation="0" Dense="true">
                         <tbody>
-                            <tr class="mud-table-row" style="background-color: var(--mud-palette-background-grey);"><td colspan="2" class="py-2"><b>ASSETS</b></td></tr>
+                            <tr class="mud-table-row ux-123"><td colspan="2" class="py-2"><b>ASSETS</b></td></tr>
                             @foreach (var line in GetAccountsByType(balanceTrialBalance, "Asset"))
                             {
-                                <tr><td class="pl-8">@line.AccountName</td><td style="text-align:right; font-family: monospace;">@((line.Debit - line.Credit).ToString("C2", _phCulture))</td></tr>
+                                <tr><td class="pl-8">@line.AccountName</td><td class="ux-101">@((line.Debit - line.Credit).ToString("C2", _phCulture))</td></tr>
                             }
-                            <tr style="border-top:1px solid #ccc">
-                                <td style="text-align:right" class="pr-4"><b>TOTAL ASSETS</b></td>
-                                <td style="text-align:right; font-family: monospace; border-bottom: 3px double black;"><b>@TotalAssets.ToString("C2", _phCulture)</b></td>
+                            <tr class="ux-124">
+                                <td class="pr-4 ux-120"><b>TOTAL ASSETS</b></td>
+                                <td class="ux-122"><b>@TotalAssets.ToString("C2", _phCulture)</b></td>
                             </tr>
 
                             <tr><td colspan="2" class="pt-6"></td></tr>
-                            <tr class="mud-table-row" style="background-color: var(--mud-palette-background-grey);"><td colspan="2" class="py-2"><b>LIABILITIES</b></td></tr>
+                            <tr class="mud-table-row ux-123"><td colspan="2" class="py-2"><b>LIABILITIES</b></td></tr>
                             @foreach (var line in GetAccountsByType(balanceTrialBalance, "Liability"))
                             {
-                                <tr><td class="pl-8">@line.AccountName</td><td style="text-align:right; font-family: monospace;">@((line.Credit - line.Debit).ToString("C2", _phCulture))</td></tr>
+                                <tr><td class="pl-8">@line.AccountName</td><td class="ux-101">@((line.Credit - line.Debit).ToString("C2", _phCulture))</td></tr>
                             }
-                            <tr style="border-top:1px solid #ccc">
-                                <td style="text-align:right" class="pr-4"><b>Total Liabilities</b></td>
-                                <td style="text-align:right; font-family: monospace;"><b>@TotalLiabilities.ToString("C2", _phCulture)</b></td>
+                            <tr class="ux-124">
+                                <td class="pr-4 ux-120"><b>Total Liabilities</b></td>
+                                <td class="ux-101"><b>@TotalLiabilities.ToString("C2", _phCulture)</b></td>
                             </tr>
 
                             <tr><td colspan="2" class="pt-4"></td></tr>
-                            <tr class="mud-table-row" style="background-color: var(--mud-palette-background-grey);"><td colspan="2" class="py-2"><b>EQUITY</b></td></tr>
+                            <tr class="mud-table-row ux-123"><td colspan="2" class="py-2"><b>EQUITY</b></td></tr>
                             @foreach (var line in GetAccountsByType(balanceTrialBalance, "Equity"))
                             {
-                                <tr><td class="pl-8">@line.AccountName</td><td style="text-align:right; font-family: monospace;">@((line.Credit - line.Debit).ToString("C2", _phCulture))</td></tr>
+                                <tr><td class="pl-8">@line.AccountName</td><td class="ux-101">@((line.Credit - line.Debit).ToString("C2", _phCulture))</td></tr>
                             }
-                            <tr><td class="pl-8 mud-text-secondary"><i>Net Income (Current Fiscal Year)</i></td><td style="text-align:right; font-family: monospace;">@NetIncome.ToString("C2", _phCulture)</td></tr>
-                            <tr style="border-top:1px solid #ccc">
-                                <td style="text-align:right" class="pr-4"><b>Total Equity</b></td>
-                                <td style="text-align:right; font-family: monospace;"><b>@TotalEquity.ToString("C2", _phCulture)</b></td>
+                            <tr><td class="pl-8 mud-text-secondary"><i>Net Income (Current Fiscal Year)</i></td><td class="ux-101">@NetIncome.ToString("C2", _phCulture)</td></tr>
+                            <tr class="ux-124">
+                                <td class="pr-4 ux-120"><b>Total Equity</b></td>
+                                <td class="ux-101"><b>@TotalEquity.ToString("C2", _phCulture)</b></td>
                             </tr>
 
                             <tr><td colspan="2" class="py-4"></td></tr>
-                            <tr style="background-color: #e8f5e9;">
+                            <tr class="ux-127">
                                 <td class="py-4 pl-4"><MudText Typo="Typo.h6"><b>TOTAL LIABILITIES & EQUITY</b></MudText></td>
-                                <td class="py-4 text-right" style="font-family: monospace; border-bottom: 3px double black;"><MudText Typo="Typo.h6"><b>@((TotalLiabilities + TotalEquity).ToString("C2", _phCulture))</b></MudText></td>
+                                <td class="py-4 text-right ux-126"><MudText Typo="Typo.h6"><b>@((TotalLiabilities + TotalEquity).ToString("C2", _phCulture))</b></MudText></td>
                             </tr>
                         </tbody>
                     </MudSimpleTable>
@@ -235,45 +235,6 @@
         </MudTabs>
     }
 </MudContainer>
-
-<style>
-    @@media print {
-        body {
-            background-color: white !important;
-        }
-
-        .no-print {
-            display: none !important;
-        }
-
-        .mud-appbar, .mud-drawer, .mud-drawer-overlay {
-            display: none !important;
-        }
-
-        .mud-tabs-toolbar {
-            display: none !important;
-        }
-
-        .mud-main-content {
-            padding: 0 !important;
-            margin: 0 !important;
-            max-width: 100% !important;
-        }
-
-        .mud-container {
-            padding: 0 !important;
-            max-width: 100% !important;
-            margin: 0 !important;
-        }
-
-        .report-paper {
-            box-shadow: none !important;
-            border: none !important;
-            padding: 0 !important;
-        }
-    }
-</style>
-
 @code {
     private TrialBalanceDTO? incomeTrialBalance;
     private TrialBalanceDTO? balanceTrialBalance;
