@@ -557,3 +557,187 @@ code {
 .stats-grid {
     gap: 24px;
 }
+
+/* ========================================
+   MAIN LAYOUT + NAVIGATION REFINEMENTS
+   ======================================== */
+
+.main-layout {
+    min-height: 100vh;
+    background: #f6f7f9;
+}
+
+.app-bar {
+    background-color: #ffffff !important;
+    color: #1f2937 !important;
+    border-bottom: 1px solid #e5e7eb;
+    box-shadow: none !important;
+}
+
+.app-bar-content {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0 1rem;
+}
+
+.menu-toggle {
+    color: #374151 !important;
+}
+
+.brand-section {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.app-logo {
+    height: 36px;
+    width: auto;
+}
+
+.brand-text .app-title {
+    color: #111827 !important;
+    font-weight: 700;
+    line-height: 1.15;
+}
+
+.brand-text .company-name {
+    color: #6b7280 !important;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.user-button {
+    color: #1f2937 !important;
+}
+
+.user-avatar {
+    background: #e5e7eb !important;
+    color: #374151 !important;
+}
+
+.user-name {
+    color: #111827 !important;
+    font-weight: 600;
+}
+
+.login-button {
+    background: #1f2937 !important;
+    color: #ffffff !important;
+}
+
+.register-button {
+    border-color: #9ca3af !important;
+    color: #374151 !important;
+}
+
+.nav-drawer {
+    background: #111827 !important;
+    border-right: 1px solid #1f2937;
+}
+
+.drawer-content {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.drawer-header {
+    padding: 1.25rem 1rem 0.75rem;
+}
+
+.drawer-title {
+    color: #9ca3af !important;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 0.72rem;
+    font-weight: 700;
+}
+
+.simple-nav-wrapper {
+    padding: 0.25rem 0.5rem 1rem;
+}
+
+.simple-nav-menu {
+    padding: 0 !important;
+}
+
+.nav-group {
+    margin-bottom: 1rem;
+}
+
+.nav-group-label {
+    color: #6b7280;
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 0.35rem 0.75rem;
+}
+
+.simple-nav-menu .mud-nav-link {
+    color: #cbd5e1 !important;
+    border-radius: 0.5rem !important;
+    margin: 0.12rem 0.25rem !important;
+    padding: 0.56rem 0.75rem !important;
+    font-weight: 500;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.simple-nav-menu .mud-nav-link .mud-nav-link-icon {
+    color: #94a3b8 !important;
+}
+
+.simple-nav-menu .mud-nav-link:hover {
+    background: rgba(148, 163, 184, 0.12) !important;
+    color: #e2e8f0 !important;
+}
+
+.simple-nav-menu .mud-nav-link:hover .mud-nav-link-icon {
+    color: #cbd5e1 !important;
+}
+
+.simple-nav-menu .mud-nav-link.active {
+    background: rgba(226, 232, 240, 0.14) !important;
+    color: #f8fafc !important;
+    font-weight: 700;
+}
+
+.simple-nav-menu .mud-nav-link.active .mud-nav-link-icon {
+    color: #f8fafc !important;
+}
+
+.main-content {
+    min-height: calc(100vh - 64px);
+}
+
+.page-wrapper {
+    min-height: 100%;
+}
+
+@media (max-width: 768px) {
+    .app-bar-content {
+        padding: 0 0.75rem;
+    }
+
+    .user-text {
+        display: none;
+    }
+
+    .auth-buttons {
+        display: flex;
+        gap: 0.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .app-logo {
+        height: 30px;
+    }
+
+    .brand-text .company-name {
+        display: none;
+    }
+}
