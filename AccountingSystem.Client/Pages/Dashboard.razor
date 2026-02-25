@@ -18,7 +18,7 @@
 <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4 mb-10">
 
     <!-- COMPACT HEADER -->
-    <div class="d-flex justify-space-between align-center mb-6">
+    <div class="page-header-row d-flex justify-space-between align-center mb-6">
         <div>
             @if (isLoading)
             {
@@ -39,7 +39,7 @@
         {
             <MudButton Variant="Variant.Filled" Class="refresh-btn" StartIcon="@Icons.Material.Outlined.Refresh"
                 Size="Size.Medium" OnClick="LoadData">
-                Refresh
+                <span class="action-button-label">Refresh</span>
             </MudButton>
         }
     </div>
