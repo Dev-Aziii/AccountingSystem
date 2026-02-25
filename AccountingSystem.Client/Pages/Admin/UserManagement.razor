@@ -38,7 +38,7 @@
             {
                 <MudButton Variant="Variant.Filled"
                            Class="refresh-btn"
-                           StartIcon="@Icons.Material.Filled.Refresh"
+                           StartIcon="@Icons.Material.Outlined.Refresh"
                            Size="Size.Large"
                            OnClick="() => LoadUsers(false)">
                     Refresh Users
@@ -123,7 +123,7 @@
                                 <MudTd DataLabel="Role">@context.RoleName</MudTd>
                                 <MudTd DataLabel="Actions" Style="text-align:right">
                                     <MudTooltip Text="Restore User">
-                                        <MudIconButton Icon="@Icons.Material.Filled.RestoreFromTrash" Size="Size.Medium" Color="Color.Default" Class="restore-hover" OnClick="() => ConfirmRestore(context.Id)" />
+                                        <MudIconButton Icon="@Icons.Material.Outlined.RestoreFromTrash" Size="Size.Medium" Color="Color.Default" Class="restore-hover" OnClick="() => ConfirmRestore(context.Id)" />
                                     </MudTooltip>
                                 </MudTd>
                             </RowTemplate>
@@ -194,7 +194,7 @@
                             }
                         </MudCardContent>
                         <MudCardActions>
-                            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Class="create-btn" StartIcon="@Icons.Material.Filled.Add" Size="Size.Large" FullWidth="true" Disabled="@isSubmitting">
+                            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Class="create-btn" StartIcon="@Icons.Material.Outlined.Add" Size="Size.Large" FullWidth="true" Disabled="@isSubmitting">
                                 @(isSubmitting ? "Creating..." : "Create Account")
                             </MudButton>
                         </MudCardActions>
@@ -204,23 +204,6 @@
         </MudItem>
     </MudGrid>
 </MudContainer>
-
-<style>
-    .archive-hover:hover {
-        color: #ff9800 !important;
-        transform: scale(1.1);
-        transition: all 0.2s ease-in-out;
-    }
-
-    .restore-hover:hover {
-        color: #4caf50 !important;
-        background-color: rgba(76, 175, 80, 0.1);
-        border-radius: 50%;
-        transform: scale(1.1);
-        transition: all 0.2s ease-in-out;
-    }
-</style>
-
 @code {
     private List<UserDTO> users = new List<UserDTO>();
     private RegisterDTO newUser = new RegisterDTO();

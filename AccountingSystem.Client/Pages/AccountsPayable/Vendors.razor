@@ -37,7 +37,7 @@
             }
             else
             {
-                <MudButton Variant="Variant.Filled" Class="create-btn" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenAddDialog">
+                <MudButton Variant="Variant.Filled" Class="create-btn" StartIcon="@Icons.Material.Outlined.Add" OnClick="OpenAddDialog">
                     Add New Vendor
                 </MudButton>
             }
@@ -49,7 +49,7 @@
         <!-- SKELETON FOR TABS AND TABLE -->
         <MudCard Elevation="2">
             <!-- Tabs Skeleton -->
-            <div class="d-flex pa-4" style="border-bottom: 1px solid rgba(0,0,0,0.12);">
+            <div class="d-flex pa-4 ux-102">
                 <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="140px" Height="36px" Class="mr-2" />
                 <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="160px" Height="36px" />
             </div>
@@ -62,7 +62,7 @@
                 </div>
 
                 <!-- Table Header Skeleton -->
-                <div class="d-flex justify-space-between mb-3 pa-2" style="border-bottom: 2px solid rgba(0,0,0,0.1);">
+                <div class="d-flex justify-space-between mb-3 pa-2 ux-103">
                     <MudSkeleton SkeletonType="SkeletonType.Text" Width="40px" Height="20px" />
                     <MudSkeleton SkeletonType="SkeletonType.Text" Width="100px" Height="20px" />
                     <MudSkeleton SkeletonType="SkeletonType.Text" Width="120px" Height="20px" />
@@ -73,20 +73,20 @@
                 <!-- Table Rows Skeleton -->
                 @for (int i = 0; i < 8; i++)
                 {
-                    <div class="d-flex justify-space-between align-center mb-3 pa-2" style="border-bottom: 1px solid rgba(0,0,0,0.05);">
-                        <div style="flex: 0.5;">
+                    <div class="d-flex justify-space-between align-center mb-3 pa-2 ux-097">
+                        <div class="ux-104">
                             <MudSkeleton SkeletonType="SkeletonType.Text" Width="30px" Height="16px" />
                         </div>
-                        <div style="flex: 2;">
+                        <div class="ux-105">
                             <MudSkeleton SkeletonType="SkeletonType.Text" Width="160px" Height="16px" />
                         </div>
-                        <div style="flex: 2;">
+                        <div class="ux-105">
                             <MudSkeleton SkeletonType="SkeletonType.Text" Width="180px" Height="16px" />
                         </div>
-                        <div style="flex: 2;">
+                        <div class="ux-105">
                             <MudSkeleton SkeletonType="SkeletonType.Text" Width="140px" Height="16px" />
                         </div>
-                        <div style="flex: 1; text-align: right;">
+                        <div class="ux-107">
                             <div class="d-flex justify-end">
                                 <MudSkeleton SkeletonType="SkeletonType.Circle" Width="32px" Height="32px" Class="mr-2" />
                                 <MudSkeleton SkeletonType="SkeletonType.Circle" Width="32px" Height="32px" />
@@ -111,7 +111,7 @@
                     <ToolBarContent>
                         <MudText Typo="Typo.h6">Active List</MudText>
                         <MudSpacer />
-                        <MudTextField @bind-Value="searchString" Placeholder="Search..." Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+                        <MudTextField @bind-Value="searchString" Placeholder="Search..." Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Outlined.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
                     </ToolBarContent>
                     <HeaderContent>
                         <MudTh>ID</MudTh>
@@ -148,7 +148,7 @@
                         <MudTd DataLabel="Email">@context.Email</MudTd>
                         <MudTd DataLabel="Actions" Style="text-align:right">
                             <MudTooltip Text="Restore Vendor">
-                                <MudIconButton Icon="@Icons.Material.Filled.RestoreFromTrash" Size="Size.Small" Color="Color.Success" OnClick="() => ConfirmRestore(context.Id)" />
+                                <MudIconButton Icon="@Icons.Material.Outlined.RestoreFromTrash" Size="Size.Small" Color="Color.Success" OnClick="() => ConfirmRestore(context.Id)" />
                             </MudTooltip>
                         </MudTd>
                     </RowTemplate>
