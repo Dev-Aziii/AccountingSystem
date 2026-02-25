@@ -24,7 +24,7 @@
 
     @if (isLoading)
     {
-        <MudPaper Class="pa-6" Elevation="2">
+        <MudPaper Class="pa-6 app-card" Elevation="0">
             <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Large" />
             <MudText Class="mt-3">Loading settings...</MudText>
         </MudPaper>
@@ -102,7 +102,7 @@
             </MudTabPanel>
 
             <MudTabPanel Text="Fiscal Year Management">
-                <MudPaper Class="pa-4" Elevation="1">
+                <MudPaper Class="pa-4 app-card" Elevation="0">
                     <MudText Typo="Typo.subtitle1" Class="mb-2">
                         Past fiscal years with activity are eligible for year-end closing.
                     </MudText>
@@ -129,11 +129,11 @@
                                 <MudTd DataLabel="Status">
                                     @if (context.IsClosed)
                                     {
-                                        <MudChip T="string" Color="Color.Success" Size="Size.Small">Closed</MudChip>
+                                        <MudChip T="string" Color="Color.Default" Size="Size.Small">Closed</MudChip>
                                     }
                                     else
                                     {
-                                        <MudChip T="string" Color="Color.Warning" Size="Size.Small">Open</MudChip>
+                                        <MudChip T="string" Color="Color.Default" Size="Size.Small">Open</MudChip>
                                     }
                                 </MudTd>
                                 <MudTd DataLabel="Closed At (UTC)">@(context.ClosedAtUtc.HasValue ? context.ClosedAtUtc.Value.ToString("yyyy-MM-dd HH:mm") : "-")</MudTd>

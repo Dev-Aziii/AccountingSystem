@@ -73,7 +73,7 @@
         </div>
         <MudButton Variant="Variant.Filled"
                    Style="background: linear-gradient(135deg, rgb(22, 84, 127) 0%, rgb(56, 146, 147) 100%); color: white; border-radius: 12px;"
-                   StartIcon="@Icons.Material.Filled.Refresh"                   Size="Size.Medium" OnClick="LoadData">
+                   StartIcon="@Icons.Material.Filled.Refresh"                   Size="Size.Small" OnClick="LoadData">
             Refresh
         </MudButton>
     </div>
@@ -119,13 +119,13 @@
 
     <!-- TABLE -->
     <div class="user-table-card">
-        <MudTable Items="@users" Hover="true" Loading="@isLoading" Filter="new Func<GlobalUserDTO, bool>(FilterFunc)"
-                  Dense="false" Elevation="0" Style="background: transparent;">
+        <MudTable Elevation="0" Dense="true" Items="@users" Hover="true" Loading="@isLoading" Filter="new Func<GlobalUserDTO, bool>(FilterFunc)"
+                  Style="background: transparent;">
             <ToolBarContent>
                 <MudText Typo="Typo.h6" Style="color: rgb(22, 84, 127); font-weight: 700;">All System Users</MudText>
                 <MudSpacer />
                 <MudTextField @bind-Value="searchString" Placeholder="Search users or companies..."
-                              Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"                              IconSize="Size.Medium"
+                              Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"                              IconSize="Size.Small"
                               Class="mt-0" Style="max-width: 300px;" />
                 <MudSelect T="string" @bind-Value="statusFilter" Label="Status" Class="ml-4" Style="max-width: 150px;">
                     <MudSelectItem T="string" Value='@("All")'>All</MudSelectItem>
@@ -170,15 +170,15 @@
                     @switch (context.Status)
                     {
                         case "Active":
-                            <MudChip T="string" Color="Color.Success" Size="Size.Small" Variant="Variant.Filled">Active
+                            <MudChip T="string" Color="Color.Default" Size="Size.Small" Variant="Variant.Filled">Active
                             </MudChip>
                             break;
                         case "Restricted":
-                            <MudChip T="string" Color="Color.Warning" Size="Size.Small" Variant="Variant.Filled">Restricted
+                            <MudChip T="string" Color="Color.Default" Size="Size.Small" Variant="Variant.Filled">Restricted
                             </MudChip>
                             break;
                         case "Blocked":
-                            <MudChip T="string" Color="Color.Error" Size="Size.Small" Variant="Variant.Filled">Blocked</MudChip>
+                            <MudChip T="string" Color="Color.Default" Size="Size.Small" Variant="Variant.Filled">Blocked</MudChip>
                             break;
                         default:
                             <MudChip T="string" Color="Color.Default" Size="Size.Small">@context.Status</MudChip>
@@ -189,21 +189,21 @@
                     <MudMenu Icon="@Icons.Material.Filled.MoreVert" Dense="true" AnchorOrigin="Origin.BottomRight">
                         @if (context.Status != "Active")
                         {
-                            <MudMenuItem Icon="@Icons.Material.Filled.CheckCircle" IconColor="Color.Success"
+                            <MudMenuItem Icon="@Icons.Material.Filled.CheckCircle" IconColor="Color.Default"
                                          OnClick="@(() => ChangeUserStatus(context, "Active"))">
                                 Activate
                             </MudMenuItem>
                         }
                         @if (context.Status != "Restricted")
                         {
-                            <MudMenuItem Icon="@Icons.Material.Filled.Warning" IconColor="Color.Warning"
+                            <MudMenuItem Icon="@Icons.Material.Filled.Warning" IconColor="Color.Default"
                                          OnClick="@(() => ChangeUserStatus(context, "Restricted"))">
                                 Restrict
                             </MudMenuItem>
                         }
                         @if (context.Status != "Blocked")
                         {
-                            <MudMenuItem Icon="@Icons.Material.Filled.Block" IconColor="Color.Error"
+                            <MudMenuItem Icon="@Icons.Material.Filled.Block" IconColor="Color.Default"
                                          OnClick="@(() => ConfirmBlockUser(context))">
                                 Block
                             </MudMenuItem>

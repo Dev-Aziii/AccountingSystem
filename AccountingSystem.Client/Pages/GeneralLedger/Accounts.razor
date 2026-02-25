@@ -39,7 +39,7 @@
             else
             {
                 <AuthorizeView Roles="Admin,Accounting" Context="authContext">
-                    <MudButton Variant="Variant.Filled" Class="create-btn" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenAddDialog">
+                    <MudButton Variant="Variant.Filled" Size="Size.Small" Color="Color.Primary" Class="create-btn" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenAddDialog">
                         Add new Account
                     </MudButton>
                 </AuthorizeView>
@@ -106,11 +106,11 @@
         <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-6">
             <!-- Tab 1: Active Accounts -->
             <MudTabPanel Text="Active Accounts" OnClick="@(() => LoadList(false))">
-                <MudTable Items="@accounts" Dense="true" Hover="true" Bordered="true" Striped="true" Filter="new Func<AccountDTO, bool>(FilterFunc)" Loading="@_loading">
+                <MudTable Elevation="0" Items="@accounts" Dense="true" Hover="true" Filter="new Func<AccountDTO, bool>(FilterFunc)" Loading="@_loading">
                     <ToolBarContent>
                         <MudText Typo="Typo.h6">Active List</MudText>
                         <MudSpacer />
-                        <MudTextField @bind-Value="searchString" Placeholder="Search..." Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+                        <MudTextField @bind-Value="searchString" Placeholder="Search..." Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Small" Class="mt-0"></MudTextField>
                     </ToolBarContent>
                     <HeaderContent>
                         <MudTh>Code</MudTh>
@@ -131,19 +131,19 @@
                                     ; break;
                                 case "Liability":
 
-                                    <MudChip T="string" Color="Color.Error" Size="Size.Small" Variant="Variant.Text">Liability</MudChip>
+                                    <MudChip T="string" Color="Color.Default" Size="Size.Small" Variant="Variant.Text">Liability</MudChip>
                                     ; break;
                                 case "Equity":
 
-                                    <MudChip T="string" Color="Color.Info" Size="Size.Small" Variant="Variant.Text">Equity</MudChip>
+                                    <MudChip T="string" Color="Color.Default" Size="Size.Small" Variant="Variant.Text">Equity</MudChip>
                                     ; break;
                                 case "Revenue":
 
-                                    <MudChip T="string" Color="Color.Success" Size="Size.Small" Variant="Variant.Text">Revenue</MudChip>
+                                    <MudChip T="string" Color="Color.Default" Size="Size.Small" Variant="Variant.Text">Revenue</MudChip>
                                     ; break;
                                 case "Expense":
 
-                                    <MudChip T="string" Color="Color.Warning" Size="Size.Small" Variant="Variant.Text">Expense</MudChip>
+                                    <MudChip T="string" Color="Color.Default" Size="Size.Small" Variant="Variant.Text">Expense</MudChip>
                                     ; break;
                                 default:
 
@@ -153,8 +153,8 @@
                         </MudTd>
                         <AuthorizeView Roles="Admin,Accounting" Context="authContext">
                             <MudTd DataLabel="Actions" Style="text-align:right">
-                                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Secondary" OnClick="() => OpenEditDialog(context)" />
-                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="() => ConfirmDelete(context.Id)" />
+                                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Default" OnClick="() => OpenEditDialog(context)" />
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Default" OnClick="() => ConfirmDelete(context.Id)" />
                             </MudTd>
                         </AuthorizeView>
                     </RowTemplate>
@@ -165,7 +165,7 @@
             <!-- Tab 2: Archived Accounts -->
             <AuthorizeView Roles="Admin,Accounting" Context="authContext">
                 <MudTabPanel Text="Archived Accounts" OnClick="@(() => LoadList(true))">
-                    <MudTable Items="@accounts" Dense="true" Hover="true" Bordered="true" Striped="true" Filter="new Func<AccountDTO, bool>(FilterFunc)" Loading="@_loading">
+                    <MudTable Elevation="0" Items="@accounts" Dense="true" Hover="true" Filter="new Func<AccountDTO, bool>(FilterFunc)" Loading="@_loading">
                         <HeaderContent>
                             <MudTh>Code</MudTh>
                             <MudTh>Name</MudTh>
@@ -178,7 +178,7 @@
                             <MudTd DataLabel="Type">@context.Type</MudTd>
                             <MudTd DataLabel="Actions" Style="text-align:right">
                                 <MudTooltip Text="Restore Account">
-                                    <MudIconButton Icon="@Icons.Material.Filled.RestoreFromTrash" Size="Size.Small" Color="Color.Success" OnClick="() => ConfirmRestore(context.Id)" />
+                                    <MudIconButton Icon="@Icons.Material.Filled.RestoreFromTrash" Size="Size.Small" Color="Color.Default" OnClick="() => ConfirmRestore(context.Id)" />
                                 </MudTooltip>
                             </MudTd>
                         </RowTemplate>

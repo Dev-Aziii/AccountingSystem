@@ -557,3 +557,43 @@ code {
 .stats-grid {
     gap: 24px;
 }
+
+/* Shared card + action normalization */
+.app-card {
+    border: 1px solid rgba(22, 84, 127, 0.12);
+    border-radius: 14px;
+    padding: 1rem;
+    background: #fff;
+}
+
+.icon-action-btn {
+    color: var(--mud-palette-text-secondary);
+}
+
+.status-chip {
+    font-weight: 600;
+}
+
+.status-chip--success {
+    border-color: rgba(46, 125, 50, 0.5) !important;
+    color: #2e7d32 !important;
+    background-color: rgba(46, 125, 50, 0.08) !important;
+}
+
+.status-chip--warning {
+    border-color: rgba(237, 108, 2, 0.5) !important;
+    color: #ed6c02 !important;
+    background-color: rgba(237, 108, 2, 0.08) !important;
+}
+
+.status-chip--danger {
+    border-color: rgba(211, 47, 47, 0.5) !important;
+    color: #d32f2f !important;
+    background-color: rgba(211, 47, 47, 0.08) !important;
+}
+
+.status-chip--neutral {
+    border-color: rgba(96, 125, 139, 0.45) !important;
+    color: #546e7a !important;
+    background-color: rgba(96, 125, 139, 0.08) !important;
+}
