@@ -24,7 +24,7 @@
 
     @if (isLoading)
     {
-        <MudPaper Class="pa-6" Elevation="2">
+        <MudPaper Class="pa-6 app-card" Elevation="0">
             <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Large" />
             <MudText Class="mt-3">Loading settings...</MudText>
         </MudPaper>
@@ -93,7 +93,7 @@
                                        Variant="Variant.Filled"
                                        Class="save-btn"
                                        Disabled="@isSubmitting"
-                                       StartIcon="@Icons.Material.Filled.Save">
+                                       StartIcon="@Icons.Material.Outlined.Save">
                                 @(isSubmitting ? "Saving..." : "Save Changes")
                             </MudButton>
                         </MudCardActions>
@@ -102,7 +102,7 @@
             </MudTabPanel>
 
             <MudTabPanel Text="Fiscal Year Management">
-                <MudPaper Class="pa-4" Elevation="1">
+                <MudPaper Class="pa-4 app-card" Elevation="0">
                     <MudText Typo="Typo.subtitle1" Class="mb-2">
                         Past fiscal years with activity are eligible for year-end closing.
                     </MudText>
@@ -117,7 +117,7 @@
                             <HeaderContent>
                                 <MudTh>Fiscal Year</MudTh>
                                 <MudTh>Period</MudTh>
-                                <MudTh style="text-align:right;">Net Income</MudTh>
+                                <MudTh Class="ux-100">Net Income</MudTh>
                                 <MudTh>Status</MudTh>
                                 <MudTh>Closed At (UTC)</MudTh>
                                 <MudTh>Action</MudTh>
@@ -125,15 +125,15 @@
                             <RowTemplate>
                                 <MudTd DataLabel="Fiscal Year">FY @context.FiscalYear</MudTd>
                                 <MudTd DataLabel="Period">@context.PeriodStart.ToString("yyyy-MM-dd") to @context.PeriodEnd.ToString("yyyy-MM-dd")</MudTd>
-                                <MudTd DataLabel="Net Income" style="text-align:right; font-family: monospace;">@context.NetIncome.ToString("C2", _phCulture)</MudTd>
+                                <MudTd Class="ux-101" DataLabel="Net Income">@context.NetIncome.ToString("C2", _phCulture)</MudTd>
                                 <MudTd DataLabel="Status">
                                     @if (context.IsClosed)
                                     {
-                                        <MudChip T="string" Color="Color.Success" Size="Size.Small">Closed</MudChip>
+                                        <MudChip T="string" Color="Color.Default" Size="Size.Small">Closed</MudChip>
                                     }
                                     else
                                     {
-                                        <MudChip T="string" Color="Color.Warning" Size="Size.Small">Open</MudChip>
+                                        <MudChip T="string" Color="Color.Default" Size="Size.Small">Open</MudChip>
                                     }
                                 </MudTd>
                                 <MudTd DataLabel="Closed At (UTC)">@(context.ClosedAtUtc.HasValue ? context.ClosedAtUtc.Value.ToString("yyyy-MM-dd HH:mm") : "-")</MudTd>

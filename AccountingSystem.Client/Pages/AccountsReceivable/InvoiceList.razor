@@ -52,7 +52,7 @@
                 </div>
 
                 <!-- Table Header Skeleton -->
-                <div class="d-flex justify-space-between mb-3 pa-2" style="border-bottom: 2px solid rgba(0,0,0,0.1);">
+                <div class="d-flex justify-space-between mb-3 pa-2 ux-103">
                     <MudSkeleton SkeletonType="SkeletonType.Text" Width="40px" Height="20px" />
                     <MudSkeleton SkeletonType="SkeletonType.Text" Width="100px" Height="20px" />
                     <MudSkeleton SkeletonType="SkeletonType.Text" Width="90px" Height="20px" />
@@ -65,26 +65,26 @@
                 <!-- Table Rows Skeleton -->
                 @for (int i = 0; i < 10; i++)
                 {
-                    <div class="d-flex justify-space-between align-center mb-3 pa-2" style="border-bottom: 1px solid rgba(0,0,0,0.05);">
-                        <div style="flex: 0.5;">
+                    <div class="d-flex justify-space-between align-center mb-3 pa-2 ux-097">
+                        <div class="ux-104">
                             <MudSkeleton SkeletonType="SkeletonType.Text" Width="30px" Height="16px" />
                         </div>
-                        <div style="flex: 2;">
+                        <div class="ux-105">
                             <MudSkeleton SkeletonType="SkeletonType.Text" Width="140px" Height="16px" />
                         </div>
-                        <div style="flex: 1;">
+                        <div class="ux-004">
                             <MudSkeleton SkeletonType="SkeletonType.Text" Width="90px" Height="16px" />
                         </div>
-                        <div style="flex: 1; text-align: right;">
+                        <div class="ux-107">
                             <MudSkeleton SkeletonType="SkeletonType.Text" Width="80px" Height="16px" Style="margin-left: auto;" />
                         </div>
-                        <div style="flex: 1; text-align: right;">
+                        <div class="ux-107">
                             <MudSkeleton SkeletonType="SkeletonType.Text" Width="80px" Height="16px" Style="margin-left: auto;" />
                         </div>
-                        <div style="flex: 0.8;">
+                        <div class="ux-108">
                             <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="70px" Height="24px" />
                         </div>
-                        <div style="flex: 1;">
+                        <div class="ux-004">
                             <div class="d-flex gap-2">
                                 <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="80px" Height="28px" />
                                 <MudSkeleton SkeletonType="SkeletonType.Circle" Width="32px" Height="32px" />
@@ -102,9 +102,9 @@
     }
     else
     {
-        <MudPaper Elevation="2" Class="pa-4 mb-4">
+        <MudPaper Elevation="0" Class="pa-4 mb-4 app-card">
             <div class="d-flex align-center mb-2">
-                <MudIcon Icon="@Icons.Material.Filled.FilterList" Class="mr-2" />
+                <MudIcon Icon="@Icons.Material.Outlined.FilterList" Class="mr-2" />
                 <MudText Typo="Typo.h6">Filters</MudText>
                 <MudSpacer />
                 @if (HasActiveFilters())
@@ -112,11 +112,11 @@
                     <MudChip T="string" Color="Color.Primary" Size="Size.Small" Class="mr-2">
                         @GetActiveFilterCount() active filter(s)
                     </MudChip>
-                    <MudButton Variant="Variant.Text"
-                               Color="Color.Secondary"
+                    <MudButton Variant="Variant.Outlined"
+                               Color="Color.Default"
                                Size="Size.Small"
                                OnClick="ClearFilters"
-                               StartIcon="@Icons.Material.Filled.Clear"
+                               StartIcon="@Icons.Material.Outlined.Clear"
                                Disabled="_loading">
                         Clear All
                     </MudButton>
@@ -161,7 +161,7 @@
                                   Label="Search"
                                   Placeholder="Search by customer or invoice id..."
                                   Adornment="Adornment.Start"
-                                  AdornmentIcon="@Icons.Material.Filled.Search"
+                                  AdornmentIcon="@Icons.Material.Outlined.Search"
                                   Variant="Variant.Outlined"
                                   Margin="Margin.Dense"
                                   Clearable="true"
@@ -170,11 +170,11 @@
             </MudGrid>
         </MudPaper>
 
-        <MudTable Items="@invoices" Dense="true" Hover="true" Bordered="true" Striped="true" Filter="new Func<InvoiceDTO, bool>(FilterFunc)" Loading="@_loading">
+        <MudTable Elevation="0" Items="@invoices" Dense="true" Hover="true" Filter="new Func<InvoiceDTO, bool>(FilterFunc)" Loading="@_loading">
             <ToolBarContent>
                 <MudText Typo="Typo.h6">Customer Invoices</MudText>
                 <MudSpacer />
-                <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" Href="/ar/invoices" Class="create-btn ml-3">Create Invoice</MudButton>
+                <MudButton Variant="Variant.Filled" Size="Size.Small" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" Href="/ar/invoices" Class="create-btn ml-3">Create Invoice</MudButton>
             </ToolBarContent>
             <HeaderContent>
                 <MudTh>ID</MudTh>
@@ -192,16 +192,16 @@
                 <MudTd DataLabel="Total" Style="text-align:right">@context.TotalAmount.ToString("C2", _phCulture)</MudTd>
                 <MudTd DataLabel="Balance" Style="text-align:right; font-weight:bold;">@context.Balance.ToString("C2", _phCulture)</MudTd>
                 <MudTd DataLabel="Status">
-                    <MudChip T="string" Size="Size.Small" Color="@GetStatusColor(context.Status)">@GetStatusLabel(context.Status)</MudChip>
+                    <MudChip T="string" Size="Size.Small" Color="Color.Default" Variant="Variant.Outlined" Class="@GetStatusClass(context.Status)">@GetStatusLabel(context.Status)</MudChip>
                 </MudTd>
                 <MudTd>
                     <div class="d-flex gap-2">
                         @if (context.Balance > 0)
                         {
-                            <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Success" OnClick="@(() => OpenReceiveDialog(context))">Receive</MudButton>
+                            <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" OnClick="@(() => OpenReceiveDialog(context))">Receive</MudButton>
                         }
                         <!-- NEW: Download PDF Button -->
-                        <MudIconButton Icon="@Icons.Material.Filled.PictureAsPdf" Color="Color.Error" Size="Size.Small" OnClick="@(() => DownloadPdf(context.Id))" title="Download PDF" />
+                        <MudIconButton Icon="@Icons.Material.Filled.PictureAsPdf" Color="Color.Default" Size="Size.Small" OnClick="@(() => DownloadPdf(context.Id))" title="Download PDF" />
                     </div>
                 </MudTd>
             </RowTemplate>
@@ -332,13 +332,14 @@
             ? status
             : null;
 
-    private static Color GetStatusColor(DocumentStatus status)
+    private static string GetStatusClass(DocumentStatus status)
         => status switch
         {
-            DocumentStatus.Paid => Color.Success,
-            DocumentStatus.PartiallyPaid => Color.Warning,
-            DocumentStatus.Void => Color.Secondary,
-            _ => Color.Error
+            DocumentStatus.Paid => "status-chip status-chip--success",
+            DocumentStatus.PartiallyPaid => "status-chip status-chip--warning",
+            DocumentStatus.Unpaid => "status-chip status-chip--danger",
+            DocumentStatus.Void => "status-chip status-chip--neutral",
+            _ => "status-chip status-chip--neutral"
         };
 
     private static string GetStatusLabel(DocumentStatus status)

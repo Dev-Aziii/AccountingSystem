@@ -14,13 +14,13 @@
 <MudDialog>
     <TitleContent>
         <MudText Typo="Typo.h6">
-            <MudIcon Icon="@Icons.Material.Filled.Receipt" Class="mr-2" />
+            <MudIcon Icon="@Icons.Material.Outlined.Receipt" Class="mr-2" />
             Record Invoice Payment
         </MudText>
     </TitleContent>
 
     <DialogContent>
-        <MudPaper Elevation="0" Class="pa-4 mb-4" Style="background-color: var(--mud-palette-background-grey);">
+        <MudPaper Elevation="0" Class="pa-4 mb-4 app-card" Style="background-color: var(--mud-palette-background-grey);">
             <MudGrid Spacing="2">
                 <MudItem xs="12" sm="6">
                     <MudText Typo="Typo.body2" Color="Color.Default">
@@ -47,16 +47,16 @@
                                AnchorOrigin="Origin.BottomCenter"
                                HelperText="How the payment will be received">
                         <MudSelectItem Value="@PaymentMethod.Cash">
-                            <MudIcon Icon="@Icons.Material.Filled.Money" Size="Size.Small" Class="mr-2" />Cash
+                            <MudIcon Icon="@Icons.Material.Outlined.Money" Size="Size.Small" Class="mr-2" />Cash
                         </MudSelectItem>
                         <MudSelectItem Value="@PaymentMethod.Check">
-                            <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Small" Class="mr-2" />Check
+                            <MudIcon Icon="@Icons.Material.Outlined.CheckCircle" Size="Size.Small" Class="mr-2" />Check
                         </MudSelectItem>
                         <MudSelectItem Value="@PaymentMethod.Online">
-                            <MudIcon Icon="@Icons.Material.Filled.CreditCard" Size="Size.Small" Class="mr-2" />Online (PayMongo)
+                            <MudIcon Icon="@Icons.Material.Outlined.CreditCard" Size="Size.Small" Class="mr-2" />Online (PayMongo)
                         </MudSelectItem>
                         <MudSelectItem Value="@PaymentMethod.BankTransfer">
-                            <MudIcon Icon="@Icons.Material.Filled.AccountBalance" Size="Size.Small" Class="mr-2" />Bank Transfer
+                            <MudIcon Icon="@Icons.Material.Outlined.AccountBalance" Size="Size.Small" Class="mr-2" />Bank Transfer
                         </MudSelectItem>
                     </MudSelect>
                 </MudItem>
@@ -81,7 +81,7 @@
                     <AccountSelect @bind-SelectedAccountId="model.AssetAccountId"
                                    TypeFilter="Asset" />
                     <MudText Typo="Typo.caption" Color="Color.Info" Class="mt-1">
-                        <MudIcon Icon="@Icons.Material.Filled.Info" Size="Size.Small" Class="mr-1" />
+                        <MudIcon Icon="@Icons.Material.Outlined.Info" Size="Size.Small" Class="mr-1" />
                         @(model.PaymentMethod == PaymentMethod.Online
                                                 ? "Where should the online payment settle?"
                                                 : "Select the Cash/Bank account to deposit funds into")
@@ -129,7 +129,7 @@
                    OnClick="Submit"
                    Variant="Variant.Filled"
                    Disabled="@(!success || isSubmitting)"
-                   StartIcon="@(isSubmitting ? null : (model.PaymentMethod == PaymentMethod.Online ? Icons.Material.Filled.Link : Icons.Material.Filled.Payment))">
+                   StartIcon="@(isSubmitting ? null : (model.PaymentMethod == PaymentMethod.Online ? Icons.Material.Outlined.Link : Icons.Material.Outlined.Payment))">
             @if (isSubmitting)
             {
                 <MudProgressCircular Class="mr-2" Size="Size.Small" Indeterminate="true" />

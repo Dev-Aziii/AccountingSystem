@@ -4,25 +4,25 @@
 <MudDialog>
     <TitleContent>
         <MudText Typo="Typo.h6">
-            <MudIcon Icon="@Icons.Material.Filled.History" Class="mr-2" />
+            <MudIcon Icon="@Icons.Material.Outlined.History" Class="mr-2" />
             Audit Log Details
         </MudText>
     </TitleContent>
 
     <DialogContent>
-        <MudPaper Elevation="0" Class="pa-4 mb-4" Style="background-color: var(--mud-palette-background-grey);">
+        <MudPaper Elevation="0" Class="pa-4 mb-4 app-card" Style="background-color: var(--mud-palette-background-grey);">
             <MudGrid Spacing="3">
                 <MudItem xs="12" sm="6">
                     <MudText Typo="Typo.caption" Color="Color.Default">User</MudText>
                     <MudText Typo="Typo.body2" Class="mt-1">
-                        <MudIcon Icon="@Icons.Material.Filled.Person" Size="Size.Small" Class="mr-1" />
+                        <MudIcon Icon="@Icons.Material.Outlined.Person" Size="Size.Small" Class="mr-1" />
                         <strong>@Log.UserEmail</strong>
                     </MudText>
                 </MudItem>
                 <MudItem xs="12" sm="6">
                     <MudText Typo="Typo.caption" Color="Color.Default">Timestamp</MudText>
                     <MudText Typo="Typo.body2" Class="mt-1">
-                        <MudIcon Icon="@Icons.Material.Filled.AccessTime" Size="Size.Small" Class="mr-1" />
+                        <MudIcon Icon="@Icons.Material.Outlined.AccessTime" Size="Size.Small" Class="mr-1" />
                         <strong>@Log.Timestamp.ToLocalTime().ToString("g")</strong>
                     </MudText>
                 </MudItem>
@@ -40,7 +40,7 @@
                 <MudItem xs="12" sm="6">
                     <MudText Typo="Typo.caption" Color="Color.Default">Target Entity</MudText>
                     <MudText Typo="Typo.body2" Class="mt-1">
-                        <MudIcon Icon="@Icons.Material.Filled.Label" Size="Size.Small" Class="mr-1" />
+                        <MudIcon Icon="@Icons.Material.Outlined.Label" Size="Size.Small" Class="mr-1" />
                         <strong>@Log.EntityName</strong>
                     </MudText>
                 </MudItem>
@@ -48,20 +48,20 @@
         </MudPaper>
 
         <MudText Typo="Typo.subtitle2" Class="mb-2">
-            <MudIcon Icon="@Icons.Material.Filled.Code" Size="Size.Small" Class="mr-1" />
+            <MudIcon Icon="@Icons.Material.Outlined.Code" Size="Size.Small" Class="mr-1" />
             Request Payload / Changes
         </MudText>
-        <MudPaper Class="pa-3"
-                  Elevation="1"
+        <MudPaper Class="pa-3 app-card"
+                  Elevation="0"
                   Style="max-height: 400px; overflow: auto; background-color: #1e1e1e; border-radius: 4px;">
-            <pre style="font-family: 'Courier New', monospace; font-size: 0.85rem; white-space: pre-wrap; color: #d4d4d4; margin: 0;">@FormatJson(Log.Changes)</pre>
+            <pre class="ux-001">@FormatJson(Log.Changes)</pre>
         </MudPaper>
     </DialogContent>
 
     <DialogActions>
         <MudButton OnClick="Cancel"
                    Variant="Variant.Text"
-                   StartIcon="@Icons.Material.Filled.Close">
+                   StartIcon="@Icons.Material.Outlined.Close">
             Close
         </MudButton>
     </DialogActions>
@@ -100,22 +100,22 @@
 
     private string GetActionIcon(string action)
     {
-        if (action == "LOGIN") return Icons.Material.Filled.Login;
+        if (action == "LOGIN") return Icons.Material.Outlined.Login;
 
-        if (action.StartsWith("USER-")) return Icons.Material.Filled.Person;
-        if (action.StartsWith("CUSTOMER-")) return Icons.Material.Filled.Person;
-        if (action.StartsWith("VENDOR-")) return Icons.Material.Filled.Business;
-        if (action.StartsWith("ACCOUNT-")) return Icons.Material.Filled.AccountBalance;
-        if (action.StartsWith("BILL-")) return Icons.Material.Filled.Receipt;
-        if (action.StartsWith("INVOICE-")) return Icons.Material.Filled.Receipt;
-        if (action == "JOURNAL-ENTRY") return Icons.Material.Filled.Book;
+        if (action.StartsWith("USER-")) return Icons.Material.Outlined.Person;
+        if (action.StartsWith("CUSTOMER-")) return Icons.Material.Outlined.Person;
+        if (action.StartsWith("VENDOR-")) return Icons.Material.Outlined.Business;
+        if (action.StartsWith("ACCOUNT-")) return Icons.Material.Outlined.AccountBalance;
+        if (action.StartsWith("BILL-")) return Icons.Material.Outlined.Receipt;
+        if (action.StartsWith("INVOICE-")) return Icons.Material.Outlined.Receipt;
+        if (action == "JOURNAL-ENTRY") return Icons.Material.Outlined.Book;
 
         // Fallbacks for raw HTTP methods
         return action switch
         {
             "POST" => Icons.Material.Filled.Add,
             "PUT" => Icons.Material.Filled.Edit,
-            "DELETE" => Icons.Material.Filled.Delete,
+            "DELETE" => Icons.Material.Outlined.Archive,
             _ => Icons.Material.Filled.Circle
         };
     }
