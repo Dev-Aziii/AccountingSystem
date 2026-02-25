@@ -10,7 +10,7 @@
 
         <!-- Logo and Company Info -->
         <div class="app-bar-content">
-            <MudIconButton Icon="@Icons.Material.Filled.Menu"
+            <MudIconButton Icon="@Icons.Material.Outlined.Menu"
                            Color="Color.Inherit"
                            Edge="Edge.Start"
                            Class="menu-toggle"
@@ -44,10 +44,10 @@
                             <ActivatorContent>
                                 <MudButton Variant="Variant.Text"
                                            Class="user-button"
-                                           EndIcon="@Icons.Material.Filled.KeyboardArrowDown">
+                                           EndIcon="@Icons.Material.Outlined.KeyboardArrowDown">
                                     <div class="user-info">
                                         <MudAvatar Class="user-avatar" Size="Size.Medium">
-                                            <MudIcon Icon="@Icons.Material.Filled.AccountCircle" />
+                                            <MudIcon Icon="@Icons.Material.Outlined.AccountCircle" />
                                         </MudAvatar>
                                         <div class="user-text">
                                             <MudText Typo="Typo.body2" Class="user-name">
@@ -60,13 +60,13 @@
                             <ChildContent>
                                 <div class="user-menu-content">
                                     <MudMenuItem Href="/profile"
-                                                 Icon="@Icons.Material.Filled.Person"
+                                                 Icon="@Icons.Material.Outlined.Person"
                                                  Class="menu-item">
                                         My Profile
                                     </MudMenuItem>
                                     <MudDivider Class="my-2" />
                                     <MudMenuItem OnClick="Logout"
-                                                 Icon="@Icons.Material.Filled.Logout"
+                                                 Icon="@Icons.Material.Outlined.Logout"
                                                  Class="menu-item logout-item">
                                         Logout
                                     </MudMenuItem>
@@ -80,13 +80,13 @@
                         <MudButton Variant="Variant.Filled"
                                    Class="login-button"
                                    Href="/"
-                                   StartIcon="@Icons.Material.Filled.Login">
+                                   StartIcon="@Icons.Material.Outlined.Login">
                             Login
                         </MudButton>
                         <MudButton Variant="Variant.Outlined"
                                    Class="register-button"
                                    Href="/register"
-                                   StartIcon="@Icons.Material.Filled.AppRegistration">
+                                   StartIcon="@Icons.Material.Outlined.AppRegistration">
                             Register
                         </MudButton>
                     </div>

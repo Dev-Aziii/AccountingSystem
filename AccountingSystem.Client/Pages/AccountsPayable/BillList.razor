@@ -51,7 +51,7 @@
                 </div>
 
                 <!-- Table Header Skeleton -->
-                <div class="d-flex justify-space-between mb-3 pa-2" style="border-bottom: 2px solid rgba(0,0,0,0.1);">
+                <div class="d-flex justify-space-between mb-3 pa-2 ux-103">
                     <MudSkeleton SkeletonType="SkeletonType.Text" Width="70px" Height="20px" />
                     <MudSkeleton SkeletonType="SkeletonType.Text" Width="100px" Height="20px" />
                     <MudSkeleton SkeletonType="SkeletonType.Text" Width="90px" Height="20px" />
@@ -64,26 +64,26 @@
                 <!-- Table Rows Skeleton -->
                 @for (int i = 0; i < 10; i++)
                 {
-                    <div class="d-flex justify-space-between align-center mb-3 pa-2" style="border-bottom: 1px solid rgba(0,0,0,0.05);">
-                        <div style="flex: 1;">
+                    <div class="d-flex justify-space-between align-center mb-3 pa-2 ux-097">
+                        <div class="ux-004">
                             <MudSkeleton SkeletonType="SkeletonType.Text" Width="90px" Height="16px" />
                         </div>
-                        <div style="flex: 1.5;">
+                        <div class="ux-106">
                             <MudSkeleton SkeletonType="SkeletonType.Text" Width="140px" Height="16px" />
                         </div>
-                        <div style="flex: 1;">
+                        <div class="ux-004">
                             <MudSkeleton SkeletonType="SkeletonType.Text" Width="90px" Height="16px" />
                         </div>
-                        <div style="flex: 1; text-align: right;">
+                        <div class="ux-107">
                             <MudSkeleton SkeletonType="SkeletonType.Text" Width="80px" Height="16px" Style="margin-left: auto;" />
                         </div>
-                        <div style="flex: 1; text-align: right;">
+                        <div class="ux-107">
                             <MudSkeleton SkeletonType="SkeletonType.Text" Width="80px" Height="16px" Style="margin-left: auto;" />
                         </div>
-                        <div style="flex: 0.8;">
+                        <div class="ux-108">
                             <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="70px" Height="24px" />
                         </div>
-                        <div style="flex: 0.8;">
+                        <div class="ux-108">
                             <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="60px" Height="28px" />
                         </div>
                     </div>
@@ -100,7 +100,7 @@
     {
         <MudPaper Elevation="2" Class="pa-4 mb-4">
             <div class="d-flex align-center mb-2">
-                <MudIcon Icon="@Icons.Material.Filled.FilterList" Class="mr-2" />
+                <MudIcon Icon="@Icons.Material.Outlined.FilterList" Class="mr-2" />
                 <MudText Typo="Typo.h6">Filters</MudText>
                 <MudSpacer />
                 @if (HasActiveFilters())
@@ -112,7 +112,7 @@
                                Color="Color.Secondary"
                                Size="Size.Small"
                                OnClick="ClearFilters"
-                               StartIcon="@Icons.Material.Filled.Clear"
+                               StartIcon="@Icons.Material.Outlined.Clear"
                                Disabled="_loading">
                         Clear All
                     </MudButton>
@@ -157,7 +157,7 @@
                                   Label="Search"
                                   Placeholder="Search by ref # or vendor..."
                                   Adornment="Adornment.Start"
-                                  AdornmentIcon="@Icons.Material.Filled.Search"
+                                  AdornmentIcon="@Icons.Material.Outlined.Search"
                                   Variant="Variant.Outlined"
                                   Margin="Margin.Dense"
                                   Clearable="true"
@@ -170,7 +170,7 @@
             <ToolBarContent>
                 <MudText Typo="Typo.h6">Vendor Bills</MudText>
                 <MudSpacer />
-                <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" Href="/ap/bills" Class="create-btn ml-3">Create Bill</MudButton>
+                <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Outlined.Add" Href="/ap/bills" Class="create-btn ml-3">Create Bill</MudButton>
             </ToolBarContent>
             <HeaderContent>
                 <MudTh>Ref #</MudTh>
