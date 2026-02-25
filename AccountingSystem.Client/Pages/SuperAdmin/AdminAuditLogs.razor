@@ -8,30 +8,6 @@
 
 <PageTitle>Super Admin Audit Logs</PageTitle>
 
-<style>
-    .audit-page-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 1.5rem;
-    }
-
-    .audit-table-card {
-        background: white;
-        border-radius: 20px;
-        border: 1px solid rgba(22, 84, 127, 0.1);
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
-        overflow: hidden;
-    }
-
-    .audit-detail-row {
-        background: rgba(22, 84, 127, 0.03);
-        padding: 0.75rem 1rem;
-        border-radius: 8px;
-        margin-top: 0.25rem;
-        font-size: 0.85rem;
-    }
-</style>
 
 <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4 mb-10">
     <!-- HEADER -->
@@ -46,7 +22,7 @@
         </div>
         <MudButton Variant="Variant.Filled"
                    Style="background: linear-gradient(135deg, rgb(22, 84, 127) 0%, rgb(56, 146, 147) 100%); color: white; border-radius: 12px;"
-                   StartIcon="@Icons.Material.Filled.Refresh"                   Size="Size.Medium" OnClick="LoadData">
+                   StartIcon="@Icons.Material.Outlined.Refresh"                   Size="Size.Medium" OnClick="LoadData">
             Refresh
         </MudButton>
     </div>
@@ -60,7 +36,7 @@
                 <MudText Typo="Typo.h6" Style="color: rgb(22, 84, 127); font-weight: 700;">Action History</MudText>
                 <MudSpacer />
                 <MudTextField @bind-Value="searchString" Placeholder="Search logs..."                              Adornment="Adornment.Start"
-                              AdornmentIcon="@Icons.Material.Filled.Search"                              IconSize="Size.Medium" Class="mt-0"
+                              AdornmentIcon="@Icons.Material.Outlined.Search"                              IconSize="Size.Medium" Class="mt-0"
                               Style="max-width: 300px;" />
                 <MudSelect T="string" @bind-Value="actionFilter" Label="Action" Class="ml-4" Style="max-width: 200px;">
                     <MudSelectItem T="string" Value='@("All")'>All Actions</MudSelectItem>
@@ -92,7 +68,7 @@
                 </MudTd>
                 <MudTd DataLabel="Admin">
                     <div class="d-flex align-center gap-2">
-                        <MudIcon Icon="@Icons.Material.Filled.Security" Size="Size.Small"
+                        <MudIcon Icon="@Icons.Material.Outlined.Security" Size="Size.Small"
                                  Style="color: rgb(22, 84, 127); opacity: 0.5;" />
                         @context.AdminEmail
                     </div>
@@ -120,7 +96,7 @@
                                      Variant="Variant.Filled">
                                 @context.OldValue
                             </MudChip>
-                            <MudIcon Icon="@Icons.Material.Filled.ArrowForward" Size="Size.Small" Style="opacity: 0.5;" />
+                            <MudIcon Icon="@Icons.Material.Outlined.ArrowForward" Size="Size.Small" Style="opacity: 0.5;" />
                             <MudChip T="string" Size="Size.Small" Color="@GetStatusColor(context.NewValue)"
                                      Variant="Variant.Filled">
                                 @context.NewValue
@@ -134,7 +110,7 @@
                 </MudTd>
                 <MudTd DataLabel="Details">
                     <MudTooltip Text="@context.Details">
-                        <MudIcon Icon="@Icons.Material.Filled.Info" Size="Size.Small"
+                        <MudIcon Icon="@Icons.Material.Outlined.Info" Size="Size.Small"
                                  Style="color: rgb(56, 146, 147); cursor: pointer;" />
                     </MudTooltip>
                 </MudTd>
@@ -191,9 +167,9 @@
 
     private string GetTargetIcon(string targetType) => targetType switch
     {
-        "Company" => Icons.Material.Filled.Business,
-        "User" => Icons.Material.Filled.Person,
-        _ => Icons.Material.Filled.Info
+        "Company" => Icons.Material.Outlined.Business,
+        "User" => Icons.Material.Outlined.Person,
+        _ => Icons.Material.Outlined.Info
     };
 
     private Color GetStatusColor(string status) => status switch

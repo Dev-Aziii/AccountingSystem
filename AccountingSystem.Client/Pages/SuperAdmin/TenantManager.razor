@@ -9,56 +9,6 @@
 
 <PageTitle>Tenant Management</PageTitle>
 
-<style>
-    .tenant-page-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 1.5rem;
-    }
-
-    .tenant-stats-row {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-        gap: 1rem;
-        margin-bottom: 1.5rem;
-    }
-
-    .tenant-stat-card {
-        padding: 1rem 1.25rem;
-        background: white;
-        border-radius: 14px;
-        border: 1px solid rgba(22, 84, 127, 0.1);
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-    }
-
-    .tenant-stat-value {
-        font-size: 1.5rem;
-        font-weight: 800;
-        color: rgb(22, 84, 127);
-        line-height: 1.2;
-    }
-
-    .tenant-stat-label {
-        font-size: 0.7rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.3px;
-        color: rgb(22, 84, 127);
-        opacity: 0.65;
-    }
-
-    .tenant-table-card {
-        background: white;
-        border-radius: 20px;
-        border: 1px solid rgba(22, 84, 127, 0.1);
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
-        overflow: hidden;
-    }
-</style>
 
 <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4 mb-10">
     <!-- HEADER -->
@@ -73,7 +23,7 @@
         </div>
         <MudButton Variant="Variant.Filled"
                    Style="background: linear-gradient(135deg, rgb(22, 84, 127) 0%, rgb(56, 146, 147) 100%); color: white; border-radius: 12px;"
-                   StartIcon="@Icons.Material.Filled.Refresh"                   Size="Size.Medium" OnClick="LoadData">
+                   StartIcon="@Icons.Material.Outlined.Refresh"                   Size="Size.Medium" OnClick="LoadData">
             Refresh
         </MudButton>
     </div>
@@ -81,28 +31,28 @@
     <!-- QUICK STATS -->
     <div class="tenant-stats-row">
         <div class="tenant-stat-card">
-            <MudIcon Icon="@Icons.Material.Filled.Business" Style="color: #1565C0;" />
+            <MudIcon Icon="@Icons.Material.Outlined.Business" Style="color: #1565C0;" />
             <div>
                 <div class="tenant-stat-value">@tenants.Count</div>
                 <div class="tenant-stat-label">Total Tenants</div>
             </div>
         </div>
         <div class="tenant-stat-card">
-            <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Style="color: #4CAF50;" />
+            <MudIcon Icon="@Icons.Material.Outlined.CheckCircle" Style="color: #4CAF50;" />
             <div>
                 <div class="tenant-stat-value">@tenants.Count(t => t.Status == "Active")</div>
                 <div class="tenant-stat-label">Active</div>
             </div>
         </div>
         <div class="tenant-stat-card">
-            <MudIcon Icon="@Icons.Material.Filled.PauseCircle" Style="color: #FF9800;" />
+            <MudIcon Icon="@Icons.Material.Outlined.PauseCircle" Style="color: #FF9800;" />
             <div>
                 <div class="tenant-stat-value">@tenants.Count(t => t.Status == "Suspended")</div>
                 <div class="tenant-stat-label">Suspended</div>
             </div>
         </div>
         <div class="tenant-stat-card">
-            <MudIcon Icon="@Icons.Material.Filled.Block" Style="color: #F44336;" />
+            <MudIcon Icon="@Icons.Material.Outlined.Block" Style="color: #F44336;" />
             <div>
                 <div class="tenant-stat-value">@tenants.Count(t => t.Status == "Blocked")</div>
                 <div class="tenant-stat-label">Blocked</div>
@@ -119,7 +69,7 @@
                 </MudText>
                 <MudSpacer />
                 <MudTextField @bind-Value="searchString" Placeholder="Search tenants..."                              Adornment="Adornment.Start"
-                              AdornmentIcon="@Icons.Material.Filled.Search"                              IconSize="Size.Medium" Class="mt-0"
+                              AdornmentIcon="@Icons.Material.Outlined.Search"                              IconSize="Size.Medium" Class="mt-0"
                               Style="max-width: 300px;" />
                 <MudSelect T="string" @bind-Value="statusFilter" Label="Status" Class="ml-4" Style="max-width: 150px;">
                     <MudSelectItem T="string" Value='@("All")'>All</MudSelectItem>
@@ -169,24 +119,24 @@
                     }
                 </MudTd>
                 <MudTd DataLabel="Actions" Style="text-align: center;">
-                    <MudMenu Icon="@Icons.Material.Filled.MoreVert" Dense="true" AnchorOrigin="Origin.BottomRight">
+                    <MudMenu Icon="@Icons.Material.Outlined.MoreVert" Dense="true" AnchorOrigin="Origin.BottomRight">
                         @if (context.Status != "Active")
                         {
-                            <MudMenuItem Icon="@Icons.Material.Filled.CheckCircle" IconColor="Color.Success"
+                            <MudMenuItem Icon="@Icons.Material.Outlined.CheckCircle" IconColor="Color.Success"
                                          OnClick="@(() => ChangeStatus(context, "Active"))">
                                 Activate
                             </MudMenuItem>
                         }
                         @if (context.Status != "Suspended")
                         {
-                            <MudMenuItem Icon="@Icons.Material.Filled.PauseCircle" IconColor="Color.Warning"
+                            <MudMenuItem Icon="@Icons.Material.Outlined.PauseCircle" IconColor="Color.Warning"
                                          OnClick="@(() => ChangeStatus(context, "Suspended"))">
                                 Suspend
                             </MudMenuItem>
                         }
                         @if (context.Status != "Blocked")
                         {
-                            <MudMenuItem Icon="@Icons.Material.Filled.Block" IconColor="Color.Error"
+                            <MudMenuItem Icon="@Icons.Material.Outlined.Block" IconColor="Color.Error"
                                          OnClick="@(() => ConfirmBlock(context))">
                                 Block
                             </MudMenuItem>
