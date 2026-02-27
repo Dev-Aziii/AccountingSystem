@@ -18,14 +18,14 @@
     }
     else if (isSuccess)
     {
-        <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" Style="font-size: 5rem;" Class="mb-4" />
+        <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success"  Class="mb-4 u-64421442" />
         <MudText Typo="Typo.h4" Color="Color.Success">Payment Successful!</MudText>
         <MudText Class="mb-4">Your payment has been recorded.</MudText>
         <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="/ar/invoices/list">Return to Invoices</MudButton>
     }
     else
     {
-        <MudIcon Icon="@Icons.Material.Filled.Error" Color="Color.Error" Style="font-size: 5rem;" Class="mb-4" />
+        <MudIcon Icon="@Icons.Material.Filled.Error" Color="Color.Error"  Class="mb-4 u-64421442" />
         <MudText Typo="Typo.h4" Color="Color.Error">Payment Failed</MudText>
         <MudText Class="mb-4">@errorMessage</MudText>
         <MudButton Variant="Variant.Filled" Color="Color.Secondary" Href="/ar/invoices/list">Back to List</MudButton>

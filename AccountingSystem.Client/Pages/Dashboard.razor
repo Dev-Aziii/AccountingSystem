@@ -262,7 +262,7 @@
                         <span class="ytd-row-meta">₱@FormatCompact(TotalRevenue)</span>
                     </div>
                     <div class="ytd-bar-track">
-                        <div class="ytd-bar-fill ytd-fill-revenue" style="width: @revPct.ToString("F0")%;">
+                        <div class="@($"ytd-bar-fill ytd-fill-revenue {GetPercentWidthClass(revPct)}")">
                             <span class="ytd-bar-pct">@revPct.ToString("F0")%</span>
                         </div>
                     </div>
@@ -275,7 +275,7 @@
                         <span class="ytd-row-meta">₱@FormatCompact(TotalExpenses) / Revenue</span>
                     </div>
                     <div class="ytd-bar-track">
-                        <div class="ytd-bar-fill ytd-fill-expenses" style="width: @expRatio.ToString("F0")%;">
+                        <div class="@($"ytd-bar-fill ytd-fill-expenses {GetPercentWidthClass(expRatio)}")">
                             <span class="ytd-bar-pct">@expRatio.ToString("F0")%</span>
                         </div>
                     </div>
@@ -288,8 +288,7 @@
                         <span class="ytd-row-meta">@(marginIsNeg ? "(" : "")@ProfitMarginPercent.ToString("F1")%@(marginIsNeg ? ")" : "")</span>
                     </div>
                     <div class="ytd-bar-track">
-                        <div class="ytd-bar-fill @(marginIsNeg ? "ytd-fill-negative" : "ytd-fill-margin")"
-                             style="width: @Math.Min(marginPct, 100).ToString("F0")%;">
+                        <div class="@($"ytd-bar-fill {(marginIsNeg ? \"ytd-fill-negative\" : \"ytd-fill-margin\")} {GetPercentWidthClass(Math.Min(marginPct,100))}")">
                             <span class="ytd-bar-pct">@Math.Min(marginPct, 100).ToString("F0")%</span>
                         </div>
                     </div>
@@ -305,7 +304,7 @@
                     <!-- Accounts Payable -->
                     <div>
                         <div class="acct-col-header">
-                            <span class="acct-col-dot" style="background:#F44336;"></span>
+                            <span class="acct-col-dot u-e6a247e7"></span>
                             Accounts Payable
                         </div>
                         <div class="acct-row">
@@ -333,7 +332,7 @@
                     <!-- Accounts Receivable -->
                     <div>
                         <div class="acct-col-header">
-                            <span class="acct-col-dot" style="background:#1565C0;"></span>
+                            <span class="acct-col-dot u-260344fe"></span>
                             Accounts Receivable
                         </div>
                         <div class="acct-row">
@@ -368,7 +367,7 @@
              ════════════════════════════════════════ -->
         <div class="dash-section-label">Market Insights</div>
 
-        <div class="market-grid" style="padding-bottom: 2rem;">
+        <div class="market-grid u-7f6a9fd6">
 
             <!-- Inflation History -->
             <div class="market-card">
@@ -392,37 +391,37 @@
                               Height="190px"
                               ChartOptions="@inflationChartOptions" />
 
-                    <div style="margin-top: 1rem; padding-top: 0.875rem; border-top: 1px solid #f3f4f6;">
+                    <div  class="u-f026b6f5">
                         @{
                             var yoyChange = inflationData.Count >= 2
                                 ? (inflationData[0].Value ?? 0) - (inflationData[1].Value ?? 0)
                                 : (decimal?)null;
                             var avg3 = inflationData.Take(3).Where(x => x.Value.HasValue).Average(x => x.Value) ?? 0;
                         }
-                        <div class="d-flex justify-space-between" style="font-size: 0.78rem; color: #6b7280; margin-bottom: 0.4rem;">
+                        <div class="d-flex justify-space-between u-88c4b330">
                             <span>Current (@inflationData.First().Date)</span>
-                            <strong style="color: #9C27B0;">@(inflationData.First().Value?.ToString("F2") ?? "N/A")%</strong>
+                            <strong  class="u-5f51284e">@(inflationData.First().Value?.ToString("F2") ?? "N/A")%</strong>
                         </div>
                         @if (yoyChange.HasValue)
                         {
-                            <div class="d-flex justify-space-between" style="font-size: 0.78rem; color: #6b7280; margin-bottom: 0.4rem;">
+                            <div class="d-flex justify-space-between u-88c4b330">
                                 <span>YoY Change</span>
-                                <strong style="color: @(yoyChange >= 0 ? "#C62828" : "#2E7D32");">
+                                <strong class="@(yoyChange >= 0 ? "text-error" : "text-success")">
                                     @(yoyChange >= 0 ? "+" : "")@yoyChange.Value.ToString("F2")%
                                 </strong>
                             </div>
                         }
-                        <div class="d-flex justify-space-between" style="font-size: 0.78rem; color: #6b7280;">
+                        <div class="d-flex justify-space-between u-d508a3ea">
                             <span>3-Year Average</span>
-                            <strong style="color: #374151;">@avg3.ToString("F2")%</strong>
+                            <strong  class="u-8302605d">@avg3.ToString("F2")%</strong>
                         </div>
                     </div>
                 }
                 else
                 {
-                    <div style="text-align: center; padding: 3rem; color: #9ca3af;">
+                    <div  class="u-60052751">
                         <MudIcon Icon="@Icons.Material.Filled.CloudOff" Size="Size.Large" />
-                        <div style="margin-top: 0.5rem; font-size: 0.875rem;">Loading inflation data…</div>
+                        <div  class="u-de7e0ee6">Loading inflation data…</div>
                     </div>
                 }
             </div><!-- /Inflation card -->
@@ -436,12 +435,12 @@
                 {
                     <!-- Rate pill -->
                     <div class="fx-rate-pill">
-                        <div class="fx-flag" style="background: linear-gradient(135deg,#1565C0,#1e88e5);">$</div>
+                        <div class="fx-flag u-7542e41d">$</div>
                         <div>
                             <div class="fx-ccy-label">USD</div>
                         </div>
-                        <MudIcon Icon="@Icons.Material.Filled.ArrowForward" Size="Size.Small" Style="color:#9ca3af; flex-shrink:0;" />
-                        <div class="fx-flag" style="background: linear-gradient(135deg,#F9A825,#FDD835);">₱</div>
+                        <MudIcon Icon="@Icons.Material.Filled.ArrowForward" Size="Size.Small"  / class="u-d6d35f30">
+                        <div class="fx-flag u-98a3a983">₱</div>
                         <div>
                             <div class="fx-ccy-label">PHP</div>
                         </div>
@@ -455,7 +454,7 @@
                     <div class="fx-conv-row">
                         <div class="fx-conv-col">
                             <div class="fx-conv-lbl">
-                                <span class="fx-flag-sm" style="background: linear-gradient(135deg,#1565C0,#1e88e5);">$</span>
+                                <span class="fx-flag-sm u-7542e41d">$</span>
                                 USD Amount
                             </div>
                             <MudNumericField @bind-Value="usdInputAmount"
@@ -467,10 +466,10 @@
                         </div>
                         <MudIcon Icon="@Icons.Material.Filled.ArrowForward"
                                  Size="Size.Small"
-                                 Style="color:#9ca3af; margin-top:1.375rem; flex-shrink:0;" />
+                                  / class="u-45dbb42c">
                         <div class="fx-conv-col">
                             <div class="fx-conv-lbl">
-                                <span class="fx-flag-sm" style="background: linear-gradient(135deg,#F9A825,#FDD835);">₱</span>
+                                <span class="fx-flag-sm u-98a3a983">₱</span>
                                 PHP Result
                             </div>
                             <div class="fx-result">@((usdInputAmount * usdToPhpRate).ToString("N2"))</div>
@@ -484,7 +483,7 @@
                             <MudButton Variant="Variant.Outlined"
                                        Size="Size.Small"
                                        OnClick="@(() => usdInputAmount = amt)"
-                                       Style="border-color:#e5e7eb; color:#374151; font-weight:600; font-size:0.72rem;">
+                                       Class="chip-neutral">
                                 $@amt
                             </MudButton>
                         }
@@ -493,8 +492,8 @@
                     <!-- Inflation context -->
                     @if (inflationData.Any())
                     {
-                        <div style="background:#f8fafc; border:1px solid #e5e7eb; border-radius:8px; padding:0.875rem; margin-bottom:0.75rem;">
-                            <div style="font-size:0.68rem; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; color:#9ca3af; margin-bottom:0.625rem;">
+                        <div  class="u-ebade839">
+                            <div  class="u-c3803726">
                                 Major Indicators
                             </div>
                             <div class="acct-row">
@@ -521,9 +520,9 @@
                 }
                 else
                 {
-                    <div style="text-align: center; padding: 3rem; color: #9ca3af;">
+                    <div  class="u-60052751">
                         <MudIcon Icon="@Icons.Material.Filled.CloudOff" Size="Size.Large" />
-                        <div style="margin-top: 0.5rem; font-size: 0.875rem;">Loading forex data…</div>
+                        <div  class="u-de7e0ee6">Loading forex data…</div>
                     </div>
                 }
             </div><!-- /Forex card -->
@@ -665,6 +664,19 @@
             .Sum(a => a.Debit - a.Credit);
 
         NetProfit = TotalRevenue - TotalExpenses;
+    }
+
+
+    private static string GetPercentWidthClass(double value)
+    {
+        var pct = (int)Math.Round(Math.Clamp(value, 0d, 100d));
+        return $"w-pct-{pct}";
+    }
+
+    private static string GetPercentWidthClass(decimal value)
+    {
+        var pct = (int)Math.Round(Math.Clamp(value, 0m, 100m));
+        return $"w-pct-{pct}";
     }
 
     private string FormatCompact(decimal value)

@@ -52,7 +52,7 @@
         <!-- SKELETON FOR TABS AND TABLE -->
         <MudCard Elevation="2">
             <!-- Tabs Skeleton -->
-            <div class="d-flex pa-4" style="border-bottom: 1px solid rgba(0,0,0,0.12);">
+            <div class="d-flex pa-4" class="border-bottom-medium">
                 <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="150px" Height="36px" Class="mr-2" />
                 <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="170px" Height="36px" />
             </div>
@@ -65,7 +65,7 @@
                 </div>
 
                 <!-- Table Header Skeleton -->
-                <div class="d-flex justify-space-between mb-3 pa-2" style="border-bottom: 2px solid rgba(0,0,0,0.1);">
+                <div class="d-flex justify-space-between mb-3 pa-2" class="border-bottom-strong">
                     <MudSkeleton SkeletonType="SkeletonType.Text" Width="40px" Height="20px" />
                     <MudSkeleton SkeletonType="SkeletonType.Text" Width="100px" Height="20px" />
                     <MudSkeleton SkeletonType="SkeletonType.Text" Width="120px" Height="20px" />
@@ -76,20 +76,20 @@
                 <!-- Table Rows Skeleton -->
                 @for (int i = 0; i < 8; i++)
                 {
-                    <div class="d-flex justify-space-between align-center mb-3 pa-2" style="border-bottom: 1px solid rgba(0,0,0,0.05);">
-                        <div style="flex: 0.5;">
+                    <div class="d-flex justify-space-between align-center mb-3 pa-2" class="border-bottom-soft">
+                        <div class="flex-05">
                             <MudSkeleton SkeletonType="SkeletonType.Text" Width="30px" Height="16px" />
                         </div>
-                        <div style="flex: 2;">
+                        <div class="flex-2">
                             <MudSkeleton SkeletonType="SkeletonType.Text" Width="160px" Height="16px" />
                         </div>
-                        <div style="flex: 2;">
+                        <div class="flex-2">
                             <MudSkeleton SkeletonType="SkeletonType.Text" Width="180px" Height="16px" />
                         </div>
-                        <div style="flex: 1.5;">
+                        <div class="flex-15">
                             <MudSkeleton SkeletonType="SkeletonType.Text" Width="120px" Height="16px" />
                         </div>
-                        <div style="flex: 1; text-align: right;">
+                        <div class="flex-1 text-right">
                             <div class="d-flex justify-end">
                                 <MudSkeleton SkeletonType="SkeletonType.Circle" Width="32px" Height="32px" Class="mr-2" />
                                 <MudSkeleton SkeletonType="SkeletonType.Circle" Width="32px" Height="32px" />
@@ -121,7 +121,7 @@
                         <MudTh>Email</MudTh>
                         <MudTh>Phone</MudTh>
                         <AuthorizeView Roles="Admin,Accounting" Context="authContext">
-                            <MudTh Style="text-align:right">Actions</MudTh>
+                            <MudTh Class="text-right">Actions</MudTh>
                         </AuthorizeView>
                     </HeaderContent>
                     <RowTemplate>
@@ -130,7 +130,7 @@
                         <MudTd DataLabel="Email">@context.Email</MudTd>
                         <MudTd DataLabel="Phone">@context.Phone</MudTd>
                         <AuthorizeView Roles="Admin,Accounting" Context="authContext">
-                            <MudTd DataLabel="Actions" Style="text-align:right">
+                            <MudTd DataLabel="Actions" Class="text-right">
                                 <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Secondary" OnClick="() => OpenEditDialog(context)" />
                                 <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="() => ConfirmDelete(context.Id)" />
                             </MudTd>
@@ -147,13 +147,13 @@
                             <MudTh>ID</MudTh>
                             <MudTh>Name</MudTh>
                             <MudTh>Email</MudTh>
-                            <MudTh Style="text-align:right">Actions</MudTh>
+                            <MudTh Class="text-right">Actions</MudTh>
                         </HeaderContent>
                         <RowTemplate>
                             <MudTd DataLabel="ID">@context.Id</MudTd>
-                            <MudTd DataLabel="Name" Style="color:gray;">@context.Name</MudTd>
+                            <MudTd DataLabel="Name" Class="text-subtle">@context.Name</MudTd>
                             <MudTd DataLabel="Email">@context.Email</MudTd>
-                            <MudTd DataLabel="Actions" Style="text-align:right">
+                            <MudTd DataLabel="Actions" Class="text-right">
                                 <MudTooltip Text="Restore Customer">
                                     <MudIconButton Icon="@Icons.Material.Filled.RestoreFromTrash" Size="Size.Small" Color="Color.Success" OnClick="() => ConfirmRestore(context.Id)" />
                                 </MudTooltip>
