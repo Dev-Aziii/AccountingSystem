@@ -31,35 +31,35 @@
     <!-- QUICK STATS -->
     <div class="user-stats-row">
         <div class="user-stat-card">
-            <MudIcon Icon="@Icons.Material.Filled.People"  / class="u-c423e369">
+            <MudIcon Icon="@Icons.Material.Filled.People" Class="u-c423e369" />
             <div>
                 <div class="user-stat-value">@users.Count</div>
                 <div class="user-stat-label">Total Users</div>
             </div>
         </div>
         <div class="user-stat-card">
-            <MudIcon Icon="@Icons.Material.Filled.CheckCircle"  / class="u-8ac7607a">
+            <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Class="u-8ac7607a" />
             <div>
                 <div class="user-stat-value">@users.Count(u => u.Status == "Active")</div>
                 <div class="user-stat-label">Active</div>
             </div>
         </div>
         <div class="user-stat-card">
-            <MudIcon Icon="@Icons.Material.Filled.Warning"  / class="u-f7564ecf">
+            <MudIcon Icon="@Icons.Material.Filled.Warning" Class="u-f7564ecf" />
             <div>
                 <div class="user-stat-value">@users.Count(u => u.Status == "Restricted")</div>
                 <div class="user-stat-label">Restricted</div>
             </div>
         </div>
         <div class="user-stat-card">
-            <MudIcon Icon="@Icons.Material.Filled.Block"  / class="u-7b4b9992">
+            <MudIcon Icon="@Icons.Material.Filled.Block" Class="u-7b4b9992" />
             <div>
                 <div class="user-stat-value">@users.Count(u => u.Status == "Blocked")</div>
                 <div class="user-stat-label">Blocked</div>
             </div>
         </div>
         <div class="user-stat-card">
-            <MudIcon Icon="@Icons.Material.Filled.Business"  / class="u-6abf8daf">
+            <MudIcon Icon="@Icons.Material.Filled.Business" Class="u-6abf8daf" />
             <div>
                 <div class="user-stat-value">@users.Select(u => u.CompanyName).Distinct().Count()</div>
                 <div class="user-stat-label">Companies</div>
@@ -102,8 +102,7 @@
             <RowTemplate>
                 <MudTd DataLabel="Company">
                     <div class="d-flex align-center gap-2">
-                        <MudIcon Icon="@Icons.Material.Filled.Business" Size="Size.Small"
-                                  / class="u-e2bec351">
+                        <MudIcon Icon="@Icons.Material.Filled.Business" Size="Size.Small" Class="u-e2bec351" />
                         <b>@context.CompanyName</b>
                     </div>
                 </MudTd>

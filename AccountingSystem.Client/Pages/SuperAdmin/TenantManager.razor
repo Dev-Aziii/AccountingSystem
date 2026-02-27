@@ -31,28 +31,28 @@
     <!-- QUICK STATS -->
     <div class="tenant-stats-row">
         <div class="tenant-stat-card">
-            <MudIcon Icon="@Icons.Material.Filled.Business"  / class="u-c423e369">
+            <MudIcon Icon="@Icons.Material.Filled.Business" Class="u-c423e369" />
             <div>
                 <div class="tenant-stat-value">@tenants.Count</div>
                 <div class="tenant-stat-label">Total Tenants</div>
             </div>
         </div>
         <div class="tenant-stat-card">
-            <MudIcon Icon="@Icons.Material.Filled.CheckCircle"  / class="u-8ac7607a">
+            <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Class="u-8ac7607a" />
             <div>
                 <div class="tenant-stat-value">@tenants.Count(t => t.Status == "Active")</div>
                 <div class="tenant-stat-label">Active</div>
             </div>
         </div>
         <div class="tenant-stat-card">
-            <MudIcon Icon="@Icons.Material.Filled.PauseCircle"  / class="u-f7564ecf">
+            <MudIcon Icon="@Icons.Material.Filled.PauseCircle" Class="u-f7564ecf" />
             <div>
                 <div class="tenant-stat-value">@tenants.Count(t => t.Status == "Suspended")</div>
                 <div class="tenant-stat-label">Suspended</div>
             </div>
         </div>
         <div class="tenant-stat-card">
-            <MudIcon Icon="@Icons.Material.Filled.Block"  / class="u-7b4b9992">
+            <MudIcon Icon="@Icons.Material.Filled.Block" Class="u-7b4b9992" />
             <div>
                 <div class="tenant-stat-value">@tenants.Count(t => t.Status == "Blocked")</div>
                 <div class="tenant-stat-label">Blocked</div>

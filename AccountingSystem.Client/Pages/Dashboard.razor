@@ -288,7 +288,7 @@
                         <span class="ytd-row-meta">@(marginIsNeg ? "(" : "")@ProfitMarginPercent.ToString("F1")%@(marginIsNeg ? ")" : "")</span>
                     </div>
                     <div class="ytd-bar-track">
-                        <div class="@($"ytd-bar-fill {(marginIsNeg ? \"ytd-fill-negative\" : \"ytd-fill-margin\")} {GetPercentWidthClass(Math.Min(marginPct,100))}")">
+                        <div class="@($"ytd-bar-fill {(marginIsNeg ? "ytd-fill-negative" : "ytd-fill-margin")} {GetPercentWidthClass(Math.Min(marginPct,100))}")">
                             <span class="ytd-bar-pct">@Math.Min(marginPct, 100).ToString("F0")%</span>
                         </div>
                     </div>
@@ -439,7 +439,7 @@
                         <div>
                             <div class="fx-ccy-label">USD</div>
                         </div>
-                        <MudIcon Icon="@Icons.Material.Filled.ArrowForward" Size="Size.Small"  / class="u-d6d35f30">
+                        <MudIcon Icon="@Icons.Material.Filled.ArrowForward" Size="Size.Small" Class="u-d6d35f30" />
                         <div class="fx-flag u-98a3a983">₱</div>
                         <div>
                             <div class="fx-ccy-label">PHP</div>
@@ -465,8 +465,7 @@
                                              HideSpinButtons="true" />
                         </div>
                         <MudIcon Icon="@Icons.Material.Filled.ArrowForward"
-                                 Size="Size.Small"
-                                  / class="u-45dbb42c">
+                                 Size="Size.Small" Class="u-45dbb42c" />
                         <div class="fx-conv-col">
                             <div class="fx-conv-lbl">
                                 <span class="fx-flag-sm u-98a3a983">₱</span>

@@ -14,7 +14,7 @@
 <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-6 mb-8" id="printable-area">
 
     <MudPaper Class="page-header mb-6 no-print" Elevation="0">
-        <div class="d-flex justify-space-between align-center flex-wrap" class="gap-12">
+        <div class="d-flex justify-space-between align-center flex-wrap gap-12">
             <div>
                 <MudText Typo="Typo.h5" Class="mb-2 page-header-title">
                     Financial Statements
@@ -23,7 +23,7 @@
                     Fiscal-year financial position and performance
                 </MudText>
             </div>
-            <div class="d-flex align-center flex-wrap" class="gap-8">
+            <div class="d-flex align-center flex-wrap gap-8">
                 <MudSelect T="int"
                            Value="selectedFiscalYear"
                            ValueChanged="OnFiscalYearChanged"
@@ -85,8 +85,8 @@
                             <tr class="mud-theme-light">
                                 <th class="py-3"><b>ACCOUNT CODE</b></th>
                                 <th class="py-3"><b>ACCOUNT NAME</b></th>
-                                <th class="py-3" class="text-right"><b>DEBIT</b></th>
-                                <th class="py-3" class="text-right"><b>CREDIT</b></th>
+                                <th class="py-3 text-right"><b>DEBIT</b></th>
+                                <th class="py-3 text-right"><b>CREDIT</b></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -110,9 +110,9 @@
                                 var totalNetCredit = balanceTrialBalance.Accounts.Sum(a => (a.Debit - a.Credit) < 0 ? Math.Abs(a.Debit - a.Credit) : 0);
                             }
                             <tr  class="u-cfd6a5e3">
-                                <td colspan="2" class="py-4" class="text-right"><b>TOTALS:</b></td>
-                                <td class="py-4" class="text-right font-mono total-double"><b>@totalNetDebit.ToString("C2", _phCulture)</b></td>
-                                <td class="py-4" class="text-right font-mono total-double"><b>@totalNetCredit.ToString("C2", _phCulture)</b></td>
+                                <td colspan="2" class="py-4 text-right"><b>TOTALS:</b></td>
+                                <td class="py-4 text-right font-mono total-double"><b>@totalNetDebit.ToString("C2", _phCulture)</b></td>
+                                <td class="py-4 text-right font-mono total-double"><b>@totalNetCredit.ToString("C2", _phCulture)</b></td>
                             </tr>
                         </tfoot>
                     </MudSimpleTable>
@@ -145,7 +145,7 @@
                                 <tr><td class="pl-8">@line.AccountName</td><td class="text-right font-mono">@((line.Credit - line.Debit).ToString("C2", _phCulture))</td></tr>
                             }
                             <tr  class="u-3b4dccfd">
-                                <td class="text-right" class="pr-4"><b>Total Revenue</b></td>
+                                <td class="text-right pr-4"><b>Total Revenue</b></td>
                                 <td class="text-right font-mono"><b>@TotalRevenue.ToString("C2", _phCulture)</b></td>
                             </tr>
 
@@ -156,14 +156,14 @@
                                 <tr><td class="pl-8">@line.AccountName</td><td class="text-right font-mono">@((line.Debit - line.Credit).ToString("C2", _phCulture))</td></tr>
                             }
                             <tr  class="u-3b4dccfd">
-                                <td class="text-right" class="pr-4"><b>Total Expenses</b></td>
+                                <td class="text-right pr-4"><b>Total Expenses</b></td>
                                 <td class="text-right font-mono"><b>(@TotalExpense.ToString("C2", _phCulture))</b></td>
                             </tr>
 
                             <tr><td colspan="2" class="py-4"></td></tr>
                             <tr class="bg-info-soft">
                                 <td class="py-4 pl-4"><MudText Typo="Typo.h6"><b>NET INCOME</b></MudText></td>
-                                <td class="py-4 text-right" class="font-mono total-double"><MudText Typo="Typo.h6"><b>@NetIncome.ToString("C2", _phCulture)</b></MudText></td>
+                                <td class="py-4 text-right font-mono total-double"><MudText Typo="Typo.h6"><b>@NetIncome.ToString("C2", _phCulture)</b></MudText></td>
                             </tr>
                         </tbody>
                     </MudSimpleTable>
@@ -196,7 +196,7 @@
                                 <tr><td class="pl-8">@line.AccountName</td><td class="text-right font-mono">@((line.Debit - line.Credit).ToString("C2", _phCulture))</td></tr>
                             }
                             <tr  class="u-3b4dccfd">
-                                <td class="text-right" class="pr-4"><b>TOTAL ASSETS</b></td>
+                                <td class="text-right pr-4"><b>TOTAL ASSETS</b></td>
                                 <td class="text-right font-mono total-double"><b>@TotalAssets.ToString("C2", _phCulture)</b></td>
                             </tr>
 
@@ -207,7 +207,7 @@
                                 <tr><td class="pl-8">@line.AccountName</td><td class="text-right font-mono">@((line.Credit - line.Debit).ToString("C2", _phCulture))</td></tr>
                             }
                             <tr  class="u-3b4dccfd">
-                                <td class="text-right" class="pr-4"><b>Total Liabilities</b></td>
+                                <td class="text-right pr-4"><b>Total Liabilities</b></td>
                                 <td class="text-right font-mono"><b>@TotalLiabilities.ToString("C2", _phCulture)</b></td>
                             </tr>
 
@@ -219,14 +219,14 @@
                             }
                             <tr><td class="pl-8 mud-text-secondary"><i>Net Income (Current Fiscal Year)</i></td><td class="text-right font-mono">@NetIncome.ToString("C2", _phCulture)</td></tr>
                             <tr  class="u-3b4dccfd">
-                                <td class="text-right" class="pr-4"><b>Total Equity</b></td>
+                                <td class="text-right pr-4"><b>Total Equity</b></td>
                                 <td class="text-right font-mono"><b>@TotalEquity.ToString("C2", _phCulture)</b></td>
                             </tr>
 
                             <tr><td colspan="2" class="py-4"></td></tr>
                             <tr class="bg-success-soft">
                                 <td class="py-4 pl-4"><MudText Typo="Typo.h6"><b>TOTAL LIABILITIES & EQUITY</b></MudText></td>
-                                <td class="py-4 text-right" class="font-mono total-double"><MudText Typo="Typo.h6"><b>@((TotalLiabilities + TotalEquity).ToString("C2", _phCulture))</b></MudText></td>
+                                <td class="py-4 text-right font-mono total-double"><MudText Typo="Typo.h6"><b>@((TotalLiabilities + TotalEquity).ToString("C2", _phCulture))</b></MudText></td>
                             </tr>
                         </tbody>
                     </MudSimpleTable>
