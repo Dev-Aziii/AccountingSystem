@@ -117,7 +117,7 @@
                             <HeaderContent>
                                 <MudTh>Fiscal Year</MudTh>
                                 <MudTh>Period</MudTh>
-                                <MudTh style="text-align:right;">Net Income</MudTh>
+                                <MudTh  class="u-08a0ed40">Net Income</MudTh>
                                 <MudTh>Status</MudTh>
                                 <MudTh>Closed At (UTC)</MudTh>
                                 <MudTh>Action</MudTh>
@@ -125,7 +125,7 @@
                             <RowTemplate>
                                 <MudTd DataLabel="Fiscal Year">FY @context.FiscalYear</MudTd>
                                 <MudTd DataLabel="Period">@context.PeriodStart.ToString("yyyy-MM-dd") to @context.PeriodEnd.ToString("yyyy-MM-dd")</MudTd>
-                                <MudTd DataLabel="Net Income" style="text-align:right; font-family: monospace;">@context.NetIncome.ToString("C2", _phCulture)</MudTd>
+                                <MudTd DataLabel="Net Income" class="text-right font-mono">@context.NetIncome.ToString("C2", _phCulture)</MudTd>
                                 <MudTd DataLabel="Status">
                                     @if (context.IsClosed)
                                     {

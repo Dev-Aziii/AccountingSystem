@@ -51,7 +51,7 @@
                 </div>
 
                 <!-- Table Header Skeleton -->
-                <div class="d-flex justify-space-between mb-3 pa-2" style="border-bottom: 2px solid rgba(0,0,0,0.1);">
+                <div class="d-flex justify-space-between mb-3 pa-2" class="border-bottom-strong">
                     <MudSkeleton SkeletonType="SkeletonType.Text" Width="70px" Height="20px" />
                     <MudSkeleton SkeletonType="SkeletonType.Text" Width="100px" Height="20px" />
                     <MudSkeleton SkeletonType="SkeletonType.Text" Width="90px" Height="20px" />
@@ -64,26 +64,26 @@
                 <!-- Table Rows Skeleton -->
                 @for (int i = 0; i < 10; i++)
                 {
-                    <div class="d-flex justify-space-between align-center mb-3 pa-2" style="border-bottom: 1px solid rgba(0,0,0,0.05);">
-                        <div style="flex: 1;">
+                    <div class="d-flex justify-space-between align-center mb-3 pa-2" class="border-bottom-soft">
+                        <div class="flex-1">
                             <MudSkeleton SkeletonType="SkeletonType.Text" Width="90px" Height="16px" />
                         </div>
-                        <div style="flex: 1.5;">
+                        <div class="flex-15">
                             <MudSkeleton SkeletonType="SkeletonType.Text" Width="140px" Height="16px" />
                         </div>
-                        <div style="flex: 1;">
+                        <div class="flex-1">
                             <MudSkeleton SkeletonType="SkeletonType.Text" Width="90px" Height="16px" />
                         </div>
-                        <div style="flex: 1; text-align: right;">
-                            <MudSkeleton SkeletonType="SkeletonType.Text" Width="80px" Height="16px" Style="margin-left: auto;" />
+                        <div class="flex-1 text-right">
+                            <MudSkeleton SkeletonType="SkeletonType.Text" Width="80px" Height="16px"  / class="u-dc310e06">
                         </div>
-                        <div style="flex: 1; text-align: right;">
-                            <MudSkeleton SkeletonType="SkeletonType.Text" Width="80px" Height="16px" Style="margin-left: auto;" />
+                        <div class="flex-1 text-right">
+                            <MudSkeleton SkeletonType="SkeletonType.Text" Width="80px" Height="16px"  / class="u-dc310e06">
                         </div>
-                        <div style="flex: 0.8;">
+                        <div class="flex-08">
                             <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="70px" Height="24px" />
                         </div>
-                        <div style="flex: 0.8;">
+                        <div class="flex-08">
                             <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="60px" Height="28px" />
                         </div>
                     </div>
@@ -176,8 +176,8 @@
                 <MudTh>Ref #</MudTh>
                 <MudTh>Vendor</MudTh>
                 <MudTh>Due Date</MudTh>
-                <MudTh Style="text-align:right">Total</MudTh>
-                <MudTh Style="text-align:right">Balance</MudTh>
+                <MudTh Class="text-right">Total</MudTh>
+                <MudTh Class="text-right">Balance</MudTh>
                 <MudTh>Status</MudTh>
                 <MudTh>Action</MudTh>
             </HeaderContent>
@@ -185,8 +185,8 @@
                 <MudTd DataLabel="Ref">@context.ReferenceNumber</MudTd>
                 <MudTd DataLabel="Vendor">@context.VendorName</MudTd>
                 <MudTd DataLabel="Due Date">@context.DueDate.ToShortDateString()</MudTd>
-                <MudTd DataLabel="Total" Style="text-align:right">@context.Amount.ToString("C2", _phCulture)</MudTd>
-                <MudTd DataLabel="Balance" Style="text-align:right; font-weight:bold;">@context.Balance.ToString("C2", _phCulture)</MudTd>
+                <MudTd DataLabel="Total" Class="text-right">@context.Amount.ToString("C2", _phCulture)</MudTd>
+                <MudTd DataLabel="Balance"  class="u-714e9ddb">@context.Balance.ToString("C2", _phCulture)</MudTd>
                 <MudTd DataLabel="Status">
                     <MudChip T="string" Size="Size.Small" Color="@GetStatusColor(context.Status)">@GetStatusLabel(context.Status)</MudChip>
                 </MudTd>

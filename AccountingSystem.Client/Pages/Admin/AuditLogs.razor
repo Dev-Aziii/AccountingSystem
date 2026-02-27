@@ -71,20 +71,20 @@
                 <!-- Table Rows Skeleton -->
                 @for (int i = 0; i < 10; i++)
                 {
-                    <div class="d-flex justify-space-between align-center mb-3 pa-2" style="border-bottom: 1px solid rgba(0,0,0,0.05);">
-                        <div style="flex: 1;">
+                    <div class="d-flex justify-space-between align-center mb-3 pa-2" class="border-bottom-soft">
+                        <div class="flex-1">
                             <MudSkeleton SkeletonType="SkeletonType.Text" Width="140px" Height="16px" />
                         </div>
-                        <div style="flex: 1;">
+                        <div class="flex-1">
                             <MudSkeleton SkeletonType="SkeletonType.Text" Width="160px" Height="16px" />
                         </div>
-                        <div style="flex: 1;">
+                        <div class="flex-1">
                             <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="80px" Height="24px" />
                         </div>
-                        <div style="flex: 1;">
+                        <div class="flex-1">
                             <MudSkeleton SkeletonType="SkeletonType.Text" Width="120px" Height="16px" />
                         </div>
-                        <div style="flex: 1; text-align: center;">
+                        <div class="flex-1 text-center">
                             <MudSkeleton SkeletonType="SkeletonType.Circle" Width="32px" Height="32px" />
                         </div>
                     </div>
@@ -199,7 +199,7 @@
                 <MudTh><MudTableSortLabel SortBy="new Func<AuditLogDTO, object>(x => x.UserEmail)">User</MudTableSortLabel></MudTh>
                 <MudTh><MudTableSortLabel SortBy="new Func<AuditLogDTO, object>(x => x.Action)">Action</MudTableSortLabel></MudTh>
                 <MudTh>Target Endpoint</MudTh>
-                <MudTh Style="text-align:center">Details</MudTh>
+                <MudTh  class="u-13076d95">Details</MudTh>
             </HeaderContent>
             <RowTemplate>
                 <MudTd DataLabel="Date">@context.Timestamp.ToLocalTime().ToString("g")</MudTd>
@@ -212,9 +212,9 @@
                     <MudChip T="string" Color="@GetActionColor(context.Action)" Size="Size.Small">@context.Action</MudChip>
                 </MudTd>
                 <MudTd DataLabel="Target">
-                    <code style="font-size: 0.8em">@context.EntityName</code>
+                    <code class="text-sm-code">@context.EntityName</code>
                 </MudTd>
-                <MudTd DataLabel="Details" Style="text-align:center">
+                <MudTd DataLabel="Details"  class="u-13076d95">
                     <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Medium" Color="Color.Default" OnClick="@(async () => await ViewDetails(context))" />
                 </MudTd>
             </RowTemplate>
