@@ -359,7 +359,6 @@ code {
     box-shadow: 0 8px 24px rgba(156, 39, 176, 0.08);
 }
 
-
 /* ========================================
    TABLE STYLES
    ======================================== */
@@ -538,12 +537,6 @@ code {
     font-weight: 500;
 }
 
-.loading-container {
-    background: linear-gradient(135deg, var(--theme-primary-light) 0%, var(--theme-secondary-light) 100%);
-    border-radius: 20px;
-    backdrop-filter: blur(10px);
-}
-
 /* ========================================
    UTILITY CLASSES
    ======================================== */
@@ -556,4 +549,861 @@ code {
 
 .stats-grid {
     gap: 24px;
+}
+
+/* ========================================
+   SPLASH / LOADING SCREEN
+   ======================================== */
+
+.splash-screen {
+    position: fixed;
+    inset: 0;
+    background: #ffffff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Roboto', sans-serif;
+    gap: 0;
+    /* subtle dot-grid texture */
+    background-image: radial-gradient(circle, rgba(22, 84, 127, 0.06) 1px, transparent 1px);
+    background-size: 28px 28px;
+}
+
+/* — Logo — */
+.splash-logo-wrap {
+    width: 72px;
+    height: 72px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 28px;
+    opacity: 0;
+    animation: splashFadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.05s forwards;
+}
+
+.splash-logo {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    filter: drop-shadow(0 2px 6px rgba(22, 84, 127, 0.15));
+}
+
+/* — Word-mark — */
+.splash-wordmark {
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.3px;
+    color: var(--theme-primary);
+    opacity: 0;
+    animation: splashFadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.15s forwards;
+}
+
+/* — Tagline — */
+.splash-tagline {
+    font-size: 12px;
+    font-weight: 400;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: var(--theme-secondary);
+    margin-top: 6px;
+    margin-bottom: 40px;
+    opacity: 0;
+    animation: splashFadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.22s forwards;
+}
+
+/* — Progress bar track — */
+.splash-bar-track {
+    width: 180px;
+    height: 2px;
+    background: rgba(22, 84, 127, 0.1);
+    border-radius: 2px;
+    overflow: hidden;
+    opacity: 0;
+    animation: splashFadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.3s forwards;
+}
+
+/* — Animated fill — */
+.splash-bar {
+    height: 100%;
+    width: 40%;
+    border-radius: 2px;
+    background: linear-gradient(90deg, var(--theme-primary), var(--theme-secondary));
+    animation: splashScan 1.6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    transform-origin: left center;
+}
+
+@keyframes splashScan {
+    0% {
+        transform: translateX(-100%) scaleX(0.6);
+        opacity: 0.4;
+    }
+
+    40% {
+        opacity: 1;
+    }
+
+    60% {
+        transform: translateX(160%) scaleX(1.2);
+        opacity: 1;
+    }
+
+    100% {
+        transform: translateX(320%) scaleX(0.6);
+        opacity: 0.4;
+    }
+}
+
+/* — Status text — */
+.splash-status {
+    margin-top: 20px;
+    font-size: 11px;
+    font-weight: 400;
+    letter-spacing: 0.4px;
+    color: rgba(22, 84, 127, 0.45);
+    opacity: 0;
+    animation: splashFadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.38s forwards;
+}
+
+/* — Shared entrance keyframe — */
+@keyframes splashFadeUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* — Mobile — */
+@media (max-width: 480px) {
+    .splash-logo-wrap {
+        width: 58px;
+        height: 58px;
+        margin-bottom: 22px;
+    }
+
+    .splash-wordmark {
+        font-size: 18px;
+    }
+
+    .splash-bar-track {
+        width: 140px;
+    }
+}
+
+/* ========================================
+   MAIN LAYOUT v2 — WHITE HEADER
+   ======================================== */
+
+.app-bar-white {
+    background: #ffffff !important;
+    box-shadow: 0 1px 0 #e5e7eb !important;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.app-bar-content {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    padding: 0 1rem;
+    gap: 1rem;
+}
+
+.menu-toggle {
+    color: #374151 !important;
+    flex-shrink: 0;
+}
+
+.brand-section {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+    min-width: 160px;
+}
+
+.app-logo {
+    height: 38px;
+    width: 38px;
+    border-radius: 10px;
+    object-fit: contain;
+}
+
+.brand-text .app-title {
+    font-size: 1.05rem !important;
+    font-weight: 800 !important;
+    color: var(--theme-primary) !important;
+    line-height: 1.2;
+}
+
+.brand-text .company-name {
+    font-size: 0.7rem !important;
+    color: #6b7280 !important;
+    font-weight: 400 !important;
+}
+
+.header-search {
+    max-width: 460px;
+    width: 100%;
+    flex: 1;
+}
+
+    .header-search .mud-input-root {
+        background: #f3f4f6 !important;
+        border-radius: 24px !important;
+    }
+
+    .header-search .mud-input-outlined-border {
+        border-color: transparent !important;
+    }
+
+    .header-search .mud-input-root:hover .mud-input-outlined-border,
+    .header-search .mud-input-root.mud-focused .mud-input-outlined-border {
+        border-color: rgba(22, 84, 127, 0.35) !important;
+    }
+
+.user-section {
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
+.user-button {
+    background: transparent !important;
+    color: #374151 !important;
+    border-radius: 24px !important;
+    padding: 5px 12px 5px 6px !important;
+    border: 1px solid #e5e7eb !important;
+    transition: background 0.2s ease !important;
+}
+
+    .user-button:hover {
+        background: #f3f4f6 !important;
+    }
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.user-avatar {
+    background: linear-gradient(135deg, var(--theme-primary) 0%, var(--theme-secondary) 100%) !important;
+    color: white !important;
+    width: 28px !important;
+    height: 28px !important;
+    font-size: 0.75rem !important;
+}
+
+.user-name {
+    color: #374151 !important;
+    font-weight: 600 !important;
+    font-size: 0.85rem !important;
+}
+
+.user-role {
+    color: #9ca3af !important;
+    font-size: 0.7rem !important;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+.user-menu-content {
+    padding: 6px;
+    min-width: 180px;
+}
+
+.menu-item {
+    border-radius: 8px !important;
+    margin-bottom: 2px;
+    font-size: 0.875rem !important;
+}
+
+    .menu-item:hover {
+        background: var(--theme-primary-light) !important;
+        color: var(--theme-primary) !important;
+    }
+
+.logout-item:hover {
+    background: rgba(244, 67, 54, 0.08) !important;
+    color: #f44336 !important;
+}
+
+.auth-buttons {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.login-button {
+    background: var(--theme-primary) !important;
+    color: white !important;
+    border-radius: 10px !important;
+    font-weight: 600 !important;
+    font-size: 0.85rem !important;
+}
+
+.register-button {
+    border: 1.5px solid var(--theme-primary) !important;
+    color: var(--theme-primary) !important;
+    border-radius: 10px !important;
+    font-weight: 600 !important;
+    font-size: 0.85rem !important;
+}
+
+.nav-drawer {
+    background: #ffffff !important;
+    border-right: 1px solid #e5e7eb !important;
+    box-shadow: none !important;
+}
+
+.drawer-content {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.drawer-header {
+    padding: 1.25rem 1rem 0.875rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.drawer-title {
+    color: var(--theme-primary) !important;
+    font-weight: 700 !important;
+    font-size: 0.75rem !important;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+}
+
+.main-layout {
+    min-height: 100vh;
+    background: #f5f6fa;
+}
+
+.main-content {
+    background: #f5f6fa;
+    min-height: calc(100vh - 64px);
+}
+
+.page-wrapper {
+    padding: 0;
+    min-height: 100%;
+}
+
+/* ========================================
+   DASHBOARD v2 — SECTION STRUCTURE
+   ======================================== */
+
+.dash-page {
+    padding: 1.5rem;
+    background: #f5f6fa;
+    min-height: 100%;
+}
+
+.dash-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.75rem;
+}
+
+.dash-title {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: var(--theme-primary);
+    line-height: 1.2;
+}
+
+.dash-date {
+    font-size: 0.78rem;
+    color: #9ca3af;
+    margin-top: 3px;
+}
+
+.dash-section-label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 1.6px;
+    text-transform: uppercase;
+    color: #9ca3af;
+    margin-bottom: 0.875rem;
+    margin-top: 1.75rem;
+}
+
+    .dash-section-label.first {
+        margin-top: 0;
+    }
+
+/* ========================================
+   KPI SPARKLINE CARDS
+   ======================================== */
+
+.kpi-sc-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 0.875rem;
+}
+
+@media (max-width: 1400px) {
+    .kpi-sc-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .kpi-sc-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+.kpi-sc-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 1rem 1.125rem 0.75rem;
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+    overflow: hidden;
+}
+
+    .kpi-sc-card:hover {
+        box-shadow: 0 6px 24px rgba(22, 84, 127, 0.1);
+        transform: translateY(-2px);
+        border-color: rgba(22, 84, 127, 0.2);
+    }
+
+.kpi-sc-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.2rem;
+}
+
+.kpi-sc-label {
+    font-size: 0.68rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: #9ca3af;
+}
+
+.kpi-sc-badge {
+    font-size: 0.62rem;
+    font-weight: 700;
+    padding: 2px 5px;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 1px;
+    white-space: nowrap;
+}
+
+    .kpi-sc-badge.badge-up {
+        background: rgba(76, 175, 80, 0.12);
+        color: #2E7D32;
+    }
+
+    .kpi-sc-badge.badge-down {
+        background: rgba(244, 67, 54, 0.1);
+        color: #C62828;
+    }
+
+    .kpi-sc-badge.badge-neutral {
+        background: rgba(96, 125, 139, 0.1);
+        color: #607D8B;
+    }
+
+.kpi-sc-value {
+    font-size: 1.55rem;
+    font-weight: 800;
+    color: #111827;
+    letter-spacing: -0.5px;
+    line-height: 1.15;
+    margin-bottom: 0.125rem;
+}
+
+    .kpi-sc-value .peso-sign {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #9ca3af;
+    }
+
+.kpi-sc-sparkline {
+    margin: 0.25rem -1.125rem 0;
+    height: 46px;
+}
+
+    .kpi-sc-sparkline svg {
+        width: 100%;
+        height: 100%;
+        display: block;
+    }
+
+.kpi-sc-footer {
+    font-size: 0.62rem;
+    color: #d1d5db;
+    margin-top: 0.375rem;
+    padding-top: 0.35rem;
+    border-top: 1px solid #f9fafb;
+}
+
+/* ========================================
+   FINANCIAL OVERVIEW
+   ======================================== */
+
+.fin-ov-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.875rem;
+}
+
+@media (max-width: 900px) {
+    .fin-ov-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.fin-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 1.375rem 1.5rem;
+}
+
+.fin-card-title {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: #111827;
+    margin-bottom: 1.25rem;
+}
+
+/* YTD Progress Bars */
+.ytd-row {
+    margin-bottom: 1.125rem;
+}
+
+.ytd-row-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 0.35rem;
+}
+
+.ytd-row-name {
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: #374151;
+}
+
+.ytd-row-meta {
+    font-size: 0.72rem;
+    color: #9ca3af;
+}
+
+.ytd-bar-track {
+    height: 20px;
+    background: #f3f4f6;
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+}
+
+.ytd-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 7px;
+    min-width: 42px;
+    transition: width 0.6s ease;
+}
+
+.ytd-bar-pct {
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+.ytd-fill-revenue {
+    background: linear-gradient(90deg, #1565C0, #1e88e5);
+}
+
+.ytd-fill-expenses {
+    background: linear-gradient(90deg, #2E7D32, #43a047);
+}
+
+.ytd-fill-margin {
+    background: linear-gradient(90deg, #546e7a, #78909c);
+}
+
+.ytd-fill-negative {
+    background: linear-gradient(90deg, #b71c1c, #e53935);
+}
+
+/* Accounts Summary */
+.acct-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+}
+
+.acct-col-header {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #374151;
+    padding-bottom: 0.625rem;
+    border-bottom: 2px solid #e5e7eb;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.acct-col-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.acct-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.45rem 0;
+    border-bottom: 1px solid #f9fafb;
+    font-size: 0.78rem;
+}
+
+    .acct-row:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
+    }
+
+.acct-row-label {
+    color: #6b7280;
+    font-weight: 400;
+}
+
+.acct-row-val {
+    font-weight: 700;
+    color: #111827;
+}
+
+    .acct-row-val.red {
+        color: #C62828;
+    }
+
+    .acct-row-val.blue {
+        color: #1565C0;
+    }
+
+    .acct-row-val.green {
+        color: #2E7D32;
+    }
+
+/* ========================================
+   MARKET INSIGHTS
+   ======================================== */
+
+.market-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.875rem;
+}
+
+@media (max-width: 900px) {
+    .market-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.market-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 1.375rem 1.5rem;
+}
+
+.market-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.2rem;
+}
+
+.market-card-title {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: #111827;
+}
+
+.market-big-kpi {
+    font-size: 2.25rem;
+    font-weight: 800;
+    color: #111827;
+    letter-spacing: -1px;
+    line-height: 1;
+}
+
+.market-card-sub {
+    font-size: 0.72rem;
+    color: #9ca3af;
+    margin-bottom: 1rem;
+}
+
+/* Currency converter */
+.fx-rate-pill {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    background: #f8fafc;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1rem;
+}
+
+.fx-flag {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.72rem;
+    font-weight: 800;
+    color: white;
+    flex-shrink: 0;
+}
+
+.fx-ccy-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #374151;
+}
+
+.fx-rate-value {
+    margin-left: auto;
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: #1565C0;
+    letter-spacing: -0.5px;
+}
+
+.fx-rate-sub {
+    font-size: 0.62rem;
+    color: #9ca3af;
+    margin-left: auto;
+    text-align: right;
+}
+
+.fx-conv-row {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    margin-bottom: 0.75rem;
+}
+
+.fx-conv-col {
+    flex: 1;
+}
+
+.fx-conv-lbl {
+    font-size: 0.62rem;
+    font-weight: 600;
+    color: #9ca3af;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.fx-flag-sm {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.5rem;
+    font-weight: 800;
+    color: white;
+}
+
+.fx-result {
+    background: #f0f7ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 6px;
+    padding: 0.55rem 0.75rem;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #1565C0;
+    text-align: center;
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.fx-quick-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.4rem;
+    margin-bottom: 0.75rem;
+}
+
+.fx-footer-note {
+    text-align: center;
+    font-size: 0.62rem;
+    color: #d1d5db;
+    padding-top: 0.625rem;
+    border-top: 1px solid #f3f4f6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+}
+
+/* ========================================
+   DASHBOARD SKELETON
+   ======================================== */
+
+.skel-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 0.875rem;
+    margin-bottom: 1.75rem;
+}
+
+@media (max-width: 1400px) {
+    .skel-kpi-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+.skel-two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.875rem;
+    margin-bottom: 1.75rem;
+}
+
+@media (max-width: 900px) {
+    .skel-two-col {
+        grid-template-columns: 1fr;
+    }
+}
+
+.skel-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 1.375rem 1.5rem;
 }
