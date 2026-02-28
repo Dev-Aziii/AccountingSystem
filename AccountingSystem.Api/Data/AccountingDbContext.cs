@@ -26,6 +26,7 @@ namespace AccountingSystem.API.Data
         public DbSet<Bill> Bills { get; set; }
         public DbSet<Invoice> Invoices { get; set; }
         public DbSet<Payment> Payments { get; set; }
+        public DbSet<DocumentSequence> DocumentSequences { get; set; }
         public DbSet<AuditLog> AuditLogs { get; set; }
         public DbSet<SuperAdminAuditLog> SuperAdminAuditLogs { get; set; }
 
@@ -43,6 +44,7 @@ namespace AccountingSystem.API.Data
             modelBuilder.Entity<Bill>().HasQueryFilter(e => !e.IsDeleted && e.CompanyId == _tenantService.GetCurrentTenant());
             modelBuilder.Entity<Invoice>().HasQueryFilter(e => !e.IsDeleted && e.CompanyId == _tenantService.GetCurrentTenant());
             modelBuilder.Entity<Payment>().HasQueryFilter(e => !e.IsDeleted && e.CompanyId == _tenantService.GetCurrentTenant());
+            modelBuilder.Entity<DocumentSequence>().HasQueryFilter(e => e.CompanyId == _tenantService.GetCurrentTenant());
             modelBuilder.Entity<AuditLog>().HasQueryFilter(e => e.CompanyId == _tenantService.GetCurrentTenant());
 
             // --- AuditLog Config ---
@@ -53,6 +55,8 @@ namespace AccountingSystem.API.Data
             modelBuilder.Entity<Invoice>().Property(i => i.Status).HasConversion<string>();
             modelBuilder.Entity<Payment>().Property(p => p.PaymentMethod).HasConversion<string>();
             modelBuilder.Entity<Payment>().Property(p => p.Type).HasConversion<string>();
+            modelBuilder.Entity<DocumentSequence>().Property(d => d.DocumentType).HasConversion<string>();
+            modelBuilder.Entity<DocumentSequence>().Property(d => d.RowVersion).IsRowVersion();
 
             // --- Decimal Precision ---
             var decimalProps = modelBuilder.Model.GetEntityTypes().SelectMany(t => t.GetProperties())
@@ -68,6 +72,7 @@ namespace AccountingSystem.API.Data
             modelBuilder.Entity<Account>().HasIndex(a => new { a.Code, a.CompanyId }).IsUnique();
             modelBuilder.Entity<FiscalYearClose>().HasIndex(f => new { f.CompanyId, f.FiscalYear }).IsUnique();
             modelBuilder.Entity<JournalEntry>().HasIndex(j => new { j.CompanyId, j.Date });
+            modelBuilder.Entity<DocumentSequence>().HasIndex(d => new { d.CompanyId, d.DocumentType }).IsUnique();
             modelBuilder.Entity<FiscalYearClose>()
                 .HasOne(f => f.ClosingJournalEntry)
                 .WithMany()

@@ -7,7 +7,6 @@ namespace AccountingSystem.Shared.DTOs
     public class JournalEntryDTO
     {
         public string Description { get; set; } = string.Empty;
-        public string Reference { get; set; } = string.Empty;
         public DateTime Date { get; set; }
         public List<JournalEntryLineDTO> Lines { get; set; } = new();
     }
@@ -43,7 +42,7 @@ namespace AccountingSystem.Shared.DTOs
         public string VendorName { get; set; } = string.Empty;
         public DateTime DueDate { get; set; }
         public decimal Amount { get; set; }
-        public string ReferenceNumber { get; set; } = string.Empty;
+        public string VendorReferenceNumber { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
         public decimal AmountPaid { get; set; }
         public DocumentStatus Status { get; set; } // Enum
@@ -55,7 +54,7 @@ namespace AccountingSystem.Shared.DTOs
         public int VendorId { get; set; }
         public DateTime DueDate { get; set; }
         public decimal Amount { get; set; }
-        public string ReferenceNumber { get; set; } = string.Empty;
+        public string VendorReferenceNumber { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
         public int ExpenseAccountId { get; set; }
     }
@@ -68,10 +67,24 @@ namespace AccountingSystem.Shared.DTOs
         public string CustomerName { get; set; } = string.Empty;
         public DateTime DueDate { get; set; }
         public decimal TotalAmount { get; set; }
+        public string ReferenceNumber { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
         public decimal PaidAmount { get; set; }
         public DocumentStatus Status { get; set; } // Enum
         public decimal Balance => TotalAmount - PaidAmount;
+    }
+
+
+    public class DocumentCreationResultDTO
+    {
+        public int Id { get; set; }
+        public string ReferenceNumber { get; set; } = string.Empty;
+    }
+
+    public class PaymentCreationResultDTO
+    {
+        public int Id { get; set; }
+        public string ReferenceNumber { get; set; } = string.Empty;
     }
 
     public class CreateInvoiceDTO

@@ -180,7 +180,7 @@
                     <MudTh>Action</MudTh>
                 </HeaderContent>
                 <RowTemplate>
-                    <MudTd DataLabel="ID" Style="color: var(--text-muted);">@context.Id</MudTd>
+                    <MudTd DataLabel="ID" Style="color: var(--text-muted);">@context.ReferenceNumber</MudTd>
                     <MudTd DataLabel="Customer" Style="font-weight: 500; color: var(--text-main);">@context.CustomerName</MudTd>
                     <MudTd DataLabel="Due Date" Style="color: var(--text-muted);">@context.DueDate.ToShortDateString()</MudTd>
                     <MudTd DataLabel="Total" Style="text-align:right; font-variant-numeric: tabular-nums;">
@@ -365,5 +365,6 @@
     private bool FilterFunc(InvoiceDTO element) =>
         string.IsNullOrWhiteSpace(searchString) ||
         element.CustomerName.Contains(searchString, StringComparison.OrdinalIgnoreCase) ||
-        element.Id.ToString().Contains(searchString, StringComparison.OrdinalIgnoreCase);
+        element.Id.ToString().Contains(searchString, StringComparison.OrdinalIgnoreCase) ||
+        element.ReferenceNumber.Contains(searchString, StringComparison.OrdinalIgnoreCase);
 }

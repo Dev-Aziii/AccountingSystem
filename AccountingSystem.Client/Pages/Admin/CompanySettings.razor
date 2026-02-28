@@ -1,5 +1,6 @@
 ﻿@page "/admin/company-settings"
 @using AccountingSystem.Shared.DTOs
+@using AccountingSystem.Shared.Enums
 @using AccountingSystem.Client.Services
 @using AccountingSystem.Client.Shared.Dialogs
 @using Microsoft.AspNetCore.Authorization
@@ -233,6 +234,30 @@
                     </MudCardContent>
                 </MudCard>
             </MudTabPanel>
+
+            <MudTabPanel Text="Document Numbering">
+                <MudCard Elevation="0" Outlined="true" Class="shadcn-card">
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <div style="font-size: 1.125rem; font-weight: 600; color: var(--text-main);">Document Numbering</div>
+                            <div style="font-size: 0.875rem; color: var(--text-muted);">Configure prefixes and next values for auto-generated documents.</div>
+                        </CardHeaderContent>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudTable Items="@documentSequences" Dense="true" Hover="true">
+                            <HeaderContent>
+                                <MudTh>Document Type</MudTh><MudTh>Prefix</MudTh><MudTh>Next Number</MudTh><MudTh></MudTh>
+                            </HeaderContent>
+                            <RowTemplate>
+                                <MudTd>@context.DocumentType</MudTd>
+                                <MudTd><MudTextField @bind-Value="context.Prefix" Dense="true" Variant="Variant.Outlined" /></MudTd>
+                                <MudTd><MudNumericField T="int" @bind-Value="context.NextNumber" Dense="true" Variant="Variant.Outlined" Min="1" /></MudTd>
+                                <MudTd><MudButton Variant="Variant.Text" OnClick="@(() => SaveSequenceAsync(context))">Save</MudButton></MudTd>
+                            </RowTemplate>
+                        </MudTable>
+                    </MudCardContent>
+                </MudCard>
+            </MudTabPanel>
         </MudTabs>
     }
 </MudContainer>
@@ -240,6 +265,7 @@
 @code {
     private UpdateCompanyDTO model = new();
     private List<FiscalYearSummaryDTO> fiscalYears = new();
+    private List<DocumentSequenceDTO> documentSequences = new();
 
     private bool isLoading = true;
     private bool isSubmitting;
@@ -274,7 +300,8 @@
         {
             var companyTask = CompanyService.GetCurrentCompanyAsync();
             var fiscalYearsTask = LedgerService.GetFiscalYearSummariesAsync();
-            await Task.WhenAll(companyTask, fiscalYearsTask);
+            var sequenceTask = CompanyService.GetDocumentSequencesAsync();
+            await Task.WhenAll(companyTask, fiscalYearsTask, sequenceTask);
 
             var current = companyTask.Result;
             if (current != null)
@@ -293,6 +320,7 @@
             fiscalYears = (fiscalYearsTask.Result ?? new List<FiscalYearSummaryDTO>())
                 .OrderByDescending(f => f.FiscalYear)
                 .ToList();
+            documentSequences = sequenceTask.Result ?? new List<DocumentSequenceDTO>();
         }
         catch (Exception ex)
         {
@@ -301,6 +329,25 @@
         finally
         {
             isLoading = false;
+        }
+    }
+
+
+    private async Task SaveSequenceAsync(DocumentSequenceDTO sequence)
+    {
+        try
+        {
+            await CompanyService.UpdateDocumentSequenceAsync(new UpdateDocumentSequenceDTO
+            {
+                DocumentType = sequence.DocumentType,
+                Prefix = sequence.Prefix,
+                NextNumber = sequence.NextNumber
+            });
+            Snackbar.Add($"{sequence.DocumentType} numbering updated.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to save sequence: {ex.Message}", Severity.Error);
         }
     }
 

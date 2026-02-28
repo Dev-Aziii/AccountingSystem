@@ -13,7 +13,6 @@ namespace AccountingSystem.Shared.DTOs
         [JsonConverter(typeof(JsonStringEnumConverter))]
         public PaymentMethod PaymentMethod { get; set; } // Enum
 
-        public string? ReferenceNumber { get; set; }
         public int AssetAccountId { get; set; }
         public string? Remarks { get; set; }
         public string? SourceId { get; set; }

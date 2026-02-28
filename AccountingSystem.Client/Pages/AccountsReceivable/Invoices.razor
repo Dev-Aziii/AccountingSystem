@@ -81,6 +81,11 @@
                             <ValidationMessage For="@(() => invoice.CustomerId)" />
                         </MudItem>
 
+
+                        <MudItem xs="12" sm="6">
+                            <MudTextField Label="Reference Number" Value="[Auto-Generated]" Disabled="true" Variant="Variant.Outlined" Margin="Margin.Dense" Class="shadcn-input" />
+                        </MudItem>
+
                         <MudItem xs="12" sm="6">
                             <MudDatePicker Label="Due Date"
                                            @bind-Date="invoiceDate"
@@ -174,8 +179,8 @@
         isSubmitting = true;
         try
         {
-            await ReceivableService.CreateInvoiceAsync(invoice);
-            Snackbar.Add("Invoice created successfully.", Severity.Success);
+            var created = await ReceivableService.CreateInvoiceAsync(invoice);
+            Snackbar.Add($"Invoice {created?.ReferenceNumber ?? ""} created successfully.", Severity.Success);
             NavManager.NavigateTo("/ar", forceLoad: true);
         }
         catch (Exception ex)

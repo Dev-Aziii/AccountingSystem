@@ -135,7 +135,10 @@ namespace AccountingSystem.API.Models
         public decimal AmountPaid { get; set; }
 
         [MaxLength(50)]
-        public string ReferenceNumber { get; set; } = string.Empty;
+        public string VendorReferenceNumber { get; set; } = string.Empty;
+
+        [MaxLength(50)]
+        public string SystemReferenceNumber { get; set; } = string.Empty;
 
         [MaxLength(500)]
         public string? Description { get; set; }
@@ -159,6 +162,9 @@ namespace AccountingSystem.API.Models
 
         [Column(TypeName = "decimal(18,2)")]
         public decimal PaidAmount { get; set; }
+
+        [MaxLength(50)]
+        public string ReferenceNumber { get; set; } = string.Empty;
 
         [MaxLength(500)]
         public string? Description { get; set; }
@@ -194,6 +200,23 @@ namespace AccountingSystem.API.Models
 
         public int? BillId { get; set; }
         public virtual Bill? Bill { get; set; }
+    }
+
+
+
+    public class DocumentSequence
+    {
+        public int Id { get; set; }
+        public int CompanyId { get; set; }
+        public DocumentType DocumentType { get; set; }
+
+        [MaxLength(20)]
+        public string Prefix { get; set; } = string.Empty;
+
+        public int NextNumber { get; set; } = 1;
+
+        [Timestamp]
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
     }
 
     // --- SECURITY ---

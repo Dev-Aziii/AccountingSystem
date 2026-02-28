@@ -23,7 +23,7 @@
                 <div class="d-flex justify-space-between align-center">
                     <div style="font-size: 0.875rem; color: var(--text-main);">
                         <span style="color: var(--text-muted); margin-right: 4px;">Reference:</span>
-                        <span style="font-weight: 500;">@Bill.ReferenceNumber</span>
+                        <span style="font-weight: 500;">@Bill.SystemReferenceNumber</span>
                     </div>
                     <div style="font-size: 1rem; font-weight: 600; color: var(--text-main); font-variant-numeric: tabular-nums;">
                         <span style="color: var(--text-muted); font-size: 0.875rem; font-weight: 400; margin-right: 4px;">Balance:</span>
@@ -100,15 +100,8 @@
                             </MudSelectItem>
                         </MudSelect>
                     </MudItem>
-
                     <MudItem xs="12" sm="6">
-                        <MudTextField Label="Reference Number"
-                                      @bind-Value="model.ReferenceNumber"
-                                      Variant="Variant.Outlined"
-                                      Margin="Margin.Dense"
-                                      Class="shadcn-input"
-                                      Placeholder="Check No. / Trans ID"
-                                      HelperText="Optional transaction reference" />
+                        <MudTextField Label="Reference Number" Value="[Auto-Generated]" Disabled="true" Variant="Variant.Outlined" Margin="Margin.Dense" Class="shadcn-input" />
                     </MudItem>
 
                     <MudItem xs="12">
@@ -212,8 +205,8 @@
 
         try
         {
-            await PayableService.PayBillAsync(model);
-            Snackbar.Add("Payment recorded successfully!", Severity.Success);
+            var result = await PayableService.PayBillAsync(model);
+            Snackbar.Add($"Payment {result?.ReferenceNumber ?? ""} recorded successfully!", Severity.Success);
             MudDialog.Close(DialogResult.Ok(true));
         }
         catch (Exception ex)
