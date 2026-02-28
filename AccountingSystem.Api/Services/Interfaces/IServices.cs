@@ -4,6 +4,14 @@ using AccountingSystem.Shared.Enums;
 
 namespace AccountingSystem.API.Services.Interfaces
 {
+
+    public interface IDocumentSequenceService
+    {
+        Task<string> GetNextSequenceAsync(int companyId, DocumentType documentType);
+        Task<List<DocumentSequenceDTO>> GetSequencesAsync(int companyId);
+        Task UpdateSequencesAsync(int companyId, List<UpdateDocumentSequenceDTO> sequences);
+    }
+
     public interface ILedgerService
     {
         Task<JournalEntry> CreateJournalEntryAsync(JournalEntryDTO entryDto, string userId);

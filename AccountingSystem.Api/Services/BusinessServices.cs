@@ -12,15 +12,21 @@ namespace AccountingSystem.API.Services
         private readonly AccountingDbContext _context;
         private readonly ILedgerService _ledgerService;
         private readonly IYearEndCloseService _yearEndCloseService;
+        private readonly ITenantService _tenantService;
+        private readonly IDocumentSequenceService _documentSequenceService;
 
         public PayableService(
             AccountingDbContext context,
             ILedgerService ledgerService,
-            IYearEndCloseService yearEndCloseService)
+            IYearEndCloseService yearEndCloseService,
+            ITenantService tenantService,
+            IDocumentSequenceService documentSequenceService)
         {
             _context = context;
             _ledgerService = ledgerService;
             _yearEndCloseService = yearEndCloseService;
+            _tenantService = tenantService;
+            _documentSequenceService = documentSequenceService;
         }
 
         public async Task<List<VendorDTO>> GetVendorsAsync(bool includeArchived = false)
@@ -184,7 +190,7 @@ namespace AccountingSystem.API.Services
                 Amount = paymentDto.Amount,
                 Date = paymentDto.PaymentDate,
                 PaymentMethod = paymentDto.PaymentMethod,
-                ReferenceNumber = paymentDto.ReferenceNumber,
+                ReferenceNumber = await _documentSequenceService.GetNextSequenceAsync(_tenantService.GetCurrentTenant(), DocumentType.BillPaymentCheck),
                 Remarks = paymentDto.Remarks,
                 Type = PaymentType.Outgoing,
                 AccountId = paymentDto.AssetAccountId,
@@ -199,7 +205,7 @@ namespace AccountingSystem.API.Services
             {
                 Date = paymentDto.PaymentDate,
                 Description = $"Payment for Bill #{bill.ReferenceNumber}",
-                Reference = paymentDto.ReferenceNumber ?? $"PAY-{payment.Id}",
+                Reference = payment.ReferenceNumber!,
                 Lines = new List<JournalEntryLineDTO>
                 {
                     new JournalEntryLineDTO { AccountId = apAccount.Id, Debit = paymentDto.Amount, Credit = 0 },
@@ -219,17 +225,23 @@ namespace AccountingSystem.API.Services
         private readonly ILedgerService _ledgerService;
         private readonly IPaymentService _paymentService;
         private readonly IYearEndCloseService _yearEndCloseService;
+        private readonly ITenantService _tenantService;
+        private readonly IDocumentSequenceService _documentSequenceService;
 
         public ReceivableService(
             AccountingDbContext context,
             ILedgerService ledgerService,
             IPaymentService paymentService,
-            IYearEndCloseService yearEndCloseService)
+            IYearEndCloseService yearEndCloseService,
+            ITenantService tenantService,
+            IDocumentSequenceService documentSequenceService)
         {
             _context = context;
             _ledgerService = ledgerService;
             _paymentService = paymentService;
             _yearEndCloseService = yearEndCloseService;
+            _tenantService = tenantService;
+            _documentSequenceService = documentSequenceService;
         }
 
         public async Task<List<CustomerDTO>> GetCustomersAsync(bool includeArchived = false)
@@ -330,6 +342,7 @@ namespace AccountingSystem.API.Services
                     DueDate = i.DueDate,
                     TotalAmount = i.TotalAmount,
                     Description = i.Description ?? string.Empty,
+                    InvoiceNumber = i.InvoiceNumber,
                     PaidAmount = i.PaidAmount,
                     Status = i.Status
                 })
@@ -339,12 +352,15 @@ namespace AccountingSystem.API.Services
 
         public async Task<Invoice> CreateInvoiceAsync(CreateInvoiceDTO invoiceDto)
         {
+            var invoiceNumber = await _documentSequenceService.GetNextSequenceAsync(_tenantService.GetCurrentTenant(), DocumentType.Invoice);
+
             var invoice = new Invoice
             {
                 CustomerId = invoiceDto.CustomerId,
                 DueDate = invoiceDto.DueDate,
                 TotalAmount = invoiceDto.Amount,
                 Description = invoiceDto.Description,
+                InvoiceNumber = invoiceNumber,
                 PaidAmount = 0,
                 Status = DocumentStatus.Unpaid
             };
@@ -356,8 +372,8 @@ namespace AccountingSystem.API.Services
             var entry = new JournalEntryDTO
             {
                 Date = DateTime.UtcNow,
-                Description = $"Invoice #{invoice.Id}: {invoiceDto.Description}",
-                Reference = invoice.Id.ToString(),
+                Description = $"Invoice {invoice.InvoiceNumber}: {invoiceDto.Description}",
+                Reference = invoice.InvoiceNumber,
                 Lines = new List<JournalEntryLineDTO>
                 {
                     new JournalEntryLineDTO { AccountId = arAccount.Id, Debit = invoiceDto.Amount, Credit = 0 },
@@ -378,7 +394,7 @@ namespace AccountingSystem.API.Services
             // PayMongo Capture Logic
             if (paymentDto.PaymentMethod == PaymentMethod.Online && !string.IsNullOrEmpty(paymentDto.SourceId))
             {
-                await _paymentService.CapturePaymentAsync(paymentDto.SourceId, paymentDto.Amount, $"Inv #{invoice.Id}");
+                await _paymentService.CapturePaymentAsync(paymentDto.SourceId, paymentDto.Amount, $"Inv {invoice.InvoiceNumber}");
             }
 
             if (paymentDto.Amount > (invoice.TotalAmount - invoice.PaidAmount))
@@ -397,7 +413,7 @@ namespace AccountingSystem.API.Services
                 Amount = paymentDto.Amount,
                 Date = paymentDto.PaymentDate,
                 PaymentMethod = paymentDto.PaymentMethod,
-                ReferenceNumber = paymentDto.ReferenceNumber,
+                ReferenceNumber = await _documentSequenceService.GetNextSequenceAsync(_tenantService.GetCurrentTenant(), DocumentType.PaymentReceived),
                 Remarks = paymentDto.Remarks,
                 Type = PaymentType.Incoming,
                 AccountId = paymentDto.AssetAccountId,
@@ -411,8 +427,8 @@ namespace AccountingSystem.API.Services
             var entry = new JournalEntryDTO
             {
                 Date = paymentDto.PaymentDate,
-                Description = $"Payment received for Invoice #{invoice.Id}",
-                Reference = paymentDto.ReferenceNumber ?? $"REC-{payment.Id}",
+                Description = $"Payment received for Invoice {invoice.InvoiceNumber}",
+                Reference = payment.ReferenceNumber!,
                 Lines = new List<JournalEntryLineDTO>
                 {
                     new JournalEntryLineDTO { AccountId = paymentDto.AssetAccountId, Debit = paymentDto.Amount, Credit = 0 },

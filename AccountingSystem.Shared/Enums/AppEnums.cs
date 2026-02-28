@@ -29,6 +29,15 @@ namespace AccountingSystem.Shared.Enums
     }
 
     [JsonConverter(typeof(JsonStringEnumConverter))]
+    public enum DocumentType
+    {
+        Invoice,
+        JournalEntry,
+        PaymentReceived,
+        BillPaymentCheck
+    }
+
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum CompanyStatus
     {
         Active,

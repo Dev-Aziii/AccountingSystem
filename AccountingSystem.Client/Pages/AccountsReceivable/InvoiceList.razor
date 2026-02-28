@@ -171,7 +171,7 @@
                     </MudButton>
                 </ToolBarContent>
                 <HeaderContent>
-                    <MudTh>ID</MudTh>
+                    <MudTh>Invoice #</MudTh>
                     <MudTh>Customer</MudTh>
                     <MudTh>Due Date</MudTh>
                     <MudTh Style="text-align:right">Total</MudTh>
@@ -180,7 +180,7 @@
                     <MudTh>Action</MudTh>
                 </HeaderContent>
                 <RowTemplate>
-                    <MudTd DataLabel="ID" Style="color: var(--text-muted);">@context.Id</MudTd>
+                    <MudTd DataLabel="Invoice #" Style="color: var(--text-muted);">@context.InvoiceNumber</MudTd>
                     <MudTd DataLabel="Customer" Style="font-weight: 500; color: var(--text-main);">@context.CustomerName</MudTd>
                     <MudTd DataLabel="Due Date" Style="color: var(--text-muted);">@context.DueDate.ToShortDateString()</MudTd>
                     <MudTd DataLabel="Total" Style="text-align:right; font-variant-numeric: tabular-nums;">

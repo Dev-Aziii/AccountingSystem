@@ -316,6 +316,24 @@ namespace AccountingSystem.API.Data
                     billSequence++;
                 }
             }
+            var companies = await context.Companies.IgnoreQueryFilters().Select(c => c.Id).ToListAsync();
+            foreach (var companyId in companies)
+            {
+                var existingTypes = await context.DocumentSequences.IgnoreQueryFilters()
+                    .Where(s => s.CompanyId == companyId)
+                    .Select(s => s.DocumentType)
+                    .ToListAsync();
+
+                var missing = DocumentSequenceSeeder.BuildDefaults(companyId)
+                    .Where(s => !existingTypes.Contains(s.DocumentType))
+                    .ToList();
+
+                if (missing.Count != 0)
+                {
+                    context.DocumentSequences.AddRange(missing);
+                    await context.SaveChangesAsync();
+                }
+            }
         }
 
         private static async Task CreateJournalEntryAsync(

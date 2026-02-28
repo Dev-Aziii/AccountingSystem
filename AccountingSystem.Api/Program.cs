@@ -26,6 +26,7 @@ builder.Services.AddDbContext<AccountingDbContext>(options =>
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IYearEndCloseService, YearEndCloseService>();
 builder.Services.AddScoped<ILedgerService, LedgerService>();
+builder.Services.AddScoped<IDocumentSequenceService, DocumentSequenceService>();
 builder.Services.AddScoped<IPayableService, PayableService>();
 builder.Services.AddScoped<IReceivableService, ReceivableService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();

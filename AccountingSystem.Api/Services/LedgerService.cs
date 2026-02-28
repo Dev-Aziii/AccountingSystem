@@ -2,6 +2,7 @@
 using AccountingSystem.API.Models;
 using AccountingSystem.API.Services.Interfaces;
 using AccountingSystem.Shared.DTOs;
+using AccountingSystem.Shared.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace AccountingSystem.API.Services
@@ -10,11 +11,15 @@ namespace AccountingSystem.API.Services
     {
         private readonly AccountingDbContext _context;
         private readonly IYearEndCloseService _yearEndCloseService;
+        private readonly ITenantService _tenantService;
+        private readonly IDocumentSequenceService _documentSequenceService;
 
-        public LedgerService(AccountingDbContext context, IYearEndCloseService yearEndCloseService)
+        public LedgerService(AccountingDbContext context, IYearEndCloseService yearEndCloseService, ITenantService tenantService, IDocumentSequenceService documentSequenceService)
         {
             _context = context;
             _yearEndCloseService = yearEndCloseService;
+            _tenantService = tenantService;
+            _documentSequenceService = documentSequenceService;
         }
 
         public async Task<List<Account>> GetChartOfAccountsAsync(bool includeArchived = false)
@@ -43,7 +48,7 @@ namespace AccountingSystem.API.Services
             {
                 Date = entryDto.Date,
                 Description = entryDto.Description,
-                Reference = entryDto.Reference,
+                Reference = await _documentSequenceService.GetNextSequenceAsync(_tenantService.GetCurrentTenant(), DocumentType.JournalEntry),
                 CreatedBy = userId,
                 IsPosted = true,
                 Lines = entryDto.Lines.Select(l => new JournalEntryLine

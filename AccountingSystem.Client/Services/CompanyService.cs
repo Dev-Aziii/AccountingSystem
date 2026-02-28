@@ -26,5 +26,20 @@ namespace AccountingSystem.Client.Services
                 throw new Exception(error);
             }
         }
+
+        public async Task<List<DocumentSequenceDTO>> GetDocumentSequencesAsync()
+        {
+            return await _api.GetAsync<List<DocumentSequenceDTO>>("api/companies/document-numbering") ?? new List<DocumentSequenceDTO>();
+        }
+
+        public async Task UpdateDocumentSequencesAsync(List<UpdateDocumentSequenceDTO> dto)
+        {
+            var response = await _api.PutAsync("api/companies/document-numbering", dto);
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                throw new Exception(error);
+            }
+        }
     }
 }

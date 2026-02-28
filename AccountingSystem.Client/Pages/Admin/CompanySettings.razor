@@ -233,6 +233,40 @@
                     </MudCardContent>
                 </MudCard>
             </MudTabPanel>
+
+            <MudTabPanel Text="Document Numbering">
+                <MudCard Elevation="0" Outlined="true" Class="shadcn-card">
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <div style="font-size: 1.125rem; font-weight: 600; color: var(--text-main);">Document Numbering</div>
+                            <div style="font-size: 0.875rem; color: var(--text-muted);">Configure prefixes and the next number used by auto-generated documents.</div>
+                        </CardHeaderContent>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudTable Items="@documentSequences" Dense="true" Hover="true" Elevation="0" Class="shadcn-table">
+                            <HeaderContent>
+                                <MudTh>Document Type</MudTh>
+                                <MudTh>Prefix</MudTh>
+                                <MudTh>Next Number</MudTh>
+                            </HeaderContent>
+                            <RowTemplate>
+                                <MudTd>@context.DocumentType</MudTd>
+                                <MudTd>
+                                    <MudTextField @bind-Value="context.Prefix" Variant="Variant.Outlined" Margin="Margin.Dense" Class="shadcn-input" />
+                                </MudTd>
+                                <MudTd>
+                                    <MudNumericField T="int" @bind-Value="context.NextNumber" Min="1" Variant="Variant.Outlined" Margin="Margin.Dense" Class="shadcn-input" />
+                                </MudTd>
+                            </RowTemplate>
+                        </MudTable>
+                    </MudCardContent>
+                    <MudCardActions Class="d-flex justify-end px-6 pb-5">
+                        <MudButton Variant="Variant.Filled" Class="custom-button" Disabled="isSavingSequences" OnClick="SaveDocumentSequencesAsync">
+                            @(isSavingSequences ? "Saving..." : "Save Document Numbering")
+                        </MudButton>
+                    </MudCardActions>
+                </MudCard>
+            </MudTabPanel>
         </MudTabs>
     }
 </MudContainer>
@@ -244,6 +278,8 @@
     private bool isLoading = true;
     private bool isSubmitting;
     private int closingYear;
+    private bool isSavingSequences;
+    private List<UpdateDocumentSequenceDTO> documentSequences = new();
     private readonly CultureInfo _phCulture = CultureInfo.GetCultureInfo("en-PH");
 
     private readonly Dictionary<int, string> fiscalMonthOptions = new()
@@ -274,7 +310,8 @@
         {
             var companyTask = CompanyService.GetCurrentCompanyAsync();
             var fiscalYearsTask = LedgerService.GetFiscalYearSummariesAsync();
-            await Task.WhenAll(companyTask, fiscalYearsTask);
+            var sequencesTask = CompanyService.GetDocumentSequencesAsync();
+            await Task.WhenAll(companyTask, fiscalYearsTask, sequencesTask);
 
             var current = companyTask.Result;
             if (current != null)
@@ -292,6 +329,16 @@
 
             fiscalYears = (fiscalYearsTask.Result ?? new List<FiscalYearSummaryDTO>())
                 .OrderByDescending(f => f.FiscalYear)
+                .ToList();
+
+            documentSequences = sequencesTask.Result
+                .Select(s => new UpdateDocumentSequenceDTO
+                {
+                    DocumentType = s.DocumentType,
+                    Prefix = s.Prefix,
+                    NextNumber = s.NextNumber
+                })
+                .OrderBy(s => s.DocumentType)
                 .ToList();
         }
         catch (Exception ex)
@@ -334,6 +381,25 @@
         catch (Exception ex)
         {
             Snackbar.Add($"Failed to load fiscal years: {ex.Message}", Severity.Error);
+        }
+    }
+
+
+    private async Task SaveDocumentSequencesAsync()
+    {
+        isSavingSequences = true;
+        try
+        {
+            await CompanyService.UpdateDocumentSequencesAsync(documentSequences);
+            Snackbar.Add("Document numbering updated.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to update numbering: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isSavingSequences = false;
         }
     }
 

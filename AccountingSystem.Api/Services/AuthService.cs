@@ -221,7 +221,8 @@ namespace AccountingSystem.API.Services
             };
 
             _context.Accounts.AddRange(accounts);
-            await _context.SaveChangesAsync(); // Added await to ensure the method is truly asynchronous
+            _context.DocumentSequences.AddRange(DocumentSequenceSeeder.BuildDefaults(companyId));
+            await _context.SaveChangesAsync();
         }
 
         private static void CreatePasswordHash(string password, out byte[] passwordHash, out byte[] passwordSalt)

@@ -163,10 +163,26 @@ namespace AccountingSystem.API.Models
         [MaxLength(500)]
         public string? Description { get; set; }
 
+        [MaxLength(50)]
+        public string InvoiceNumber { get; set; } = string.Empty;
+
         public DocumentStatus Status { get; set; } = DocumentStatus.Unpaid;
 
         [NotMapped]
         public decimal Balance => TotalAmount - PaidAmount;
+    }
+
+    public class DocumentSequence : BaseEntity
+    {
+        public DocumentType DocumentType { get; set; }
+
+        [MaxLength(20)]
+        public string Prefix { get; set; } = string.Empty;
+
+        public int NextNumber { get; set; } = 1;
+
+        [Timestamp]
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
     }
 
     // --- TRANSACTIONS ---

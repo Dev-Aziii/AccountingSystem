@@ -69,6 +69,7 @@ namespace AccountingSystem.Shared.DTOs
         public DateTime DueDate { get; set; }
         public decimal TotalAmount { get; set; }
         public string Description { get; set; } = string.Empty;
+        public string InvoiceNumber { get; set; } = string.Empty;
         public decimal PaidAmount { get; set; }
         public DocumentStatus Status { get; set; } // Enum
         public decimal Balance => TotalAmount - PaidAmount;

@@ -697,3 +697,18 @@ dotnet build AccountingSystem.sln
   "remarks": "Partial payment"
 }
 ```
+
+## Document Numbering
+
+The system auto-generates document numbers per company for:
+- Invoices (`INV-0001`)
+- Journal entries (`JE-0001`)
+- Customer payments received (`PR-0001`)
+- Bill payments/checks (`CHK-0001`)
+
+Vendor bills remain manually entered and should continue to use the vendor invoice number for accounting traceability.
+
+Implementation notes:
+- `DocumentSequences` stores `CompanyId`, `DocumentType`, `Prefix`, and `NextNumber`.
+- The sequence service uses optimistic concurrency (`RowVersion`) with retries to avoid duplicate numbers under concurrent requests.
+- Admins can edit prefix and next number in **Company Settings → Document Numbering**.

@@ -14,11 +14,13 @@ namespace AccountingSystem.API.Controllers
     {
         private readonly AccountingDbContext _context;
         private readonly ITenantService _tenantService;
+        private readonly IDocumentSequenceService _documentSequenceService;
 
-        public CompaniesController(AccountingDbContext context, ITenantService tenantService)
+        public CompaniesController(AccountingDbContext context, ITenantService tenantService, IDocumentSequenceService documentSequenceService)
         {
             _context = context;
             _tenantService = tenantService;
+            _documentSequenceService = documentSequenceService;
         }
 
         [HttpGet("current")]
@@ -60,6 +62,24 @@ namespace AccountingSystem.API.Controllers
             await _context.SaveChangesAsync();
 
             return Ok(new { message = "Company profile updated successfully." });
+        }
+
+        [HttpGet("document-numbering")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> GetDocumentNumbering()
+        {
+            var tenantId = _tenantService.GetCurrentTenant();
+            var sequences = await _documentSequenceService.GetSequencesAsync(tenantId);
+            return Ok(sequences);
+        }
+
+        [HttpPut("document-numbering")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> UpdateDocumentNumbering([FromBody] List<UpdateDocumentSequenceDTO> dto)
+        {
+            var tenantId = _tenantService.GetCurrentTenant();
+            await _documentSequenceService.UpdateSequencesAsync(tenantId, dto);
+            return Ok(new { message = "Document numbering updated successfully." });
         }
     }
 }

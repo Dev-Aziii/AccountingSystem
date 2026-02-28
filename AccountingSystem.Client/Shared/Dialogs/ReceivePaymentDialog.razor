@@ -110,12 +110,13 @@
                         </MudItem>
                         <MudItem xs="12" sm="6">
                             <MudTextField Label="Reference Number"
-                                          @bind-Value="model.ReferenceNumber"
+                                          Value="[Auto-Generated]"
                                           Variant="Variant.Outlined"
                                           Margin="Margin.Dense"
                                           Class="shadcn-input"
-                                          Placeholder="Check No. / Trans ID"
-                                          HelperText="Optional transaction reference" />
+                                          Placeholder="[Auto-Generated]"
+                                          HelperText="Generated when payment is recorded"
+                                          Disabled="true" />
                         </MudItem>
                     }
 
