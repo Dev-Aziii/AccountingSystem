@@ -302,7 +302,11 @@
 
     private async Task ConfirmDelete(int id)
     {
-        bool? result = await DialogService.ShowMessageBox("Archive", "Archive this account? It will be hidden from selection lists.", yesText: "Archive", cancelText: "Cancel");
+        bool result = await ShowConfirmDialog(
+            "Archive this account?",
+            "It will be hidden from selection lists.",
+            "Archive",
+            Color.Error);
         if (result == true)
         {
             try
@@ -317,7 +321,11 @@
 
     private async Task ConfirmRestore(int id)
     {
-        bool? result = await DialogService.ShowMessageBox("Restore", "Restore this account?", yesText: "Restore", cancelText: "Cancel");
+        bool result = await ShowConfirmDialog(
+            "Restore this account?",
+            "It will become available again in account selection lists.",
+            "Restore",
+            Color.Success);
         if (result == true)
         {
             try
@@ -328,6 +336,21 @@
             }
             catch (Exception ex) { Snackbar.Add(ex.Message, Severity.Error); }
         }
+    }
+
+    private async Task<bool> ShowConfirmDialog(string content, string subText, string buttonText, Color color)
+    {
+        var parameters = new DialogParameters
+        {
+            [nameof(ShadcnConfirmDialog.ContentText)] = content,
+            [nameof(ShadcnConfirmDialog.SubText)] = subText,
+            [nameof(ShadcnConfirmDialog.ButtonText)] = buttonText,
+            [nameof(ShadcnConfirmDialog.Color)] = color
+        };
+        var options = new DialogOptions { MaxWidth = MaxWidth.ExtraSmall, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<ShadcnConfirmDialog>("Confirm", parameters, options);
+        var result = await dialog.Result;
+        return result is not null && !result.Canceled;
     }
 
     // Helper for Shadcn badge colors based on account type

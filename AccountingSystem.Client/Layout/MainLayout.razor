@@ -5,10 +5,6 @@
 @inject AuthService AuthService
 @inject NavigationManager NavManager
 
-<MudThemeProvider Theme="_shadcnTheme" />
-<MudDialogProvider />
-<MudSnackbarProvider />
-
 <MudLayout Class="shadcn-layout">
     <MudAppBar Class="shadcn-app-bar" Elevation="0">
 
@@ -350,23 +346,6 @@
 
 @code {
     bool _drawerOpen = true;
-
-    // This overrides the global purple color to the dark slate shadcn color
-    private MudTheme _shadcnTheme = new MudTheme()
-    {
-        PaletteLight = new PaletteLight()
-        {
-            Primary = "#0f172a", // Slate-900
-            Secondary = "#64748b", // Slate-500
-            AppbarBackground = "#ffffff",
-            AppbarText = "#0f172a",
-            Background = "#f8fafc",
-            Surface = "#ffffff",
-            DrawerBackground = "#ffffff",
-            DrawerText = "#0f172a",
-            ActionDefault = "#64748b" // Default icon color
-        }
-    };
 
     void DrawerToggle()
     {
