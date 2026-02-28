@@ -1,0 +1,31 @@
+﻿@page "/superadmin"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "SuperAdmin")]
+
+<PageTitle>Super Admin</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-6">
+    <MudText Typo="Typo.h4" Class="mb-1">Super Admin</MudText>
+    <MudText Typo="Typo.body2" Class="mb-4" Style="color: var(--text-muted);">Access global system management tools.</MudText>
+
+    <MudBreadcrumbs Items="@_links" Class="mb-6" />
+
+    <MudPaper Outlined="true" Elevation="0" Class="pa-4">
+        <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
+            @foreach (var link in _links)
+            {
+                <MudButton Variant="Variant.Outlined" Color="Color.Primary" Href="@link.Href">@link.Text</MudButton>
+            }
+        </MudStack>
+    </MudPaper>
+</MudContainer>
+
+@code {
+    private readonly List<BreadcrumbItem> _links = new()
+    {
+        new("System Overview", href: "superadmin/dashboard"),
+        new("Tenant Manager", href: "superadmin/tenants"),
+        new("Global Users", href: "superadmin/users"),
+        new("Admin Audit Logs", href: "superadmin/audit-logs")
+    };
+}

@@ -5,44 +5,25 @@
     <MudNavMenu Dense="true" Class="shadcn-nav-menu">
 
         <AuthorizeView Roles="SuperAdmin">
-            <div class="nav-section-label">Super Admin</div>
-            <MudNavLink Href="superadmin/dashboard" Match="NavLinkMatch.All" Icon="@Icons.Material.Outlined.Security">System Overview</MudNavLink>
-            <MudNavLink Href="superadmin/tenants" Match="NavLinkMatch.All" Icon="@Icons.Material.Outlined.Business">Tenant Manager</MudNavLink>
-            <MudNavLink Href="superadmin/users" Match="NavLinkMatch.All" Icon="@Icons.Material.Outlined.Group">Global Users</MudNavLink>
-            <MudNavLink Href="superadmin/audit-logs" Match="NavLinkMatch.All" Icon="@Icons.Material.Outlined.History">Admin Audit Logs</MudNavLink>
+            <MudNavLink Href="superadmin" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Security">Super Admin</MudNavLink>
         </AuthorizeView>
 
         <AuthorizeView Roles="Admin,Accounting,Management">
-            <div class="nav-section-label">Overview</div>
-            <MudNavLink Href="dashboard" Match="NavLinkMatch.All" Icon="@Icons.Material.Outlined.Dashboard">Dashboard</MudNavLink>
+            <MudNavLink Href="dashboard" Match="NavLinkMatch.All" Icon="@Icons.Material.Outlined.Dashboard">Overview</MudNavLink>
         </AuthorizeView>
 
         <AuthorizeView Roles="Admin">
-            <div class="nav-section-label">Administration</div>
-            <MudNavLink Href="admin/users" Match="NavLinkMatch.All" Icon="@Icons.Material.Outlined.People">User Management</MudNavLink>
-            <MudNavLink Href="admin/audit-logs" Match="NavLinkMatch.All" Icon="@Icons.Material.Outlined.History">Audit Logs</MudNavLink>
-            <MudNavLink Href="admin/company-settings" Match="NavLinkMatch.All" Icon="@Icons.Material.Outlined.Settings">Company Settings</MudNavLink>
+            <MudNavLink Href="admin" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Settings">Administration</MudNavLink>
         </AuthorizeView>
 
         <AuthorizeView Roles="Admin,Accounting">
-            <div class="nav-section-label">General Ledger</div>
-            <MudNavLink Href="gl/journal" Match="NavLinkMatch.All" Icon="@Icons.Material.Outlined.EditNote">Journal Entries</MudNavLink>
-            <MudNavLink Href="gl/accounts" Match="NavLinkMatch.All" Icon="@Icons.Material.Outlined.AccountTree">Chart of Accounts</MudNavLink>
-
-            <div class="nav-section-label">Accounts Payable</div>
-            <MudNavLink Href="ap/bills" Match="NavLinkMatch.All" Icon="@Icons.Material.Outlined.NoteAdd">Create Vendor Bill</MudNavLink>
-            <MudNavLink Href="ap/bills/list" Match="NavLinkMatch.All" Icon="@Icons.Material.Outlined.ListAlt">Bills List</MudNavLink>
-            <MudNavLink Href="ap/vendors" Match="NavLinkMatch.All" Icon="@Icons.Material.Outlined.Store">Vendors</MudNavLink>
-
-            <div class="nav-section-label">Accounts Receivable</div>
-            <MudNavLink Href="ar/invoices" Match="NavLinkMatch.All" Icon="@Icons.Material.Outlined.NoteAdd">Create Invoice</MudNavLink>
-            <MudNavLink Href="ar/invoices/list" Match="NavLinkMatch.All" Icon="@Icons.Material.Outlined.ListAlt">Invoice List</MudNavLink>
-            <MudNavLink Href="ar/customers" Match="NavLinkMatch.All" Icon="@Icons.Material.Outlined.Groups">Customers</MudNavLink>
+            <MudNavLink Href="gl" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.AccountBalance">General Ledger</MudNavLink>
+            <MudNavLink Href="ap" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.RequestQuote">Accounts Payable</MudNavLink>
+            <MudNavLink Href="ar" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.ReceiptLong">Accounts Receivable</MudNavLink>
         </AuthorizeView>
 
         <AuthorizeView Roles="Admin,Accounting,Management">
-            <div class="nav-section-label">Reporting</div>
-            <MudNavLink Href="reports/financials" Match="NavLinkMatch.All" Icon="@Icons.Material.Outlined.Analytics">Financial Statements</MudNavLink>
+            <MudNavLink Href="reports" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Analytics">Reporting</MudNavLink>
         </AuthorizeView>
 
     </MudNavMenu>
@@ -57,21 +38,6 @@
     .shadcn-nav-menu {
         padding: 0 !important;
     }
-
-    /* ── Section Labels ───────────────────────────────────── */
-    .nav-section-label {
-        font-size: 0.6875rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.06em;
-        color: var(--text-muted);
-        padding: 1.25rem 1rem 0.3rem 1rem;
-        user-select: none;
-    }
-
-        .nav-section-label:first-of-type {
-            padding-top: 0.25rem;
-        }
 
     /* ── Nav Links ────────────────────────────────────────── */
     .shadcn-nav-menu .mud-nav-link {

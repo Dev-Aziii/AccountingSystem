@@ -1,0 +1,30 @@
+﻿@page "/ar"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Admin,Accounting")]
+
+<PageTitle>Accounts Receivable</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-6">
+    <MudText Typo="Typo.h4" Class="mb-1">Accounts Receivable</MudText>
+    <MudText Typo="Typo.body2" Class="mb-4" Style="color: var(--text-muted);">Create invoices and manage customer collections.</MudText>
+
+    <MudBreadcrumbs Items="@_links" Class="mb-6" />
+
+    <MudPaper Outlined="true" Elevation="0" Class="pa-4">
+        <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
+            @foreach (var link in _links)
+            {
+                <MudButton Variant="Variant.Outlined" Color="Color.Primary" Href="@link.Href">@link.Text</MudButton>
+            }
+        </MudStack>
+    </MudPaper>
+</MudContainer>
+
+@code {
+    private readonly List<BreadcrumbItem> _links = new()
+    {
+        new("Create Invoice", href: "ar/invoices"),
+        new("Invoice List", href: "ar/invoices/list"),
+        new("Customers", href: "ar/customers")
+    };
+}
