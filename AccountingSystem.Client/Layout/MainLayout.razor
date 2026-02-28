@@ -5,6 +5,10 @@
 @inject AuthService AuthService
 @inject NavigationManager NavManager
 
+<MudThemeProvider Theme="_shadcnTheme" />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
 <MudLayout Class="shadcn-layout">
     <MudAppBar Class="shadcn-app-bar" Elevation="0">
 
@@ -109,14 +113,18 @@
 </MudLayout>
 
 <style>
-    /* CSS Variables for Shadcn equivalents (fallback to hardcoded if not using variables) */
+    /* CSS Variables for Shadcn equivalents */
     :root {
         --border-color: #e2e8f0;
         --bg-background: #f8fafc;
         --bg-surface: #ffffff;
+        --bg-muted: #f1f5f9;
         --text-main: #0f172a;
         --text-muted: #64748b;
         --radius-md: 6px;
+        --radius-lg: 8px;
+        --color-destructive: #ef4444;
+        --color-success: #10b981;
     }
 
     /* Main Layout */
@@ -150,7 +158,7 @@
     }
 
         .menu-toggle:hover {
-            background-color: #f1f5f9 !important;
+            background-color: var(--bg-muted) !important;
             color: var(--text-main) !important;
         }
 
@@ -173,7 +181,7 @@
     }
 
     .app-title {
-        font-weight: 700;
+        font-weight: 600;
         font-size: 1.1rem;
         letter-spacing: -0.025em;
         line-height: 1.1;
@@ -192,11 +200,12 @@
         border-radius: var(--radius-md) !important;
         color: var(--text-main) !important;
         transition: background-color 0.15s ease !important;
-        text-transform: none !important; /* Remove uppercase */
+        text-transform: none !important;
+        font-weight: 500 !important;
     }
 
         .user-ghost-button:hover {
-            background-color: #f1f5f9 !important;
+            background-color: var(--bg-muted) !important;
         }
 
     .user-info {
@@ -206,7 +215,7 @@
     }
 
     .user-avatar {
-        background-color: #f1f5f9 !important;
+        background-color: var(--bg-muted) !important;
         color: var(--text-main) !important;
         border: 1px solid var(--border-color);
         width: 28px !important;
@@ -222,6 +231,15 @@
     .user-menu-content {
         min-width: 220px;
         padding: 4px;
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        background-color: var(--bg-surface);
+    }
+
+    .shadcn-menu-list {
+        padding: 0 !important;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+        border-radius: var(--radius-md) !important;
     }
 
     .menu-header {
@@ -238,17 +256,18 @@
         border-radius: 4px !important;
         font-size: 0.875rem !important;
         padding: 8px 12px !important;
-        margin: 2px 0 !important;
+        margin: 2px 4px !important;
         color: var(--text-main) !important;
+        transition: background-color 0.1s ease !important;
     }
 
         .shadcn-menu-item:hover {
-            background-color: #f1f5f9 !important;
+            background-color: var(--bg-muted) !important;
         }
 
     .logout-item:hover {
         background-color: #fef2f2 !important;
-        color: #ef4444 !important;
+        color: var(--color-destructive) !important;
     }
 
     /* Auth Buttons */
@@ -266,16 +285,16 @@
     }
 
         .shadcn-btn-ghost:hover {
-            background-color: #f1f5f9 !important;
+            background-color: var(--bg-muted) !important;
         }
 
     .shadcn-btn-primary {
         border-radius: var(--radius-md) !important;
         text-transform: none !important;
         font-weight: 500 !important;
-        background-color: var(--theme-primary) !important; /* Still respects your theme */
+        background-color: var(--text-main) !important;
         color: white !important;
-        box-shadow: none !important; /* Flat */
+        box-shadow: none !important;
         padding: 6px 16px !important;
     }
 
@@ -294,14 +313,14 @@
         display: flex;
         flex-direction: column;
     }
-    fapp
+
     /* Main Content */
     .shadcn-main-content {
         min-height: calc(100vh - 64px);
     }
 
     .page-wrapper {
-        padding: 1.5rem; /* Standard shadcn content padding */
+        padding: 1.5rem;
         min-height: 100%;
         max-width: 1400px;
         margin: 0 auto;
@@ -309,34 +328,45 @@
 
     /* Fixed Media Queries */
     @@media (max-width: 768px) {
-        .user-name
+        .user-name {
+            display: none;
+        }
 
-    {
-        display: none;
-    }
-
-    .page-wrapper {
-        padding: 1rem;
-    }
-
+        .page-wrapper {
+            padding: 1rem;
+        }
     }
 
     @@media (max-width: 480px) {
-        .app-bar-content
+        .app-bar-content {
+            padding: 0 0.75rem;
+        }
 
-    {
-        padding: 0 0.75rem;
-    }
-
-    .company-name {
-        display: none;
-    }
-
+        .company-name {
+            display: none;
+        }
     }
 </style>
 
 @code {
     bool _drawerOpen = true;
+
+    // This overrides the global purple color to the dark slate shadcn color
+    private MudTheme _shadcnTheme = new MudTheme()
+    {
+        PaletteLight = new PaletteLight()
+        {
+            Primary = "#0f172a", // Slate-900
+            Secondary = "#64748b", // Slate-500
+            AppbarBackground = "#ffffff",
+            AppbarText = "#0f172a",
+            Background = "#f8fafc",
+            Surface = "#ffffff",
+            DrawerBackground = "#ffffff",
+            DrawerText = "#0f172a",
+            ActionDefault = "#64748b" // Default icon color
+        }
+    };
 
     void DrawerToggle()
     {
