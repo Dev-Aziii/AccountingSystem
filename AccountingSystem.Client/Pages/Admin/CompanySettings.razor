@@ -1,6 +1,7 @@
 ﻿@page "/admin/company-settings"
 @using AccountingSystem.Shared.DTOs
 @using AccountingSystem.Client.Services
+@using AccountingSystem.Client.Shared.Dialogs
 @using Microsoft.AspNetCore.Authorization
 @using MudBlazor
 @using System.Globalization
@@ -336,15 +337,30 @@
         }
     }
 
+    private async Task<bool> ShowConfirmDialog(string content, string subText, string buttonText, Color color)
+    {
+        var parameters = new DialogParameters
+        {
+            [nameof(ShadcnConfirmDialog.ContentText)] = content,
+            [nameof(ShadcnConfirmDialog.SubText)] = subText,
+            [nameof(ShadcnConfirmDialog.ButtonText)] = buttonText,
+            [nameof(ShadcnConfirmDialog.Color)] = color
+        };
+        var options = new DialogOptions { MaxWidth = MaxWidth.ExtraSmall, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<ShadcnConfirmDialog>("Confirm", parameters, options);
+        var result = await dialog.Result;
+        return result is not null && !result.Canceled;
+    }
+
     private async Task RunYearEndCloseAsync(int fiscalYear)
     {
-        var confirm = await DialogService.ShowMessageBox(
-            "Confirm Year-End Close",
-            $"Run year-end close for FY {fiscalYear}? This action marks the year as closed for new postings.",
-            yesText: "Run Close",
-            cancelText: "Cancel");
+        var confirm = await ShowConfirmDialog(
+            $"Run year-end close for FY {fiscalYear}?",
+            "This action marks the fiscal year as closed for new postings.",
+            "Run Close",
+            Color.Warning);
 
-        if (confirm != true)
+        if (!confirm)
             return;
 
         closingYear = fiscalYear;

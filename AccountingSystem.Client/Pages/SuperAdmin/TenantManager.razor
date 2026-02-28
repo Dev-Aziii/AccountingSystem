@@ -1,6 +1,7 @@
 ﻿@page "/superadmin/tenants"
 @using AccountingSystem.Shared.DTOs
 @using AccountingSystem.Client.Services
+@using AccountingSystem.Client.Shared.Dialogs
 @using MudBlazor
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "SuperAdmin")]
 @inject SuperAdminService SuperAdminService
@@ -247,15 +248,32 @@
 
     private async Task ConfirmBlock(TenantDTO tenant)
     {
-        var result = await DialogService.ShowMessageBox(
-            "Block Company",
-            $"Are you sure you want to BLOCK '{tenant.Name}'? This will permanently prevent all users from accessing the system until unblocked.",
-            yesText: "Block", cancelText: "Cancel");
+        var result = await ShowConfirmDialog(
+            $"Block company '{tenant.Name}'?",
+            "All users from this company will be prevented from accessing the system until unblocked.",
+            "Block",
+            Color.Error);
 
-        if (result == true)
+        if (result)
         {
             await ChangeStatus(tenant, "Blocked");
         }
+    }
+
+
+    private async Task<bool> ShowConfirmDialog(string content, string subText, string buttonText, Color color)
+    {
+        var parameters = new DialogParameters
+        {
+            [nameof(ShadcnConfirmDialog.ContentText)] = content,
+            [nameof(ShadcnConfirmDialog.SubText)] = subText,
+            [nameof(ShadcnConfirmDialog.ButtonText)] = buttonText,
+            [nameof(ShadcnConfirmDialog.Color)] = color
+        };
+        var options = new DialogOptions { MaxWidth = MaxWidth.ExtraSmall, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<ShadcnConfirmDialog>("Confirm", parameters, options);
+        var dialogResult = await dialog.Result;
+        return dialogResult is not null && !dialogResult.Canceled;
     }
 
     private bool FilterFunc(TenantDTO element)
