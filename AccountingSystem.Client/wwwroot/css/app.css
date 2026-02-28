@@ -210,6 +210,40 @@
         cursor: not-allowed !important;
     }
 
+/* =========================================
+   SHADCN SNACKBAR (TOAST) STYLES
+========================================= */
+
+.mud-snackbar {
+    background-color: transparent !important;
+    border-radius: var(--radius-md) !important; 
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important; 
+}
+
+/* Ensure the text inside the snackbar uses your dark slate color */
+.mud-snackbar-content-message {
+    color: var(--text-main) !important;
+    font-weight: 500 !important;
+    font-size: 0.875rem !important;
+}
+
+/* Colorize the left-side icons based on the severity */
+.mud-alert-text-success .mud-icon-root {
+    color: var(--color-success) !important;
+}
+
+.mud-alert-text-error .mud-icon-root {
+    color: var(--color-destructive) !important;
+}
+
+.mud-alert-text-warning .mud-icon-root {
+    color: #f59e0b !important;
+}
+/* Amber-500 */
+.mud-alert-text-info .mud-icon-root {
+    color: var(--text-main) !important;
+}
+
 /* ========================================
    NEW SHADCN UTILITIES
    ======================================== */

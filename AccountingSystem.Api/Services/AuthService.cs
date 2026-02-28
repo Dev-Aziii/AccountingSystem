@@ -138,8 +138,15 @@ namespace AccountingSystem.API.Services
             if (await _context.Users.AnyAsync(u => u.Email == registerDto.Email))
                 throw new Exception("Email already exists in this company.");
 
-            var role = await _context.Roles.FirstOrDefaultAsync(r => r.Name == registerDto.RoleName);
-            if (role == null) throw new Exception($"Role '{registerDto.RoleName}' does not exist.");
+            var normalizedRoleName = registerDto.RoleName.Trim();
+            var role = await _context.Roles
+                .AsNoTracking()
+                .FirstOrDefaultAsync(r => r.Name.ToLower() == normalizedRoleName.ToLower());
+            if (role == null)
+                throw new Exception($"Role '{registerDto.RoleName}' does not exist.");
+
+            if (role.Name == "SuperAdmin")
+                throw new Exception("SuperAdmin role cannot be assigned from this endpoint.");
 
             CreatePasswordHash(registerDto.Password, out byte[] passwordHash, out byte[] passwordSalt);
 
