@@ -7,11 +7,21 @@
 @inject ISnackbar Snackbar
 
 <Microsoft.AspNetCore.Components.Authorization.AuthorizeView Roles="Admin,Accounting">
-    <MudSelect T="int" Label="Account" @bind-Value="InternalAccountId"
-               Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Add" OnAdornmentClick="OpenAddDialog"
-               Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter"
-               Dense="true" Disabled="@(accounts == null)" Clearable="true">
-        <MudSelectItem Value="0" Disabled="true">-- Select Account --</MudSelectItem>
+    <MudSelect T="int"
+               Label="Account"
+               @bind-Value="InternalAccountId"
+               Adornment="Adornment.End"
+               AdornmentIcon="@Icons.Material.Outlined.Add"
+               OnAdornmentClick="OpenAddDialog"
+               Variant="Variant.Outlined"
+               Margin="Margin.Dense"
+               Class="shadcn-input"
+               AnchorOrigin="Origin.BottomCenter"
+               Disabled="@(accounts == null)"
+               Clearable="true">
+
+        <MudSelectItem Value="0" Disabled="true">Select an account...</MudSelectItem>
+
         @if (accounts != null)
         {
             foreach (var a in accounts)
@@ -51,12 +61,14 @@
         {
             var all = await LedgerService.GetAccountsAsync();
             // Filter accounts if TypeFilter is provided (e.g., only "Asset" accounts for payments)
-            // Fix: Handle potential null from GetAccountsAsync
             accounts = string.IsNullOrEmpty(TypeFilter)
                 ? all
                 : all?.Where(a => a.Type.Equals(TypeFilter, StringComparison.OrdinalIgnoreCase)).ToList();
         }
-        catch (Exception ex) { Console.WriteLine(ex.Message); }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
     }
 
     private async Task OpenAddDialog()

@@ -11,141 +11,174 @@
 @inject NavigationManager NavManager
 @inject ILocalStorageService LocalStorage
 
-<MudDialog>
+<MudDialog Class="shadcn-dialog" DisableSidePadding="true">
     <TitleContent>
-        <MudText Typo="Typo.h6">
-            <MudIcon Icon="@Icons.Material.Filled.Receipt" Class="mr-2" />
-            Record Invoice Payment
-        </MudText>
+        <div class="d-flex align-center px-6 pt-6 pb-4">
+            <MudIcon Icon="@Icons.Material.Outlined.Receipt" Class="mr-2 text-muted" Size="Size.Small" />
+            <h3 style="font-size: 1.25rem; font-weight: 600; letter-spacing: -0.025em; color: var(--text-main); margin: 0;">
+                Record Invoice Payment
+            </h3>
+        </div>
     </TitleContent>
 
     <DialogContent>
-        <MudPaper Elevation="0" Class="pa-4 mb-4" Style="background-color: var(--mud-palette-background-grey);">
-            <MudGrid Spacing="2">
-                <MudItem xs="12" sm="6">
-                    <MudText Typo="Typo.body2" Color="Color.Default">
-                        <strong>Customer:</strong> @Invoice.CustomerName
-                    </MudText>
-                </MudItem>
-                <MudItem xs="12" sm="6">
-                    <MudText Typo="Typo.body2" Color="Color.Success" Class="text-right">
-                        <strong>Balance:</strong> @Invoice.Balance.ToString("C2", _phCulture)
-                    </MudText>
-                </MudItem>
-            </MudGrid>
-        </MudPaper>
+        <div class="px-6 pb-2">
+            <div class="pa-4 mb-6" style="background-color: var(--bg-muted); border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                <div class="d-flex justify-space-between align-center">
+                    <div style="font-size: 0.875rem; color: var(--text-main);">
+                        <span style="color: var(--text-muted); margin-right: 4px;">Customer:</span>
+                        <span style="font-weight: 500;">@Invoice.CustomerName</span>
+                    </div>
+                    <div style="font-size: 1rem; font-weight: 600; color: var(--color-success); font-variant-numeric: tabular-nums;">
+                        <span style="color: var(--text-muted); font-size: 0.875rem; font-weight: 400; margin-right: 4px;">Balance:</span>
+                        @Invoice.Balance.ToString("C2", _phCulture)
+                    </div>
+                </div>
+            </div>
 
-        <MudForm @ref="form" @bind-IsValid="@success">
-            <MudGrid Spacing="3">
-                <MudItem xs="12" sm="6">
-                    <MudSelect T="PaymentMethod"
-                               Label="Payment Method"
-                               @bind-Value="model.PaymentMethod"
-                               Variant="Variant.Outlined"
-                               Required="true"
-                               RequiredError="Payment method is required"
-                               AnchorOrigin="Origin.BottomCenter"
-                               HelperText="How the payment will be received">
-                        <MudSelectItem Value="@PaymentMethod.Cash">
-                            <MudIcon Icon="@Icons.Material.Filled.Money" Size="Size.Small" Class="mr-2" />Cash
-                        </MudSelectItem>
-                        <MudSelectItem Value="@PaymentMethod.Check">
-                            <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Small" Class="mr-2" />Check
-                        </MudSelectItem>
-                        <MudSelectItem Value="@PaymentMethod.Online">
-                            <MudIcon Icon="@Icons.Material.Filled.CreditCard" Size="Size.Small" Class="mr-2" />Online (PayMongo)
-                        </MudSelectItem>
-                        <MudSelectItem Value="@PaymentMethod.BankTransfer">
-                            <MudIcon Icon="@Icons.Material.Filled.AccountBalance" Size="Size.Small" Class="mr-2" />Bank Transfer
-                        </MudSelectItem>
-                    </MudSelect>
-                </MudItem>
-
-                <MudItem xs="12" sm="6">
-                    <MudNumericField T="decimal"
-                                     Label="Amount Received"
-                                     @bind-Value="model.Amount"
-                                     Format="N2"
-                                     Variant="Variant.Outlined"
-                                     Min="0.01M"
-                                     Max="@Invoice.Balance"
-                                     Required="true"
-                                     RequiredError="Amount is required"
-                                     immediate="true"
-                                     HelperText="@($"Maximum: {Invoice.Balance.ToString("C2", _phCulture)}")"
-                                     AdornmentText="₱"
-                                     Adornment="Adornment.Start" />
-                </MudItem>
-
-                <MudItem xs="12">
-                    <AccountSelect @bind-SelectedAccountId="model.AssetAccountId"
-                                   TypeFilter="Asset" />
-                    <MudText Typo="Typo.caption" Color="Color.Info" Class="mt-1">
-                        <MudIcon Icon="@Icons.Material.Filled.Info" Size="Size.Small" Class="mr-1" />
-                        @(model.PaymentMethod == PaymentMethod.Online
-                                                ? "Where should the online payment settle?"
-                                                : "Select the Cash/Bank account to deposit funds into")
-                    </MudText>
-                </MudItem>
-
-                @if (model.PaymentMethod != PaymentMethod.Online)
-                {
+            <MudForm @ref="form" @bind-IsValid="@success" Spacing="4">
+                <MudGrid Spacing="3">
                     <MudItem xs="12" sm="6">
-                        <MudDatePicker Label="Payment Date"
-                                       @bind-Date="date"
-                                       Variant="Variant.Outlined"
-                                       Required="true"
-                                       RequiredError="Payment date is required"
-                                       immediate="true"
-                                       HelperText="Date the payment was received"
-                                       MaxDate="DateTime.Today" />
+                        <MudSelect T="PaymentMethod"
+                                   Label="Payment Method"
+                                   @bind-Value="model.PaymentMethod"
+                                   Variant="Variant.Outlined"
+                                   Margin="Margin.Dense"
+                                   Class="shadcn-input"
+                                   Required="true"
+                                   RequiredError="Payment method is required"
+                                   AnchorOrigin="Origin.BottomCenter"
+                                   HelperText="How the payment will be received">
+                            <MudSelectItem Value="@PaymentMethod.Cash">
+                                <MudIcon Icon="@Icons.Material.Outlined.Money" Size="Size.Small" Class="mr-2 text-muted" />Cash
+                            </MudSelectItem>
+                            <MudSelectItem Value="@PaymentMethod.Check">
+                                <MudIcon Icon="@Icons.Material.Outlined.CheckCircle" Size="Size.Small" Class="mr-2 text-muted" />Check
+                            </MudSelectItem>
+                            <MudSelectItem Value="@PaymentMethod.Online">
+                                <MudIcon Icon="@Icons.Material.Outlined.CreditCard" Size="Size.Small" Class="mr-2 text-muted" />Online (PayMongo)
+                            </MudSelectItem>
+                            <MudSelectItem Value="@PaymentMethod.BankTransfer">
+                                <MudIcon Icon="@Icons.Material.Outlined.AccountBalance" Size="Size.Small" Class="mr-2 text-muted" />Bank Transfer
+                            </MudSelectItem>
+                        </MudSelect>
                     </MudItem>
+
                     <MudItem xs="12" sm="6">
-                        <MudTextField Label="Reference Number"
-                                      @bind-Value="model.ReferenceNumber"
+                        <MudNumericField T="decimal"
+                                         Label="Amount Received"
+                                         @bind-Value="model.Amount"
+                                         Format="N2"
+                                         Variant="Variant.Outlined"
+                                         Margin="Margin.Dense"
+                                         Class="shadcn-input"
+                                         Min="0.01M"
+                                         Max="@Invoice.Balance"
+                                         Required="true"
+                                         RequiredError="Amount is required"
+                                         Immediate="true"
+                                         HelperText="@($"Maximum: {Invoice.Balance.ToString("C2", _phCulture)}")"
+                                         AdornmentText="₱"
+                                         Adornment="Adornment.Start"
+                                         HideSpinButtons="true" />
+                    </MudItem>
+
+                    <MudItem xs="12">
+                        <AccountSelect @bind-SelectedAccountId="model.AssetAccountId"
+                                       TypeFilter="Asset" />
+                        <div class="d-flex align-center mt-1" style="font-size: 0.75rem; color: var(--text-muted);">
+                            <MudIcon Icon="@Icons.Material.Outlined.Info" Size="Size.Small" Class="mr-1" Style="font-size: 14px;" />
+                            @(model.PaymentMethod == PaymentMethod.Online
+                                                        ? "Where should the online payment settle?"
+                                                        : "Select the Cash/Bank account to deposit funds into")
+                        </div>
+                    </MudItem>
+
+                    @if (model.PaymentMethod != PaymentMethod.Online)
+                    {
+                        <MudItem xs="12" sm="6">
+                            <MudDatePicker Label="Payment Date"
+                                           @bind-Date="date"
+                                           Variant="Variant.Outlined"
+                                           Margin="Margin.Dense"
+                                           Class="shadcn-input"
+                                           Required="true"
+                                           RequiredError="Payment date is required"
+                                           Immediate="true"
+                                           HelperText="Date the payment was received"
+                                           MaxDate="DateTime.Today" />
+                        </MudItem>
+                        <MudItem xs="12" sm="6">
+                            <MudTextField Label="Reference Number"
+                                          @bind-Value="model.ReferenceNumber"
+                                          Variant="Variant.Outlined"
+                                          Margin="Margin.Dense"
+                                          Class="shadcn-input"
+                                          Placeholder="Check No. / Trans ID"
+                                          HelperText="Optional transaction reference" />
+                        </MudItem>
+                    }
+
+                    <MudItem xs="12">
+                        <MudTextField Label="Remarks"
+                                      @bind-Value="model.Remarks"
                                       Variant="Variant.Outlined"
-                                      Placeholder="Check No. / Trans ID"
-                                      HelperText="Optional transaction reference" />
+                                      Margin="Margin.Dense"
+                                      Class="shadcn-input"
+                                      Lines="3"
+                                      HelperText="Additional notes about this payment" />
                     </MudItem>
-                }
-
-                <MudItem xs="12">
-                    <MudTextField Label="Remarks"
-                                  @bind-Value="model.Remarks"
-                                  Variant="Variant.Outlined"
-                                  Lines="3"
-                                  HelperText="Additional notes about this payment" />
-                </MudItem>
-            </MudGrid>
-        </MudForm>
+                </MudGrid>
+            </MudForm>
+        </div>
     </DialogContent>
 
     <DialogActions>
-        <MudButton OnClick="Cancel"
-                   Variant="Variant.Text">
-            Cancel
-        </MudButton>
-        <MudButton Color="Color.Success"
-                   OnClick="Submit"
-                   Variant="Variant.Filled"
-                   Disabled="@(!success || isSubmitting)"
-                   StartIcon="@(isSubmitting ? null : (model.PaymentMethod == PaymentMethod.Online ? Icons.Material.Filled.Link : Icons.Material.Filled.Payment))">
-            @if (isSubmitting)
-            {
-                <MudProgressCircular Class="mr-2" Size="Size.Small" Indeterminate="true" />
-                <span>Processing...</span>
-            }
-            else if (model.PaymentMethod == PaymentMethod.Online)
-            {
-                <span>Generate Payment Link</span>
-            }
-            else
-            {
-                <span>Receive Payment</span>
-            }
-        </MudButton>
+        <div class="d-flex w-100 justify-end gap-2 px-6 py-4 mt-2">
+            <MudButton OnClick="Cancel"
+                       Variant="Variant.Outlined"
+                       Class="shadcn-btn-outline"
+                       Size="Size.Small">
+                Cancel
+            </MudButton>
+            <MudButton OnClick="Submit"
+                       Variant="Variant.Filled"
+                       Class="custom-button"
+                       Size="Size.Small"
+                       Disabled="@(!success || isSubmitting)"
+                       StartIcon="@(isSubmitting ? null : (model.PaymentMethod == PaymentMethod.Online ? Icons.Material.Outlined.Link : Icons.Material.Outlined.Payment))">
+                @if (isSubmitting)
+                {
+                    <MudProgressCircular Class="mr-2" Size="Size.Small" Indeterminate="true" Style="color: var(--bg-surface);" />
+                    <span>Processing...</span>
+                }
+                else if (model.PaymentMethod == PaymentMethod.Online)
+                {
+                    <span>Generate Link</span>
+                }
+                else
+                {
+                    <span>Receive Payment</span>
+                }
+            </MudButton>
+        </div>
     </DialogActions>
 </MudDialog>
+
+<style>
+    /* Clean up the default MudBlazor dialog padding so we can style the header/footer */
+    .shadcn-dialog .mud-dialog-title {
+        padding: 0;
+    }
+
+    .shadcn-dialog .mud-dialog-content {
+        padding: 0;
+    }
+
+    .shadcn-dialog .mud-dialog-actions {
+        padding: 0;
+    }
+</style>
 
 @code {
     [CascadingParameter]
