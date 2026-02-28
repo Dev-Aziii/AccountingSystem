@@ -1,559 +1,269 @@
 ﻿html, body {
-    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-}
-
-h1:focus {
-    outline: none;
-}
-
-a, .btn-link {
-    color: #0071c1;
-}
-
-.btn-primary {
-    color: #fff;
-    background-color: #1b6ec2;
-    border-color: #1861ac;
-}
-
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-    box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
-}
-
-.content {
-    padding-top: 1.1rem;
-}
-
-.valid.modified:not([type=checkbox]) {
-    outline: 1px solid #26b050;
-}
-
-.invalid {
-    outline: 1px solid red;
-}
-
-.validation-message {
-    color: red;
-}
-
-#blazor-error-ui {
-    background: lightyellow;
-    bottom: 0;
-    box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.2);
-    display: none;
-    left: 0;
-    padding: 0.6rem 1.25rem 0.7rem 1.25rem;
-    position: fixed;
-    width: 100%;
-    z-index: 1000;
-}
-
-    #blazor-error-ui .dismiss {
-        cursor: pointer;
-        position: absolute;
-        right: 0.75rem;
-        top: 0.5rem;
-    }
-
-.blazor-error-boundary {
-    background: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTYiIGhlaWdodD0iNDkiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIG92ZXJmbG93PSJoaWRkZW4iPjxkZWZzPjxjbGlwUGF0aCBpZD0iY2xpcDAiPjxyZWN0IHg9IjIzNSIgeT0iNTEiIHdpZHRoPSI1NiIgaGVpZ2h0PSI0OSIvPjwvY2xpcFBhdGg+PC9kZWZzPjxnIGNsaXAtcGF0aD0idXJsKCNjbGlwMCkiIHRyYW5zZm9ybT0idHJhbnNsYXRlKC0yMzUgLTUxKSI+PHBhdGggZD0iTTI2My41MDYgNTFDMjY0LjcxNyA1MSAyNjUuODEzIDUxLjQ4MzcgMjY2LjYwNiA1Mi4yNjU4TDI2Ny4wNTIgNTIuNzk4NyAyNjcuNTM5IDUzLjYyODMgMjkwLjE4NSA5Mi4xODMxIDI5MC41NDUgOTIuNzk1IDI5MC42NTYgOTIuOTk2QzI5MC44NzcgOTMuNTEzIDI5MSA5NC4wODE1IDI5MSA5NC42NzgyIDI5MSA5Ny4wNjUxIDI4OS4wMzggOTkgMjg2LjYxNyA5OUwyNDAuMzgzIDk5QzIzNy45NjMgOTkgMjM2IDk3LjA2NTEgMjM2IDk0LjY3ODIgMjM2IDk0LjM3OTkgMjM2LjAzMSA5NC4wODg2IDIzNi4wODkgOTMuODA3MkwyMzYuMzM4IDkzLjAxNjIgMjM2Ljg1OCA5Mi4xMzE0IDI1OS40NzMgNTMuNjI5NCAyNTkuOTYxIDUyLjc5ODUgMjYwLjQwNyA1Mi4yNjU4QzI2MS4yIDUxLjQ4MzcgMjYyLjI5NiA1MSAyNjMuNTA2IDUxWk0yNjMuNTg2IDY2LjAxODNDMjYwLjczNyA2Ni4wMTgzIDI1OS4zMTMgNjcuMTI0NSAyNTkuMzEzIDY5LjMzNyAyNTkuMzEzIDY5LjYxMDIgMjU5LjMzMiA2OS44NjA4IDI1OS4zNzEgNzAuMDg4N0wyNjEuNzk1IDg0LjAxNjEgMjY1LjM4IDg0LjAxNjEgMjY3LjgyMSA2OS43NDc1QzI2Ny44NiA2OS43MzA5IDI2Ny44NzkgNjkuNTg3NyAyNjcuODc5IDY5LjMxNzkgMjY3Ljg3OSA2Ny4xMTgyIDI2Ni40NDggNjYuMDE4MyAyNjMuNTg2IDY2LjAxODNaTTI2My41NzYgODYuMDU0N0MyNjEuMDQ5IDg2LjA1NDcgMjU5Ljc4NiA4Ny4zMDA1IDI1OS43ODYgODkuNzkyMSAyNTkuNzg2IDkyLjI4MzcgMjYxLjA0OSA5My41Mjk1IDI2My41NzYgOTMuNTI5NSAyNjYuMTE2IDkzLjUyOTUgMjY3LjM4NyA5Mi4yODM3IDI2Ny4zODcgODkuNzkyMSAyNjcuMzg3IDg3LjMwMDUgMjY2LjExNiA4Ni4wNTQ3IDI2My41NzYgODYuMDU0N1oiIGZpbGw9IiNGRkU1MDAiIGZpbGwtcnVsZT0iZXZlbm9kZCIvPjwvZz48L3N2Zz4=) no-repeat 1rem/1.8rem, #b32121;
-    padding: 1rem 1rem 1rem 3.7rem;
-    color: white;
-}
-
-    .blazor-error-boundary::after {
-        content: "An error has occurred."
-    }
-
-.loading-progress {
-    position: relative;
-    display: block;
-    width: 8rem;
-    height: 8rem;
-    margin: 20vh auto 1rem auto;
-}
-
-    .loading-progress circle {
-        fill: none;
-        stroke: #e0e0e0;
-        stroke-width: 0.6rem;
-        transform-origin: 50% 50%;
-        transform: rotate(-90deg);
-    }
-
-        .loading-progress circle:last-child {
-            stroke: #1b6ec2;
-            stroke-dasharray: calc(3.141 * var(--blazor-load-percentage, 0%) * 0.8), 500%;
-            transition: stroke-dasharray 0.05s ease-in-out;
-        }
-
-.loading-progress-text {
-    position: absolute;
-    text-align: center;
-    font-weight: bold;
-    inset: calc(20vh + 3.25rem) 0 auto 0.2rem;
-}
-
-    .loading-progress-text:after {
-        content: var(--blazor-load-percentage-text, "Loading");
-    }
-
-code {
-    color: #c02d76;
+    font-family: 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif; /* Inter is the standard for shadcn */
 }
 
 /* ========================================
-   CUSTOM THEME STYLES - GLOBAL
+   SHADCN/UI THEME STYLES - GLOBAL
    ======================================== */
 
 :root {
-    --theme-primary: rgb(22, 84, 127);
-    --theme-secondary: rgb(56, 146, 147);
-    --theme-primary-light: rgba(22, 84, 127, 0.1);
-    --theme-secondary-light: rgba(56, 146, 147, 0.1);
-    --theme-primary-dark: rgb(16, 62, 94);
-    --theme-secondary-dark: rgb(42, 110, 111);
+    /* Base Shadcn Colors (Slate/Zinc vibe) */
+    --border-color: #e2e8f0;
+    --bg-background: #f8fafc;
+    --bg-surface: #ffffff;
+    --bg-muted: #f1f5f9;
+    --text-main: #0f172a;
+    --text-muted: #64748b;
+    --radius-lg: 8px;
+    --radius-md: 6px;
+    /* Semantic Colors */
+    --theme-primary: #0f172a; /* Slate 900 */
+    --theme-primary-hover: #334155; /* Slate 700 */
+    --theme-secondary: #f1f5f9; /* Slate 100 */
+    --theme-secondary-hover: #e2e8f0; /* Slate 200 */
+    /* Utility Colors */
+    --color-success: #10b981;
+    --color-destructive: #ef4444;
+    --color-warning: #f59e0b;
 }
 
+/* Base Overrides */
 .custom-bg-gradient {
-    background: linear-gradient(135deg, var(--theme-primary) 0%, var(--theme-secondary) 100%);
+    background: var(--bg-surface);
 }
 
 .custom-text-primary {
-    color: var(--theme-primary) !important;
+    color: var(--text-main) !important;
 }
 
 .custom-text-secondary {
-    color: var(--theme-secondary) !important;
+    color: var(--text-muted) !important;
 }
 
 /* ========================================
-   HEADER STYLES
+   HEADER STYLES (Flattened)
    ======================================== */
 
-.dashboard-header {
-    background: white !important;
-    border-radius: 20px;
-    position: relative;
-    overflow: hidden;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-    border: 1px solid rgba(22, 84, 127, 0.1);
+.dashboard-header, .page-header {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
 }
 
-    .dashboard-header .mud-paper {
-        background: transparent !important;
-        box-shadow: none !important;
-    }
-
-.header-title {
-    color: var(--theme-primary) !important;
-    font-weight: 800;
-}
-
-.header-subtitle {
-    color: var(--theme-secondary) !important;
-    font-weight: 400;
-}
-
-.page-header {
-    background: none !important;
-    position: relative;
-    overflow: hidden;
-}
-
-    .page-header .mud-paper {
-        background: transparent !important;
-        box-shadow: none !important;
-    }
-
-.page-header-title {
-    color: var(--theme-primary) !important;
-    font-weight: 800;
-}
-
-.page-header-subtitle {
-    color: var(--theme-secondary) !important;
-    font-weight: 400;
-}
-
-/* ========================================
-   KPI CARD STYLES
-   ======================================== */
-
-.kpi-card {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    border-radius: 20px;
-    border: 1px solid rgba(0,0,0,0.08);
-    position: relative;
-    overflow: hidden;
-    background: linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%);
-}
-
-    .kpi-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 4px;
-        background: linear-gradient(90deg, var(--theme-primary) 0%, var(--theme-secondary) 100%);
-    }
-
-    .kpi-card:hover {
-        transform: translateY(-8px) scale(1.02);
-        box-shadow: 0 20px 40px rgba(22, 84, 127, 0.15);
-        border-color: var(--theme-primary);
-    }
-
-.kpi-value {
-    font-size: 2rem;
-    font-weight: 800;
-    letter-spacing: -0.5px;
-    background: linear-gradient(135deg, var(--theme-primary) 0%, var(--theme-secondary) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
-
-.kpi-icon {
-    background: linear-gradient(135deg, var(--theme-primary) 0%, var(--theme-secondary) 100%);
-    border-radius: 16px;
-    padding: 12px;
-    color: white;
-}
-
-.kpi-label {
-    font-size: 0.75rem;
+.header-title, .page-header-title {
+    color: var(--text-main) !important;
     font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    color: var(--theme-primary);
-    opacity: 0.8;
+    letter-spacing: -0.025em;
 }
 
-.kpi-description {
-    font-size: 0.8rem;
-    color: var(--theme-secondary);
-    font-weight: 500;
-    margin-top: 4px;
+.header-subtitle, .page-header-subtitle {
+    color: var(--text-muted) !important;
+    font-size: 0.875rem;
 }
 
 /* ========================================
-   SECTION STYLES
+   CARD STYLES (Formerly KPI/WorldBank/Sections)
    ======================================== */
 
-.section-title {
-    font-weight: 700;
-    font-size: 1.3rem;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    color: var(--theme-primary);
-    margin-bottom: 20px;
-    position: relative;
+/* Replaced heavy gradients and 20px radii with 8px crisp borders */
+.kpi-card, .content-section, .calendar-section, .ledger-section, .worldbank-card, .worldbank-chart-section {
+    background: var(--bg-surface) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: var(--radius-lg) !important;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+    transition: box-shadow 0.2s ease;
 }
 
-    .section-title::after {
-        content: '';
-        flex: 1;
-        height: 2px;
-        background: linear-gradient(90deg, var(--theme-primary) 0%, var(--theme-secondary) 100%);
-        margin-left: 16px;
+    .kpi-card::before, .section-title::after, .worldbank-card::before {
+        display: none; /* Remove colorful pseudo-element lines */
     }
 
-.content-section {
-    background: rgba(255, 255, 255, 0.95);
-    border-radius: 20px;
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(22, 84, 127, 0.1);
-    box-shadow: 0 8px 32px rgba(22, 84, 127, 0.08);
-}
-
-.calendar-section {
-    background: white;
-    border-radius: 20px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.06);
-    border: 1px solid rgba(22, 84, 127, 0.1);
-}
-
-.ledger-section {
-    background: white;
-    border-radius: 20px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.06);
-    border: 1px solid rgba(56, 146, 147, 0.1);
-}
-
-/* ========================================
-   WORLD BANK CARD STYLES
-   ======================================== */
-
-:root {
-    --worldbank-primary: rgb(156, 39, 176);
-    --worldbank-secondary: rgb(103, 58, 183);
-    --worldbank-light: rgba(156, 39, 176, 0.1);
-    --worldbank-dark: rgb(123, 31, 138);
-}
-
-.worldbank-card {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    border-radius: 20px;
-    border: 1px solid rgba(156, 39, 176, 0.2);
-    position: relative;
-    overflow: hidden;
-    background: linear-gradient(145deg, #fafafa 0%, #f3e5f5 100%);
-}
-
-    .worldbank-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 4px;
-        background: linear-gradient(90deg, var(--worldbank-primary) 0%, var(--worldbank-secondary) 100%);
+    /* Remove the floaty hover states */
+    .kpi-card:hover, .worldbank-card:hover {
+        transform: none !important;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05) !important;
+        border-color: var(--border-color) !important;
     }
 
-    .worldbank-card:hover {
-        transform: translateY(-8px) scale(1.02);
-        box-shadow: 0 20px 40px rgba(156, 39, 176, 0.15);
-        border-color: var(--worldbank-primary);
-    }
-
-.worldbank-value {
-    font-size: 2rem;
-    font-weight: 800;
-    letter-spacing: -0.5px;
-    background: linear-gradient(135deg, var(--worldbank-primary) 0%, var(--worldbank-secondary) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
-
-.worldbank-icon {
-    background: linear-gradient(135deg, var(--worldbank-primary) 0%, var(--worldbank-secondary) 100%);
-    border-radius: 16px;
-    padding: 12px;
-    color: white;
-}
-
-.worldbank-label {
-    font-size: 0.75rem;
+.kpi-value, .worldbank-value {
+    font-size: 1.5rem;
     font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    color: var(--worldbank-primary);
-    opacity: 0.8;
+    letter-spacing: -0.025em;
+    color: var(--text-main) !important;
+    background: none !important; /* Strip gradient text */
+    -webkit-text-fill-color: var(--text-main) !important;
 }
 
-.worldbank-description {
-    font-size: 0.8rem;
-    color: var(--worldbank-secondary);
+.kpi-label, .worldbank-label {
+    font-size: 0.75rem;
     font-weight: 500;
-    margin-top: 4px;
+    text-transform: none; /* Shadcn rarely uses uppercase */
+    color: var(--text-muted) !important;
 }
 
-.worldbank-chart-section {
-    background: linear-gradient(145deg, #ffffff 0%, #f3e5f5 100%);
-    border-radius: 20px;
-    border: 1px solid rgba(156, 39, 176, 0.1);
-    box-shadow: 0 8px 24px rgba(156, 39, 176, 0.08);
+.kpi-icon, .worldbank-icon {
+    background: transparent !important;
+    color: var(--text-muted) !important;
+    padding: 0;
 }
-
 
 /* ========================================
    TABLE STYLES
    ======================================== */
 
-.custom-table .mud-table-head {
-    background: linear-gradient(135deg, var(--theme-primary-light) 0%, var(--theme-secondary-light) 100%);
+.custom-table .mud-table-head, .shadcn-table .mud-table-head {
+    background: var(--bg-surface) !important;
 }
 
-    .custom-table .mud-table-head .mud-table-cell {
-        font-weight: 700;
-        color: var(--theme-primary);
-        border-bottom: 2px solid var(--theme-primary);
+    .custom-table .mud-table-head .mud-table-cell, .shadcn-table .mud-table-head .mud-table-cell {
+        font-weight: 500;
+        color: var(--text-muted);
+        border-bottom: 1px solid var(--border-color) !important;
+        font-size: 0.875rem;
     }
 
-.custom-table .mud-table-row:hover {
-    background-color: var(--theme-primary-light);
+.custom-table .mud-table-row:hover, .shadcn-table .mud-table-row:hover {
+    background-color: var(--bg-muted) !important;
 }
 
 /* ========================================
-   BUTTON STYLES
+   BUTTON STYLES (SHADCN/UI)
    ======================================== */
 
-.custom-button {
-    background: linear-gradient(135deg, var(--theme-primary) 0%, var(--theme-secondary) 100%);
-    border-radius: 12px;
-    font-weight: 600;
-    text-transform: none;
-    padding: 12px 24px;
-    box-shadow: 0 4px 16px rgba(22, 84, 127, 0.3);
-    transition: all 0.3s ease;
-    color: white !important;
+/* 1. Global Reset for Custom Buttons */
+.custom-button, .create-btn, .save-btn, .refresh-btn {
+    text-transform: none !important; /* No forced uppercase */
+    font-weight: 500 !important; /* Medium weight, not too bold */
+    border-radius: var(--radius-md) !important; /* 6px crisp corners */
+    transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, transform 0.1s ease !important;
+    transform: none !important; /* Kill legacy floating animations */
+    letter-spacing: normal !important;
 }
 
-    .custom-button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(22, 84, 127, 0.4);
-        color: white !important;
+    /* Kill all legacy gradient slide animations */
+    .create-btn::before, .save-btn::before, .custom-button::before {
+        display: none !important;
     }
 
-    .custom-button .mud-button-text {
-        color: white !important;
+    /* Ensure MudBlazor text wrapper inherits the right color */
+    .custom-button .mud-button-text,
+    .create-btn .mud-button-text,
+    .save-btn .mud-button-text,
+    .refresh-btn .mud-button-text {
+        color: inherit !important;
     }
 
-.create-btn {
-    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-    border: none;
-    color: white !important;
-    border-radius: 12px;
-    font-weight: 600;
-    text-transform: none;
-    padding: 12px 24px;
-    box-shadow: 0 4px 16px rgba(40, 167, 69, 0.3);
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
+/* 2. PRIMARY BUTTONS (.create-btn, .save-btn, .custom-button) */
+.create-btn, .save-btn, .custom-button {
+    background-color: var(--theme-primary) !important; 
+    color: var(--bg-surface) !important; 
+    border: 1px solid transparent !important;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important; 
+    padding: 8px 16px !important; 
 }
 
-    .create-btn:hover {
-        background: linear-gradient(135deg, #218838 0%, #1ba085 100%);
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(40, 167, 69, 0.4);
-        color: white !important;
+    /* Hover: Slightly lighter background, no floating */
+    .create-btn:hover, .save-btn:hover, .custom-button:hover {
+        background-color: var(--theme-primary-hover) !important;
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+        transform: none !important;
     }
 
-    .create-btn:active {
-        transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(40, 167, 69, 0.5);
+    /* Active/Click: Subtle press effect */
+    .create-btn:active, .save-btn:active, .custom-button:active {
+        transform: scale(0.98) !important;
+        box-shadow: none !important;
     }
 
-    .create-btn:disabled {
-        background: linear-gradient(135deg, #6c757d 0%, #868e96 100%);
-        transform: none;
-        box-shadow: 0 2px 8px rgba(108, 117, 125, 0.2);
-        cursor: not-allowed;
+    /* Disabled state: Flat grey */
+    .create-btn:disabled, .save-btn:disabled, .custom-button:disabled {
+        background-color: var(--bg-muted) !important;
+        color: var(--text-muted) !important;
+        opacity: 0.5 !important;
+        cursor: not-allowed !important;
+        box-shadow: none !important;
     }
 
-    .create-btn .mud-button-text {
-        color: white !important;
-    }
-
-    .create-btn::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-        transition: left 0.6s ease;
-    }
-
-    .create-btn:hover::before {
-        left: 100%;
-    }
-
-.save-btn {
-    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
-    border: none;
-    color: white !important;
-    border-radius: 12px;
-    font-weight: 600;
-    text-transform: none;
-    padding: 12px 24px;
-    box-shadow: 0 4px 16px rgba(0, 123, 255, 0.3);
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
-}
-
-    .save-btn:hover {
-        background: linear-gradient(135deg, #0056b3 0%, #004085 100%);
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(0, 123, 255, 0.4);
-        color: white !important;
-    }
-
-    .save-btn:active {
-        transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(0, 123, 255, 0.5);
-    }
-
-    .save-btn:disabled {
-        background: linear-gradient(135deg, #6c757d 0%, #868e96 100%);
-        transform: none;
-        box-shadow: 0 2px 8px rgba(108, 117, 125, 0.2);
-        cursor: not-allowed;
-    }
-
-    .save-btn .mud-button-text {
-        color: white !important;
-    }
-
-    .save-btn::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-        transition: left 0.6s ease;
-    }
-
-    .save-btn:hover::before {
-        left: 100%;
-    }
-
+/* 3. SECONDARY / OUTLINE BUTTONS (.refresh-btn) */
 .refresh-btn {
-    background: linear-gradient(135deg, var(--theme-primary) 0%, var(--theme-secondary) 100%);
-    border: none;
-    color: white;
-    border-radius: 12px;
-    font-weight: 600;
-    box-shadow: 0 4px 16px rgba(22, 84, 127, 0.3);
-    transition: all 0.3s ease;
+    background-color: var(--bg-surface) !important; /* White Background */
+    color: var(--text-main) !important; /* Slate 900 Text */
+    border: 1px solid var(--border-color) !important; /* 1px outline */
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+    padding: 8px 16px !important;
 }
 
+    /* Hover: Light grey background */
     .refresh-btn:hover {
-        background: linear-gradient(135deg, var(--theme-primary-dark) 0%, var(--theme-secondary-dark) 100%);
-        transform: translateY(-1px);
-        box-shadow: 0 8px 25px rgba(22, 84, 127, 0.4);
+        background-color: var(--bg-muted) !important;
+        color: var(--text-main) !important;
+        transform: none !important;
+    }
+
+    /* Active/Click: Subtle press effect */
+    .refresh-btn:active {
+        transform: scale(0.98) !important;
+    }
+
+    .refresh-btn:disabled {
+        opacity: 0.5 !important;
+        cursor: not-allowed !important;
     }
 
 /* ========================================
-   UI COMPONENTS
+   NEW SHADCN UTILITIES
    ======================================== */
 
-.legend-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 16px;
-    background: rgba(255, 255, 255, 0.8);
-    border-radius: 20px;
-    border: 1px solid rgba(0,0,0,0.08);
+.shadcn-card {
+    border-radius: var(--radius-lg) !important;
+    border: 1px solid var(--border-color) !important;
+    background: var(--bg-surface) !important;
+}
+
+.shadcn-chip-default {
+    background-color: var(--bg-muted) !important;
+    color: var(--text-main) !important;
+    border-radius: 4px !important;
     font-weight: 500;
 }
 
-.loading-container {
-    background: linear-gradient(135deg, var(--theme-primary-light) 0%, var(--theme-secondary-light) 100%);
-    border-radius: 20px;
-    backdrop-filter: blur(10px);
+.shadcn-chip-destructive {
+    background-color: #fef2f2 !important;
+    color: var(--color-destructive) !important;
+    border-radius: 4px !important;
+    font-weight: 500;
 }
 
-/* ========================================
-   UTILITY CLASSES
-   ======================================== */
+/* Icon Buttons (Archive/Restore) */
+.shadcn-icon-btn {
+    transition: background-color 0.15s ease;
+    border-radius: var(--radius-md) !important;
+}
+
+    .shadcn-icon-btn:hover {
+        background-color: var(--bg-muted) !important;
+    }
+
+.text-destructive {
+    color: var(--text-muted) !important;
+}
+
+    .text-destructive:hover {
+        color: var(--color-destructive) !important;
+        background-color: #fef2f2 !important;
+    }
+
+.text-success {
+    color: var(--text-muted) !important;
+}
+
+    .text-success:hover {
+        color: var(--color-success) !important;
+        background-color: #f0fdf4 !important;
+    }
 
 .peso::before {
-    content: "₱ ";
-    color: var(--theme-secondary);
-    font-weight: 600;
-}
-
-.stats-grid {
-    gap: 24px;
+    content: "₱";
+    color: var(--text-muted);
+    margin-right: 2px;
 }

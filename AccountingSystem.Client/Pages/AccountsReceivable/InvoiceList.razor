@@ -1,5 +1,4 @@
-﻿@page "/ar/invoices/list"
-@using AccountingSystem.Shared.DTOs
+﻿@using AccountingSystem.Shared.DTOs
 @using AccountingSystem.Client.Services
 @using AccountingSystem.Client.Shared.Dialogs
 @using AccountingSystem.Shared.Enums
@@ -14,47 +13,41 @@
 
 <PageTitle>Customer Invoices</PageTitle>
 
-<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-6">
-    <!-- HEADER -->
-    <MudPaper Class="page-header mb-6" Elevation="0">
-        <div class="d-flex justify-space-between align-center">
-            <div>
-                @if (_initialLoading)
-                {
-                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="180px" Height="32px" Class="mb-2" />
-                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="420px" Height="20px" />
-                }
-                else
-                {
-                    <MudText Typo="Typo.h5" Class="mb-2 page-header-title">
-                        Customer Invoices
-                    </MudText>
-                    <MudText Typo="Typo.body1" Class="page-header-subtitle">
-                        Manage customer invoices and track payment collections
-                    </MudText>
-                }
-            </div>
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-6 mb-10">
+    <div class="d-flex justify-space-between align-center mb-6">
+        <div>
+            @if (_initialLoading)
+            {
+                <MudSkeleton SkeletonType="SkeletonType.Text" Width="180px" Height="32px" Class="mb-1" />
+                <MudSkeleton SkeletonType="SkeletonType.Text" Width="420px" Height="16px" />
+            }
+            else
+            {
+                <h2 style="font-size: 1.5rem; font-weight: 600; letter-spacing: -0.025em; color: var(--text-main); margin: 0;">
+                    Customer Invoices
+                </h2>
+                <p style="color: var(--text-muted); font-size: 0.875rem; margin: 0.25rem 0 0 0;">
+                    Manage customer invoices and track payment collections.
+                </p>
+            }
         </div>
-    </MudPaper>
+    </div>
 
     @if (_initialLoading)
     {
-        <!-- SKELETON FOR TABLE -->
-        <MudCard Elevation="3">
-            <!-- Toolbar Skeleton -->
-            <MudCardContent Class="pa-4">
-                <div class="d-flex justify-space-between align-center mb-4">
+        <MudCard Elevation="0" Outlined="true" Class="shadcn-card">
+            <MudCardContent Class="pa-0">
+                <div class="d-flex justify-space-between align-center pa-4 border-b">
                     <MudSkeleton SkeletonType="SkeletonType.Text" Width="160px" Height="24px" />
-                    <div class="d-flex align-center">
-                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="300px" Height="40px" Class="mr-3" />
-                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="150px" Height="42px" />
+                    <div class="d-flex align-center gap-3">
+                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="300px" Height="36px" Style="border-radius: 6px;" />
+                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="150px" Height="36px" Style="border-radius: 6px;" />
                     </div>
                 </div>
 
-                <!-- Table Header Skeleton -->
-                <div class="d-flex justify-space-between mb-3 pa-2" style="border-bottom: 2px solid rgba(0,0,0,0.1);">
+                <div class="d-flex justify-space-between mb-2 pa-4 border-b">
                     <MudSkeleton SkeletonType="SkeletonType.Text" Width="40px" Height="20px" />
-                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="100px" Height="20px" />
+                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="150px" Height="20px" />
                     <MudSkeleton SkeletonType="SkeletonType.Text" Width="90px" Height="20px" />
                     <MudSkeleton SkeletonType="SkeletonType.Text" Width="70px" Height="20px" />
                     <MudSkeleton SkeletonType="SkeletonType.Text" Width="80px" Height="20px" />
@@ -62,151 +55,172 @@
                     <MudSkeleton SkeletonType="SkeletonType.Text" Width="70px" Height="20px" />
                 </div>
 
-                <!-- Table Rows Skeleton -->
-                @for (int i = 0; i < 10; i++)
+                @for (int i = 0; i < 8; i++)
                 {
-                    <div class="d-flex justify-space-between align-center mb-3 pa-2" style="border-bottom: 1px solid rgba(0,0,0,0.05);">
-                        <div style="flex: 0.5;">
-                            <MudSkeleton SkeletonType="SkeletonType.Text" Width="30px" Height="16px" />
-                        </div>
-                        <div style="flex: 2;">
-                            <MudSkeleton SkeletonType="SkeletonType.Text" Width="140px" Height="16px" />
-                        </div>
-                        <div style="flex: 1;">
-                            <MudSkeleton SkeletonType="SkeletonType.Text" Width="90px" Height="16px" />
-                        </div>
-                        <div style="flex: 1; text-align: right;">
-                            <MudSkeleton SkeletonType="SkeletonType.Text" Width="80px" Height="16px" Style="margin-left: auto;" />
-                        </div>
-                        <div style="flex: 1; text-align: right;">
-                            <MudSkeleton SkeletonType="SkeletonType.Text" Width="80px" Height="16px" Style="margin-left: auto;" />
-                        </div>
-                        <div style="flex: 0.8;">
-                            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="70px" Height="24px" />
-                        </div>
+                    <div class="d-flex justify-space-between align-center py-3 px-4" style="border-bottom: 1px solid var(--border-color);">
+                        <div style="flex: 0.5;"><MudSkeleton SkeletonType="SkeletonType.Text" Width="30px" Height="16px" /></div>
+                        <div style="flex: 2;"><MudSkeleton SkeletonType="SkeletonType.Text" Width="140px" Height="16px" /></div>
+                        <div style="flex: 1;"><MudSkeleton SkeletonType="SkeletonType.Text" Width="90px" Height="16px" /></div>
+                        <div style="flex: 1; text-align: right;"><MudSkeleton SkeletonType="SkeletonType.Text" Width="80px" Height="16px" Style="margin-left: auto;" /></div>
+                        <div style="flex: 1; text-align: right;"><MudSkeleton SkeletonType="SkeletonType.Text" Width="80px" Height="16px" Style="margin-left: auto;" /></div>
+                        <div style="flex: 0.8;"><MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="70px" Height="24px" Style="border-radius: 4px;" /></div>
                         <div style="flex: 1;">
                             <div class="d-flex gap-2">
-                                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="80px" Height="28px" />
+                                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="80px" Height="28px" Style="border-radius: 6px;" />
                                 <MudSkeleton SkeletonType="SkeletonType.Circle" Width="32px" Height="32px" />
                             </div>
                         </div>
                     </div>
                 }
 
-                <!-- Pagination Skeleton -->
-                <div class="d-flex justify-center mt-4">
-                    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="250px" Height="32px" />
+                <div class="d-flex justify-end pa-4">
+                    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="250px" Height="32px" Style="border-radius: 6px;" />
                 </div>
             </MudCardContent>
         </MudCard>
     }
     else
     {
-        <MudPaper Elevation="2" Class="pa-4 mb-4">
-            <div class="d-flex align-center mb-2">
-                <MudIcon Icon="@Icons.Material.Filled.FilterList" Class="mr-2" />
-                <MudText Typo="Typo.h6">Filters</MudText>
-                <MudSpacer />
-                @if (HasActiveFilters())
-                {
-                    <MudChip T="string" Color="Color.Primary" Size="Size.Small" Class="mr-2">
-                        @GetActiveFilterCount() active filter(s)
-                    </MudChip>
-                    <MudButton Variant="Variant.Text"
-                               Color="Color.Secondary"
-                               Size="Size.Small"
-                               OnClick="ClearFilters"
-                               StartIcon="@Icons.Material.Filled.Clear"
-                               Disabled="_loading">
-                        Clear All
-                    </MudButton>
-                }
-            </div>
-
-            <MudGrid>
-                <MudItem xs="12" md="3">
-                    <MudSelect T="int"
-                               Value="selectedFiscalYear"
-                               ValueChanged="OnFiscalYearChanged"
-                               Label="Fiscal Year"
-                               Variant="Variant.Outlined"
-                               Margin="Margin.Dense"
-                               Dense="true"
-                               Disabled="_loading">
-                        <MudSelectItem T="int" Value="0">All Years</MudSelectItem>
-                        @foreach (var year in fiscalYears)
-                        {
-                            <MudSelectItem T="int" Value="@year.FiscalYear">FY @year.FiscalYear</MudSelectItem>
-                        }
-                    </MudSelect>
-                </MudItem>
-                <MudItem xs="12" md="3">
-                    <MudSelect T="string"
-                               Value="selectedStatus"
-                               ValueChanged="OnStatusChanged"
-                               Label="Status"
-                               Variant="Variant.Outlined"
-                               Margin="Margin.Dense"
-                               Dense="true"
-                               Disabled="_loading">
-                        <MudSelectItem T="string" Value="@AllStatusValue">All Statuses</MudSelectItem>
-                        <MudSelectItem T="string" Value="@nameof(DocumentStatus.Unpaid)">Unpaid</MudSelectItem>
-                        <MudSelectItem T="string" Value="@nameof(DocumentStatus.PartiallyPaid)">Partially Paid</MudSelectItem>
-                        <MudSelectItem T="string" Value="@nameof(DocumentStatus.Paid)">Paid</MudSelectItem>
-                        <MudSelectItem T="string" Value="@nameof(DocumentStatus.Void)">Void</MudSelectItem>
-                    </MudSelect>
-                </MudItem>
-                <MudItem xs="12" md="6">
-                    <MudTextField @bind-Value="searchString"
-                                  Label="Search"
-                                  Placeholder="Search by customer or invoice id..."
-                                  Adornment="Adornment.Start"
-                                  AdornmentIcon="@Icons.Material.Filled.Search"
-                                  Variant="Variant.Outlined"
-                                  Margin="Margin.Dense"
-                                  Clearable="true"
-                                  Disabled="_loading" />
-                </MudItem>
-            </MudGrid>
-        </MudPaper>
-
-        <MudTable Items="@invoices" Dense="true" Hover="true" Bordered="true" Striped="true" Filter="new Func<InvoiceDTO, bool>(FilterFunc)" Loading="@_loading">
-            <ToolBarContent>
-                <MudText Typo="Typo.h6">Customer Invoices</MudText>
-                <MudSpacer />
-                <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" Href="/ar/invoices" Class="create-btn ml-3">Create Invoice</MudButton>
-            </ToolBarContent>
-            <HeaderContent>
-                <MudTh>ID</MudTh>
-                <MudTh>Customer</MudTh>
-                <MudTh>Due Date</MudTh>
-                <MudTh Style="text-align:right">Total</MudTh>
-                <MudTh Style="text-align:right">Balance</MudTh>
-                <MudTh>Status</MudTh>
-                <MudTh>Action</MudTh>
-            </HeaderContent>
-            <RowTemplate>
-                <MudTd DataLabel="ID">@context.Id</MudTd>
-                <MudTd DataLabel="Customer">@context.CustomerName</MudTd>
-                <MudTd DataLabel="Due Date">@context.DueDate.ToShortDateString()</MudTd>
-                <MudTd DataLabel="Total" Style="text-align:right">@context.TotalAmount.ToString("C2", _phCulture)</MudTd>
-                <MudTd DataLabel="Balance" Style="text-align:right; font-weight:bold;">@context.Balance.ToString("C2", _phCulture)</MudTd>
-                <MudTd DataLabel="Status">
-                    <MudChip T="string" Size="Size.Small" Color="@GetStatusColor(context.Status)">@GetStatusLabel(context.Status)</MudChip>
-                </MudTd>
-                <MudTd>
-                    <div class="d-flex gap-2">
-                        @if (context.Balance > 0)
-                        {
-                            <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Success" OnClick="@(() => OpenReceiveDialog(context))">Receive</MudButton>
-                        }
-                        <!-- NEW: Download PDF Button -->
-                        <MudIconButton Icon="@Icons.Material.Filled.PictureAsPdf" Color="Color.Error" Size="Size.Small" OnClick="@(() => DownloadPdf(context.Id))" title="Download PDF" />
+        <MudCard Elevation="0" Outlined="true" Class="shadcn-card mb-6">
+            <MudCardContent Class="pa-4">
+                <div class="d-flex align-center justify-space-between mb-4">
+                    <div class="d-flex align-center">
+                        <MudIcon Icon="@Icons.Material.Outlined.FilterList" Size="Size.Small" Class="mr-2 text-muted" />
+                        <span style="font-size: 0.875rem; font-weight: 600; color: var(--text-main);">Filters</span>
                     </div>
-                </MudTd>
-            </RowTemplate>
-            <PagerContent><MudTablePager /></PagerContent>
-        </MudTable>
+                    @if (HasActiveFilters())
+                    {
+                        <div class="d-flex align-center gap-2">
+                            <span style="font-size: 0.75rem; color: var(--text-muted); background: var(--bg-muted); padding: 2px 8px; border-radius: 4px;">
+                                @GetActiveFilterCount() active
+                            </span>
+                            <MudButton Variant="Variant.Text"
+                                       Size="Size.Small"
+                                       OnClick="ClearFilters"
+                                       StartIcon="@Icons.Material.Outlined.Clear"
+                                       Disabled="_loading"
+                                       Style="color: var(--text-muted); text-transform: none; font-size: 0.75rem;">
+                                Clear All
+                            </MudButton>
+                        </div>
+                    }
+                </div>
+
+                <MudGrid Spacing="2">
+                    <MudItem xs="12" md="3">
+                        <MudSelect T="int"
+                                   Value="selectedFiscalYear"
+                                   ValueChanged="OnFiscalYearChanged"
+                                   Label="Fiscal Year"
+                                   Variant="Variant.Outlined"
+                                   Margin="Margin.Dense"
+                                   Class="shadcn-input"
+                                   AnchorOrigin="Origin.BottomCenter"
+                                   Disabled="_loading">
+                            <MudSelectItem T="int" Value="0">All Years</MudSelectItem>
+                            @foreach (var year in fiscalYears)
+                            {
+                                <MudSelectItem T="int" Value="@year.FiscalYear">FY @year.FiscalYear</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="12" md="3">
+                        <MudSelect T="string"
+                                   Value="selectedStatus"
+                                   ValueChanged="OnStatusChanged"
+                                   Label="Status"
+                                   Variant="Variant.Outlined"
+                                   Margin="Margin.Dense"
+                                   Class="shadcn-input"
+                                   AnchorOrigin="Origin.BottomCenter"
+                                   Disabled="_loading">
+                            <MudSelectItem T="string" Value="@AllStatusValue">All Statuses</MudSelectItem>
+                            <MudSelectItem T="string" Value="@nameof(DocumentStatus.Unpaid)">Unpaid</MudSelectItem>
+                            <MudSelectItem T="string" Value="@nameof(DocumentStatus.PartiallyPaid)">Partially Paid</MudSelectItem>
+                            <MudSelectItem T="string" Value="@nameof(DocumentStatus.Paid)">Paid</MudSelectItem>
+                            <MudSelectItem T="string" Value="@nameof(DocumentStatus.Void)">Void</MudSelectItem>
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudTextField @bind-Value="searchString"
+                                      Label="Search"
+                                      Placeholder="Search by customer or invoice ID..."
+                                      Adornment="Adornment.Start"
+                                      AdornmentIcon="@Icons.Material.Outlined.Search"
+                                      Variant="Variant.Outlined"
+                                      Margin="Margin.Dense"
+                                      Class="shadcn-input"
+                                      Clearable="true"
+                                      Disabled="_loading" />
+                    </MudItem>
+                </MudGrid>
+            </MudCardContent>
+        </MudCard>
+
+        <MudCard Elevation="0" Outlined="true" Class="shadcn-card">
+            <MudTable Items="@invoices" Dense="true" Hover="true" Elevation="0" Filter="new Func<InvoiceDTO, bool>(FilterFunc)" Loading="@_loading" Class="shadcn-table">
+                <ToolBarContent>
+                    <div style="font-size: 1.125rem; font-weight: 600; color: var(--text-main);">Invoices List</div>
+                    <MudSpacer />
+                    <MudButton Variant="Variant.Filled" 
+                               StartIcon="@Icons.Material.Outlined.Add" 
+                               Href="/ar" 
+                               Class="custom-button"
+                               Size="Size.Small">
+                        Create Invoice
+                    </MudButton>
+                </ToolBarContent>
+                <HeaderContent>
+                    <MudTh>ID</MudTh>
+                    <MudTh>Customer</MudTh>
+                    <MudTh>Due Date</MudTh>
+                    <MudTh Style="text-align:right">Total</MudTh>
+                    <MudTh Style="text-align:right">Balance</MudTh>
+                    <MudTh>Status</MudTh>
+                    <MudTh>Action</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="ID" Style="color: var(--text-muted);">@context.Id</MudTd>
+                    <MudTd DataLabel="Customer" Style="font-weight: 500; color: var(--text-main);">@context.CustomerName</MudTd>
+                    <MudTd DataLabel="Due Date" Style="color: var(--text-muted);">@context.DueDate.ToShortDateString()</MudTd>
+                    <MudTd DataLabel="Total" Style="text-align:right; font-variant-numeric: tabular-nums;">
+                        @context.TotalAmount.ToString("C2", _phCulture)
+                    </MudTd>
+                    <MudTd DataLabel="Balance" Style="text-align:right; font-weight:600; font-variant-numeric: tabular-nums; color: var(--text-main);">
+                        @context.Balance.ToString("C2", _phCulture)
+                    </MudTd>
+                    <MudTd DataLabel="Status">
+                        <span class="shadcn-badge @GetStatusBadgeClass(context.Status)">@GetStatusLabel(context.Status)</span>
+                    </MudTd>
+                    <MudTd DataLabel="Action">
+                        <div class="d-flex align-center gap-2">
+                            @if (context.Balance > 0)
+                            {
+                                <MudButton Size="Size.Small" 
+                                           Variant="Variant.Outlined" 
+                                           Class="shadcn-btn-outline" 
+                                           OnClick="@(() => OpenReceiveDialog(context))">
+                                    Receive
+                                </MudButton>
+                            }
+                            <MudTooltip Text="Download PDF">
+                                <MudIconButton Icon="@Icons.Material.Outlined.PictureAsPdf" 
+                                               Class="shadcn-icon-btn text-muted" 
+                                               Size="Size.Small" 
+                                               OnClick="@(() => DownloadPdf(context.Id))" />
+                            </MudTooltip>
+                        </div>
+                    </MudTd>
+                </RowTemplate>
+                <PagerContent><MudTablePager /></PagerContent>
+                <NoRecordsContent>
+                    <div style="text-align: center; padding: 3rem; color: var(--text-muted);">
+                        <MudIcon Icon="@Icons.Material.Outlined.ReceiptLong" Size="Size.Medium" Class="mb-2" />
+                        <div style="font-size: 0.875rem;">No invoices found matching your criteria.</div>
+                    </div>
+                </NoRecordsContent>
+            </MudTable>
+        </MudCard>
     }
 </MudContainer>
 
@@ -307,7 +321,6 @@
         var dialog = await DialogService.ShowAsync<ReceivePaymentDialog>("Receive Payment", parameters, options);
         var result = await dialog.Result;
 
-        // Fix: Handle potential null result
         if (result != null && !result.Canceled) await LoadData();
     }
 
@@ -332,13 +345,14 @@
             ? status
             : null;
 
-    private static Color GetStatusColor(DocumentStatus status)
+    // Refactored to use shadcn custom badge classes
+    private static string GetStatusBadgeClass(DocumentStatus status)
         => status switch
         {
-            DocumentStatus.Paid => Color.Success,
-            DocumentStatus.PartiallyPaid => Color.Warning,
-            DocumentStatus.Void => Color.Secondary,
-            _ => Color.Error
+            DocumentStatus.Paid => "badge-green",
+            DocumentStatus.PartiallyPaid => "badge-orange",
+            DocumentStatus.Void => "badge-slate",
+            _ => "badge-red" // Unpaid
         };
 
     private static string GetStatusLabel(DocumentStatus status)

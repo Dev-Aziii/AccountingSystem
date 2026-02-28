@@ -1,5 +1,4 @@
-﻿@page "/ap/vendors"
-@using AccountingSystem.Shared.DTOs
+﻿@using AccountingSystem.Shared.DTOs
 @using AccountingSystem.Client.Services
 @using AccountingSystem.Client.Shared.Dialogs
 @using Microsoft.AspNetCore.Authorization
@@ -11,149 +10,168 @@
 
 <PageTitle>Vendor Management</PageTitle>
 
-<MudContainer MaxWidth="MaxWidth.Large" Class="mt-6">
-    <!-- HEADER -->
-    <MudPaper Class="page-header mb-6" Elevation="0">
-        <div class="d-flex justify-space-between align-center">
-            <div>
-                @if (_initialLoading)
-                {
-                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="220px" Height="32px" Class="mb-2" />
-                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="420px" Height="20px" />
-                }
-                else
-                {
-                    <MudText Typo="Typo.h5" Class="mb-2 page-header-title">
-                        Vendor Management
-                    </MudText>
-                    <MudText Typo="Typo.body1" Class="page-header-subtitle">
-                        Manage supplier relationships and track accounts payable contacts
-                    </MudText>
-                }
-            </div>
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-6 mb-10">
+    <div class="d-flex justify-space-between align-center mb-6">
+        <div>
             @if (_initialLoading)
             {
-                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="170px" Height="42px" />
+                <MudSkeleton SkeletonType="SkeletonType.Text" Width="220px" Height="32px" Class="mb-1" />
+                <MudSkeleton SkeletonType="SkeletonType.Text" Width="420px" Height="16px" />
             }
             else
             {
-                <MudButton Variant="Variant.Filled" Class="create-btn" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenAddDialog">
-                    Add New Vendor
-                </MudButton>
+                <h2 style="font-size: 1.5rem; font-weight: 600; letter-spacing: -0.025em; color: var(--text-main); margin: 0;">
+                    Vendor Management
+                </h2>
+                <p style="color: var(--text-muted); font-size: 0.875rem; margin: 0.25rem 0 0 0;">
+                    Manage supplier relationships and track accounts payable contacts.
+                </p>
             }
         </div>
-    </MudPaper>
+        @if (_initialLoading)
+        {
+            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="140px" Height="36px" Style="border-radius: 6px;" />
+        }
+        else
+        {
+            <MudButton Variant="Variant.Filled"
+                       Class="custom-button"
+                       StartIcon="@Icons.Material.Outlined.Add"
+                       Size="Size.Small"
+                       OnClick="OpenAddDialog">
+                Add Vendor
+            </MudButton>
+        }
+    </div>
 
     @if (_initialLoading)
     {
-        <!-- SKELETON FOR TABS AND TABLE -->
-        <MudCard Elevation="2">
-            <!-- Tabs Skeleton -->
-            <div class="d-flex pa-4" style="border-bottom: 1px solid rgba(0,0,0,0.12);">
-                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="140px" Height="36px" Class="mr-2" />
-                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="160px" Height="36px" />
+        <MudCard Elevation="0" Outlined="true" Class="shadcn-card">
+            <div class="d-flex pa-4 border-b">
+                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="140px" Height="24px" Class="mr-4" />
+                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="160px" Height="24px" />
             </div>
 
-            <MudCardContent Class="pa-6">
-                <!-- Toolbar Skeleton -->
-                <div class="d-flex justify-space-between align-center mb-4">
+            <MudCardContent Class="pa-0">
+                <div class="d-flex justify-space-between align-center pa-4 border-b">
                     <MudSkeleton SkeletonType="SkeletonType.Text" Width="120px" Height="24px" />
-                    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="300px" Height="40px" />
+                    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="250px" Height="36px" Style="border-radius: 6px;" />
                 </div>
 
-                <!-- Table Header Skeleton -->
-                <div class="d-flex justify-space-between mb-3 pa-2" style="border-bottom: 2px solid rgba(0,0,0,0.1);">
+                <div class="d-flex justify-space-between mb-2 pa-4 border-b">
                     <MudSkeleton SkeletonType="SkeletonType.Text" Width="40px" Height="20px" />
-                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="100px" Height="20px" />
+                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="150px" Height="20px" />
+                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="180px" Height="20px" />
                     <MudSkeleton SkeletonType="SkeletonType.Text" Width="120px" Height="20px" />
-                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="130px" Height="20px" />
                     <MudSkeleton SkeletonType="SkeletonType.Text" Width="80px" Height="20px" />
                 </div>
 
-                <!-- Table Rows Skeleton -->
-                @for (int i = 0; i < 8; i++)
+                @for (int i = 0; i < 6; i++)
                 {
-                    <div class="d-flex justify-space-between align-center mb-3 pa-2" style="border-bottom: 1px solid rgba(0,0,0,0.05);">
-                        <div style="flex: 0.5;">
-                            <MudSkeleton SkeletonType="SkeletonType.Text" Width="30px" Height="16px" />
-                        </div>
-                        <div style="flex: 2;">
-                            <MudSkeleton SkeletonType="SkeletonType.Text" Width="160px" Height="16px" />
-                        </div>
-                        <div style="flex: 2;">
-                            <MudSkeleton SkeletonType="SkeletonType.Text" Width="180px" Height="16px" />
-                        </div>
-                        <div style="flex: 2;">
-                            <MudSkeleton SkeletonType="SkeletonType.Text" Width="140px" Height="16px" />
-                        </div>
+                    <div class="d-flex justify-space-between align-center py-3 px-4" style="border-bottom: 1px solid var(--border-color);">
+                        <div style="flex: 0.5;"><MudSkeleton SkeletonType="SkeletonType.Text" Width="30px" Height="16px" /></div>
+                        <div style="flex: 2;"><MudSkeleton SkeletonType="SkeletonType.Text" Width="160px" Height="16px" /></div>
+                        <div style="flex: 2;"><MudSkeleton SkeletonType="SkeletonType.Text" Width="180px" Height="16px" /></div>
+                        <div style="flex: 2;"><MudSkeleton SkeletonType="SkeletonType.Text" Width="140px" Height="16px" /></div>
                         <div style="flex: 1; text-align: right;">
-                            <div class="d-flex justify-end">
-                                <MudSkeleton SkeletonType="SkeletonType.Circle" Width="32px" Height="32px" Class="mr-2" />
-                                <MudSkeleton SkeletonType="SkeletonType.Circle" Width="32px" Height="32px" />
+                            <div class="d-flex justify-end gap-2">
+                                <MudSkeleton SkeletonType="SkeletonType.Circle" Width="28px" Height="28px" />
+                                <MudSkeleton SkeletonType="SkeletonType.Circle" Width="28px" Height="28px" />
                             </div>
                         </div>
                     </div>
                 }
 
-                <!-- Pagination Skeleton -->
-                <div class="d-flex justify-center mt-4">
-                    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="250px" Height="32px" />
+                <div class="d-flex justify-end pa-4">
+                    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="250px" Height="32px" Style="border-radius: 6px;" />
                 </div>
             </MudCardContent>
         </MudCard>
     }
     else
     {
-        <!-- TABS: Active vs Archived -->
-        <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-6">
+        <MudTabs Elevation="0" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pt-4" Class="shadcn-tabs">
+
             <MudTabPanel Text="Active Vendors" OnClick="@(() => LoadList(false))">
-                <MudTable Items="@vendors" Dense="true" Hover="true" Bordered="true" Striped="true" Filter="new Func<VendorDTO, bool>(FilterFunc)" Loading="@_loading">
-                    <ToolBarContent>
-                        <MudText Typo="Typo.h6">Active List</MudText>
-                        <MudSpacer />
-                        <MudTextField @bind-Value="searchString" Placeholder="Search..." Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
-                    </ToolBarContent>
-                    <HeaderContent>
-                        <MudTh>ID</MudTh>
-                        <MudTh>Name</MudTh>
-                        <MudTh>Email</MudTh>
-                        <MudTh>Contact Person</MudTh>
-                        <MudTh Style="text-align:right">Actions</MudTh>
-                    </HeaderContent>
-                    <RowTemplate>
-                        <MudTd DataLabel="ID">@context.Id</MudTd>
-                        <MudTd DataLabel="Name"><b>@context.Name</b></MudTd>
-                        <MudTd DataLabel="Email">@context.Email</MudTd>
-                        <MudTd DataLabel="Contact">@context.ContactPerson</MudTd>
-                        <MudTd DataLabel="Actions" Style="text-align:right">
-                            <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Secondary" OnClick="() => OpenEditDialog(context)" />
-                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="() => ConfirmDelete(context.Id)" />
-                        </MudTd>
-                    </RowTemplate>
-                    <PagerContent><MudTablePager /></PagerContent>
-                </MudTable>
+                <MudCard Elevation="0" Outlined="true" Class="shadcn-card">
+                    <MudTable Items="@vendors" Dense="true" Hover="true" Elevation="0" Filter="new Func<VendorDTO, bool>(FilterFunc)" Loading="@_loading" Class="shadcn-table">
+                        <ToolBarContent>
+                            <div style="font-size: 1.125rem; font-weight: 600; color: var(--text-main);">Active List</div>
+                            <MudSpacer />
+                            <MudTextField @bind-Value="searchString"
+                                          Placeholder="Search vendors..."
+                                          Adornment="Adornment.Start"
+                                          AdornmentIcon="@Icons.Material.Outlined.Search"
+                                          Variant="Variant.Outlined"
+                                          Margin="Margin.Dense"
+                                          Class="shadcn-input"
+                                          Style="max-width: 300px; margin-top: 0;"></MudTextField>
+                        </ToolBarContent>
+                        <HeaderContent>
+                            <MudTh>ID</MudTh>
+                            <MudTh>Name</MudTh>
+                            <MudTh>Email</MudTh>
+                            <MudTh>Contact Person</MudTh>
+                            <MudTh Style="text-align:right">Actions</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd DataLabel="ID" Style="color: var(--text-muted);">@context.Id</MudTd>
+                            <MudTd DataLabel="Name" Style="font-weight: 500; color: var(--text-main);">@context.Name</MudTd>
+                            <MudTd DataLabel="Email" Style="color: var(--text-muted);">@context.Email</MudTd>
+                            <MudTd DataLabel="Contact" Style="color: var(--text-muted);">@context.ContactPerson</MudTd>
+                            <MudTd DataLabel="Actions" Style="text-align:right">
+                                <MudIconButton Icon="@Icons.Material.Outlined.Edit"
+                                               Size="Size.Small"
+                                               Class="shadcn-icon-btn mr-1"
+                                               OnClick="() => OpenEditDialog(context)" />
+                                <MudIconButton Icon="@Icons.Material.Outlined.Archive"
+                                               Size="Size.Small"
+                                               Class="shadcn-icon-btn text-destructive"
+                                               OnClick="() => ConfirmDelete(context.Id)" />
+                            </MudTd>
+                        </RowTemplate>
+                        <PagerContent><MudTablePager /></PagerContent>
+                    </MudTable>
+                </MudCard>
             </MudTabPanel>
 
             <MudTabPanel Text="Archived Vendors" OnClick="@(() => LoadList(true))">
-                <MudTable Items="@vendors" Dense="true" Hover="true" Bordered="true" Striped="true" Filter="new Func<VendorDTO, bool>(FilterFunc)" Loading="@_loading">
-                    <HeaderContent>
-                        <MudTh>ID</MudTh>
-                        <MudTh>Name</MudTh>
-                        <MudTh>Email</MudTh>
-                        <MudTh Style="text-align:right">Actions</MudTh>
-                    </HeaderContent>
-                    <RowTemplate>
-                        <MudTd DataLabel="ID">@context.Id</MudTd>
-                        <MudTd DataLabel="Name" Style="color:gray;">@context.Name</MudTd>
-                        <MudTd DataLabel="Email">@context.Email</MudTd>
-                        <MudTd DataLabel="Actions" Style="text-align:right">
-                            <MudTooltip Text="Restore Vendor">
-                                <MudIconButton Icon="@Icons.Material.Filled.RestoreFromTrash" Size="Size.Small" Color="Color.Success" OnClick="() => ConfirmRestore(context.Id)" />
-                            </MudTooltip>
-                        </MudTd>
-                    </RowTemplate>
-                    <PagerContent><MudTablePager /></PagerContent>
-                </MudTable>
+                <MudCard Elevation="0" Outlined="true" Class="shadcn-card">
+                    <MudTable Items="@vendors" Dense="true" Hover="true" Elevation="0" Filter="new Func<VendorDTO, bool>(FilterFunc)" Loading="@_loading" Class="shadcn-table">
+                        <ToolBarContent>
+                            <div style="font-size: 1.125rem; font-weight: 600; color: var(--text-main);">Archived List</div>
+                            <MudSpacer />
+                            <MudTextField @bind-Value="searchString"
+                                          Placeholder="Search archived..."
+                                          Adornment="Adornment.Start"
+                                          AdornmentIcon="@Icons.Material.Outlined.Search"
+                                          Variant="Variant.Outlined"
+                                          Margin="Margin.Dense"
+                                          Class="shadcn-input"
+                                          Style="max-width: 300px; margin-top: 0;"></MudTextField>
+                        </ToolBarContent>
+                        <HeaderContent>
+                            <MudTh>ID</MudTh>
+                            <MudTh>Name</MudTh>
+                            <MudTh>Email</MudTh>
+                            <MudTh Style="text-align:right">Actions</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd DataLabel="ID" Style="color: var(--text-muted);">@context.Id</MudTd>
+                            <MudTd DataLabel="Name" Style="color: var(--text-muted); text-decoration: line-through;">@context.Name</MudTd>
+                            <MudTd DataLabel="Email" Style="color: var(--text-muted);">@context.Email</MudTd>
+                            <MudTd DataLabel="Actions" Style="text-align:right">
+                                <MudTooltip Text="Restore Vendor">
+                                    <MudIconButton Icon="@Icons.Material.Outlined.RestoreFromTrash"
+                                                   Size="Size.Small"
+                                                   Class="shadcn-icon-btn text-success"
+                                                   OnClick="() => ConfirmRestore(context.Id)" />
+                                </MudTooltip>
+                            </MudTd>
+                        </RowTemplate>
+                        <PagerContent><MudTablePager /></PagerContent>
+                    </MudTable>
+                </MudCard>
             </MudTabPanel>
         </MudTabs>
     }
@@ -216,7 +234,11 @@
 
     private async Task ConfirmDelete(int id)
     {
-        bool? result = await DialogService.ShowMessageBox("Archive", "Archive this vendor?", yesText: "Archive", cancelText: "Cancel");
+        bool result = await ShowConfirmDialog(
+            "Archive this vendor?",
+            "Archived vendors are hidden from active vendor lists.",
+            "Archive",
+            Color.Error);
         if (result == true)
         {
             try
@@ -231,7 +253,11 @@
 
     private async Task ConfirmRestore(int id)
     {
-        bool? result = await DialogService.ShowMessageBox("Restore", "Restore this vendor?", yesText: "Restore", cancelText: "Cancel");
+        bool result = await ShowConfirmDialog(
+            "Restore this vendor?",
+            "This vendor will return to active vendor lists.",
+            "Restore",
+            Color.Success);
         if (result == true)
         {
             try
@@ -242,5 +268,20 @@
             }
             catch (Exception ex) { Snackbar.Add(ex.Message, Severity.Error); }
         }
+    }
+
+    private async Task<bool> ShowConfirmDialog(string content, string subText, string buttonText, Color color)
+    {
+        var parameters = new DialogParameters
+        {
+            [nameof(ShadcnConfirmDialog.ContentText)] = content,
+            [nameof(ShadcnConfirmDialog.SubText)] = subText,
+            [nameof(ShadcnConfirmDialog.ButtonText)] = buttonText,
+            [nameof(ShadcnConfirmDialog.Color)] = color
+        };
+        var options = new DialogOptions { MaxWidth = MaxWidth.ExtraSmall, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<ShadcnConfirmDialog>("Confirm", parameters, options);
+        var result = await dialog.Result;
+        return result is not null && !result.Canceled;
     }
 }

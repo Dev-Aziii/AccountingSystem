@@ -11,43 +11,95 @@
 
 <PageTitle>AccSys</PageTitle>
 
-<div class="login-container">
-    <div class="login-card-container">
-        <MudPaper Class="login-card pa-8" Elevation="0">
+<div class="split-login-container">
 
-            <!-- LOGO AND HEADER -->
-            <div class="login-header text-center mb-6">
-                <div class="logo-container mb-4">
-                    <img src="AccsysLogo.png" alt="Accsys Logo" class="logo-image" />
-                </div>
-                <MudText Typo="Typo.h4" Class="main-title mb-2">
-                    Welcome to AccSys
-                </MudText>
-                <MudText Typo="Typo.body1" Class="login-subtitle">
-                    Sign in to access your accounting system
-                </MudText>
+    <!-- ===== LEFT BRANDING PANEL ===== -->
+    <div class="branding-panel">
+        <div class="branding-inner">
+            <!-- Floating decorative circles -->
+            <div class="deco-circle deco-circle--lg"></div>
+            <div class="deco-circle deco-circle--sm"></div>
+            <div class="deco-circle deco-circle--xs"></div>
+
+            <!-- Illustration -->
+            <div class="branding-illustration">
+                <div class="img-skeleton @(illustrationLoaded ? "img-skeleton--hidden" : "")"></div>
+                <img src="graphics3.png"
+                     alt="AccSys Accounting Illustration"
+                     class="branding-img @(illustrationLoaded ? "branding-img--visible" : "")"
+                     @onload="OnIllustrationLoaded" />
             </div>
 
-            <!-- LOGIN FORM -->
+            <!-- Text content -->
+            <div class="branding-text">
+                <h1 class="branding-title">AccSys Solutions</h1>
+                <p class="branding-subtitle">
+                    Sign in to manage your finances with clarity, control, and confidence.
+                </p>
+            </div>
+
+            <!-- Bottom trust badges -->
+            <div class="branding-badges">
+                <div class="badge-item">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="badge-icon"><path fill-rule="evenodd" d="M12.516 2.17a.75.75 0 0 0-1.032 0 11.209 11.209 0 0 1-7.877 3.08.75.75 0 0 0-.722.515A12.74 12.74 0 0 0 2.25 9.75c0 5.942 4.064 10.933 9.563 12.348a.749.749 0 0 0 .374 0c5.499-1.415 9.563-6.406 9.563-12.348 0-1.39-.223-2.73-.635-3.985a.75.75 0 0 0-.722-.516l-.143.001c-2.996 0-5.717-1.17-7.734-3.08Z" clip-rule="evenodd" /></svg>
+                    <span>Secure</span>
+                </div>
+                <div class="badge-item">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="badge-icon"><path d="M18.375 2.25c-1.035 0-1.875.84-1.875 1.875v15.75c0 1.035.84 1.875 1.875 1.875h.75c1.035 0 1.875-.84 1.875-1.875V4.125c0-1.036-.84-1.875-1.875-1.875h-.75ZM9.75 8.625c0-1.036.84-1.875 1.875-1.875h.75c1.036 0 1.875.84 1.875 1.875v11.25c0 1.035-.84 1.875-1.875 1.875h-.75a1.875 1.875 0 0 1-1.875-1.875V8.625ZM3 13.125c0-1.036.84-1.875 1.875-1.875h.75c1.036 0 1.875.84 1.875 1.875v6.75c0 1.035-.84 1.875-1.875 1.875h-.75A1.875 1.875 0 0 1 3 19.875v-6.75Z" /></svg>
+                    <span>Real-time</span>
+                </div>
+                <div class="badge-item">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="badge-icon"><path fill-rule="evenodd" d="M8.603 3.799A4.49 4.49 0 0 1 12 2.25c1.357 0 2.573.6 3.397 1.549a4.49 4.49 0 0 1 3.498 1.307 4.491 4.491 0 0 1 1.307 3.497A4.49 4.49 0 0 1 21.75 12a4.49 4.49 0 0 1-1.549 3.397 4.491 4.491 0 0 1-1.307 3.497 4.491 4.491 0 0 1-3.497 1.307A4.49 4.49 0 0 1 12 21.75a4.49 4.49 0 0 1-3.397-1.549 4.49 4.49 0 0 1-3.498-1.307 4.491 4.491 0 0 1-1.307-3.498A4.49 4.49 0 0 1 2.25 12c0-1.357.6-2.573 1.549-3.397a4.49 4.49 0 0 1 1.307-3.497 4.49 4.49 0 0 1 3.497-1.307Zm7.007 6.387a.75.75 0 1 0-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 0 0-1.06 1.06l2.25 2.25a.75.75 0 0 0 1.14-.094l3.75-5.25Z" clip-rule="evenodd" /></svg>
+                    <span>Reliable</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== RIGHT FORM PANEL ===== -->
+    <div class="form-panel">
+        <div class="form-inner">
+
+            <!-- Logo + Header -->
+            <div class="form-header">
+                <div class="logo-wrap">
+                    <img src="AccsysLogo.png" alt="AccSys Logo" class="form-logo" />
+                </div>
+                <h2 class="form-title">Welcome to AccSys</h2>
+                <p class="form-subtitle">Sign in to access your accounting system</p>
+            </div>
+
+            <!-- Login Form -->
             <EditForm Model="@loginModel" OnValidSubmit="HandleLogin">
                 <DataAnnotationsValidator />
 
-                <div class="login-form">
-                    <MudTextField Label="Email Address"   @bind-Value="loginModel.Email"      For="@(() => loginModel.Email)"
-                                  Variant="Variant.Outlined"                   Class="mb-4 login-field"                      FullWidth="true"
-                                  Style="border-radius: 12px;" />
+                <div class="fields-group">
+                    <MudTextField Label="Email Address"
+                                  @bind-Value="loginModel.Email"
+                                  For="@(() => loginModel.Email)"
+                                  Variant="Variant.Outlined"
+                                  Class="accsys-field mb-5"
+                                  FullWidth="true" />
 
-                    <MudTextField Label="Password"  @bind-Value="loginModel.Password"     For="@(() => loginModel.Password)"
-                                  Variant="Variant.Outlined"                  InputType="InputType.Password"                                  Class="mb-6 login-field"
-                                  FullWidth="true"                                  Style="border-radius: 12px;" />
+                    <MudTextField Label="Password"
+                                  @bind-Value="loginModel.Password"
+                                  For="@(() => loginModel.Password)"
+                                  Variant="Variant.Outlined"
+                                  InputType="InputType.Password"
+                                  Class="accsys-field mb-7"
+                                  FullWidth="true" />
 
-                    <MudButton ButtonType="ButtonType.Submit"                               Variant="Variant.Filled" Class="login-button"
-                               FullWidth="true" Disabled="@isLoading" Size="Size.Large"
-                               Starticon="@(!isLoading ? Icons.Material.Filled.Login : "")">
+                    <MudButton ButtonType="ButtonType.Submit"
+                               Variant="Variant.Filled"
+                               Class="accsys-btn"
+                               FullWidth="true"
+                               Disabled="@isLoading"
+                               Size="Size.Large"
+                               StartIcon="@(!isLoading ? Icons.Material.Filled.Login : "")">
                         @if (isLoading)
                         {
-                            <div class="d-flex align-center">
-                                <MudProgressCircular Class="mr-3" Size="Size.Small" Indeterminate="true" />
+                            <div class="d-flex align-center gap-2">
+                                <MudProgressCircular Size="Size.Small" Indeterminate="true" />
                                 <span>Signing In...</span>
                             </div>
                         }
@@ -59,282 +111,403 @@
                 </div>
             </EditForm>
 
-            <!-- FOOTER LINKS -->
-            <div class="login-footer text-center mt-6">
-                <MudDivider Class="mb-4" />
-                <MudText Typo="Typo.body2" Class="mb-3">
+            <!-- Footer -->
+            <div class="form-footer">
+                <MudDivider Class="mb-5" />
+                <MudText Typo="Typo.body2" Class="mb-2">
                     Don't have an account?
-                    <MudLink Href="register" Class="register-link">
-                        Register Your Company
-                    </MudLink>
+                    <MudLink Href="register" Class="register-link">Register Your Company</MudLink>
                 </MudText>
-                <MudText Typo="Typo.caption" Class="login-help-text">
+                <MudText Typo="Typo.caption" Class="help-text">
                     Need help? Contact your system administrator
                 </MudText>
             </div>
 
-        </MudPaper>
+        </div>
     </div>
+
 </div>
 
 <style>
-    .login-container {
-        min-height: 100vh;
-        background: #ffffff;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 2rem 1rem;
-        position: relative;
+    /* ── Animations ───────────────────────────────────────────────── */
+    @@keyframes slideInLeft {
+        from {
+            opacity: 0;
+            transform: translateX(-56px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
     }
 
-    .login-card-container {
+    @@keyframes slideInRight {
+        from {
+            opacity: 0;
+            transform: translateX(56px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    @@keyframes fadeUp {
+        from {
+            opacity: 0;
+            transform: translateY(18px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @@keyframes shimmer {
+        0% {
+            background-position: -600px 0;
+        }
+
+        100% {
+            background-position: 600px 0;
+        }
+    }
+
+    /* ── Reset & Base ─────────────────────────────────────────────── */
+    .split-login-container {
+        display: flex;
+        min-height: 100vh; 
         width: 100%;
-        max-width: 450px;
+    }
+
+    /* ── LEFT BRANDING PANEL ──────────────────────────────────────── */
+    .branding-panel {
+        display: none;
+        width: 50%;
+        background: linear-gradient(135deg, #134658 0%, #0d9488 100%);
         position: relative;
+        overflow: hidden;
+        animation: slideInLeft 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+
+    @@media (min-width: 768px) {
+        .branding-panel {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    }
+
+    .branding-inner {
+        position: relative;
+        z-index: 2;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 2rem 2.5rem;
+        max-width: 480px;
+        width: 100%;
+    }
+
+    /* Decorative floating circles */
+    .deco-circle {
+        position: absolute;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.06);
+        pointer-events: none;
+    }
+
+    .deco-circle--lg {
+        width: 380px;
+        height: 380px;
+        top: -100px;
+        right: -120px;
+    }
+
+    .deco-circle--sm {
+        width: 220px;
+        height: 220px;
+        bottom: 40px;
+        left: -80px;
+        background: rgba(255, 255, 255, 0.05);
+    }
+
+    .deco-circle--xs {
+        width: 110px;
+        height: 110px;
+        top: 50%;
+        left: 15%;
+        background: rgba(255, 255, 255, 0.04);
+    }
+
+    /* ── Illustration wrapper + skeleton ─────────────────────────── */
+    .branding-illustration {
+        width: 100%;
+        max-width: 300px;
+        margin-bottom: 1.25rem;
+        border-radius: 1.25rem;
+        overflow: hidden;
+        box-shadow: 0 24px 60px rgba(0,0,0,0.25), 0 8px 20px rgba(0,0,0,0.15);
+        transition: transform 0.5s ease;
+        position: relative;
+        min-height: 200px;
+    }
+
+        .branding-illustration:hover {
+            transform: scale(1.03) translateY(-4px);
+        }
+
+    /* Skeleton shimmer overlay */
+    .img-skeleton {
+        position: absolute;
+        inset: 0;
+        border-radius: 1.25rem;
+        background: linear-gradient( 90deg, rgba(255,255,255,0.08) 25%, rgba(255,255,255,0.18) 50%, rgba(255,255,255,0.08) 75% );
+        background-size: 600px 100%;
+        animation: shimmer 1.6s infinite linear;
+        transition: opacity 0.35s ease;
         z-index: 1;
     }
 
-    /* Glassmorphism Card Style */
-    .login-card {
-        background: rgba(255, 255, 255, 0.25);
-        border-radius: 24px;
-        border: 1px solid rgba(255, 255, 255, 0.3);
-        backdrop-filter: blur(20px);
-        box-shadow: 0 8px 32px rgba(22, 84, 127, 0.1), 0 2px 8px rgba(0, 0, 0, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.4);
-        transition: all 0.3s ease;
-        position: relative;
-        overflow: hidden;
-    }
-
-    /* Glass card overlay for extra depth */
-    .login-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 50%, rgba(255, 255, 255, 0.1) 100%);
+    .img-skeleton--hidden {
+        opacity: 0;
         pointer-events: none;
-        border-radius: 24px;
     }
 
-    .login-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 16px 48px rgba(22, 84, 127, 0.15), 0 4px 16px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.5);
-        border: 1px solid rgba(255, 255, 255, 0.4);
-    }
-
-    .login-header {
-        padding-bottom: 2rem;
-        border-bottom: 1px solid rgba(22, 84, 127, 0.15);
+    /* Image starts invisible, fades in once loaded */
+    .branding-img {
+        width: 100%;
+        display: block;
+        object-fit: cover;
+        opacity: 0;
+        transition: opacity 0.45s ease;
         position: relative;
         z-index: 2;
     }
 
-    .logo-container {
+    .branding-img--visible {
+        opacity: 1;
+    }
+
+    /* Text */
+    .branding-title {
+        font-size: 2.25rem;
+        font-weight: 800;
+        color: #ffffff;
+        margin: 0 0 0.75rem 0;
+        letter-spacing: -0.5px;
+        text-shadow: 0 2px 12px rgba(0,0,0,0.2);
+    }
+
+    .branding-subtitle {
+        font-size: 1rem;
+        color: rgba(255,255,255,0.85);
+        line-height: 1.7;
+        margin: 0 0 1.25rem 0;
+    }
+
+    /* Trust badges */
+    .branding-badges {
+        display: flex;
+        gap: 1.25rem;
+    }
+
+    .badge-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.35rem;
+        color: rgba(255,255,255,0.9);
+        font-size: 0.72rem;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+    }
+
+    .badge-icon {
+        width: 22px;
+        height: 22px;
+        color: rgba(255,255,255,0.85);
+    }
+
+    /* ── RIGHT FORM PANEL ────────────────────────────────────────── */
+    .form-panel {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #ffffff;
+        padding: 2rem 1.25rem;
+        overflow: hidden;
+        animation: slideInRight 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+
+    @@media (min-width: 768px) {
+        .form-panel {
+            width: 50%;
+            padding: 2rem;
+        }
+    }
+
+    @@media (min-width: 1024px) {
+        .form-panel {
+            padding: 2rem 3rem;
+        }
+    }
+
+    .form-inner {
+        width: 100%;
+        max-width: 420px;
+    }
+
+    /* Header */
+    .form-header {
+        text-align: center;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid #e8edf2;
+        animation: fadeUp 0.5s 0.1s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+
+    .logo-wrap {
         display: flex;
         justify-content: center;
-        align-items: center;
-        margin-bottom: 1.5rem;
+        margin-bottom: 0.75rem;
     }
 
-    .logo-image {
-        height: 80px;
+    .form-logo {
+        height: 62px;
         width: auto;
-        filter: drop-shadow(0 4px 12px rgba(22, 84, 127, 0.2));
-        transition: all 0.3s ease;
+        filter: drop-shadow(0 4px 12px rgba(19, 70, 88, 0.18));
+        transition: transform 0.3s ease;
     }
 
-    .logo-image:hover {
-        transform: scale(1.05);
-        filter: drop-shadow(0 6px 16px rgba(22, 84, 127, 0.3));
-    }
+        .form-logo:hover {
+            transform: scale(1.06);
+        }
 
-    /* Main AccSys Title Styling */
-    .main-title {
-        color: var(--theme-primary) !important;
-        font-weight: 900;
-        letter-spacing: -0.8px;
-        text-shadow: 0 3px 6px rgba(22, 84, 127, 0.15);
-        text-align: center;
-        background: linear-gradient(135deg, var(--theme-primary) 0%, var(--theme-secondary) 100%);
+    .form-title {
+        font-size: 1.9rem;
+        font-weight: 800;
+        margin: 0 0 0.4rem 0;
+        letter-spacing: -0.6px;
+        background: linear-gradient(135deg, #1a5d73 0%, #0d9488 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
-        font-size: 2.5rem;
-        line-height: 1.2;
     }
 
-    /* Website Subtitle Styling */
-    .website-subtitle {
-        color: var(--theme-secondary) !important;
-        font-weight: 600;
-        text-align: center;
-        opacity: 0.9;
-        letter-spacing: 0.5px;
-        text-transform: uppercase;
+    .form-subtitle {
         font-size: 0.9rem;
-        margin-bottom: 1rem;
-    }
-
-    .login-subtitle {
-        color: var(--theme-primary) !important;
-        font-weight: 400;
-        opacity: 0.8;
-        text-align: center;
+        color: #64748b;
         font-style: italic;
+        margin: 0;
     }
 
-    .login-form {
-        margin: 2rem 0;
-        position: relative;
-        z-index: 2;
+    /* Fields */
+    .fields-group {
+        margin: 1rem 0;
+        animation: fadeUp 0.5s 0.2s cubic-bezier(0.22, 1, 0.36, 1) both;
     }
 
-    .login-field {
-        margin-bottom: 1.5rem;
+    .accsys-field .mud-input-outlined {
+        border-radius: 10px !important;
+        background: #f0f5fb !important;
     }
 
-    .login-field .mud-input-control {
-        border-radius: 12px;
+    .accsys-field .mud-input-outlined-border {
+        border-radius: 10px !important;
     }
 
-    .login-field .mud-input-outlined {
-        border-radius: 12px;
-        background: rgba(255, 255, 255, 0.4);
-        backdrop-filter: blur(10px);
+    .accsys-field.mud-input-control:hover .mud-input-outlined {
+        background: #e8f0f8 !important;
     }
 
-    .login-field .mud-input-outlined:hover {
-        border-color: var(--theme-primary);
-        background: rgba(255, 255, 255, 0.5);
-        box-shadow: 0 2px 8px rgba(22, 84, 127, 0.1);
+    .accsys-field .mud-input-label-inputcontrol {
+        color: #4a6274 !important;
     }
 
-    .login-field .mud-input-outlined.mud-input-focused {
-        border-color: var(--theme-primary);
-        box-shadow: 0 0 0 2px rgba(22, 84, 127, 0.2), 0 4px 12px rgba(22, 84, 127, 0.15);
-        background: rgba(255, 255, 255, 0.6);
-    }
-
-    .login-button {
-        background: linear-gradient(135deg, var(--theme-primary) 0%, var(--theme-secondary) 100%) !important;
-        border-radius: 12px !important;
+    /* Submit button */
+    .accsys-btn {
+        background: linear-gradient(to right, #1a5370, #429497) !important;
+        border-radius: 10px !important;
         font-weight: 600 !important;
+        font-size: 0.95rem !important;
         text-transform: none !important;
-        padding: 16px 24px !important;
-        box-shadow: 0 8px 24px rgba(22, 84, 127, 0.3), 0 2px 8px rgba(0, 0, 0, 0.1) !important;
-        transition: all 0.3s ease !important;
-        color: white !important;
-        border: 1px solid rgba(255, 255, 255, 0.2) !important;
-        font-size: 1rem !important;
-        min-height: 56px !important;
-        backdrop-filter: blur(10px);
+        min-height: 52px !important;
+        color: #ffffff !important;
+        box-shadow: 0 6px 20px rgba(26, 83, 112, 0.35) !important;
+        transition: all 0.25s ease !important;
+        border: none !important;
     }
 
-    .login-button:hover {
-        transform: translateY(-2px) !important;
-        box-shadow: 0 12px 32px rgba(22, 84, 127, 0.4), 0 4px 16px rgba(0, 0, 0, 0.15) !important;
-        background: linear-gradient(135deg, var(--theme-primary-dark) 0%, var(--theme-secondary-dark) 100%) !important;
-        border: 1px solid rgba(255, 255, 255, 0.3) !important;
-    }
+        .accsys-btn:hover:not(:disabled) {
+            transform: translateY(-2px) !important;
+            box-shadow: 0 10px 28px rgba(26, 83, 112, 0.45) !important;
+            opacity: 0.95 !important;
+        }
 
-    .login-button:disabled {
-        opacity: 0.7;
-        transform: none !important;
-    }
+        .accsys-btn:disabled {
+            opacity: 0.65 !important;
+            transform: none !important;
+        }
 
-    .login-footer {
-        padding-top: 2rem;
-        border-top: 1px solid rgba(22, 84, 127, 0.15);
-        position: relative;
-        z-index: 2;
+    /* Footer */
+    .form-footer {
+        text-align: center;
+        padding-top: 0.5rem;
+        animation: fadeUp 0.5s 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
     }
 
     .register-link {
-        color: var(--theme-secondary) !important;
-        font-weight: 600 !important;
+        color: #0d9488 !important;
+        font-weight: 700 !important;
         text-decoration: none !important;
-        transition: all 0.3s ease;
+        transition: color 0.2s ease;
     }
 
-    .register-link:hover {
-        color: var(--theme-secondary-dark) !important;
-        text-decoration: underline !important;
-        text-shadow: 0 2px 4px rgba(56, 146, 147, 0.2);
-    }
+        .register-link:hover {
+            color: #0a7a70 !important;
+            text-decoration: underline !important;
+        }
 
-    .login-help-text {
-        color: rgba(22, 84, 127, 0.7) !important;
+    .help-text {
+        color: #94a3b8 !important;
         font-style: italic;
     }
 
-    @@media (max-width: 768px) {
-        .login-container {
-            padding: 1rem;
+    /* ── Mobile ──────────────────────────────────────────────────── */
+    @@media (max-width: 767px) {
+        .split-login-container {
+            height: auto;
+            min-height: 100vh;
+            overflow-y: auto;
+            background: linear-gradient(160deg, #134658 0%, #1a7a7a 40%, #f0f5fb 40%);
         }
 
-        .login-card {
-            padding: 2rem !important;
+        .form-panel {
+            background: transparent;
+            padding-top: 3.5rem;
         }
 
-        .logo-image {
-            height: 60px;
+        .form-inner {
+            background: #ffffff;
+            border-radius: 1.5rem;
+            padding: 2rem 1.5rem;
+            box-shadow: 0 16px 48px rgba(19, 70, 88, 0.2);
         }
-
-        .main-title {
-            font-size: 2rem;
-        }
-
-        .website-subtitle {
-            font-size: 0.8rem;
-        }
-    }
-
-    @@media (max-width: 480px) {
-        .login-card {
-            padding: 1.5rem !important;
-            border-radius: 16px;
-        }
-
-        .logo-image {
-            height: 50px;
-        }
-
-        .main-title {
-            font-size: 1.8rem;
-            letter-spacing: -0.5px;
-        }
-
-        .website-subtitle {
-            font-size: 0.75rem;
-        }
-    }
-
-    /* Form validation styling */
-    .login-field .validation-message {
-        color: #d32f2f;
-        font-size: 0.75rem;
-        margin-top: 0.25rem;
-        text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5);
-    }
-
-    .login-field .mud-input-outlined.mud-input-error {
-        border-color: #d32f2f;
-        background: rgba(211, 47, 47, 0.05);
-    }
-
-    .login-field .mud-input-outlined.mud-input-error:hover {
-        border-color: #d32f2f;
-        background: rgba(211, 47, 47, 0.08);
     }
 </style>
 
 @code {
     private LoginDTO loginModel = new LoginDTO();
     private bool isLoading = false;
+    private bool illustrationLoaded = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -344,6 +517,12 @@
             var role = authState.User.FindFirst("role")?.Value;
             NavManager.NavigateTo(role == "SuperAdmin" ? "/superadmin/dashboard" : "/dashboard");
         }
+    }
+
+    private void OnIllustrationLoaded()
+    {
+        illustrationLoaded = true;
+        StateHasChanged();
     }
 
     private async Task HandleLogin()

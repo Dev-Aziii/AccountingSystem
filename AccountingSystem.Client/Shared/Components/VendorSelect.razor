@@ -14,15 +14,17 @@
                      SearchFunc="@SearchVendors"
                      ToStringFunc="@(v => v == null ? null : v.Name)"
                      Adornment="Adornment.End"
-                     AdornmentIcon="@Icons.Material.Filled.Add"
+                     AdornmentIcon="@Icons.Material.Outlined.Add"
                      OnAdornmentClick="OpenAddDialog"
                      Variant="Variant.Outlined"
-                     Dense="true"
+                     Margin="Margin.Dense"
+                     Class="shadcn-input"
                      Disabled="@(vendors == null)"
                      Clearable="true"
                      ResetValueOnEmptyText="true"
                      CoerceText="true"
-                     CoerceValue="true" />
+                     CoerceValue="true"
+                     Placeholder="Search or add vendor..." />
 </Microsoft.AspNetCore.Components.Authorization.AuthorizeView>
 
 @code {
@@ -61,7 +63,10 @@
                 _selectedVendor = vendors.FirstOrDefault(v => v.Id == SelectedVendorId);
             }
         }
-        catch (Exception ex) { Console.WriteLine(ex.Message); }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading vendors: {ex.Message}");
+        }
     }
 
     private async Task OnValueChanged(VendorDTO? value)
@@ -78,19 +83,24 @@
         if (string.IsNullOrEmpty(value))
             return Task.FromResult(vendors.AsEnumerable());
 
-        return Task.FromResult(vendors.Where(x => x.Name.Contains(value, StringComparison.InvariantCultureIgnoreCase)));
+        return Task.FromResult(vendors.Where(x =>
+            x.Name.Contains(value, StringComparison.InvariantCultureIgnoreCase)));
     }
 
     private async Task OpenAddDialog()
     {
         var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true };
         var dialog = await DialogService.ShowAsync<VendorDialog>("Add New Vendor", options);
-        var result = await dialog.Result;
 
-        if (result != null && !result.Canceled)
+        if (dialog != null)
         {
-            await LoadVendors();
-            Snackbar.Add("Vendor list refreshed.", Severity.Info);
+            var result = await dialog.Result;
+
+            if (result != null && !result.Canceled)
+            {
+                await LoadVendors();
+                Snackbar.Add("Vendor list refreshed.", Severity.Info);
+            }
         }
     }
 }

@@ -5,64 +5,94 @@
 @inject PayableService PayableService
 @inject ISnackbar Snackbar
 
-<MudDialog>
+<MudDialog Class="shadcn-dialog" DisableSidePadding="true">
     <TitleContent>
-        <MudText Typo="Typo.h6">
-            <MudIcon Icon="@Icons.Material.Filled.Business" Class="mr-2" />
-            @(Vendor?.Id > 0 ? "Edit Vendor" : "Create New Vendor")
-        </MudText>
+        <div class="d-flex align-center px-6 pt-6 pb-4">
+            <MudIcon Icon="@Icons.Material.Outlined.Business" Class="mr-2 text-muted" Size="Size.Small" />
+            <h3 style="font-size: 1.25rem; font-weight: 600; letter-spacing: -0.025em; color: var(--text-main); margin: 0;">
+                @(Vendor?.Id > 0 ? "Edit Vendor" : "Create New Vendor")
+            </h3>
+        </div>
     </TitleContent>
 
     <DialogContent>
-        <MudForm @ref="form" @bind-IsValid="@success" Spacing="4">
-            <MudTextField T="string"
-                          Label="Vendor Name"
-                          Required="true"
-                          RequiredError="Vendor name is required"
-                          @bind-Value="model.Name"
-                          Immediate="true"
-                          Variant="Variant.Outlined"
-                          HelperText="Legal or business name of the vendor" />
+        <div class="px-6 pb-2">
+            <MudForm @ref="form" @bind-IsValid="@success" Spacing="4">
+                <MudTextField T="string"
+                              Label="Vendor Name"
+                              Required="true"
+                              RequiredError="Vendor name is required"
+                              @bind-Value="model.Name"
+                              Immediate="true"
+                              Variant="Variant.Outlined"
+                              Margin="Margin.Dense"
+                              Class="shadcn-input"
+                              HelperText="Legal or business name of the vendor" />
 
-            <MudTextField T="string"
-                          Label="Email"
-                          @bind-Value="model.Email"
-                          Validation="@(new EmailAddressAttribute())"
-                          Immediate="true"
-                          Variant="Variant.Outlined"
-                          InputType="InputType.Email"
-                          HelperText="Primary email address for communications" />
+                <MudTextField T="string"
+                              Label="Email"
+                              @bind-Value="model.Email"
+                              Validation="@(new EmailAddressAttribute())"
+                              Immediate="true"
+                              Variant="Variant.Outlined"
+                              InputType="InputType.Email"
+                              Margin="Margin.Dense"
+                              Class="shadcn-input"
+                              HelperText="Primary email address for communications" />
 
-            <MudTextField T="string"
-                          Label="Contact Person"
-                          @bind-Value="model.ContactPerson"
-                          Variant="Variant.Outlined"
-                          HelperText="Primary point of contact at the vendor" />
-        </MudForm>
+                <MudTextField T="string"
+                              Label="Contact Person"
+                              @bind-Value="model.ContactPerson"
+                              Variant="Variant.Outlined"
+                              Margin="Margin.Dense"
+                              Class="shadcn-input"
+                              HelperText="Primary point of contact at the vendor" />
+            </MudForm>
+        </div>
     </DialogContent>
 
     <DialogActions>
-        <MudButton OnClick="Cancel"
-                   Variant="Variant.Text">
-            Cancel
-        </MudButton>
-        <MudButton Color="Color.Primary"
-                   OnClick="Submit"
-                   Variant="Variant.Filled"
-                   Disabled="isSubmitting"
-                   StartIcon="@(isSubmitting ? null : (Vendor?.Id > 0 ? Icons.Material.Filled.Save : Icons.Material.Filled.Add))">
-            @if (isSubmitting)
-            {
-                <MudProgressCircular Class="mr-2" Size="Size.Small" Indeterminate="true" />
-                @(Vendor?.Id > 0 ? "Updating..." : "Creating...")
-            }
-            else
-            {
-                @(Vendor?.Id > 0 ? "Update" : "Create")
-            }
-        </MudButton>
+        <div class="d-flex w-100 justify-end gap-2 px-6 py-4 mt-2">
+            <MudButton OnClick="Cancel"
+                       Variant="Variant.Outlined"
+                       Class="shadcn-btn-outline"
+                       Size="Size.Small">
+                Cancel
+            </MudButton>
+            <MudButton OnClick="Submit"
+                       Variant="Variant.Filled"
+                       Class="custom-button"
+                       Size="Size.Small"
+                       Disabled="isSubmitting"
+                       StartIcon="@(isSubmitting ? null : (Vendor?.Id > 0 ? Icons.Material.Outlined.Save : Icons.Material.Outlined.Add))">
+                @if (isSubmitting)
+                {
+                    <MudProgressCircular Class="mr-2" Size="Size.Small" Indeterminate="true" Style="color: var(--bg-surface);" />
+                    @(Vendor?.Id > 0 ? "Updating..." : "Creating...")
+                }
+                else
+                {
+                    @(Vendor?.Id > 0 ? "Update" : "Create")
+                }
+            </MudButton>
+        </div>
     </DialogActions>
 </MudDialog>
+
+<style>
+    /* Clean up the default MudBlazor dialog padding so we can style the header/footer */
+    .shadcn-dialog .mud-dialog-title {
+        padding: 0;
+    }
+
+    .shadcn-dialog .mud-dialog-content {
+        padding: 0;
+    }
+
+    .shadcn-dialog .mud-dialog-actions {
+        padding: 0;
+    }
+</style>
 
 @code {
     [CascadingParameter]

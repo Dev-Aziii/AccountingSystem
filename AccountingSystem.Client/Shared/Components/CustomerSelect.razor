@@ -14,15 +14,17 @@
                      SearchFunc="@SearchCustomers"
                      ToStringFunc="@(c => c == null ? null : c.Name)"
                      Adornment="Adornment.End"
-                     AdornmentIcon="@Icons.Material.Filled.Add"
+                     AdornmentIcon="@Icons.Material.Outlined.Add"
                      OnAdornmentClick="OpenAddDialog"
                      Variant="Variant.Outlined"
-                     Dense="true"
+                     Margin="Margin.Dense"
+                     Class="shadcn-input"
                      Disabled="@(customers == null)"
                      Clearable="true"
                      ResetValueOnEmptyText="true"
                      CoerceText="true"
-                     CoerceValue="true" />
+                     CoerceValue="true"
+                     Placeholder="Search or add customer..." />
 </Microsoft.AspNetCore.Components.Authorization.AuthorizeView>
 
 @code {
@@ -53,7 +55,8 @@
     {
         try
         {
-            customers = await ReceivableService.GetCustomersAsync().ConfigureAwait(false);
+            // Use ConfigureAwait(true) or omit to ensure we return to the UI thread context
+            customers = await ReceivableService.GetCustomersAsync();
             if (SelectedCustomerId != 0 && customers != null)
             {
                 _selectedCustomer = customers.FirstOrDefault(c => c.Id == SelectedCustomerId);
@@ -61,7 +64,7 @@
         }
         catch (Exception ex)
         {
-            Console.WriteLine(ex.Message);
+            Console.WriteLine($"Error loading customers: {ex.Message}");
         }
     }
 
@@ -75,8 +78,12 @@
     private Task<IEnumerable<CustomerDTO>> SearchCustomers(string? value, CancellationToken token)
     {
         if (customers == null) return Task.FromResult(Enumerable.Empty<CustomerDTO>());
-        if (string.IsNullOrEmpty(value)) return Task.FromResult(customers.AsEnumerable());
-        return Task.FromResult(customers.Where(x => x.Name.Contains(value, StringComparison.InvariantCultureIgnoreCase)));
+
+        if (string.IsNullOrEmpty(value))
+            return Task.FromResult(customers.AsEnumerable());
+
+        return Task.FromResult(customers.Where(x =>
+            x.Name.Contains(value, StringComparison.InvariantCultureIgnoreCase)));
     }
 
     private async Task OpenAddDialog()
@@ -84,11 +91,11 @@
         var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true };
         var dialog = await DialogService.ShowAsync<CustomerDialog>("Add New Customer", options);
 
-        if (dialog != null) // Ensure dialog is not null before accessing Result
+        if (dialog != null)
         {
             var result = await dialog.Result;
 
-            if (result != null && !result.Canceled) // Ensure result is not null before accessing Canceled
+            if (result != null && !result.Canceled)
             {
                 await LoadCustomers();
                 Snackbar.Add("Customer list refreshed.", Severity.Info);

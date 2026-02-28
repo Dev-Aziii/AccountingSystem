@@ -1,71 +1,91 @@
 ﻿@using AccountingSystem.Shared.DTOs
 @using MudBlazor
 
-<MudDialog>
+<MudDialog Class="shadcn-dialog" DisableSidePadding="true">
     <TitleContent>
-        <MudText Typo="Typo.h6">
-            <MudIcon Icon="@Icons.Material.Filled.History" Class="mr-2" />
-            Audit Log Details
-        </MudText>
+        <div class="d-flex align-center px-6 pt-6 pb-4">
+            <MudIcon Icon="@Icons.Material.Outlined.History" Class="mr-2 text-muted" Size="Size.Small" />
+            <h3 style="font-size: 1.25rem; font-weight: 600; letter-spacing: -0.025em; color: var(--text-main); margin: 0;">
+                Audit Log Details
+            </h3>
+        </div>
     </TitleContent>
 
     <DialogContent>
-        <MudPaper Elevation="0" Class="pa-4 mb-4" Style="background-color: var(--mud-palette-background-grey);">
-            <MudGrid Spacing="3">
-                <MudItem xs="12" sm="6">
-                    <MudText Typo="Typo.caption" Color="Color.Default">User</MudText>
-                    <MudText Typo="Typo.body2" Class="mt-1">
-                        <MudIcon Icon="@Icons.Material.Filled.Person" Size="Size.Small" Class="mr-1" />
-                        <strong>@Log.UserEmail</strong>
-                    </MudText>
-                </MudItem>
-                <MudItem xs="12" sm="6">
-                    <MudText Typo="Typo.caption" Color="Color.Default">Timestamp</MudText>
-                    <MudText Typo="Typo.body2" Class="mt-1">
-                        <MudIcon Icon="@Icons.Material.Filled.AccessTime" Size="Size.Small" Class="mr-1" />
-                        <strong>@Log.Timestamp.ToLocalTime().ToString("g")</strong>
-                    </MudText>
-                </MudItem>
-                <MudItem xs="12" sm="6">
-                    <MudText Typo="Typo.caption" Color="Color.Default">Action</MudText>
-                    <div class="mt-1">
-                        <MudChip T="string"
-                                 Size="Size.Small"
-                                 Color="@GetActionColor(Log.Action)"
-                                 Icon="@GetActionIcon(Log.Action)">
-                            @Log.Action
-                        </MudChip>
-                    </div>
-                </MudItem>
-                <MudItem xs="12" sm="6">
-                    <MudText Typo="Typo.caption" Color="Color.Default">Target Entity</MudText>
-                    <MudText Typo="Typo.body2" Class="mt-1">
-                        <MudIcon Icon="@Icons.Material.Filled.Label" Size="Size.Small" Class="mr-1" />
-                        <strong>@Log.EntityName</strong>
-                    </MudText>
-                </MudItem>
-            </MudGrid>
-        </MudPaper>
+        <div class="px-6 pb-2">
+            <div class="pa-4 mb-6" style="background-color: var(--bg-muted); border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                <MudGrid Spacing="3">
+                    <MudItem xs="12" sm="6">
+                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.25rem;">User</div>
+                        <div class="d-flex align-center" style="font-size: 0.875rem; font-weight: 500; color: var(--text-main);">
+                            <MudIcon Icon="@Icons.Material.Outlined.Person" Size="Size.Small" Class="mr-2 text-muted" />
+                            @Log.UserEmail
+                        </div>
+                    </MudItem>
+                    <MudItem xs="12" sm="6">
+                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.25rem;">Timestamp</div>
+                        <div class="d-flex align-center" style="font-size: 0.875rem; font-weight: 500; color: var(--text-main);">
+                            <MudIcon Icon="@Icons.Material.Outlined.AccessTime" Size="Size.Small" Class="mr-2 text-muted" />
+                            @Log.Timestamp.ToLocalTime().ToString("MMM dd, yyyy HH:mm:ss")
+                        </div>
+                    </MudItem>
+                    <MudItem xs="12" sm="6">
+                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.25rem;">Action</div>
+                        <div class="mt-1">
+                            <span class="shadcn-badge @GetActionBadgeClass(Log.Action)">
+                                <MudIcon Icon="@GetActionIcon(Log.Action)" Size="Size.Small" Class="mr-1" Style="font-size: 14px;" />
+                                @Log.Action
+                            </span>
+                        </div>
+                    </MudItem>
+                    <MudItem xs="12" sm="6">
+                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.25rem;">Target Entity</div>
+                        <div class="d-flex align-center" style="font-size: 0.875rem; font-weight: 500; color: var(--text-main);">
+                            <MudIcon Icon="@Icons.Material.Outlined.Label" Size="Size.Small" Class="mr-2 text-muted" />
+                            <code style="background: var(--bg-surface); padding: 2px 6px; border-radius: 4px; border: 1px solid var(--border-color); font-size: 0.75rem;">
+                                @Log.EntityName
+                            </code>
+                        </div>
+                    </MudItem>
+                </MudGrid>
+            </div>
 
-        <MudText Typo="Typo.subtitle2" Class="mb-2">
-            <MudIcon Icon="@Icons.Material.Filled.Code" Size="Size.Small" Class="mr-1" />
-            Request Payload / Changes
-        </MudText>
-        <MudPaper Class="pa-3"
-                  Elevation="1"
-                  Style="max-height: 400px; overflow: auto; background-color: #1e1e1e; border-radius: 4px;">
-            <pre style="font-family: 'Courier New', monospace; font-size: 0.85rem; white-space: pre-wrap; color: #d4d4d4; margin: 0;">@FormatJson(Log.Changes)</pre>
-        </MudPaper>
+            <div style="font-size: 0.875rem; font-weight: 600; color: var(--text-main); margin-bottom: 0.5rem; display: flex; align-items: center;">
+                <MudIcon Icon="@Icons.Material.Outlined.Code" Size="Size.Small" Class="mr-2 text-muted" />
+                Request Payload / Changes
+            </div>
+            <div class="pa-4" style="max-height: 400px; overflow: auto; background-color: #0f172a; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                <pre style="font-family: 'ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', monospace; font-size: 0.85rem; white-space: pre-wrap; color: #e2e8f0; margin: 0;">@FormatJson(Log.Changes)</pre>
+            </div>
+        </div>
     </DialogContent>
 
     <DialogActions>
-        <MudButton OnClick="Cancel"
-                   Variant="Variant.Text"
-                   StartIcon="@Icons.Material.Filled.Close">
-            Close
-        </MudButton>
+        <div class="d-flex w-100 justify-end px-6 py-4 mt-2">
+            <MudButton OnClick="Cancel"
+                       Variant="Variant.Outlined"
+                       Class="shadcn-btn-outline"
+                       Size="Size.Small">
+                Close
+            </MudButton>
+        </div>
     </DialogActions>
 </MudDialog>
+
+<style>
+    /* Clean up the default MudBlazor dialog padding so we can style the header/footer */
+    .shadcn-dialog .mud-dialog-title {
+        padding: 0;
+    }
+
+    .shadcn-dialog .mud-dialog-content {
+        padding: 0;
+    }
+
+    .shadcn-dialog .mud-dialog-actions {
+        padding: 0;
+    }
+</style>
 
 @code {
     [CascadingParameter]
@@ -76,47 +96,48 @@
 
     private void Cancel() => MudDialog.Cancel();
 
-    private Color GetActionColor(string action)
+    // Replaced GetActionColor with GetActionBadgeClass
+    private string GetActionBadgeClass(string action)
     {
-        if (action == "LOGIN") return Color.Dark;
+        if (action == "LOGIN") return "badge-slate";
 
-        if (action.StartsWith("USER-")) return Color.Tertiary;       // Purple for User Mgmt
-        if (action.StartsWith("CUSTOMER-")) return Color.Info;       // Blue for AR
-        if (action.StartsWith("VENDOR-")) return Color.Warning;      // Orange for AP
-        if (action.StartsWith("ACCOUNT-")) return Color.Success;     // Green for GL
-        if (action.StartsWith("BILL-")) return Color.Error;          // Red/Pink for Expenses
-        if (action.StartsWith("INVOICE-")) return Color.Primary;     // Primary for Revenue
-        if (action == "JOURNAL-ENTRY") return Color.Surface;         // Neutral for Journals
+        if (action.StartsWith("USER-")) return "badge-purple";
+        if (action.StartsWith("CUSTOMER-")) return "badge-blue";
+        if (action.StartsWith("VENDOR-")) return "badge-orange";
+        if (action.StartsWith("ACCOUNT-")) return "badge-green";
+        if (action.StartsWith("BILL-")) return "badge-red";
+        if (action.StartsWith("INVOICE-")) return "badge-indigo";
+        if (action == "JOURNAL-ENTRY") return "badge-slate";
 
         // Fallbacks for raw HTTP methods
         return action switch
         {
-            "POST" => Color.Success,
-            "PUT" => Color.Warning,
-            "DELETE" => Color.Error,
-            _ => Color.Default
+            "POST" => "badge-green",
+            "PUT" => "badge-orange",
+            "DELETE" => "badge-red",
+            _ => "badge-slate"
         };
     }
 
     private string GetActionIcon(string action)
     {
-        if (action == "LOGIN") return Icons.Material.Filled.Login;
+        if (action == "LOGIN") return Icons.Material.Outlined.Login;
 
-        if (action.StartsWith("USER-")) return Icons.Material.Filled.Person;
-        if (action.StartsWith("CUSTOMER-")) return Icons.Material.Filled.Person;
-        if (action.StartsWith("VENDOR-")) return Icons.Material.Filled.Business;
-        if (action.StartsWith("ACCOUNT-")) return Icons.Material.Filled.AccountBalance;
-        if (action.StartsWith("BILL-")) return Icons.Material.Filled.Receipt;
-        if (action.StartsWith("INVOICE-")) return Icons.Material.Filled.Receipt;
-        if (action == "JOURNAL-ENTRY") return Icons.Material.Filled.Book;
+        if (action.StartsWith("USER-")) return Icons.Material.Outlined.Person;
+        if (action.StartsWith("CUSTOMER-")) return Icons.Material.Outlined.Person;
+        if (action.StartsWith("VENDOR-")) return Icons.Material.Outlined.Business;
+        if (action.StartsWith("ACCOUNT-")) return Icons.Material.Outlined.AccountBalance;
+        if (action.StartsWith("BILL-")) return Icons.Material.Outlined.Receipt;
+        if (action.StartsWith("INVOICE-")) return Icons.Material.Outlined.Receipt;
+        if (action == "JOURNAL-ENTRY") return Icons.Material.Outlined.Book;
 
         // Fallbacks for raw HTTP methods
         return action switch
         {
-            "POST" => Icons.Material.Filled.Add,
-            "PUT" => Icons.Material.Filled.Edit,
-            "DELETE" => Icons.Material.Filled.Delete,
-            _ => Icons.Material.Filled.Circle
+            "POST" => Icons.Material.Outlined.Add,
+            "PUT" => Icons.Material.Outlined.Edit,
+            "DELETE" => Icons.Material.Outlined.Delete,
+            _ => Icons.Material.Outlined.Circle
         };
     }
 

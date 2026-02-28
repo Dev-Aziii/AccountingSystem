@@ -1,0 +1,15 @@
+@using System.Linq
+@using MudBlazor
+
+<MudPaper Class="section-header" Elevation="1">
+    <MudBreadcrumbs Items="@BreadcrumbItems" />
+</MudPaper>
+
+@code {
+    [Parameter, EditorRequired]
+    public List<NavItem> Items { get; set; } = new();
+
+    private IReadOnlyList<BreadcrumbItem> BreadcrumbItems => Items
+        .Select(item => new BreadcrumbItem(item.Title, item.Href))
+        .ToList();
+}

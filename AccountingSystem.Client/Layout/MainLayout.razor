@@ -5,12 +5,11 @@
 @inject AuthService AuthService
 @inject NavigationManager NavManager
 
-<MudLayout Class="main-layout">
-    <MudAppBar Class="app-bar" Elevation="0">
+<MudLayout Class="shadcn-layout">
+    <MudAppBar Class="shadcn-app-bar" Elevation="0">
 
-        <!-- Logo and Company Info -->
         <div class="app-bar-content">
-            <MudIconButton Icon="@Icons.Material.Filled.Menu"
+            <MudIconButton Icon="@Icons.Material.Outlined.Menu"
                            Color="Color.Inherit"
                            Edge="Edge.Start"
                            Class="menu-toggle"
@@ -19,14 +18,12 @@
             <div class="brand-section">
                 <img src="AccsysLogo.png" alt="AccSys Logo" class="app-logo" />
                 <div class="brand-text">
-                    <MudText Typo="Typo.h6" Class="app-title">
-                        AccSys
-                    </MudText>
+                    <span class="app-title">AccSys</span>
                     <AuthorizeView>
                         <Authorized Context="authContext">
-                            <MudText Typo="Typo.caption" Class="company-name">
+                            <span class="company-name">
                                 @(authContext.User.FindFirst("CompanyName")?.Value ?? "Multi-Tenant Edition")
-                            </MudText>
+                            </span>
                         </Authorized>
                     </AuthorizeView>
                 </div>
@@ -34,41 +31,43 @@
 
             <MudSpacer />
 
-            <!-- User Section -->
             <AuthorizeView>
                 <Authorized Context="authContext">
                     <div class="user-section">
                         <MudMenu AnchorOrigin="Origin.BottomRight"
                                  TransformOrigin="Origin.TopRight"
-                                 Class="user-menu">
+                                 Class="user-menu"
+                                 ListClass="shadcn-menu-list">
                             <ActivatorContent>
                                 <MudButton Variant="Variant.Text"
-                                           Class="user-button"
-                                           EndIcon="@Icons.Material.Filled.KeyboardArrowDown">
+                                           Class="user-ghost-button"
+                                           EndIcon="@Icons.Material.Outlined.ExpandMore">
                                     <div class="user-info">
-                                        <MudAvatar Class="user-avatar" Size="Size.Medium">
-                                            <MudIcon Icon="@Icons.Material.Filled.AccountCircle" />
+                                        <MudAvatar Class="user-avatar" Size="Size.Small">
+                                            <MudIcon Icon="@Icons.Material.Outlined.Person" Size="Size.Small" />
                                         </MudAvatar>
-                                        <div class="user-text">
-                                            <MudText Typo="Typo.body2" Class="user-name">
-                                                @(authContext.User.FindFirst("FullName")?.Value ?? authContext.User.Identity?.Name)
-                                            </MudText>
-                                        </div>
+                                        <span class="user-name">
+                                            @(authContext.User.FindFirst("FullName")?.Value ?? authContext.User.Identity?.Name)
+                                        </span>
                                     </div>
                                 </MudButton>
                             </ActivatorContent>
                             <ChildContent>
                                 <div class="user-menu-content">
+                                    <div class="menu-header">
+                                        <div class="menu-header-title">My Account</div>
+                                    </div>
+                                    <MudDivider Class="my-1" />
                                     <MudMenuItem Href="/profile"
-                                                 Icon="@Icons.Material.Filled.Person"
-                                                 Class="menu-item">
-                                        My Profile
+                                                 Icon="@Icons.Material.Outlined.AccountCircle"
+                                                 Class="shadcn-menu-item">
+                                        Profile
                                     </MudMenuItem>
-                                    <MudDivider Class="my-2" />
+                                    <MudDivider Class="my-1" />
                                     <MudMenuItem OnClick="Logout"
-                                                 Icon="@Icons.Material.Filled.Logout"
-                                                 Class="menu-item logout-item">
-                                        Logout
+                                                 Icon="@Icons.Material.Outlined.Logout"
+                                                 Class="shadcn-menu-item logout-item">
+                                        Log out
                                     </MudMenuItem>
                                 </div>
                             </ChildContent>
@@ -77,16 +76,14 @@
                 </Authorized>
                 <NotAuthorized>
                     <div class="auth-buttons">
-                        <MudButton Variant="Variant.Filled"
-                                   Class="login-button"
-                                   Href="/"
-                                   StartIcon="@Icons.Material.Filled.Login">
-                            Login
+                        <MudButton Variant="Variant.Text"
+                                   Class="shadcn-btn-ghost"
+                                   Href="/login">
+                            Log in
                         </MudButton>
-                        <MudButton Variant="Variant.Outlined"
-                                   Class="register-button"
-                                   Href="/register"
-                                   StartIcon="@Icons.Material.Filled.AppRegistration">
+                        <MudButton Variant="Variant.Filled"
+                                   Class="shadcn-btn-primary"
+                                   Href="/register">
                             Register
                         </MudButton>
                     </div>
@@ -97,17 +94,14 @@
 
     <MudDrawer @bind-Open="_drawerOpen"
                ClipMode="DrawerClipMode.Always"
-               Class="nav-drawer"
+               Class="shadcn-drawer"
                Elevation="0">
         <div class="drawer-content">
-            <div class="drawer-header">
-                <MudText Typo="Typo.h6" Class="drawer-title">Navigation</MudText>
-            </div>
             <NavMenu />
         </div>
     </MudDrawer>
 
-    <MudMainContent Class="main-content">
+    <MudMainContent Class="shadcn-main-content">
         <div class="page-wrapper">
             @Body
         </div>
@@ -115,37 +109,53 @@
 </MudLayout>
 
 <style>
-    /* Main Layout Styles */
-    .main-layout {
-        min-height: 100vh;
-        background: #f8f9fa;
+    /* CSS Variables for Shadcn equivalents */
+    :root {
+        --border-color: #e2e8f0;
+        --bg-background: #f8fafc;
+        --bg-surface: #ffffff;
+        --bg-muted: #f1f5f9;
+        --text-main: #0f172a;
+        --text-muted: #64748b;
+        --radius-md: 6px;
+        --radius-lg: 8px;
+        --color-destructive: #ef4444;
+        --color-success: #10b981;
     }
 
-    /* App Bar Styles */
-    .app-bar {
-        background: linear-gradient(135deg, var(--theme-primary) 0%, var(--theme-secondary) 100%) !important;
-        box-shadow: 0 2px 20px rgba(22, 84, 127, 0.15) !important;
-        backdrop-filter: blur(10px);
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    /* Main Layout */
+    .shadcn-layout {
+        min-height: 100vh;
+        background-color: var(--bg-background);
+        color: var(--text-main);
+    }
+
+    /* Flat, bordered App Bar */
+    .shadcn-app-bar {
+        background-color: var(--bg-surface) !important;
+        color: var(--text-main) !important;
+        border-bottom: 1px solid var(--border-color);
     }
 
     .app-bar-content {
         width: 100%;
         display: flex;
         align-items: center;
-        padding: 0 1rem;
+        padding: 0 1.5rem;
+        height: 64px;
     }
 
+    /* Flat ghost button for menu toggle */
     .menu-toggle {
         margin-right: 1rem;
-        background: rgba(255, 255, 255, 0.1) !important;
-        border-radius: 12px !important;
-        transition: all 0.3s ease;
+        border-radius: var(--radius-md) !important;
+        color: var(--text-muted) !important;
+        transition: background-color 0.15s ease !important;
     }
 
         .menu-toggle:hover {
-            background: rgba(255, 255, 255, 0.2) !important;
-            transform: scale(1.05);
+            background-color: var(--bg-muted) !important;
+            color: var(--text-main) !important;
         }
 
     /* Brand Section */
@@ -156,146 +166,142 @@
     }
 
     .app-logo {
-        height: 40px;
+        height: 28px;
         width: auto;
-        filter: drop-shadow(0 2px 6px rgba(255, 255, 255, 0.2));
-        transition: all 0.3s ease;
     }
 
-        .app-logo:hover {
-            transform: scale(1.05);
-            filter: drop-shadow(0 4px 8px rgba(255, 255, 255, 0.3));
-        }
-
-    .brand-text .app-title {
-        color: white !important;
-        font-weight: 800;
-        letter-spacing: -0.5px;
-        line-height: 1.2;
-        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    .brand-text {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
     }
 
-    .brand-text .company-name {
-        color: rgba(255, 255, 255, 0.8) !important;
+    .app-title {
+        font-weight: 600;
+        font-size: 1.1rem;
+        letter-spacing: -0.025em;
+        line-height: 1.1;
+        color: var(--text-main);
+    }
+
+    .company-name {
+        font-size: 0.75rem;
         font-weight: 500;
-        letter-spacing: 0.5px;
+        color: var(--text-muted);
     }
 
-    /* User Section */
-    .user-section {
-        margin-left: auto;
+    /* User Section (Ghost Button style) */
+    .user-ghost-button {
+        padding: 6px 12px !important;
+        border-radius: var(--radius-md) !important;
+        color: var(--text-main) !important;
+        transition: background-color 0.15s ease !important;
+        text-transform: none !important;
+        font-weight: 500 !important;
     }
 
-    .user-button {
-        background: rgba(255, 255, 255, 0.1) !important;
-        border: 1px solid rgba(255, 255, 255, 0.2) !important;
-        border-radius: 16px !important;
-        padding: 8px 16px !important;
-        color: white !important;
-        transition: all 0.3s ease;
-    }
-
-        .user-button:hover {
-            background: rgba(255, 255, 255, 0.2) !important;
-            border-color: rgba(255, 255, 255, 0.3) !important;
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        .user-ghost-button:hover {
+            background-color: var(--bg-muted) !important;
         }
 
     .user-info {
         display: flex;
         align-items: center;
-        gap: 12px;
+        gap: 8px;
     }
 
     .user-avatar {
-        background: rgba(255, 255, 255, 0.2) !important;
-        color: white !important;
-    }
-
-    .user-text {
-        display: flex;
-        flex-direction: column;
-        align-items: flex-start;
+        background-color: var(--bg-muted) !important;
+        color: var(--text-main) !important;
+        border: 1px solid var(--border-color);
+        width: 28px !important;
+        height: 28px !important;
     }
 
     .user-name {
-        color: white !important;
-        font-weight: 600;
-        line-height: 1.2;
+        font-size: 0.875rem;
+        font-weight: 500;
     }
 
-    .user-role {
-        color: rgba(255, 255, 255, 0.7) !important;
-        font-size: 0.75rem;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-
-    /* User Menu */
+    /* Dropdown Menu */
     .user-menu-content {
-        padding: 8px;
-        min-width: 200px;
+        min-width: 220px;
+        padding: 4px;
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        background-color: var(--bg-surface);
     }
 
-    .menu-item {
-        border-radius: 8px !important;
-        margin-bottom: 2px;
-        transition: all 0.2s ease;
+    .shadcn-menu-list {
+        padding: 0 !important;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+        border-radius: var(--radius-md) !important;
     }
 
-        .menu-item:hover {
-            background: var(--theme-primary-light) !important;
-            color: var(--theme-primary) !important;
+    .menu-header {
+        padding: 8px 12px;
+    }
+
+    .menu-header-title {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--text-main);
+    }
+
+    .shadcn-menu-item {
+        border-radius: 4px !important;
+        font-size: 0.875rem !important;
+        padding: 8px 12px !important;
+        margin: 2px 4px !important;
+        color: var(--text-main) !important;
+        transition: background-color 0.1s ease !important;
+    }
+
+        .shadcn-menu-item:hover {
+            background-color: var(--bg-muted) !important;
         }
 
     .logout-item:hover {
-        background: rgba(244, 67, 54, 0.1) !important;
-        color: #f44336 !important;
+        background-color: #fef2f2 !important;
+        color: var(--color-destructive) !important;
     }
 
     /* Auth Buttons */
     .auth-buttons {
         display: flex;
-        gap: 12px;
+        gap: 8px;
         align-items: center;
     }
 
-    .login-button {
-        background: rgba(255, 255, 255, 0.9) !important;
-        color: var(--theme-primary) !important;
-        border-radius: 12px !important;
-        font-weight: 600 !important;
-        padding: 8px 20px !important;
-        transition: all 0.3s ease;
+    .shadcn-btn-ghost {
+        border-radius: var(--radius-md) !important;
+        text-transform: none !important;
+        font-weight: 500 !important;
+        color: var(--text-main) !important;
     }
 
-        .login-button:hover {
-            background: white !important;
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(255, 255, 255, 0.3);
+        .shadcn-btn-ghost:hover {
+            background-color: var(--bg-muted) !important;
         }
 
-    .register-button {
-        border: 2px solid rgba(255, 255, 255, 0.8) !important;
+    .shadcn-btn-primary {
+        border-radius: var(--radius-md) !important;
+        text-transform: none !important;
+        font-weight: 500 !important;
+        background-color: var(--text-main) !important;
         color: white !important;
-        border-radius: 12px !important;
-        font-weight: 600 !important;
-        padding: 6px 18px !important;
-        transition: all 0.3s ease;
+        box-shadow: none !important;
+        padding: 6px 16px !important;
     }
 
-        .register-button:hover {
-            background: rgba(255, 255, 255, 0.1) !important;
-            border-color: white !important;
-            transform: translateY(-1px);
+        .shadcn-btn-primary:hover {
+            opacity: 0.9;
         }
 
     /* Navigation Drawer */
-    .nav-drawer {
-        background: white !important;
-        border-right: 1px solid rgba(22, 84, 127, 0.1);
-        box-shadow: 4px 0 20px rgba(0, 0, 0, 0.05) !important;
+    .shadcn-drawer {
+        background-color: var(--bg-surface) !important;
+        border-right: 1px solid var(--border-color) !important;
     }
 
     .drawer-content {
@@ -304,74 +310,37 @@
         flex-direction: column;
     }
 
-    .drawer-header {
-        padding: 1.5rem 1rem 1rem;
-        border-bottom: 1px solid rgba(22, 84, 127, 0.1);
-        background: linear-gradient(135deg, var(--theme-primary-light) 0%, var(--theme-secondary-light) 100%);
-    }
-
-    .drawer-title {
-        color: var(--theme-primary) !important;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        font-size: 0.9rem;
-    }
-
     /* Main Content */
-    .main-content {
-        background: #f8f9fa;
+    .shadcn-main-content {
         min-height: calc(100vh - 64px);
     }
 
     .page-wrapper {
-        padding: 0;
+        padding: 1.5rem;
         min-height: 100%;
+        max-width: 1400px;
+        margin: 0 auto;
     }
 
-    /* Responsive Design */
-    media (max-width: 768px) {
-        .brand-text .app-title
+    /* Fixed Media Queries */
+    @@media (max-width: 768px) {
+        .user-name {
+            display: none;
+        }
 
-    {
-        font-size: 1.1rem;
+        .page-wrapper {
+            padding: 1rem;
+        }
     }
 
-    .user-text {
-        display: none;
-    }
+    @@media (max-width: 480px) {
+        .app-bar-content {
+            padding: 0 0.75rem;
+        }
 
-    .auth-buttons {
-        gap: 8px;
-    }
-
-    .login-button,
-    .register-button {
-        padding: 6px 12px !important;
-        font-size: 0.875rem;
-    }
-
-    }
-
-    media (max-width: 480px) {
-        .app-bar-content
-
-    {
-        padding: 0 0.5rem;
-    }
-
-    .brand-section {
-        gap: 8px;
-    }
-
-    .app-logo {
-        height: 32px;
-    }
-
-    .brand-text .company-name {
-        display: none;
-    }
-
+        .company-name {
+            display: none;
+        }
     }
 </style>
 

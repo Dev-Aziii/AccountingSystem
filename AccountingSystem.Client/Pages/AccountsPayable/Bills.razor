@@ -1,5 +1,4 @@
-﻿@page "/ap/bills"
-@using AccountingSystem.Shared.DTOs
+﻿@using AccountingSystem.Shared.DTOs
 @using AccountingSystem.Client.Services
 @using AccountingSystem.Client.Shared.Components
 @using Microsoft.AspNetCore.Authorization
@@ -12,69 +11,65 @@
 
 <PageTitle>Create Bill</PageTitle>
 
-<MudContainer MaxWidth="MaxWidth.Medium" Class="mt-6">
-    <!-- HEADER -->
-    <MudPaper Class="page-header mb-6" Elevation="0">
-        <div class="d-flex justify-space-between align-center">
-            <div>
-                @if (_initialLoading)
-                {
-                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="180px" Height="32px" Class="mb-2" />
-                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="380px" Height="20px" />
-                }
-                else
-                {
-                    <MudText Typo="Typo.h5" Class="mb-2 page-header-title">
-                        New Vendor Bill
-                    </MudText>
-                    <MudText Typo="Typo.body1" Class="page-header-subtitle">
-                        Record vendor invoices and track accounts payable obligations
-                    </MudText>
-                }
-            </div>
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-6 mb-10">
+    <div class="d-flex justify-space-between align-center mb-6">
+        <div>
+            @if (_initialLoading)
+            {
+                <MudSkeleton SkeletonType="SkeletonType.Text" Width="180px" Height="32px" Class="mb-1" />
+                <MudSkeleton SkeletonType="SkeletonType.Text" Width="380px" Height="16px" />
+            }
+            else
+            {
+                <h2 style="font-size: 1.5rem; font-weight: 600; letter-spacing: -0.025em; color: var(--text-main); margin: 0;">
+                    New Vendor Bill
+                </h2>
+                <p style="color: var(--text-muted); font-size: 0.875rem; margin: 0.25rem 0 0 0;">
+                    Record vendor invoices and track accounts payable obligations.
+                </p>
+            }
         </div>
-    </MudPaper>
+    </div>
 
     @if (_initialLoading)
     {
-        <!-- SKELETON FOR BILL FORM -->
-        <MudCard>
+        <MudCard Elevation="0" Outlined="true" Class="shadcn-card">
             <MudCardContent>
-                <MudGrid>
+                <MudGrid Spacing="3">
                     <MudItem xs="12" sm="6">
                         <MudSkeleton SkeletonType="SkeletonType.Text" Width="80px" Height="16px" Class="mb-2" />
-                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="56px" />
+                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="40px" Style="border-radius: 6px;" />
                     </MudItem>
 
                     <MudItem xs="12" sm="6">
                         <MudSkeleton SkeletonType="SkeletonType.Text" Width="140px" Height="16px" Class="mb-2" />
-                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="56px" />
+                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="40px" Style="border-radius: 6px;" />
                     </MudItem>
 
                     <MudItem xs="12" sm="4">
                         <MudSkeleton SkeletonType="SkeletonType.Text" Width="80px" Height="16px" Class="mb-2" />
-                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="56px" />
+                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="40px" Style="border-radius: 6px;" />
                     </MudItem>
 
                     <MudItem xs="12" sm="4">
                         <MudSkeleton SkeletonType="SkeletonType.Text" Width="90px" Height="16px" Class="mb-2" />
-                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="56px" />
+                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="40px" Style="border-radius: 6px;" />
                     </MudItem>
 
                     <MudItem xs="12" sm="4">
                         <MudSkeleton SkeletonType="SkeletonType.Text" Width="120px" Height="16px" Class="mb-2" />
-                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="56px" />
+                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="40px" Style="border-radius: 6px;" />
                     </MudItem>
 
                     <MudItem xs="12">
                         <MudSkeleton SkeletonType="SkeletonType.Text" Width="100px" Height="16px" Class="mb-2" />
-                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="86px" />
+                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="86px" Style="border-radius: 6px;" />
                     </MudItem>
                 </MudGrid>
             </MudCardContent>
 
-            <MudCardActions Class="d-flex justify-end">
-                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="130px" Height="42px" />
+            <MudCardActions Class="d-flex justify-end pa-4 border-t">
+                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="130px" Height="40px" Style="border-radius: 6px;" />
             </MudCardActions>
         </MudCard>
     }
@@ -83,9 +78,9 @@
         <EditForm Model="@bill" OnValidSubmit="HandleSubmit">
             <DataAnnotationsValidator />
 
-            <MudCard>
+            <MudCard Elevation="0" Outlined="true" Class="shadcn-card">
                 <MudCardContent>
-                    <MudGrid>
+                    <MudGrid Spacing="3">
 
                         <MudItem xs="12" sm="6">
                             <VendorSelect @bind-SelectedVendorId="bill.VendorId" />
@@ -95,14 +90,18 @@
                         <MudItem xs="12" sm="6">
                             <MudTextField Label="Reference Number"
                                           @bind-Value="bill.ReferenceNumber"
-                                          Variant="Variant.Outlined" />
+                                          Variant="Variant.Outlined"
+                                          Margin="Margin.Dense"
+                                          Class="shadcn-input" />
                             <ValidationMessage For="@(() => bill.ReferenceNumber)" />
                         </MudItem>
 
                         <MudItem xs="12" sm="4">
                             <MudDatePicker Label="Due Date"
                                            @bind-Date="billDate"
-                                           Variant="Variant.Outlined" />
+                                           Variant="Variant.Outlined"
+                                           Margin="Margin.Dense"
+                                           Class="shadcn-input" />
                         </MudItem>
 
                         <MudItem xs="12" sm="4">
@@ -112,7 +111,9 @@
                                              Adornment="Adornment.Start"
                                              AdornmentText="₱"
                                              HideSpinButtons="true"
-                                             Variant="Variant.Outlined" />
+                                             Variant="Variant.Outlined"
+                                             Margin="Margin.Dense"
+                                             Class="shadcn-input" />
                         </MudItem>
 
                         <MudItem xs="12" sm="4">
@@ -125,18 +126,21 @@
                             <MudTextField Label="Description"
                                           @bind-Value="bill.Description"
                                           Lines="3"
-                                          Variant="Variant.Outlined" />
+                                          Variant="Variant.Outlined"
+                                          Margin="Margin.Dense"
+                                          Class="shadcn-input" />
                         </MudItem>
 
                     </MudGrid>
                 </MudCardContent>
 
-                <MudCardActions Class="d-flex justify-end">
+                <MudCardActions Class="d-flex justify-end pa-4">
                     <MudButton ButtonType="ButtonType.Submit"
                                Variant="Variant.Filled"
                                Class="save-btn"
+                               Size="Size.Medium"
                                Disabled="@isSubmitting"
-                               StartIcon="@Icons.Material.Filled.Save">
+                               StartIcon="@Icons.Material.Outlined.Save">
                         @(isSubmitting ? "Saving..." : "Save Bill")
                     </MudButton>
                 </MudCardActions>
@@ -190,7 +194,7 @@
         {
             await PayableService.CreateBillAsync(bill);
             Snackbar.Add("Bill created successfully.", Severity.Success);
-            NavManager.NavigateTo("/ap/bills", forceLoad: true);
+            NavManager.NavigateTo("/ap", forceLoad: true);
         }
         catch (Exception ex)
         {

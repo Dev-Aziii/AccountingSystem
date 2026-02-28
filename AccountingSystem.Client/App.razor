@@ -3,7 +3,7 @@
 @using MudBlazor
 
 <CascadingAuthenticationState>
-    <MudThemeProvider />
+    <MudThemeProvider Theme="_shadcnTheme" />
     <MudPopoverProvider />
     <MudDialogProvider />
     <MudSnackbarProvider />
@@ -37,3 +37,21 @@
         </NotFound>
     </Router>
 </CascadingAuthenticationState>
+
+@code {
+    private MudTheme _shadcnTheme = new MudTheme()
+    {
+        PaletteLight = new PaletteLight()
+        {
+            Primary = "#0f172a", 
+            Secondary = "#64748b", 
+            AppbarBackground = "#ffffff",
+            AppbarText = "#0f172a",
+            Background = "#f8fafc",
+            Surface = "#ffffff",
+            DrawerBackground = "#ffffff",
+            DrawerText = "#0f172a",
+            ActionDefault = "#64748b"
+        }
+    };
+}
