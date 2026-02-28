@@ -88,12 +88,16 @@
                         </MudItem>
 
                         <MudItem xs="12" sm="6">
-                            <MudTextField Label="Reference Number"
-                                          @bind-Value="bill.ReferenceNumber"
+                            <MudTextField Label="Vendor Invoice Number"
+                                          @bind-Value="bill.VendorReferenceNumber"
                                           Variant="Variant.Outlined"
                                           Margin="Margin.Dense"
                                           Class="shadcn-input" />
-                            <ValidationMessage For="@(() => bill.ReferenceNumber)" />
+                            <ValidationMessage For="@(() => bill.VendorReferenceNumber)" />
+                        </MudItem>
+
+                        <MudItem xs="12" sm="6">
+                            <MudTextField Label="System Reference Number" Value="[Auto-Generated]" Disabled="true" Variant="Variant.Outlined" Margin="Margin.Dense" Class="shadcn-input" />
                         </MudItem>
 
                         <MudItem xs="12" sm="4">

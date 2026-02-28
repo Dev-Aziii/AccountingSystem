@@ -39,7 +39,7 @@ namespace AccountingSystem.Client.Services
             return await _api.GetAsync<List<InvoiceDTO>>($"api/receivables/invoices{query}");
         }
 
-        public async Task CreateInvoiceAsync(CreateInvoiceDTO invoiceDto)
+        public async Task<DocumentCreationResultDTO?> CreateInvoiceAsync(CreateInvoiceDTO invoiceDto)
         {
             var response = await _api.PostAsync("api/receivables/invoice", invoiceDto);
             if (!response.IsSuccessStatusCode)
@@ -47,9 +47,11 @@ namespace AccountingSystem.Client.Services
                 var error = await response.Content.ReadAsStringAsync();
                 throw new Exception(error);
             }
+
+            return await response.Content.ReadFromJsonAsync<DocumentCreationResultDTO>();
         }
 
-        public async Task ReceivePaymentAsync(RecordPaymentDTO paymentDto)
+        public async Task<PaymentCreationResultDTO?> ReceivePaymentAsync(RecordPaymentDTO paymentDto)
         {
             var response = await _api.PostAsync($"api/receivables/invoice/{paymentDto.ReferenceId}/receive", paymentDto);
             if (!response.IsSuccessStatusCode)
@@ -57,6 +59,8 @@ namespace AccountingSystem.Client.Services
                 var error = await response.Content.ReadAsStringAsync();
                 throw new Exception(error);
             }
+
+            return await response.Content.ReadFromJsonAsync<PaymentCreationResultDTO>();
         }
 
         public async Task<CustomerDTO?> CreateCustomerAsync(CreateCustomerDTO customer)
