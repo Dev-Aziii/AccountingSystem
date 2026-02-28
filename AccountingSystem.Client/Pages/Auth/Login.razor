@@ -179,9 +179,8 @@
     /* ── Reset & Base ─────────────────────────────────────────────── */
     .split-login-container {
         display: flex;
-        height: 100vh;
+        min-height: 100vh; 
         width: 100%;
-        overflow: hidden;
     }
 
     /* ── LEFT BRANDING PANEL ──────────────────────────────────────── */
@@ -485,6 +484,9 @@
     /* ── Mobile ──────────────────────────────────────────────────── */
     @@media (max-width: 767px) {
         .split-login-container {
+            height: auto;
+            min-height: 100vh;
+            overflow-y: auto;
             background: linear-gradient(160deg, #134658 0%, #1a7a7a 40%, #f0f5fb 40%);
         }
 

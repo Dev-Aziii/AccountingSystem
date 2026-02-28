@@ -88,9 +88,128 @@
                     <MudLink Href="/" Class="signin-link">Sign In Here</MudLink>
                 </MudText>
                 <MudText Typo="Typo.caption" Class="help-text">
-                    By creating an account, you agree to our terms of service
+                    By creating an account, you agree to our
+                    <span class="tos-link" @onclick="OpenTermsModal">Terms of Service</span>
                 </MudText>
             </div>
+
+            <!-- Terms of Service Modal -->
+            @if (showTermsModal)
+            {
+                <div class="tos-backdrop" @onclick="CloseTermsModal">
+                    <div class="tos-modal" @onclick:stopPropagation="true">
+                        <div class="tos-header">
+                            <div class="tos-header-left">
+                                <div class="tos-icon">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M5.625 1.5c-1.036 0-1.875.84-1.875 1.875v17.25c0 1.035.84 1.875 1.875 1.875h12.75c1.035 0 1.875-.84 1.875-1.875V12.75A3.75 3.75 0 0 0 16.5 9h-1.875a1.875 1.875 0 0 1-1.875-1.875V5.25A3.75 3.75 0 0 0 9 1.5H5.625ZM7.5 15a.75.75 0 0 1 .75-.75h7.5a.75.75 0 0 1 0 1.5h-7.5A.75.75 0 0 1 7.5 15Zm.75-6.75a.75.75 0 0 0 0 1.5H12a.75.75 0 0 0 0-1.5H8.25Z" clip-rule="evenodd" /><path d="M12.971 1.816A5.23 5.23 0 0 1 14.25 5.25v1.875c0 .207.168.375.375.375H16.5a5.23 5.23 0 0 1 3.434 1.279 9.768 9.768 0 0 0-6.963-6.963Z" /></svg>
+                                </div>
+                                <div>
+                                    <h2 class="tos-title">Terms of Service</h2>
+                                    <p class="tos-meta">AccSys Solutions &mdash; Effective upon registration</p>
+                                </div>
+                            </div>
+                            <button class="tos-close" @onclick="CloseTermsModal">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M5.47 5.47a.75.75 0 0 1 1.06 0L12 10.94l5.47-5.47a.75.75 0 1 1 1.06 1.06L13.06 12l5.47 5.47a.75.75 0 1 1-1.06 1.06L12 13.06l-5.47 5.47a.75.75 0 0 1-1.06-1.06L10.94 12 5.47 6.53a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd" /></svg>
+                            </button>
+                        </div>
+
+                        <div class="tos-notice">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="tos-notice-icon"><path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm8.706-1.442c1.146-.573 2.437.463 2.126 1.706l-.709 2.836.042-.02a.75.75 0 0 1 .67 1.34l-.04.022c-1.147.573-2.438-.463-2.127-1.706l.71-2.836-.042.02a.75.75 0 1 1-.671-1.34l.041-.022ZM12 9a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Z" clip-rule="evenodd" /></svg>
+                            <p><strong>Academic Project Notice:</strong> AccSys is a student-developed system created as a requirement for <strong>IT15</strong> at the <strong>University of Mindanao</strong>. It is intended solely for academic demonstration purposes and does not constitute a commercial product or service.</p>
+                        </div>
+
+                        <div class="tos-body">
+
+                            <div class="tos-section">
+                                <h3 class="tos-section-title">
+                                    <span class="tos-section-num">1</span>
+                                    Acceptance of Terms
+                                </h3>
+                                <p>By registering and using AccSys ("the System"), you confirm that you have read, understood, and agree to be bound by these Terms of Service. If you do not agree to these terms, please do not proceed with registration or use of the System.</p>
+                            </div>
+
+                            <div class="tos-section">
+                                <h3 class="tos-section-title">
+                                    <span class="tos-section-num">2</span>
+                                    Nature of the System
+                                </h3>
+                                <p>AccSys is an academic project developed in partial fulfillment of the requirements for the course <strong>IT15</strong> at the <strong>University of Mindanao</strong>. The system is a demonstration of accounting software capabilities including company registration, financial record management, and reporting features. It is <strong>not intended for actual commercial, legal, or financial use</strong>.</p>
+                            </div>
+
+                            <div class="tos-section">
+                                <h3 class="tos-section-title">
+                                    <span class="tos-section-num">3</span>
+                                    User Accounts & Registration
+                                </h3>
+                                <p>When you register a company account, you agree to provide accurate and complete information. You are responsible for maintaining the confidentiality of your login credentials and for all activities that occur under your account. You must notify the system administrators immediately of any unauthorized use of your account.</p>
+                            </div>
+
+                            <div class="tos-section">
+                                <h3 class="tos-section-title">
+                                    <span class="tos-section-num">4</span>
+                                    Data & Privacy
+                                </h3>
+                                <p>Any data entered into AccSys — including company names, financial records, and user information — is stored solely for demonstration and evaluation purposes within the scope of this academic project. We do not sell, share, or distribute your data to third parties. However, as this is an academic environment, absolute data security cannot be guaranteed. <strong>Do not enter real financial data, sensitive personal information, or confidential business records.</strong></p>
+                            </div>
+
+                            <div class="tos-section">
+                                <h3 class="tos-section-title">
+                                    <span class="tos-section-num">5</span>
+                                    Acceptable Use
+                                </h3>
+                                <p>You agree to use AccSys only for lawful purposes and in a manner consistent with the academic intent of the system. You must not:</p>
+                                <ul class="tos-list">
+                                    <li>Attempt to gain unauthorized access to any part of the system</li>
+                                    <li>Upload malicious code, scripts, or harmful content</li>
+                                    <li>Use the system to conduct fraudulent or deceptive activities</li>
+                                    <li>Interfere with the system's functionality or other users' access</li>
+                                    <li>Reproduce, resell, or distribute the system without written permission from the developers</li>
+                                </ul>
+                            </div>
+
+                            <div class="tos-section">
+                                <h3 class="tos-section-title">
+                                    <span class="tos-section-num">6</span>
+                                    Intellectual Property
+                                </h3>
+                                <p>All source code, design assets, UI components, and system logic of AccSys are the intellectual property of the development team. This project was developed as part of the IT15 curriculum at the University of Mindanao. Unauthorized copying, redistribution, or commercial use of any part of the system is strictly prohibited.</p>
+                            </div>
+
+                            <div class="tos-section">
+                                <h3 class="tos-section-title">
+                                    <span class="tos-section-num">7</span>
+                                    Disclaimer of Warranties
+                                </h3>
+                                <p>AccSys is provided <strong>"as is"</strong> for academic evaluation purposes. The development team makes no warranties, express or implied, regarding the system's accuracy, completeness, reliability, or fitness for any particular purpose. The team shall not be liable for any damages arising from the use or inability to use the system.</p>
+                            </div>
+
+                            <div class="tos-section">
+                                <h3 class="tos-section-title">
+                                    <span class="tos-section-num">8</span>
+                                    Modifications & Termination
+                                </h3>
+                                <p>The development team reserves the right to modify, suspend, or discontinue the System at any time without prior notice, as this is an academic demonstration. Access may be terminated at the end of the academic term or evaluation period.</p>
+                            </div>
+
+                            <div class="tos-section">
+                                <h3 class="tos-section-title">
+                                    <span class="tos-section-num">9</span>
+                                    Governing Terms
+                                </h3>
+                                <p>These Terms of Service are governed by the academic policies of the <strong>University of Mindanao</strong> and applicable Philippine laws. Any disputes arising from the use of this system shall be resolved in accordance with the university's academic integrity and conduct policies.</p>
+                            </div>
+
+                        </div>
+
+                        <div class="tos-footer">
+                            <p class="tos-footer-note">Last updated for IT15 Academic Submission &mdash; University of Mindanao</p>
+                            <button class="tos-accept-btn" @onclick="CloseTermsModal">
+                                I Understand &amp; Accept
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            }
         </div>
     </div>
 
@@ -103,7 +222,7 @@
 
             <div class="branding-illustration">
                 <div class="img-skeleton @(illustrationLoaded ? "img-skeleton--hidden" : "")"></div>
-                <img src="graphics2.png"
+                <img src="graphics.png"
                      alt="AccSys Dashboard Illustration"
                      class="branding-img @(illustrationLoaded ? "branding-img--visible" : "")"
                      @onload="OnIllustrationLoaded" />
@@ -112,23 +231,23 @@
             <div class="branding-text">
                 <h1 class="branding-title">AccSys Solutions</h1>
                 <p class="branding-subtitle">
-                    Create your account and start managing your business finances with clarity,
-                    control, and confidence.
+                    The all-in-one professional accounting system designed to streamline
+                    your business finances with modern precision.
                 </p>
             </div>
 
             <div class="branding-features">
                 <div class="feature-item">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="feature-icon"><path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm13.36-1.814a.75.75 0 1 0-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 0 0-1.06 1.06l2.25 2.25a.75.75 0 0 0 1.14-.094l3.75-5.25Z" clip-rule="evenodd" /></svg>
-                    <span>Reliable</span>
+                    <span>Multi-company management</span>
                 </div>
                 <div class="feature-item">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="feature-icon"><path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm13.36-1.814a.75.75 0 1 0-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 0 0-1.06 1.06l2.25 2.25a.75.75 0 0 0 1.14-.094l3.75-5.25Z" clip-rule="evenodd" /></svg>
-                    <span>Real-time </span>
+                    <span>Real-time financial reports</span>
                 </div>
                 <div class="feature-item">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="feature-icon"><path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm13.36-1.814a.75.75 0 1 0-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 0 0-1.06 1.06l2.25 2.25a.75.75 0 0 0 1.14-.094l3.75-5.25Z" clip-rule="evenodd" /></svg>
-                    <span>Secured</span>
+                    <span>Secure cloud-based storage</span>
                 </div>
             </div>
         </div>
@@ -185,9 +304,8 @@
 
     .split-register-container {
         display: flex;
-        height: 100vh;
+        min-height: 100vh;
         width: 100%;
-        overflow: hidden;
     }
 
     /* LEFT FORM PANEL */
@@ -465,7 +583,7 @@
     }
 
     .branding-title {
-        font-size: 2.25rem;
+        font-size: 1.65rem;
         font-weight: 800;
         color: #ffffff;
         margin: 0 0 0.4rem 0;
@@ -474,7 +592,7 @@
     }
 
     .branding-subtitle {
-        font-size: 1rem;
+        font-size: 0.875rem;
         color: rgba(255,255,255,0.85);
         line-height: 1.6;
         margin: 0 0 1rem 0;
@@ -482,27 +600,24 @@
 
     .branding-features {
         display: flex;
-        gap: 1rem; 
-        justify-content: center; 
+        flex-direction: column;
+        gap: 0.45rem;
         width: 100%;
-        max-width: 420px; 
-        margin: 0 auto; 
+        max-width: 280px;
     }
 
     .feature-item {
         display: flex;
         align-items: center;
-        justify-content: center; 
         gap: 0.6rem;
-        width: 130px; 
-        color: rgba(255, 255, 255, 0.92);
+        color: rgba(255,255,255,0.92);
         font-size: 0.8rem;
         font-weight: 500;
-        text-align: center;
-        background: rgba(255, 255, 255, 0.08);
+        text-align: left;
+        background: rgba(255,255,255,0.08);
         border-radius: 8px;
         padding: 0.45rem 0.75rem;
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255,255,255,0.1);
     }
 
     .feature-icon {
@@ -512,12 +627,294 @@
         flex-shrink: 0;
     }
 
-    /* Mobile */
+    /* ── Terms of Service link ───────────────────────────────────── */
+    .tos-link {
+        color: #0d9488;
+        font-weight: 700;
+        cursor: pointer;
+        text-decoration: underline;
+        text-underline-offset: 2px;
+        transition: color 0.2s ease;
+    }
+
+        .tos-link:hover {
+            color: #0a7a70;
+        }
+
+    /* ── Modal Backdrop ─────────────────────────────────────────── */
+    .tos-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(13, 38, 50, 0.6);
+        backdrop-filter: blur(4px);
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+        animation: fadeIn 0.2s ease both;
+    }
+
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+
+        to {
+            opacity: 1;
+        }
+    }
+
+    @@keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(24px) scale(0.98);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    }
+
+    /* ── Modal Container ────────────────────────────────────────── */
+    .tos-modal {
+        background: #ffffff;
+        border-radius: 1.25rem;
+        width: 100%;
+        max-width: 620px;
+        max-height: 88vh;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 32px 80px rgba(0,0,0,0.25), 0 8px 24px rgba(0,0,0,0.1);
+        animation: slideUp 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+        overflow: hidden;
+    }
+
+    /* ── Modal Header ───────────────────────────────────────────── */
+    .tos-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid #e8edf2;
+        background: linear-gradient(135deg, #134658 0%, #1a7a6e 100%);
+        flex-shrink: 0;
+    }
+
+    .tos-header-left {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .tos-icon {
+        width: 40px;
+        height: 40px;
+        background: rgba(255,255,255,0.15);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+        .tos-icon svg {
+            width: 22px;
+            height: 22px;
+            color: #ffffff;
+        }
+
+    .tos-title {
+        font-size: 1.1rem;
+        font-weight: 800;
+        color: #ffffff;
+        margin: 0;
+        letter-spacing: -0.3px;
+    }
+
+    .tos-meta {
+        font-size: 0.72rem;
+        color: rgba(255,255,255,0.7);
+        margin: 0;
+    }
+
+    .tos-close {
+        background: rgba(255,255,255,0.12);
+        border: none;
+        border-radius: 8px;
+        width: 34px;
+        height: 34px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: background 0.2s ease;
+        flex-shrink: 0;
+    }
+
+        .tos-close:hover {
+            background: rgba(255,255,255,0.22);
+        }
+
+        .tos-close svg {
+            width: 18px;
+            height: 18px;
+            color: #ffffff;
+        }
+
+    /* ── Academic Notice Banner ─────────────────────────────────── */
+    .tos-notice {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.65rem;
+        background: #fffbeb;
+        border-left: 4px solid #f59e0b;
+        padding: 0.85rem 1.25rem;
+        flex-shrink: 0;
+    }
+
+    .tos-notice-icon {
+        width: 18px;
+        height: 18px;
+        color: #d97706;
+        flex-shrink: 0;
+        margin-top: 1px;
+    }
+
+    .tos-notice p {
+        font-size: 0.78rem;
+        color: #78350f;
+        margin: 0;
+        line-height: 1.55;
+    }
+
+    /* ── Modal Scrollable Body ──────────────────────────────────── */
+    .tos-body {
+        padding: 1.25rem 1.5rem;
+        overflow-y: auto;
+        flex: 1;
+        scrollbar-width: thin;
+        scrollbar-color: #cbd5e1 transparent;
+    }
+
+        .tos-body::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        .tos-body::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 99px;
+        }
+
+    .tos-section {
+        margin-bottom: 1.25rem;
+    }
+
+        .tos-section:last-child {
+            margin-bottom: 0;
+        }
+
+    .tos-section-title {
+        display: flex;
+        align-items: center;
+        gap: 0.55rem;
+        font-size: 0.88rem;
+        font-weight: 700;
+        color: #134658;
+        margin: 0 0 0.4rem 0;
+    }
+
+    .tos-section-num {
+        width: 22px;
+        height: 22px;
+        background: linear-gradient(135deg, #134658, #0d9488);
+        color: #ffffff;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.68rem;
+        font-weight: 800;
+        flex-shrink: 0;
+    }
+
+    .tos-section p {
+        font-size: 0.8rem;
+        color: #475569;
+        line-height: 1.65;
+        margin: 0;
+    }
+
+    .tos-list {
+        margin: 0.5rem 0 0 1rem;
+        padding: 0;
+        list-style: none;
+    }
+
+        .tos-list li {
+            font-size: 0.8rem;
+            color: #475569;
+            line-height: 1.65;
+            padding: 0.2rem 0;
+            padding-left: 1rem;
+            position: relative;
+        }
+
+            .tos-list li::before {
+                content: "•";
+                position: absolute;
+                left: 0;
+                color: #0d9488;
+                font-weight: 700;
+            }
+
+    /* ── Modal Footer ───────────────────────────────────────────── */
+    .tos-footer {
+        padding: 1rem 1.5rem;
+        border-top: 1px solid #e8edf2;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        background: #f8fafc;
+        flex-shrink: 0;
+        flex-wrap: wrap;
+    }
+
+    .tos-footer-note {
+        font-size: 0.7rem;
+        color: #94a3b8;
+        font-style: italic;
+        margin: 0;
+    }
+
+    .tos-accept-btn {
+        background: linear-gradient(to right, #1a5370, #429497);
+        color: #ffffff;
+        border: none;
+        border-radius: 8px;
+        padding: 0.55rem 1.4rem;
+        font-size: 0.82rem;
+        font-weight: 600;
+        cursor: pointer;
+        box-shadow: 0 4px 12px rgba(26, 83, 112, 0.3);
+        transition: all 0.2s ease;
+        white-space: nowrap;
+    }
+
+        .tos-accept-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(26, 83, 112, 0.4);
+            opacity: 0.95;
+        }
+
+    /* ── Mobile */
     @@media (max-width: 767px) {
         .split-register-container {
             background: linear-gradient(160deg, #134658 0%, #1a7a7a 35%, #f0f5fb 35%);
-            height: 100vh;
-            overflow: hidden;
+            min-height: 100vh;
+            overflow-y: auto;
         }
 
         .form-panel {
@@ -539,6 +936,7 @@
     private CompanyRegisterDTO registerModel = new CompanyRegisterDTO();
     private bool isLoading = false;
     private bool illustrationLoaded = false;
+    private bool showTermsModal = false;
 
     private const string SiteKey = "6LcUNGEsAAAAAJKM0sgFbG3mKWAiYq-cXaz2Wv_8";
 
@@ -555,6 +953,16 @@
     {
         illustrationLoaded = true;
         StateHasChanged();
+    }
+
+    private void OpenTermsModal()
+    {
+        showTermsModal = true;
+    }
+
+    private void CloseTermsModal()
+    {
+        showTermsModal = false;
     }
 
     private async Task HandleRegistration()
