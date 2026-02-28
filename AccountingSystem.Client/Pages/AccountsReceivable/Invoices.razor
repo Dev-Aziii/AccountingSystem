@@ -1,5 +1,4 @@
-﻿@page "/ar/invoices"
-@using AccountingSystem.Shared.DTOs
+﻿@using AccountingSystem.Shared.DTOs
 @using AccountingSystem.Client.Services
 @using AccountingSystem.Client.Shared.Components
 @using Microsoft.AspNetCore.Authorization
@@ -177,7 +176,7 @@
         {
             await ReceivableService.CreateInvoiceAsync(invoice);
             Snackbar.Add("Invoice created successfully.", Severity.Success);
-            NavManager.NavigateTo("/ar/invoices", forceLoad: true);
+            NavManager.NavigateTo("/ar", forceLoad: true);
         }
         catch (Exception ex)
         {

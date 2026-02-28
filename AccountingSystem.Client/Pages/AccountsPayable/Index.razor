@@ -1,0 +1,25 @@
+@page "/ap"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin,Accounting")]
+
+<MudContainer MaxWidth="MaxWidth.Large" Class=" pb-8">
+    <MudTabs Rounded="true" PanelClass="pa-2" KeepPanelsAlive="true">
+        <MudTabPanel Text="Bills List">
+            <APBillsList />
+        </MudTabPanel>
+        <MudTabPanel Text="Create Vendor Bill">
+            <APCreateBill />
+        </MudTabPanel>
+        <MudTabPanel Text="Vendors">
+            <APVendors />
+        </MudTabPanel>
+    </MudTabs>
+</MudContainer>
+
+@code {
+    private readonly List<NavItem> _breadcrumbItems =
+    [
+        new() { Title = "Bills List", Href = "/ap" },
+        new() { Title = "Create Vendor Bill", Href = "/ap" },
+        new() { Title = "Vendors", Href = "/ap" }
+    ];
+}

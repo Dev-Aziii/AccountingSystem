@@ -1,4 +1,5 @@
 ﻿@page "/admin/users"
+@using AccountingSystem.Client.Shared.Dialogs
 @using AccountingSystem.Shared.DTOs
 @using AccountingSystem.Client.Services
 @using Microsoft.AspNetCore.Authorization
@@ -225,46 +226,64 @@
 
     private async Task ConfirmDelete(int id)
     {
-        bool? result = await DialogService.ShowMessageBox(
-            "Archive User?",
-            "This user will be archived and lose system access. You can restore them later if needed.",
-            yesText: "Archive",
-            cancelText: "Cancel");
+        var parameters = new DialogParameters<ShadcnConfirmDialog>
+    {
+        { x => x.ContentText, "Archive User?" },
+        { x => x.SubText, "This user will lose system access immediately. You can restore them from the Archived tab." },
+        { x => x.ButtonText, "Archive User" },
+        { x => x.Color, Color.Error }
+    };
 
-        if (result == true)
+        var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.ExtraSmall };
+        var dialog = await DialogService.ShowAsync<ShadcnConfirmDialog>("Confirm", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
         {
             try
             {
+                _loading = true;
                 await UserService.DeleteUserAsync(id);
-                Snackbar.Add("User archived successfully!", Severity.Success);
+                Snackbar.Add("User archived successfully", Severity.Success);
                 await LoadUsers(false);
             }
-            catch (Exception ex)
+            catch (Exception ex) { Snackbar.Add(ex.Message, Severity.Error); }
+            finally
             {
-                Snackbar.Add($"Failed to archive user: {ex.Message}", Severity.Error);
+                _loading = false;
+                StateHasChanged();
             }
         }
     }
 
     private async Task ConfirmRestore(int id)
     {
-        bool? result = await DialogService.ShowMessageBox(
-            "Restore User?",
-            "This user will regain system access with their previous permissions and role.",
-            yesText: "Restore",
-            cancelText: "Cancel");
+        var parameters = new DialogParameters<ShadcnConfirmDialog>
+    {
+        { x => x.ContentText, "Restore User?" },
+        { x => x.SubText, "This will reactivate the account with their previous permissions." },
+        { x => x.ButtonText, "Restore Account" },
+        { x => x.Color, Color.Success }
+    };
 
-        if (result == true)
+        var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.ExtraSmall };
+        var dialog = await DialogService.ShowAsync<ShadcnConfirmDialog>("Confirm", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
         {
             try
             {
+                _loading = true;
                 await UserService.RestoreUserAsync(id);
-                Snackbar.Add("User restored successfully!", Severity.Success);
+                Snackbar.Add("User restored successfully", Severity.Success);
                 await LoadUsers(true);
             }
-            catch (Exception ex)
+            catch (Exception ex) { Snackbar.Add(ex.Message, Severity.Error); }
+            finally
             {
-                Snackbar.Add($"Failed to restore user: {ex.Message}", Severity.Error);
+                _loading = false;
+                StateHasChanged();
             }
         }
     }

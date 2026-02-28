@@ -1,0 +1,25 @@
+@page "/ar"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin,Accounting")]
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="pb-8">
+    <MudTabs Rounded="true" PanelClass="pa-2" KeepPanelsAlive="true">
+        <MudTabPanel Text="Invoice List">
+            <ARInvoiceList />
+        </MudTabPanel>
+        <MudTabPanel Text="Create Invoice">
+            <ARCreateInvoice />
+        </MudTabPanel>
+        <MudTabPanel Text="Customers">
+            <ARCustomers />
+        </MudTabPanel>
+    </MudTabs>
+</MudContainer>
+
+@code {
+    private readonly List<NavItem> _breadcrumbItems =
+    [
+        new() { Title = "Invoice List", Href = "/ar" },
+        new() { Title = "Create Invoice", Href = "/ar" },
+        new() { Title = "Customers", Href = "/ar" }
+    ];
+}

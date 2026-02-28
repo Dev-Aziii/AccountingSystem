@@ -1,5 +1,4 @@
-﻿@page "/ar/customers"
-@using AccountingSystem.Shared.DTOs
+﻿@using AccountingSystem.Shared.DTOs
 @using AccountingSystem.Client.Services
 @using AccountingSystem.Client.Shared.Dialogs
 @using Microsoft.AspNetCore.Authorization
@@ -244,7 +243,11 @@
 
     private async Task ConfirmDelete(int id)
     {
-        bool? result = await DialogService.ShowMessageBox("Archive", "Archive this customer?", yesText: "Archive", cancelText: "Cancel");
+        bool result = await ShowConfirmDialog(
+            "Archive this customer?",
+            "Archived customers are hidden from active customer lists.",
+            "Archive",
+            Color.Error);
         if (result == true)
         {
             try { await ReceivableService.DeleteCustomerAsync(id); Snackbar.Add("Customer archived.", Severity.Success); await LoadList(false); }
@@ -254,11 +257,30 @@
 
     private async Task ConfirmRestore(int id)
     {
-        bool? result = await DialogService.ShowMessageBox("Restore", "Restore this customer?", yesText: "Restore", cancelText: "Cancel");
+        bool result = await ShowConfirmDialog(
+            "Restore this customer?",
+            "This customer will return to active customer lists.",
+            "Restore",
+            Color.Success);
         if (result == true)
         {
             try { await ReceivableService.RestoreCustomerAsync(id); Snackbar.Add("Customer restored.", Severity.Success); await LoadList(true); }
             catch (Exception ex) { Snackbar.Add(ex.Message, Severity.Error); }
         }
+    }
+
+    private async Task<bool> ShowConfirmDialog(string content, string subText, string buttonText, Color color)
+    {
+        var parameters = new DialogParameters
+        {
+            [nameof(ShadcnConfirmDialog.ContentText)] = content,
+            [nameof(ShadcnConfirmDialog.SubText)] = subText,
+            [nameof(ShadcnConfirmDialog.ButtonText)] = buttonText,
+            [nameof(ShadcnConfirmDialog.Color)] = color
+        };
+        var options = new DialogOptions { MaxWidth = MaxWidth.ExtraSmall, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<ShadcnConfirmDialog>("Confirm", parameters, options);
+        var result = await dialog.Result;
+        return result is not null && !result.Canceled;
     }
 }

@@ -1,5 +1,4 @@
-﻿@page "/ap/bills"
-@using AccountingSystem.Shared.DTOs
+﻿@using AccountingSystem.Shared.DTOs
 @using AccountingSystem.Client.Services
 @using AccountingSystem.Client.Shared.Components
 @using Microsoft.AspNetCore.Authorization
@@ -195,7 +194,7 @@
         {
             await PayableService.CreateBillAsync(bill);
             Snackbar.Add("Bill created successfully.", Severity.Success);
-            NavManager.NavigateTo("/ap/bills", forceLoad: true);
+            NavManager.NavigateTo("/ap", forceLoad: true);
         }
         catch (Exception ex)
         {
