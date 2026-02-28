@@ -12,42 +12,86 @@
 
 <PageTitle>Company Settings</PageTitle>
 
-<MudContainer MaxWidth="MaxWidth.Large" Class="mt-6 mb-8">
-    <MudPaper Class="page-header mb-6" Elevation="0">
-        <MudText Typo="Typo.h5" Class="mb-2 page-header-title">
-            Company Settings
-        </MudText>
-        <MudText Typo="Typo.body1" Class="page-header-subtitle">
-            Manage company profile and fiscal year closing.
-        </MudText>
-    </MudPaper>
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-6 mb-10">
+    <div class="d-flex justify-space-between align-center mb-6">
+        <div>
+            @if (isLoading)
+            {
+                <MudSkeleton SkeletonType="SkeletonType.Text" Width="200px" Height="32px" Class="mb-1" />
+                <MudSkeleton SkeletonType="SkeletonType.Text" Width="300px" Height="16px" />
+            }
+            else
+            {
+                <h2 style="font-size: 1.5rem; font-weight: 600; letter-spacing: -0.025em; color: var(--text-main); margin: 0;">
+                    Company Settings
+                </h2>
+                <p style="color: var(--text-muted); font-size: 0.875rem; margin: 0.25rem 0 0 0;">
+                    Manage company profile and fiscal year closing.
+                </p>
+            }
+        </div>
+    </div>
 
     @if (isLoading)
     {
-        <MudPaper Class="pa-6" Elevation="2">
-            <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Large" />
-            <MudText Class="mt-3">Loading settings...</MudText>
-        </MudPaper>
+        <MudCard Elevation="0" Outlined="true" Class="shadcn-card">
+            <MudCardContent>
+                <div class="d-flex mb-6 gap-4 border-b pb-2">
+                    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="120px" Height="24px" />
+                    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="150px" Height="24px" />
+                </div>
+
+                <MudSkeleton SkeletonType="SkeletonType.Text" Width="150px" Height="24px" Class="mb-4" />
+
+                <div class="mb-4">
+                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="100px" Height="16px" Class="mb-1" />
+                    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="40px" Style="border-radius: 6px;" />
+                </div>
+                <div class="mb-4">
+                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="120px" Height="16px" Class="mb-1" />
+                    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="80px" Style="border-radius: 6px;" />
+                </div>
+                <div class="d-flex gap-4 mb-6">
+                    <div style="flex: 1;">
+                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="40px" Style="border-radius: 6px;" />
+                    </div>
+                    <div style="flex: 1;">
+                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="40px" Style="border-radius: 6px;" />
+                    </div>
+                    <div style="flex: 1;">
+                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="40px" Style="border-radius: 6px;" />
+                    </div>
+                </div>
+
+                <div class="d-flex justify-end mt-4 pt-4 border-t">
+                    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="140px" Height="40px" Style="border-radius: 6px;" />
+                </div>
+            </MudCardContent>
+        </MudCard>
     }
     else
     {
-        <MudTabs Rounded="true" Elevation="1" PanelClass="pa-4">
+        <MudTabs Elevation="0" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pt-4" Class="shadcn-tabs">
+
             <MudTabPanel Text="Company Profile">
                 <EditForm Model="@model" OnValidSubmit="HandleSubmit">
                     <DataAnnotationsValidator />
-                    <MudCard Elevation="2">
+                    <MudCard Elevation="0" Outlined="true" Class="shadcn-card">
                         <MudCardHeader>
                             <CardHeaderContent>
-                                <MudText Typo="Typo.h6">General Information</MudText>
+                                <div style="font-size: 1.125rem; font-weight: 600; color: var(--text-main);">General Information</div>
+                                <div style="font-size: 0.875rem; color: var(--text-muted);">Update your core business details and financial settings.</div>
                             </CardHeaderContent>
                         </MudCardHeader>
                         <MudCardContent>
-                            <MudGrid>
+                            <MudGrid Spacing="3">
                                 <MudItem xs="12">
                                     <MudTextField Label="Company Name"
                                                   @bind-Value="model.Name"
                                                   For="@(() => model.Name)"
                                                   Variant="Variant.Outlined"
+                                                  Margin="Margin.Dense"
+                                                  Class="shadcn-input"
                                                   Required="true" />
                                 </MudItem>
 
@@ -56,6 +100,8 @@
                                                   @bind-Value="model.Address"
                                                   For="@(() => model.Address)"
                                                   Variant="Variant.Outlined"
+                                                  Margin="Margin.Dense"
+                                                  Class="shadcn-input"
                                                   Lines="3" />
                                 </MudItem>
 
@@ -63,7 +109,9 @@
                                     <MudTextField Label="Tax ID / TIN"
                                                   @bind-Value="model.TaxId"
                                                   For="@(() => model.TaxId)"
-                                                  Variant="Variant.Outlined" />
+                                                  Variant="Variant.Outlined"
+                                                  Margin="Margin.Dense"
+                                                  Class="shadcn-input" />
                                 </MudItem>
 
                                 <MudItem xs="12" sm="4">
@@ -71,6 +119,8 @@
                                                   @bind-Value="model.Currency"
                                                   For="@(() => model.Currency)"
                                                   Variant="Variant.Outlined"
+                                                  Margin="Margin.Dense"
+                                                  Class="shadcn-input"
                                                   HelperText="e.g. PHP, USD" />
                                 </MudItem>
 
@@ -79,7 +129,10 @@
                                                Label="Fiscal Year Start Month"
                                                @bind-Value="model.FiscalYearStartMonth"
                                                Variant="Variant.Outlined"
-                                               HelperText="Defines fiscal-year boundaries">
+                                               Margin="Margin.Dense"
+                                               Class="shadcn-input"
+                                               AnchorOrigin="Origin.BottomCenter"
+                                               HelperText="Defines boundaries">
                                         @foreach (var month in fiscalMonthOptions)
                                         {
                                             <MudSelectItem T="int" Value="@month.Key">@month.Value</MudSelectItem>
@@ -88,12 +141,12 @@
                                 </MudItem>
                             </MudGrid>
                         </MudCardContent>
-                        <MudCardActions Class="d-flex justify-end pa-4">
+                        <MudCardActions Class="d-flex justify-end pa-4" Style="border-top: 1px solid var(--border-color); background: var(--bg-background); border-bottom-left-radius: var(--radius-lg); border-bottom-right-radius: var(--radius-lg);">
                             <MudButton ButtonType="ButtonType.Submit"
                                        Variant="Variant.Filled"
                                        Class="save-btn"
-                                       Disabled="@isSubmitting"
-                                       StartIcon="@Icons.Material.Filled.Save">
+                                       Size="Size.Medium"
+                                       Disabled="@isSubmitting">
                                 @(isSubmitting ? "Saving..." : "Save Changes")
                             </MudButton>
                         </MudCardActions>
@@ -102,54 +155,82 @@
             </MudTabPanel>
 
             <MudTabPanel Text="Fiscal Year Management">
-                <MudPaper Class="pa-4" Elevation="1">
-                    <MudText Typo="Typo.subtitle1" Class="mb-2">
-                        Past fiscal years with activity are eligible for year-end closing.
-                    </MudText>
+                <MudCard Elevation="0" Outlined="true" Class="shadcn-card">
+                    <MudCardContent Class="pa-0">
+                        <div class="pa-4 border-b">
+                            <div style="font-size: 1.125rem; font-weight: 600; color: var(--text-main);">Year-End Closing</div>
+                            <div style="font-size: 0.875rem; color: var(--text-muted);">Past fiscal years with activity are eligible to be securely closed.</div>
+                        </div>
 
-                    @if (fiscalYears.Count == 0)
-                    {
-                        <MudAlert Severity="Severity.Info">No fiscal-year activity found yet.</MudAlert>
-                    }
-                    else
-                    {
-                        <MudTable Items="fiscalYears" Dense="true" Hover="true" Elevation="0">
-                            <HeaderContent>
-                                <MudTh>Fiscal Year</MudTh>
-                                <MudTh>Period</MudTh>
-                                <MudTh style="text-align:right;">Net Income</MudTh>
-                                <MudTh>Status</MudTh>
-                                <MudTh>Closed At (UTC)</MudTh>
-                                <MudTh>Action</MudTh>
-                            </HeaderContent>
-                            <RowTemplate>
-                                <MudTd DataLabel="Fiscal Year">FY @context.FiscalYear</MudTd>
-                                <MudTd DataLabel="Period">@context.PeriodStart.ToString("yyyy-MM-dd") to @context.PeriodEnd.ToString("yyyy-MM-dd")</MudTd>
-                                <MudTd DataLabel="Net Income" style="text-align:right; font-family: monospace;">@context.NetIncome.ToString("C2", _phCulture)</MudTd>
-                                <MudTd DataLabel="Status">
-                                    @if (context.IsClosed)
-                                    {
-                                        <MudChip T="string" Color="Color.Success" Size="Size.Small">Closed</MudChip>
-                                    }
-                                    else
-                                    {
-                                        <MudChip T="string" Color="Color.Warning" Size="Size.Small">Open</MudChip>
-                                    }
-                                </MudTd>
-                                <MudTd DataLabel="Closed At (UTC)">@(context.ClosedAtUtc.HasValue ? context.ClosedAtUtc.Value.ToString("yyyy-MM-dd HH:mm") : "-")</MudTd>
-                                <MudTd DataLabel="Action">
-                                    <MudButton Variant="Variant.Filled"
-                                               Color="Color.Primary"
-                                               Size="Size.Small"
-                                               Disabled="@(!context.CanClose || closingYear == context.FiscalYear)"
-                                               OnClick="@(() => RunYearEndCloseAsync(context.FiscalYear))">
-                                        @(closingYear == context.FiscalYear ? "Closing..." : "Run Year-End Close")
-                                    </MudButton>
-                                </MudTd>
-                            </RowTemplate>
-                        </MudTable>
-                    }
-                </MudPaper>
+                        @if (fiscalYears.Count == 0)
+                        {
+                            <div style="text-align: center; padding: 3rem; color: var(--text-muted);">
+                                <MudIcon Icon="@Icons.Material.Outlined.EventNote" Size="Size.Medium" Class="mb-2" />
+                                <div style="font-size: 0.875rem;">No fiscal-year activity found yet.</div>
+                            </div>
+                        }
+                        else
+                        {
+                            <MudTable Items="fiscalYears" Dense="true" Hover="true" Elevation="0" Class="shadcn-table">
+                                <HeaderContent>
+                                    <MudTh>Fiscal Year</MudTh>
+                                    <MudTh>Period</MudTh>
+                                    <MudTh Style="text-align:right;">Net Income</MudTh>
+                                    <MudTh>Status</MudTh>
+                                    <MudTh>Closed At (UTC)</MudTh>
+                                    <MudTh Style="text-align:right;">Action</MudTh>
+                                </HeaderContent>
+                                <RowTemplate>
+                                    <MudTd DataLabel="Fiscal Year" Style="font-weight: 500; color: var(--text-main);">FY @context.FiscalYear</MudTd>
+                                    <MudTd DataLabel="Period" Style="color: var(--text-muted);">@context.PeriodStart.ToString("yyyy-MM-dd") to @context.PeriodEnd.ToString("yyyy-MM-dd")</MudTd>
+                                    <MudTd DataLabel="Net Income" Style="text-align:right; font-variant-numeric: tabular-nums; font-weight: 500;">@context.NetIncome.ToString("C2", _phCulture)</MudTd>
+                                    <MudTd DataLabel="Status">
+                                        @if (context.IsClosed)
+                                        {
+                                            <span class="shadcn-badge badge-green">Closed</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="shadcn-badge badge-orange">Open</span>
+                                        }
+                                    </MudTd>
+                                    <MudTd DataLabel="Closed At (UTC)" Style="color: var(--text-muted); font-size: 0.875rem;">
+                                        @(context.ClosedAtUtc.HasValue? context.ClosedAtUtc.Value.ToString("yyyy-MM-dd HH:mm") : "—")
+                                    </MudTd>
+                                    <MudTd DataLabel="Action" Style="text-align:right;">
+                                        @if (context.CanClose && closingYear != context.FiscalYear)
+                                        {
+                                            <MudButton Variant="Variant.Filled"
+                                                       Class="custom-button"
+                                                       Size="Size.Small"
+                                                       OnClick="@(() => RunYearEndCloseAsync(context.FiscalYear))">
+                                                Close Year
+                                            </MudButton>
+                                        }
+                                        else if (closingYear == context.FiscalYear)
+                                        {
+                                            <MudButton Variant="Variant.Filled"
+                                                       Class="custom-button"
+                                                       Size="Size.Small"
+                                                       Disabled="true">
+                                                Closing...
+                                            </MudButton>
+                                        }
+                                        else
+                                        {
+                                            <MudButton Variant="Variant.Outlined"
+                                                       Class="shadcn-btn-outline"
+                                                       Size="Size.Small"
+                                                       Disabled="true">
+                                                Locked
+                                            </MudButton>
+                                        }
+                                    </MudTd>
+                                </RowTemplate>
+                            </MudTable>
+                        }
+                    </MudCardContent>
+                </MudCard>
             </MudTabPanel>
         </MudTabs>
     }

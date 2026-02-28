@@ -10,180 +10,227 @@
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
 
+<style>
+    /* Shadcn-style custom colored badges */
+    .shadcn-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 2px 8px;
+        border-radius: 4px; /* Crisp corners */
+        font-size: 0.75rem;
+        font-weight: 600;
+        white-space: nowrap;
+        letter-spacing: 0.025em;
+    }
+
+    /* The Colors: Light pastel background with deep colored text */
+    .badge-slate {
+        background-color: #f1f5f9;
+        color: #475569;
+    }
+
+    .badge-purple {
+        background-color: #f3e8ff;
+        color: #7e22ce;
+    }
+
+    .badge-blue {
+        background-color: #e0f2fe;
+        color: #0369a1;
+    }
+
+    .badge-orange {
+        background-color: #ffedd5;
+        color: #c2410c;
+    }
+
+    .badge-green {
+        background-color: #dcfce7;
+        color: #15803d;
+    }
+
+    .badge-red {
+        background-color: #fee2e2;
+        color: #b91c1c;
+    }
+
+    .badge-indigo {
+        background-color: #e0e7ff;
+        color: #4338ca;
+    }
+</style>
+
 <PageTitle>Chart of Accounts</PageTitle>
 
-<MudContainer MaxWidth="MaxWidth.Large" Class="mt-6">
-    <!-- HEADER -->
-    <MudPaper Class="page-header mb-6" Elevation="0">
-        <div class="d-flex justify-space-between align-center">
-            <div>
-                @if (_initialLoading)
-                {
-                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="200px" Height="32px" Class="mb-2" />
-                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="450px" Height="20px" />
-                }
-                else
-                {
-                    <MudText Typo="Typo.h5" Class="mb-2 page-header-title">
-                        Chart of Accounts
-                    </MudText>
-                    <MudText Typo="Typo.body1" Class="page-header-subtitle">
-                        Set up account classifications to track your business financial activities
-                    </MudText>
-                }
-            </div>
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-6 mb-10">
+    <div class="d-flex justify-space-between align-center mb-6">
+        <div>
             @if (_initialLoading)
             {
-                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="180px" Height="42px" />
+                <MudSkeleton SkeletonType="SkeletonType.Text" Width="200px" Height="32px" Class="mb-1" />
+                <MudSkeleton SkeletonType="SkeletonType.Text" Width="350px" Height="16px" />
             }
             else
             {
-                <AuthorizeView Roles="Admin,Accounting" Context="authContext">
-                    <MudButton Variant="Variant.Filled" Class="create-btn" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenAddDialog">
-                        Add new Account
-                    </MudButton>
-                </AuthorizeView>
+                <h2 style="font-size: 1.5rem; font-weight: 600; letter-spacing: -0.025em; color: var(--text-main); margin: 0;">
+                    Chart of Accounts
+                </h2>
+                <p style="color: var(--text-muted); font-size: 0.875rem; margin: 0.25rem 0 0 0;">
+                    Set up account classifications to track your business financial activities.
+                </p>
             }
         </div>
-    </MudPaper>
+        @if (_initialLoading)
+        {
+            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="150px" Height="36px" Style="border-radius: 6px;" />
+        }
+        else
+        {
+            <AuthorizeView Roles="Admin,Accounting" Context="authContext">
+                <MudButton Variant="Variant.Filled"
+                           Class="custom-button"
+                           StartIcon="@Icons.Material.Outlined.Add"
+                           Size="Size.Small"
+                           OnClick="OpenAddDialog">
+                    Add Account
+                </MudButton>
+            </AuthorizeView>
+        }
+    </div>
 
     @if (_initialLoading)
     {
-        <!-- SKELETON FOR TABS AND TABLE -->
-        <MudCard Elevation="2">
-            <!-- Tabs Skeleton -->
-            <div class="d-flex pa-4" style="border-bottom: 1px solid rgba(0,0,0,0.12);">
-                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="140px" Height="36px" Class="mr-2" />
-                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="160px" Height="36px" />
+        <MudCard Elevation="0" Outlined="true" Class="shadcn-card">
+            <div class="d-flex pa-4 border-b">
+                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="140px" Height="24px" Class="mr-4" />
+                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="160px" Height="24px" />
             </div>
 
-            <MudCardContent Class="pa-6">
-                <!-- Toolbar Skeleton -->
-                <div class="d-flex justify-space-between align-center mb-4">
+            <MudCardContent Class="pa-0">
+                <div class="d-flex justify-space-between align-center pa-4 border-b">
                     <MudSkeleton SkeletonType="SkeletonType.Text" Width="120px" Height="24px" />
-                    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="300px" Height="40px" />
+                    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="250px" Height="36px" Style="border-radius: 6px;" />
                 </div>
 
-                <!-- Table Header Skeleton -->
-                <div class="d-flex justify-space-between mb-3 pa-2" style="border-bottom: 2px solid rgba(0,0,0,0.1);">
+                <div class="d-flex justify-space-between mb-2 pa-4 border-b">
                     <MudSkeleton SkeletonType="SkeletonType.Text" Width="80px" Height="20px" />
-                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="100px" Height="20px" />
+                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="150px" Height="20px" />
                     <MudSkeleton SkeletonType="SkeletonType.Text" Width="90px" Height="20px" />
                     <MudSkeleton SkeletonType="SkeletonType.Text" Width="80px" Height="20px" />
                 </div>
 
-                <!-- Table Rows Skeleton -->
-                @for (int i = 0; i < 8; i++)
+                @for (int i = 0; i < 6; i++)
                 {
-                    <div class="d-flex justify-space-between align-center mb-3 pa-2" style="border-bottom: 1px solid rgba(0,0,0,0.05);">
-                        <div style="flex: 1;">
-                            <MudSkeleton SkeletonType="SkeletonType.Text" Width="80px" Height="16px" />
-                        </div>
-                        <div style="flex: 2;">
-                            <MudSkeleton SkeletonType="SkeletonType.Text" Width="180px" Height="16px" />
-                        </div>
-                        <div style="flex: 1;">
-                            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="90px" Height="24px" />
-                        </div>
+                    <div class="d-flex justify-space-between align-center py-3 px-4" style="border-bottom: 1px solid var(--border-color);">
+                        <div style="flex: 1;"><MudSkeleton SkeletonType="SkeletonType.Text" Width="60px" Height="16px" /></div>
+                        <div style="flex: 2;"><MudSkeleton SkeletonType="SkeletonType.Text" Width="180px" Height="16px" /></div>
+                        <div style="flex: 1;"><MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="70px" Height="24px" Style="border-radius: 4px;" /></div>
                         <div style="flex: 1; text-align: right;">
-                            <div class="d-flex justify-end">
-                                <MudSkeleton SkeletonType="SkeletonType.Circle" Width="32px" Height="32px" Class="mr-2" />
-                                <MudSkeleton SkeletonType="SkeletonType.Circle" Width="32px" Height="32px" />
+                            <div class="d-flex justify-end gap-2">
+                                <MudSkeleton SkeletonType="SkeletonType.Circle" Width="28px" Height="28px" />
+                                <MudSkeleton SkeletonType="SkeletonType.Circle" Width="28px" Height="28px" />
                             </div>
                         </div>
                     </div>
                 }
 
-                <!-- Pagination Skeleton -->
-                <div class="d-flex justify-center mt-4">
-                    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="250px" Height="32px" />
+                <div class="d-flex justify-end pa-4">
+                    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="250px" Height="32px" Style="border-radius: 6px;" />
                 </div>
             </MudCardContent>
         </MudCard>
     }
     else
     {
-        <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-6">
-            <!-- Tab 1: Active Accounts -->
+        <MudTabs Elevation="0" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pt-4" Class="shadcn-tabs">
+
             <MudTabPanel Text="Active Accounts" OnClick="@(() => LoadList(false))">
-                <MudTable Items="@accounts" Dense="true" Hover="true" Bordered="true" Striped="true" Filter="new Func<AccountDTO, bool>(FilterFunc)" Loading="@_loading">
-                    <ToolBarContent>
-                        <MudText Typo="Typo.h6">Active List</MudText>
-                        <MudSpacer />
-                        <MudTextField @bind-Value="searchString" Placeholder="Search..." Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
-                    </ToolBarContent>
-                    <HeaderContent>
-                        <MudTh>Code</MudTh>
-                        <MudTh>Name</MudTh>
-                        <MudTh>Type</MudTh>
-                        <AuthorizeView Roles="Admin,Accounting" Context="authContext">
-                            <MudTh Style="text-align:right">Actions</MudTh>
-                        </AuthorizeView>
-                    </HeaderContent>
-                    <RowTemplate>
-                        <MudTd DataLabel="Code">@context.Code</MudTd>
-                        <MudTd DataLabel="Name"><b>@context.Name</b></MudTd>
-                        <MudTd DataLabel="Type">
-                            @switch (context.Type)
-                            {
-                                case "Asset":
-                                    <MudChip T="string" Color="Color.Primary" Size="Size.Small" Variant="Variant.Text">Asset</MudChip>
-                                    ; break;
-                                case "Liability":
-
-                                    <MudChip T="string" Color="Color.Error" Size="Size.Small" Variant="Variant.Text">Liability</MudChip>
-                                    ; break;
-                                case "Equity":
-
-                                    <MudChip T="string" Color="Color.Info" Size="Size.Small" Variant="Variant.Text">Equity</MudChip>
-                                    ; break;
-                                case "Revenue":
-
-                                    <MudChip T="string" Color="Color.Success" Size="Size.Small" Variant="Variant.Text">Revenue</MudChip>
-                                    ; break;
-                                case "Expense":
-
-                                    <MudChip T="string" Color="Color.Warning" Size="Size.Small" Variant="Variant.Text">Expense</MudChip>
-                                    ; break;
-                                default:
-
-                                    <MudChip T="string" Size="Size.Small">@context.Type</MudChip>
-                                    ; break;
-                            }
-                        </MudTd>
-                        <AuthorizeView Roles="Admin,Accounting" Context="authContext">
-                            <MudTd DataLabel="Actions" Style="text-align:right">
-                                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Secondary" OnClick="() => OpenEditDialog(context)" />
-                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="() => ConfirmDelete(context.Id)" />
-                            </MudTd>
-                        </AuthorizeView>
-                    </RowTemplate>
-                    <PagerContent><MudTablePager /></PagerContent>
-                </MudTable>
-            </MudTabPanel>
-
-            <!-- Tab 2: Archived Accounts -->
-            <AuthorizeView Roles="Admin,Accounting" Context="authContext">
-                <MudTabPanel Text="Archived Accounts" OnClick="@(() => LoadList(true))">
-                    <MudTable Items="@accounts" Dense="true" Hover="true" Bordered="true" Striped="true" Filter="new Func<AccountDTO, bool>(FilterFunc)" Loading="@_loading">
+                <MudCard Elevation="0" Outlined="true" Class="shadcn-card">
+                    <MudTable Items="@accounts" Dense="true" Hover="true" Elevation="0" Filter="new Func<AccountDTO, bool>(FilterFunc)" Loading="@_loading" Class="shadcn-table">
+                        <ToolBarContent>
+                            <div style="font-size: 1.125rem; font-weight: 600; color: var(--text-main);">Active List</div>
+                            <MudSpacer />
+                            <MudTextField @bind-Value="searchString"
+                                          Placeholder="Search accounts..."
+                                          Adornment="Adornment.Start"
+                                          AdornmentIcon="@Icons.Material.Outlined.Search"
+                                          Variant="Variant.Outlined"
+                                          Margin="Margin.Dense"
+                                          Class="shadcn-input"
+                                          Style="max-width: 300px; margin-top: 0;"></MudTextField>
+                        </ToolBarContent>
                         <HeaderContent>
                             <MudTh>Code</MudTh>
                             <MudTh>Name</MudTh>
                             <MudTh>Type</MudTh>
-                            <MudTh Style="text-align:right">Actions</MudTh>
+                            <AuthorizeView Roles="Admin,Accounting" Context="authContext">
+                                <MudTh Style="text-align:right">Actions</MudTh>
+                            </AuthorizeView>
                         </HeaderContent>
                         <RowTemplate>
-                            <MudTd DataLabel="Code">@context.Code</MudTd>
-                            <MudTd DataLabel="Name" Style="color:gray;">@context.Name</MudTd>
-                            <MudTd DataLabel="Type">@context.Type</MudTd>
-                            <MudTd DataLabel="Actions" Style="text-align:right">
-                                <MudTooltip Text="Restore Account">
-                                    <MudIconButton Icon="@Icons.Material.Filled.RestoreFromTrash" Size="Size.Small" Color="Color.Success" OnClick="() => ConfirmRestore(context.Id)" />
-                                </MudTooltip>
+                            <MudTd DataLabel="Code" Style="font-weight: 500; color: var(--text-main);">@context.Code</MudTd>
+                            <MudTd DataLabel="Name" Style="color: var(--text-muted);">@context.Name</MudTd>
+                            <MudTd DataLabel="Type">
+                                <span class="shadcn-badge @GetAccountTypeBadge(context.Type)">@context.Type</span>
                             </MudTd>
+                            <AuthorizeView Roles="Admin,Accounting" Context="authContext">
+                                <MudTd DataLabel="Actions" Style="text-align:right">
+                                    <MudIconButton Icon="@Icons.Material.Outlined.Edit"
+                                                   Size="Size.Small"
+                                                   Class="shadcn-icon-btn mr-1"
+                                                   OnClick="() => OpenEditDialog(context)" />
+                                    <MudIconButton Icon="@Icons.Material.Outlined.Archive"
+                                                   Size="Size.Small"
+                                                   Class="shadcn-icon-btn text-destructive"
+                                                   OnClick="() => ConfirmDelete(context.Id)" />
+                                </MudTd>
+                            </AuthorizeView>
                         </RowTemplate>
                         <PagerContent><MudTablePager /></PagerContent>
                     </MudTable>
+                </MudCard>
+            </MudTabPanel>
+
+            <AuthorizeView Roles="Admin,Accounting" Context="authContext">
+                <MudTabPanel Text="Archived Accounts" OnClick="@(() => LoadList(true))">
+                    <MudCard Elevation="0" Outlined="true" Class="shadcn-card">
+                        <MudTable Items="@accounts" Dense="true" Hover="true" Elevation="0" Filter="new Func<AccountDTO, bool>(FilterFunc)" Loading="@_loading" Class="shadcn-table">
+                            <ToolBarContent>
+                                <div style="font-size: 1.125rem; font-weight: 600; color: var(--text-main);">Archived List</div>
+                                <MudSpacer />
+                                <MudTextField @bind-Value="searchString"
+                                              Placeholder="Search archived..."
+                                              Adornment="Adornment.Start"
+                                              AdornmentIcon="@Icons.Material.Outlined.Search"
+                                              Variant="Variant.Outlined"
+                                              Margin="Margin.Dense"
+                                              Class="shadcn-input"
+                                              Style="max-width: 300px; margin-top: 0;"></MudTextField>
+                            </ToolBarContent>
+                            <HeaderContent>
+                                <MudTh>Code</MudTh>
+                                <MudTh>Name</MudTh>
+                                <MudTh>Type</MudTh>
+                                <MudTh Style="text-align:right">Actions</MudTh>
+                            </HeaderContent>
+                            <RowTemplate>
+                                <MudTd DataLabel="Code" Style="color: var(--text-muted);">@context.Code</MudTd>
+                                <MudTd DataLabel="Name" Style="color: var(--text-muted); text-decoration: line-through;">@context.Name</MudTd>
+                                <MudTd DataLabel="Type">
+                                    <span class="shadcn-badge badge-slate">@context.Type</span>
+                                </MudTd>
+                                <MudTd DataLabel="Actions" Style="text-align:right">
+                                    <MudTooltip Text="Restore Account">
+                                        <MudIconButton Icon="@Icons.Material.Outlined.RestoreFromTrash"
+                                                       Size="Size.Small"
+                                                       Class="shadcn-icon-btn text-success"
+                                                       OnClick="() => ConfirmRestore(context.Id)" />
+                                    </MudTooltip>
+                                </MudTd>
+                            </RowTemplate>
+                            <PagerContent><MudTablePager /></PagerContent>
+                        </MudTable>
+                    </MudCard>
                 </MudTabPanel>
             </AuthorizeView>
         </MudTabs>
@@ -281,5 +328,19 @@
             }
             catch (Exception ex) { Snackbar.Add(ex.Message, Severity.Error); }
         }
+    }
+
+    // Helper for Shadcn badge colors based on account type
+    private string GetAccountTypeBadge(string type)
+    {
+        return type switch
+        {
+            "Asset" => "badge-blue",
+            "Liability" => "badge-red",
+            "Equity" => "badge-purple",
+            "Revenue" => "badge-green",
+            "Expense" => "badge-orange",
+            _ => "badge-slate"
+        };
     }
 }

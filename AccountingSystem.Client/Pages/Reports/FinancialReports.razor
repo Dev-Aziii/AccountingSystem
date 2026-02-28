@@ -11,82 +11,89 @@
 
 <PageTitle>Financial Reports</PageTitle>
 
-<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-6 mb-8" id="printable-area">
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-6 mb-10" id="printable-area">
 
-    <MudPaper Class="page-header mb-6 no-print" Elevation="0">
-        <div class="d-flex justify-space-between align-center flex-wrap" style="gap: 12px;">
-            <div>
-                <MudText Typo="Typo.h5" Class="mb-2 page-header-title">
-                    Financial Statements
-                </MudText>
-                <MudText Typo="Typo.body1" Class="page-header-subtitle">
-                    Fiscal-year financial position and performance
-                </MudText>
-            </div>
-            <div class="d-flex align-center flex-wrap" style="gap: 8px;">
-                <MudSelect T="int"
-                           Value="selectedFiscalYear"
-                           ValueChanged="OnFiscalYearChanged"
-                           Label="Fiscal Year"
-                           Variant="Variant.Outlined"
-                           Dense="true"
-                           Disabled="@(isLoading || fiscalYears.Count == 0)"
-                           Style="min-width: 170px;">
-                    @foreach (var year in fiscalYears)
-                    {
-                        <MudSelectItem T="int" Value="@year.FiscalYear">FY @year.FiscalYear</MudSelectItem>
-                    }
-                </MudSelect>
-                <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Refresh" OnClick="LoadData" Disabled="isLoading">Refresh</MudButton>
-                <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.PictureAsPdf" OnClick="PrintReport" Disabled="@(isLoading || selectedFiscalYear == 0)">Download PDF</MudButton>
-            </div>
+    <div class="d-flex justify-space-between align-center flex-wrap mb-6 no-print" style="gap: 12px;">
+        <div>
+            <h2 style="font-size: 1.5rem; font-weight: 600; letter-spacing: -0.025em; color: var(--text-main); margin: 0;">
+                Financial Statements
+            </h2>
+            <p style="color: var(--text-muted); font-size: 0.875rem; margin: 0.25rem 0 0 0;">
+                Fiscal-year financial position and performance.
+            </p>
         </div>
-    </MudPaper>
+        <div class="d-flex align-center flex-wrap" style="gap: 12px;">
+            <MudSelect T="int"
+                       Value="selectedFiscalYear"
+                       ValueChanged="OnFiscalYearChanged"
+                       Label="Fiscal Year"
+                       Variant="Variant.Outlined"
+                       Margin="Margin.Dense"
+                       Class="shadcn-input"
+                       AnchorOrigin="Origin.BottomCenter"
+                       Disabled="@(isLoading || fiscalYears.Count == 0)"
+                       Style="min-width: 170px; margin-top: 0;">
+                @foreach (var year in fiscalYears)
+                {
+                    <MudSelectItem T="int" Value="@year.FiscalYear">FY @year.FiscalYear</MudSelectItem>
+                }
+            </MudSelect>
+
+            <MudButton Variant="Variant.Filled"
+                       Class="custom-button"
+                       StartIcon="@Icons.Material.Outlined.PictureAsPdf"
+                       Size="Size.Small"
+                       OnClick="PrintReport"
+                       Disabled="@(isLoading || selectedFiscalYear == 0)">
+                Download PDF
+            </MudButton>
+        </div>
+    </div>
 
     @if (isLoading)
     {
-        <MudPaper Class="pa-6" Elevation="2">
-            <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Large" />
-            <MudText Class="mt-3">Loading financial data...</MudText>
-        </MudPaper>
+        <MudCard Elevation="0" Outlined="true" Class="shadcn-card pa-10 text-center">
+            <MudProgressCircular Color="Color.Default" Indeterminate="true" Size="Size.Medium" Style="color: var(--text-muted);" />
+            <div style="color: var(--text-muted); font-size: 0.875rem; margin-top: 1rem;">Loading financial data...</div>
+        </MudCard>
     }
     else if (currentCompany == null)
     {
-        <MudAlert Severity="Severity.Warning">Company profile is missing.</MudAlert>
+        <MudAlert Severity="Severity.Warning" Elevation="0" Outlined="true" Class="shadcn-card">Company profile is missing. Please configure it in settings.</MudAlert>
     }
     else if (selectedFiscalYear == 0 || incomeTrialBalance == null || balanceTrialBalance == null)
     {
-        <MudAlert Severity="Severity.Info">No fiscal-year data available yet.</MudAlert>
+        <MudAlert Severity="Severity.Info" Elevation="0" Outlined="true" Class="shadcn-card">No fiscal-year data available yet.</MudAlert>
     }
     else
     {
-        <MudTabs Elevation="0" Rounded="true" ApplyEffectsToContainer="true" PanelClass="mt-4" Color="Color.Transparent" SliderColor="Color.Primary" Centered="true">
+        <MudTabs Elevation="0" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pt-4" Class="shadcn-tabs no-print-tabs" Centered="true">
 
             <MudTabPanel Text="Trial Balance">
-                <MudPaper Elevation="4" Class="pa-8 report-paper">
+                <MudCard Elevation="0" Outlined="true" Class="shadcn-card pa-8 report-paper">
                     <div class="report-header text-center mb-8">
-                        <MudText Typo="Typo.h4" Align="Align.Center" Class="mb-1"><b>@currentCompany.Name</b></MudText>
+                        <div style="font-size: 1.5rem; font-weight: 700; color: var(--text-main); letter-spacing: -0.025em;">@currentCompany.Name</div>
                         @if (!string.IsNullOrEmpty(currentCompany.Address))
                         {
-                            <MudText Typo="Typo.body2" Align="Align.Center">@currentCompany.Address</MudText>
+                            <div style="font-size: 0.875rem; color: var(--text-muted);">@currentCompany.Address</div>
                         }
                         @if (!string.IsNullOrEmpty(currentCompany.TaxId))
                         {
-                            <MudText Typo="Typo.caption" Align="Align.Center">TIN: @currentCompany.TaxId</MudText>
+                            <div style="font-size: 0.75rem; color: var(--text-muted);">TIN: @currentCompany.TaxId</div>
                         }
 
-                        <MudText Typo="Typo.h5" Align="Align.Center" Class="mud-text-secondary mt-4 mb-1">Trial Balance</MudText>
-                        <MudText Typo="Typo.subtitle1" Align="Align.Center">As of @selectedPeriodEnd.ToString("MMMM dd, yyyy") (FY @selectedFiscalYear)</MudText>
-                        <MudDivider Class="mt-4 mb-4 mx-auto" Style="width: 50%;" />
+                        <div style="font-size: 1.125rem; font-weight: 600; color: var(--text-main); margin-top: 1.5rem;">Trial Balance</div>
+                        <div style="font-size: 0.875rem; color: var(--text-muted);">As of @selectedPeriodEnd.ToString("MMMM dd, yyyy") (FY @selectedFiscalYear)</div>
+                        <hr style="border: 0; border-top: 1px solid var(--border-color); width: 100px; margin: 1.5rem auto;" />
                     </div>
 
-                    <MudSimpleTable Hover="true" Dense="true" Style="overflow-x: auto;" Elevation="0">
+                    <table class="w-100 shadcn-report-table">
                         <thead>
-                            <tr class="mud-theme-light">
-                                <th class="py-3"><b>ACCOUNT CODE</b></th>
-                                <th class="py-3"><b>ACCOUNT NAME</b></th>
-                                <th class="py-3" style="text-align:right"><b>DEBIT</b></th>
-                                <th class="py-3" style="text-align:right"><b>CREDIT</b></th>
+                            <tr>
+                                <th style="text-align: left;">ACCOUNT CODE</th>
+                                <th style="text-align: left;">ACCOUNT NAME</th>
+                                <th style="text-align: right;">DEBIT</th>
+                                <th style="text-align: right;">CREDIT</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -97,10 +104,10 @@
                                 var displayCredit = net < 0 ? Math.Abs(net) : 0;
 
                                 <tr>
-                                    <td class="mud-text-secondary">@line.AccountCode</td>
+                                    <td style="color: var(--text-muted);">@line.AccountCode</td>
                                     <td>@line.AccountName</td>
-                                    <td style="text-align:right; font-family: monospace;">@displayDebit.ToString("C2", _phCulture)</td>
-                                    <td style="text-align:right; font-family: monospace;">@displayCredit.ToString("C2", _phCulture)</td>
+                                    <td class="tabular-nums text-right">@displayDebit.ToString("C2", _phCulture)</td>
+                                    <td class="tabular-nums text-right">@displayCredit.ToString("C2", _phCulture)</td>
                                 </tr>
                             }
                         </tbody>
@@ -109,148 +116,253 @@
                                 var totalNetDebit = balanceTrialBalance.Accounts.Sum(a => (a.Debit - a.Credit) > 0 ? (a.Debit - a.Credit) : 0);
                                 var totalNetCredit = balanceTrialBalance.Accounts.Sum(a => (a.Debit - a.Credit) < 0 ? Math.Abs(a.Debit - a.Credit) : 0);
                             }
-                            <tr style="border-top: 2px solid var(--mud-palette-text-primary);">
-                                <td colspan="2" class="py-4" style="text-align:right"><b>TOTALS:</b></td>
-                                <td class="py-4" style="text-align:right; font-family: monospace; border-bottom: 3px double black;"><b>@totalNetDebit.ToString("C2", _phCulture)</b></td>
-                                <td class="py-4" style="text-align:right; font-family: monospace; border-bottom: 3px double black;"><b>@totalNetCredit.ToString("C2", _phCulture)</b></td>
+                            <tr class="totals-row">
+                                <td colspan="2" style="text-align:right; font-weight: 600;">TOTALS:</td>
+                                <td class="tabular-nums text-right double-underline" style="font-weight: 700;">@totalNetDebit.ToString("C2", _phCulture)</td>
+                                <td class="tabular-nums text-right double-underline" style="font-weight: 700;">@totalNetCredit.ToString("C2", _phCulture)</td>
                             </tr>
                         </tfoot>
-                    </MudSimpleTable>
-                </MudPaper>
+                    </table>
+                </MudCard>
             </MudTabPanel>
 
             <MudTabPanel Text="Income Statement">
-                <MudPaper Elevation="4" Class="pa-8 report-paper">
+                <MudCard Elevation="0" Outlined="true" Class="shadcn-card pa-8 report-paper">
                     <div class="report-header text-center mb-8">
-                        <MudText Typo="Typo.h4" Align="Align.Center" Class="mb-1"><b>@currentCompany.Name</b></MudText>
+                        <div style="font-size: 1.5rem; font-weight: 700; color: var(--text-main); letter-spacing: -0.025em;">@currentCompany.Name</div>
                         @if (!string.IsNullOrEmpty(currentCompany.Address))
                         {
-                            <MudText Typo="Typo.body2" Align="Align.Center">@currentCompany.Address</MudText>
+                            <div style="font-size: 0.875rem; color: var(--text-muted);">@currentCompany.Address</div>
                         }
                         @if (!string.IsNullOrEmpty(currentCompany.TaxId))
                         {
-                            <MudText Typo="Typo.caption" Align="Align.Center">TIN: @currentCompany.TaxId</MudText>
+                            <div style="font-size: 0.75rem; color: var(--text-muted);">TIN: @currentCompany.TaxId</div>
                         }
 
-                        <MudText Typo="Typo.h5" Align="Align.Center" Class="mud-text-secondary mt-4 mb-1">Income Statement</MudText>
-                        <MudText Typo="Typo.subtitle1" Align="Align.Center">For @selectedPeriodStart.ToString("MMMM dd, yyyy") to @selectedPeriodEnd.ToString("MMMM dd, yyyy") (FY @selectedFiscalYear)</MudText>
-                        <MudDivider Class="mt-4 mb-4 mx-auto" Style="width: 50%;" />
+                        <div style="font-size: 1.125rem; font-weight: 600; color: var(--text-main); margin-top: 1.5rem;">Income Statement</div>
+                        <div style="font-size: 0.875rem; color: var(--text-muted);">For @selectedPeriodStart.ToString("MMMM dd, yyyy") to @selectedPeriodEnd.ToString("MMMM dd, yyyy") (FY @selectedFiscalYear)</div>
+                        <hr style="border: 0; border-top: 1px solid var(--border-color); width: 100px; margin: 1.5rem auto;" />
                     </div>
 
-                    <MudSimpleTable Elevation="0" Dense="true">
+                    <table class="w-100 shadcn-report-table">
                         <tbody>
-                            <tr class="mud-table-row" style="background-color: var(--mud-palette-background-grey);"><td colspan="2" class="py-2"><b>REVENUE</b></td></tr>
+                            <tr class="category-header"><td colspan="2">REVENUE</td></tr>
                             @foreach (var line in GetAccountsByType(incomeTrialBalance, "Revenue"))
                             {
-                                <tr><td class="pl-8">@line.AccountName</td><td style="text-align:right; font-family: monospace;">@((line.Credit - line.Debit).ToString("C2", _phCulture))</td></tr>
+                                <tr>
+                                    <td class="pl-8">@line.AccountName</td>
+                                    <td class="tabular-nums text-right">@((line.Credit - line.Debit).ToString("C2", _phCulture))</td>
+                                </tr>
                             }
-                            <tr style="border-top:1px solid #ccc">
-                                <td style="text-align:right" class="pr-4"><b>Total Revenue</b></td>
-                                <td style="text-align:right; font-family: monospace;"><b>@TotalRevenue.ToString("C2", _phCulture)</b></td>
+                            <tr class="subtotal-row">
+                                <td class="text-right font-weight-600">Total Revenue</td>
+                                <td class="tabular-nums text-right font-weight-600">@TotalRevenue.ToString("C2", _phCulture)</td>
                             </tr>
 
-                            <tr><td colspan="2" class="py-2"></td></tr>
-                            <tr class="mud-table-row" style="background-color: var(--mud-palette-background-grey);"><td colspan="2" class="py-2"><b>OPERATING EXPENSES</b></td></tr>
+                            <tr><td colspan="2" class="py-4 border-0"></td></tr>
+
+                            <tr class="category-header"><td colspan="2">OPERATING EXPENSES</td></tr>
                             @foreach (var line in GetAccountsByType(incomeTrialBalance, "Expense"))
                             {
-                                <tr><td class="pl-8">@line.AccountName</td><td style="text-align:right; font-family: monospace;">@((line.Debit - line.Credit).ToString("C2", _phCulture))</td></tr>
+                                <tr>
+                                    <td class="pl-8">@line.AccountName</td>
+                                    <td class="tabular-nums text-right">@((line.Debit - line.Credit).ToString("C2", _phCulture))</td>
+                                </tr>
                             }
-                            <tr style="border-top:1px solid #ccc">
-                                <td style="text-align:right" class="pr-4"><b>Total Expenses</b></td>
-                                <td style="text-align:right; font-family: monospace;"><b>(@TotalExpense.ToString("C2", _phCulture))</b></td>
+                            <tr class="subtotal-row">
+                                <td class="text-right font-weight-600">Total Expenses</td>
+                                <td class="tabular-nums text-right font-weight-600">(@TotalExpense.ToString("C2", _phCulture))</td>
                             </tr>
 
-                            <tr><td colspan="2" class="py-4"></td></tr>
-                            <tr style="background-color: #e3f2fd;">
-                                <td class="py-4 pl-4"><MudText Typo="Typo.h6"><b>NET INCOME</b></MudText></td>
-                                <td class="py-4 text-right" style="font-family: monospace; border-bottom: 3px double black;"><MudText Typo="Typo.h6"><b>@NetIncome.ToString("C2", _phCulture)</b></MudText></td>
+                            <tr><td colspan="2" class="py-6 border-0"></td></tr>
+
+                            <tr class="grand-total-row">
+                                <td style="font-size: 1.125rem;">NET INCOME</td>
+                                <td class="tabular-nums text-right double-underline" style="font-size: 1.125rem;">@NetIncome.ToString("C2", _phCulture)</td>
                             </tr>
                         </tbody>
-                    </MudSimpleTable>
-                </MudPaper>
+                    </table>
+                </MudCard>
             </MudTabPanel>
 
             <MudTabPanel Text="Balance Sheet">
-                <MudPaper Elevation="4" Class="pa-8 report-paper">
+                <MudCard Elevation="0" Outlined="true" Class="shadcn-card pa-8 report-paper">
                     <div class="report-header text-center mb-8">
-                        <MudText Typo="Typo.h4" Align="Align.Center" Class="mb-1"><b>@currentCompany.Name</b></MudText>
+                        <div style="font-size: 1.5rem; font-weight: 700; color: var(--text-main); letter-spacing: -0.025em;">@currentCompany.Name</div>
                         @if (!string.IsNullOrEmpty(currentCompany.Address))
                         {
-                            <MudText Typo="Typo.body2" Align="Align.Center">@currentCompany.Address</MudText>
+                            <div style="font-size: 0.875rem; color: var(--text-muted);">@currentCompany.Address</div>
                         }
                         @if (!string.IsNullOrEmpty(currentCompany.TaxId))
                         {
-                            <MudText Typo="Typo.caption" Align="Align.Center">TIN: @currentCompany.TaxId</MudText>
+                            <div style="font-size: 0.75rem; color: var(--text-muted);">TIN: @currentCompany.TaxId</div>
                         }
 
-                        <MudText Typo="Typo.h5" Align="Align.Center" Class="mud-text-secondary mt-4 mb-1">Balance Sheet</MudText>
-                        <MudText Typo="Typo.subtitle1" Align="Align.Center">As of @selectedPeriodEnd.ToString("MMMM dd, yyyy") (FY @selectedFiscalYear)</MudText>
-                        <MudDivider Class="mt-4 mb-4 mx-auto" Style="width: 50%;" />
+                        <div style="font-size: 1.125rem; font-weight: 600; color: var(--text-main); margin-top: 1.5rem;">Balance Sheet</div>
+                        <div style="font-size: 0.875rem; color: var(--text-muted);">As of @selectedPeriodEnd.ToString("MMMM dd, yyyy") (FY @selectedFiscalYear)</div>
+                        <hr style="border: 0; border-top: 1px solid var(--border-color); width: 100px; margin: 1.5rem auto;" />
                     </div>
 
-                    <MudSimpleTable Elevation="0" Dense="true">
+                    <table class="w-100 shadcn-report-table">
                         <tbody>
-                            <tr class="mud-table-row" style="background-color: var(--mud-palette-background-grey);"><td colspan="2" class="py-2"><b>ASSETS</b></td></tr>
+                            <tr class="category-header"><td colspan="2">ASSETS</td></tr>
                             @foreach (var line in GetAccountsByType(balanceTrialBalance, "Asset"))
                             {
-                                <tr><td class="pl-8">@line.AccountName</td><td style="text-align:right; font-family: monospace;">@((line.Debit - line.Credit).ToString("C2", _phCulture))</td></tr>
+                                <tr>
+                                    <td class="pl-8">@line.AccountName</td>
+                                    <td class="tabular-nums text-right">@((line.Debit - line.Credit).ToString("C2", _phCulture))</td>
+                                </tr>
                             }
-                            <tr style="border-top:1px solid #ccc">
-                                <td style="text-align:right" class="pr-4"><b>TOTAL ASSETS</b></td>
-                                <td style="text-align:right; font-family: monospace; border-bottom: 3px double black;"><b>@TotalAssets.ToString("C2", _phCulture)</b></td>
+                            <tr class="subtotal-row">
+                                <td class="text-right font-weight-600">TOTAL ASSETS</td>
+                                <td class="tabular-nums text-right font-weight-700 double-underline">@TotalAssets.ToString("C2", _phCulture)</td>
                             </tr>
 
-                            <tr><td colspan="2" class="pt-6"></td></tr>
-                            <tr class="mud-table-row" style="background-color: var(--mud-palette-background-grey);"><td colspan="2" class="py-2"><b>LIABILITIES</b></td></tr>
+                            <tr><td colspan="2" class="py-6 border-0"></td></tr>
+
+                            <tr class="category-header"><td colspan="2">LIABILITIES</td></tr>
                             @foreach (var line in GetAccountsByType(balanceTrialBalance, "Liability"))
                             {
-                                <tr><td class="pl-8">@line.AccountName</td><td style="text-align:right; font-family: monospace;">@((line.Credit - line.Debit).ToString("C2", _phCulture))</td></tr>
+                                <tr>
+                                    <td class="pl-8">@line.AccountName</td>
+                                    <td class="tabular-nums text-right">@((line.Credit - line.Debit).ToString("C2", _phCulture))</td>
+                                </tr>
                             }
-                            <tr style="border-top:1px solid #ccc">
-                                <td style="text-align:right" class="pr-4"><b>Total Liabilities</b></td>
-                                <td style="text-align:right; font-family: monospace;"><b>@TotalLiabilities.ToString("C2", _phCulture)</b></td>
+                            <tr class="subtotal-row">
+                                <td class="text-right font-weight-600">Total Liabilities</td>
+                                <td class="tabular-nums text-right font-weight-600">@TotalLiabilities.ToString("C2", _phCulture)</td>
                             </tr>
 
-                            <tr><td colspan="2" class="pt-4"></td></tr>
-                            <tr class="mud-table-row" style="background-color: var(--mud-palette-background-grey);"><td colspan="2" class="py-2"><b>EQUITY</b></td></tr>
+                            <tr><td colspan="2" class="py-4 border-0"></td></tr>
+
+                            <tr class="category-header"><td colspan="2">EQUITY</td></tr>
                             @foreach (var line in GetAccountsByType(balanceTrialBalance, "Equity"))
                             {
-                                <tr><td class="pl-8">@line.AccountName</td><td style="text-align:right; font-family: monospace;">@((line.Credit - line.Debit).ToString("C2", _phCulture))</td></tr>
+                                <tr>
+                                    <td class="pl-8">@line.AccountName</td>
+                                    <td class="tabular-nums text-right">@((line.Credit - line.Debit).ToString("C2", _phCulture))</td>
+                                </tr>
                             }
-                            <tr><td class="pl-8 mud-text-secondary"><i>Net Income (Current Fiscal Year)</i></td><td style="text-align:right; font-family: monospace;">@NetIncome.ToString("C2", _phCulture)</td></tr>
-                            <tr style="border-top:1px solid #ccc">
-                                <td style="text-align:right" class="pr-4"><b>Total Equity</b></td>
-                                <td style="text-align:right; font-family: monospace;"><b>@TotalEquity.ToString("C2", _phCulture)</b></td>
+                            <tr>
+                                <td class="pl-8" style="color: var(--text-muted); font-style: italic;">Net Income (Current Fiscal Year)</td>
+                                <td class="tabular-nums text-right">@NetIncome.ToString("C2", _phCulture)</td>
+                            </tr>
+                            <tr class="subtotal-row">
+                                <td class="text-right font-weight-600">Total Equity</td>
+                                <td class="tabular-nums text-right font-weight-600">@TotalEquity.ToString("C2", _phCulture)</td>
                             </tr>
 
-                            <tr><td colspan="2" class="py-4"></td></tr>
-                            <tr style="background-color: #e8f5e9;">
-                                <td class="py-4 pl-4"><MudText Typo="Typo.h6"><b>TOTAL LIABILITIES & EQUITY</b></MudText></td>
-                                <td class="py-4 text-right" style="font-family: monospace; border-bottom: 3px double black;"><MudText Typo="Typo.h6"><b>@((TotalLiabilities + TotalEquity).ToString("C2", _phCulture))</b></MudText></td>
+                            <tr><td colspan="2" class="py-6 border-0"></td></tr>
+
+                            <tr class="grand-total-row">
+                                <td style="font-size: 1.125rem;">TOTAL LIABILITIES & EQUITY</td>
+                                <td class="tabular-nums text-right double-underline" style="font-size: 1.125rem;">@((TotalLiabilities + TotalEquity).ToString("C2", _phCulture))</td>
                             </tr>
                         </tbody>
-                    </MudSimpleTable>
-                </MudPaper>
+                    </table>
+                </MudCard>
             </MudTabPanel>
         </MudTabs>
     }
 </MudContainer>
 
 <style>
+    /* Shadcn Report Table Styles */
+    .shadcn-report-table {
+        border-collapse: collapse;
+        width: 100%;
+        color: var(--text-main);
+        font-size: 0.875rem;
+    }
+
+        .shadcn-report-table th {
+            font-weight: 600;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--border-color);
+            padding: 0.75rem 1rem;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+        }
+
+        .shadcn-report-table td {
+            padding: 0.5rem 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .shadcn-report-table tr:last-child td {
+            border-bottom: none;
+        }
+
+    /* Standard Utilities */
+    .tabular-nums {
+        font-variant-numeric: tabular-nums;
+    }
+
+    .text-right {
+        text-align: right;
+    }
+
+    .font-weight-600 {
+        font-weight: 600;
+    }
+
+    .font-weight-700 {
+        font-weight: 700;
+    }
+
+    .pl-8 {
+        padding-left: 2rem !important;
+    }
+
+    .border-0 {
+        border: none !important;
+    }
+
+    /* Report specific rows */
+    .category-header td {
+        background-color: var(--bg-muted);
+        font-weight: 600;
+        font-size: 0.75rem;
+        letter-spacing: 0.05em;
+        color: var(--text-muted);
+        padding: 0.5rem 1rem;
+    }
+
+    .subtotal-row td {
+        border-top: 1px solid var(--border-color);
+        padding-top: 0.75rem;
+        padding-bottom: 0.75rem;
+    }
+
+    .totals-row td {
+        border-top: 2px solid var(--text-main);
+        padding-top: 1rem;
+        padding-bottom: 1rem;
+    }
+
+    .grand-total-row td {
+        border-top: 2px solid var(--text-main);
+        font-weight: 700;
+        padding-top: 1.25rem;
+        padding-bottom: 1.25rem;
+    }
+
+    .double-underline {
+        border-bottom: 3px double var(--text-main) !important;
+    }
+
+    /* Print Styles */
     @@media print {
         body {
             background-color: white !important;
+            color: black !important;
         }
 
-        .no-print {
+        .no-print, .no-print-tabs .mud-tabs-toolbar {
             display: none !important;
         }
 
         .mud-appbar, .mud-drawer, .mud-drawer-overlay {
-            display: none !important;
-        }
-
-        .mud-tabs-toolbar {
             display: none !important;
         }
 
@@ -270,6 +382,11 @@
             box-shadow: none !important;
             border: none !important;
             padding: 0 !important;
+        }
+
+        .category-header td {
+            background-color: #f3f4f6 !important; /* Force light gray on print */
+            -webkit-print-color-adjust: exact;
         }
     }
 </style>

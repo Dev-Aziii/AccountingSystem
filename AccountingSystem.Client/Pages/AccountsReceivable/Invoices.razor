@@ -11,64 +11,60 @@
 
 <PageTitle>Create Invoice</PageTitle>
 
-<MudContainer MaxWidth="MaxWidth.Medium" Class="mt-6">
-    <!-- HEADER -->
-    <MudPaper Class="page-header mb-6" Elevation="0">
-        <div class="d-flex justify-space-between align-center">
-            <div>
-                @if (_initialLoading)
-                {
-                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="220px" Height="32px" Class="mb-2" />
-                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="400px" Height="20px" />
-                }
-                else
-                {
-                    <MudText Typo="Typo.h5" Class="mb-2 page-header-title">
-                        New Customer Invoice
-                    </MudText>
-                    <MudText Typo="Typo.body1" Class="page-header-subtitle">
-                        Create customer invoices and track accounts receivable transactions
-                    </MudText>
-                }
-            </div>
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-6 mb-10">
+    <div class="d-flex justify-space-between align-center mb-6">
+        <div>
+            @if (_initialLoading)
+            {
+                <MudSkeleton SkeletonType="SkeletonType.Text" Width="220px" Height="32px" Class="mb-1" />
+                <MudSkeleton SkeletonType="SkeletonType.Text" Width="400px" Height="16px" />
+            }
+            else
+            {
+                <h2 style="font-size: 1.5rem; font-weight: 600; letter-spacing: -0.025em; color: var(--text-main); margin: 0;">
+                    New Customer Invoice
+                </h2>
+                <p style="color: var(--text-muted); font-size: 0.875rem; margin: 0.25rem 0 0 0;">
+                    Create customer invoices and track accounts receivable transactions.
+                </p>
+            }
         </div>
-    </MudPaper>
+    </div>
 
     @if (_initialLoading)
     {
-        <!-- SKELETON FOR INVOICE FORM -->
-        <MudCard>
+        <MudCard Elevation="0" Outlined="true" Class="shadcn-card">
             <MudCardContent>
-                <MudGrid>
+                <MudGrid Spacing="3">
                     <MudItem xs="12" sm="6">
                         <MudSkeleton SkeletonType="SkeletonType.Text" Width="90px" Height="16px" Class="mb-2" />
-                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="56px" />
+                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="40px" Style="border-radius: 6px;" />
                     </MudItem>
 
                     <MudItem xs="12" sm="6">
                         <MudSkeleton SkeletonType="SkeletonType.Text" Width="80px" Height="16px" Class="mb-2" />
-                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="56px" />
+                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="40px" Style="border-radius: 6px;" />
                     </MudItem>
 
                     <MudItem xs="12" sm="6">
                         <MudSkeleton SkeletonType="SkeletonType.Text" Width="130px" Height="16px" Class="mb-2" />
-                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="56px" />
+                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="40px" Style="border-radius: 6px;" />
                     </MudItem>
 
                     <MudItem xs="12" sm="6">
                         <MudSkeleton SkeletonType="SkeletonType.Text" Width="120px" Height="16px" Class="mb-2" />
-                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="56px" />
+                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="40px" Style="border-radius: 6px;" />
                     </MudItem>
 
                     <MudItem xs="12">
                         <MudSkeleton SkeletonType="SkeletonType.Text" Width="100px" Height="16px" Class="mb-2" />
-                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="86px" />
+                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="86px" Style="border-radius: 6px;" />
                     </MudItem>
                 </MudGrid>
             </MudCardContent>
 
-            <MudCardActions Class="d-flex justify-end">
-                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="140px" Height="42px" />
+            <MudCardActions Class="d-flex justify-end pa-4 border-t">
+                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="140px" Height="40px" Style="border-radius: 6px;" />
             </MudCardActions>
         </MudCard>
     }
@@ -77,9 +73,9 @@
         <EditForm Model="@invoice" OnValidSubmit="HandleSubmit">
             <DataAnnotationsValidator />
 
-            <MudCard>
+            <MudCard Elevation="0" Outlined="true" Class="shadcn-card">
                 <MudCardContent>
-                    <MudGrid>
+                    <MudGrid Spacing="3">
 
                         <MudItem xs="12" sm="6">
                             <CustomerSelect @bind-SelectedCustomerId="invoice.CustomerId" />
@@ -89,7 +85,9 @@
                         <MudItem xs="12" sm="6">
                             <MudDatePicker Label="Due Date"
                                            @bind-Date="invoiceDate"
-                                           Variant="Variant.Outlined" />
+                                           Variant="Variant.Outlined"
+                                           Margin="Margin.Dense"
+                                           Class="shadcn-input" />
                         </MudItem>
 
                         <MudItem xs="12" sm="6">
@@ -99,7 +97,9 @@
                                              Adornment="Adornment.Start"
                                              AdornmentText="₱"
                                              HideSpinButtons="true"
-                                             Variant="Variant.Outlined" />
+                                             Variant="Variant.Outlined"
+                                             Margin="Margin.Dense"
+                                             Class="shadcn-input" />
                         </MudItem>
 
                         <MudItem xs="12" sm="6">
@@ -112,18 +112,21 @@
                             <MudTextField Label="Description"
                                           @bind-Value="invoice.Description"
                                           Lines="3"
-                                          Variant="Variant.Outlined" />
+                                          Variant="Variant.Outlined"
+                                          Margin="Margin.Dense"
+                                          Class="shadcn-input" />
                         </MudItem>
 
                     </MudGrid>
                 </MudCardContent>
 
-                <MudCardActions Class="d-flex justify-end">
+                <MudCardActions Class="d-flex justify-end pa-4" Style="border-top: 1px solid var(--border-color); background: var(--bg-background); border-bottom-left-radius: var(--radius-lg); border-bottom-right-radius: var(--radius-lg);">
                     <MudButton ButtonType="ButtonType.Submit"
                                Variant="Variant.Filled"
                                Class="save-btn"
+                               Size="Size.Medium"
                                Disabled="@isSubmitting"
-                               StartIcon="@Icons.Material.Filled.Save">
+                               StartIcon="@Icons.Material.Outlined.Save">
                         @(isSubmitting ? "Saving..." : "Save Invoice")
                     </MudButton>
                 </MudCardActions>

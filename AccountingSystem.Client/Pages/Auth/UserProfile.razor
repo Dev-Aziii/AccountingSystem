@@ -11,36 +11,54 @@
 
 <PageTitle>My Profile</PageTitle>
 
-<MudContainer MaxWidth="MaxWidth.Medium" Class="mt-8">
-    <MudText Typo="Typo.h4" Color="Color.Primary" Class="mb-4">My Account Settings</MudText>
+<MudContainer MaxWidth="MaxWidth.Medium" Class="mt-6 mb-10">
+    <div class="mb-6">
+        <h2 style="font-size: 1.5rem; font-weight: 600; letter-spacing: -0.025em; color: var(--text-main); margin: 0;">
+            My Account Settings
+        </h2>
+        <p style="color: var(--text-muted); font-size: 0.875rem; margin: 0.25rem 0 0 0;">
+            Manage your personal profile and security preferences.
+        </p>
+    </div>
 
-    <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-6">
+    <MudTabs Elevation="0" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pt-4" Class="shadcn-tabs">
 
-        <!-- TAB 1: GENERAL PROFILE -->
-        <MudTabPanel Text="General Information" Icon="@Icons.Material.Filled.Person">
+        <MudTabPanel Text="General Information" Icon="@Icons.Material.Outlined.Person">
             <EditForm Model="@profileModel" OnValidSubmit="HandleUpdateProfile">
                 <DataAnnotationsValidator />
-                <MudCard Elevation="0">
+                <MudCard Elevation="0" Outlined="true" Class="shadcn-card">
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <div style="font-size: 1.125rem; font-weight: 600; color: var(--text-main);">Profile Details</div>
+                            <div style="font-size: 0.875rem; color: var(--text-muted);">Update your personal information and email address.</div>
+                        </CardHeaderContent>
+                    </MudCardHeader>
                     <MudCardContent>
-                        <MudGrid>
+                        <MudGrid Spacing="3">
                             <MudItem xs="12" sm="6">
                                 <MudTextField Label="Full Name"
                                               @bind-Value="profileModel.FullName"
                                               For="@(() => profileModel.FullName)"
-                                              Variant="Variant.Outlined" />
+                                              Variant="Variant.Outlined"
+                                              Margin="Margin.Dense"
+                                              Class="shadcn-input" />
                             </MudItem>
                             <MudItem xs="12" sm="6">
                                 <MudTextField Label="Email Address"
                                               @bind-Value="profileModel.Email"
                                               For="@(() => profileModel.Email)"
-                                              Variant="Variant.Outlined" />
+                                              Variant="Variant.Outlined"
+                                              Margin="Margin.Dense"
+                                              Class="shadcn-input" />
                             </MudItem>
                         </MudGrid>
                     </MudCardContent>
-                    <MudCardActions Class="d-flex justify-end">
+
+                    <MudCardActions Class="d-flex justify-end pa-4" Style="border-top: 1px solid var(--border-color); background: var(--bg-background); border-bottom-left-radius: var(--radius-lg); border-bottom-right-radius: var(--radius-lg);">
                         <MudButton ButtonType="ButtonType.Submit"
                                    Variant="Variant.Filled"
-                                   Color="Color.Primary"
+                                   Class="save-btn"
+                                   Size="Size.Medium"
                                    Disabled="@isProfileSubmitting">
                             @(isProfileSubmitting ? "Saving..." : "Save Changes")
                         </MudButton>
@@ -49,19 +67,26 @@
             </EditForm>
         </MudTabPanel>
 
-        <!-- TAB 2: SECURITY (PASSWORD) -->
-        <MudTabPanel Text="Security" Icon="@Icons.Material.Filled.Lock">
+        <MudTabPanel Text="Security" Icon="@Icons.Material.Outlined.Lock">
             <EditForm Model="@passwordModel" OnValidSubmit="HandleChangePassword">
                 <DataAnnotationsValidator />
-                <MudCard Elevation="0">
+                <MudCard Elevation="0" Outlined="true" Class="shadcn-card">
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <div style="font-size: 1.125rem; font-weight: 600; color: var(--text-main);">Change Password</div>
+                            <div style="font-size: 0.875rem; color: var(--text-muted);">Ensure your account is using a long, random password to stay secure.</div>
+                        </CardHeaderContent>
+                    </MudCardHeader>
                     <MudCardContent>
-                        <MudGrid>
+                        <MudGrid Spacing="3">
                             <MudItem xs="12">
                                 <MudTextField Label="Current Password"
                                               @bind-Value="passwordModel.CurrentPassword"
                                               For="@(() => passwordModel.CurrentPassword)"
                                               InputType="InputType.Password"
-                                              Variant="Variant.Outlined" />
+                                              Variant="Variant.Outlined"
+                                              Margin="Margin.Dense"
+                                              Class="shadcn-input" />
                             </MudItem>
                             <MudItem xs="12" sm="6">
                                 <MudTextField Label="New Password"
@@ -69,6 +94,8 @@
                                               For="@(() => passwordModel.NewPassword)"
                                               InputType="InputType.Password"
                                               Variant="Variant.Outlined"
+                                              Margin="Margin.Dense"
+                                              Class="shadcn-input"
                                               HelperText="Must be at least 6 characters" />
                             </MudItem>
                             <MudItem xs="12" sm="6">
@@ -76,16 +103,20 @@
                                               @bind-Value="passwordModel.ConfirmPassword"
                                               For="@(() => passwordModel.ConfirmPassword)"
                                               InputType="InputType.Password"
-                                              Variant="Variant.Outlined" />
+                                              Variant="Variant.Outlined"
+                                              Margin="Margin.Dense"
+                                              Class="shadcn-input" />
                             </MudItem>
                         </MudGrid>
                     </MudCardContent>
-                    <MudCardActions Class="d-flex justify-end">
+
+                    <MudCardActions Class="d-flex justify-end pa-4" Style="border-top: 1px solid var(--border-color); background: var(--bg-background); border-bottom-left-radius: var(--radius-lg); border-bottom-right-radius: var(--radius-lg);">
                         <MudButton ButtonType="ButtonType.Submit"
                                    Variant="Variant.Filled"
-                                   Color="Color.Warning"
+                                   Class="custom-button"
+                                   Size="Size.Medium"
                                    Disabled="@isPasswordSubmitting">
-                            @(isPasswordSubmitting ? "Updating..." : "Change Password")
+                            @(isPasswordSubmitting ? "Updating..." : "Update Password")
                         </MudButton>
                     </MudCardActions>
                 </MudCard>

@@ -9,28 +9,60 @@
 @inject ISnackbar Snackbar
 @inject ILocalStorageService LocalStorage
 
-<MudContainer MaxWidth="MaxWidth.Small" Class="mt-16 text-center">
-    @if (isVerifying)
-    {
-        <MudProgressCircular Color="Color.Primary" Size="Size.Large" Indeterminate="true" Class="mb-4" />
-        <MudText Typo="Typo.h5">Verifying Payment...</MudText>
-        <MudText>Please wait while we confirm with PayMongo.</MudText>
-    }
-    else if (isSuccess)
-    {
-        <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" Style="font-size: 5rem;" Class="mb-4" />
-        <MudText Typo="Typo.h4" Color="Color.Success">Payment Successful!</MudText>
-        <MudText Class="mb-4">Your payment has been recorded.</MudText>
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="/ar/invoices/list">Return to Invoices</MudButton>
-    }
-    else
-    {
-        <MudIcon Icon="@Icons.Material.Filled.Error" Color="Color.Error" Style="font-size: 5rem;" Class="mb-4" />
-        <MudText Typo="Typo.h4" Color="Color.Error">Payment Failed</MudText>
-        <MudText Class="mb-4">@errorMessage</MudText>
-        <MudButton Variant="Variant.Filled" Color="Color.Secondary" Href="/ar/invoices/list">Back to List</MudButton>
-    }
-</MudContainer>
+<PageTitle>Payment Verification</PageTitle>
+
+<div class="d-flex align-center justify-center" style="min-height: 80vh; padding: 1rem;">
+    <MudCard Elevation="0" Outlined="true" Class="shadcn-card" Style="width: 100%; max-width: 400px; padding: 3rem 2rem;">
+        <MudCardContent Class="text-center pa-0">
+
+            @if (isVerifying)
+            {
+                <MudProgressCircular Color="Color.Default" Size="Size.Large" Indeterminate="true" Class="mb-6" Style="color: var(--text-muted);" />
+                <div style="font-size: 1.5rem; font-weight: 600; letter-spacing: -0.025em; color: var(--text-main); margin-bottom: 0.5rem;">
+                    Verifying Payment
+                </div>
+                <div style="font-size: 0.875rem; color: var(--text-muted);">
+                    Please wait while we securely confirm your transaction with PayMongo.
+                </div>
+            }
+            else if (isSuccess)
+            {
+                <MudIcon Icon="@Icons.Material.Outlined.CheckCircle" Style="font-size: 4rem; color: var(--color-success);" Class="mb-6" />
+                <div style="font-size: 1.5rem; font-weight: 600; letter-spacing: -0.025em; color: var(--text-main); margin-bottom: 0.5rem;">
+                    Payment Successful
+                </div>
+                <div style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 2rem;">
+                    Your payment has been successfully verified and recorded in the ledger.
+                </div>
+                <MudButton Variant="Variant.Filled"
+                           Class="custom-button"
+                           Href="/ar/invoices/list"
+                           FullWidth="true"
+                           Size="Size.Large">
+                    Return to Invoices
+                </MudButton>
+            }
+            else
+            {
+                <MudIcon Icon="@Icons.Material.Outlined.ErrorOutline" Style="font-size: 4rem; color: var(--color-destructive);" Class="mb-6" />
+                <div style="font-size: 1.5rem; font-weight: 600; letter-spacing: -0.025em; color: var(--text-main); margin-bottom: 0.5rem;">
+                    Payment Failed
+                </div>
+                <div style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 2rem;">
+                    @errorMessage
+                </div>
+                <MudButton Variant="Variant.Outlined"
+                           Class="shadcn-btn-outline"
+                           Href="/ar/invoices/list"
+                           FullWidth="true"
+                           Size="Size.Large">
+                    Back to Invoices
+                </MudButton>
+            }
+
+        </MudCardContent>
+    </MudCard>
+</div>
 
 @code {
     [SupplyParameterFromQuery] public int InvoiceId { get; set; }
@@ -65,7 +97,6 @@
                 ReferenceId = InvoiceId,
                 AssetAccountId = AccountId,
                 Amount = Amount,
-                // FIX: Use Enum instead of string
                 PaymentMethod = PaymentMethod.Online,
                 ReferenceNumber = sourceId,
                 PaymentDate = DateTime.Now,
