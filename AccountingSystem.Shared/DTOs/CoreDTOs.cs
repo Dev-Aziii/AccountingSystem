@@ -43,6 +43,7 @@ namespace AccountingSystem.Shared.DTOs
         public DateTime DueDate { get; set; }
         public decimal Amount { get; set; }
         public string VendorReferenceNumber { get; set; } = string.Empty;
+        public string SystemReferenceNumber { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
         public decimal AmountPaid { get; set; }
         public DocumentStatus Status { get; set; } // Enum
