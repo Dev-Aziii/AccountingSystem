@@ -119,42 +119,6 @@
         gap: 1rem;
     }
 
-    /* ── Year filter pill group (inside chart header) ── */
-    .sa-year-filter {
-        display: flex;
-        align-items: center;
-        gap: 0.2rem;
-        background: var(--bg-muted, #f1f5f9);
-        border-radius: 9999px;
-        padding: 0.175rem;
-    }
-
-    .sa-year-btn {
-        padding: 0.2rem 0.7rem;
-        border-radius: 9999px;
-        border: none;
-        background: transparent;
-        font-size: 0.75rem;
-        font-weight: 500;
-        color: var(--text-muted, #64748b);
-        cursor: pointer;
-        transition: all 0.15s ease;
-        white-space: nowrap;
-        line-height: 1.6;
-    }
-
-        .sa-year-btn:hover {
-            color: var(--text-main, #0f172a);
-        }
-
-        .sa-year-btn.active {
-            background: var(--bg-surface, #fff);
-            color: var(--text-main, #0f172a);
-            font-weight: 600;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
-
-    /* ── Custom SVG Chart ── */
     .custom-chart-wrap {
         width: 100%;
         flex: 1;
@@ -227,9 +191,9 @@
         transform: translate(-50%, -110%);
     }
 
-    .chart-tooltip.visible {
-        opacity: 1;
-    }
+        .chart-tooltip.visible {
+            opacity: 1;
+        }
 
     .chart-tooltip-label {
         font-weight: 400;
@@ -246,6 +210,8 @@
     }
 </style>
 
+@* FIX RZ1003: @@keyframes blocks are moved out of <style> into a MarkupString
+   to prevent Razor from misreading the CSS braces as code blocks. *@
 @((MarkupString)@"<style>
     @@keyframes fadeInArea {
         from { opacity: 0; }
@@ -371,35 +337,19 @@
             <!-- Custom SVG Line Chart: Tenant Registrations -->
             <MudItem xs="12">
                 <div class="sa-featured-card">
-
-                    <!-- Chart header: title left, year pills + peak right -->
                     <div class="sa-section-header">
                         <MudIcon Icon="@Icons.Material.Outlined.TrendingUp" Size="Size.Small" Style="color: var(--text-muted);" />
-                        <span class="sa-section-title">Tenant Registrations</span>
-                        <MudSpacer />
-
-                        <!-- peak badge -->
-                        @if (filteredChartPoints.Count > 0)
+                        <span class="sa-section-title">Tenant Registrations (12 Months)</span>
+                        @if (chartPoints.Count > 0)
                         {
-                            <span style="font-size: 0.78rem; color: var(--text-muted); font-weight: 500; margin-right: 0.75rem;">
-                                Peak: @filteredChartPoints.Max(p => p.Value) tenants
+                            <MudSpacer />
+                            <span style="font-size: 0.78rem; color: var(--text-muted); font-weight: 500;">
+                                Peak: @chartPoints.Max(p => p.Value) tenants
                             </span>
                         }
-
-                        <!-- year pill filter -->
-                        <div class="sa-year-filter">
-                            @foreach (var yr in availableYears)
-                            {
-                                var capturedYr = yr;
-                                <button class="sa-year-btn @(selectedYear == capturedYr ? "active" : "")"
-                                        @onclick="() => OnYearChanged(capturedYr)">
-                                    @capturedYr
-                                </button>
-                            }
-                        </div>
                     </div>
 
-                    @if (filteredChartPoints.Count > 0)
+                    @if (chartPoints.Count > 0)
                     {
                         <div class="custom-chart-wrap" id="chart-container">
                             <div class="chart-tooltip @(tooltipVisible ? "visible" : "")"
@@ -421,12 +371,12 @@
 
                                 @for (int g = 0; g <= 4; g++)
                                 {
-                                    double gy    = PadTop + (ChartHeight / 4.0) * g;
-                                    double gVal  = yMax - (yMax / 4.0) * g;
-                                    int    gInt  = (int)Math.Round(gVal);
+                                    double gy = PadTop + (ChartHeight / 4.0) * g;
+                                    double gVal = yMax - (yMax / 4.0) * g;
+                                    int gInt = (int)Math.Round(gVal);
                                     string gyStr = gy.ToString("F1", System.Globalization.CultureInfo.InvariantCulture);
-                                    string lx    = ((int)(PadLeft - 8)).ToString(System.Globalization.CultureInfo.InvariantCulture);
-                                    string ly    = (gy + 4).ToString("F1", System.Globalization.CultureInfo.InvariantCulture);
+                                    string lx = ((int)(PadLeft - 8)).ToString(System.Globalization.CultureInfo.InvariantCulture);
+                                    string ly = (gy + 4).ToString("F1", System.Globalization.CultureInfo.InvariantCulture);
                                     string x2Str = (SvgWidth - PadRight).ToString("F1", System.Globalization.CultureInfo.InvariantCulture);
                                     string plStr = PadLeft.ToString("F1", System.Globalization.CultureInfo.InvariantCulture);
 
@@ -434,7 +384,7 @@
                                     @((MarkupString)$"<text class=\"chart-axis-label\" x=\"{lx}\" y=\"{ly}\" text-anchor=\"end\">{gInt}</text>")
                                 }
 
-                                @foreach (var pt in filteredChartPoints)
+                                @foreach (var pt in chartPoints)
                                 {
                                     string ptx = pt.X.ToString("F1", System.Globalization.CultureInfo.InvariantCulture);
                                     string pty = (SvgHeight - PadBottom + 18).ToString("F1", System.Globalization.CultureInfo.InvariantCulture);
@@ -445,7 +395,9 @@
                                 <path class="chart-area-path" d="@areaPath"></path>
                                 <path class="chart-line-path" d="@linePath"></path>
 
-                                @foreach (var pt in filteredChartPoints)
+                                @* FIX RZ9980: <circle> must use explicit closing tag, not self-closing />,
+                                   when Blazor event directives (@onmouseover / @onmouseout) are present. *@
+                                @foreach (var pt in chartPoints)
                                 {
                                     var capturedPt = pt;
                                     <circle class="chart-marker"
@@ -463,7 +415,7 @@
                     else
                     {
                         <div class="d-flex align-center justify-center" style="height: 300px;">
-                            <MudText Typo="Typo.body2" Color="Color.Tertiary">No registration data for @selectedYear</MudText>
+                            <MudText Typo="Typo.body2" Color="Color.Tertiary">No registration data available</MudText>
                         </div>
                     }
                 </div>
@@ -624,39 +576,30 @@
     private SystemDashboardDTO? stats;
     private bool isLoading = true;
 
-    // ── Year filter (chart-scoped, client-side only) ──────────────
-    private int       selectedYear;
-    private List<int> availableYears = new();
-
-    // ── SVG constants ─────────────────────────────────────────────
-    private const double SvgWidth  = 1000;
+    private const double SvgWidth = 1000;
     private const double SvgHeight = 300;
-    private const double PadLeft   = 40;
-    private const double PadRight  = 20;
-    private const double PadTop    = 20;
+    private const double PadLeft = 40;
+    private const double PadRight = 20;
+    private const double PadTop = 20;
     private const double PadBottom = 36;
-    private double ChartWidth  => SvgWidth  - PadLeft - PadRight;
-    private double ChartHeight => SvgHeight - PadTop  - PadBottom;
+    private double ChartWidth => SvgWidth - PadLeft - PadRight;
+    private double ChartHeight => SvgHeight - PadTop - PadBottom;
 
-    // allChartPoints holds every data point loaded from the API.
-    // filteredChartPoints is the client-side subset for the selected year.
-    private List<ChartPoint> allChartPoints      = new();
-    private List<ChartPoint> filteredChartPoints = new();
-
+    private List<ChartPoint> chartPoints = new();
     private string linePath = "";
     private string areaPath = "";
-    private double yMax     = 1;
+    private double yMax = 1;
 
-    private bool   tooltipVisible = false;
-    private double tooltipX       = 0;
-    private double tooltipY       = 0;
-    private string tooltipLabel   = "";
-    private string tooltipValue   = "";
+    private bool tooltipVisible = false;
+    private double tooltipX = 0;
+    private double tooltipY = 0;
+    private string tooltipLabel = "";
+    private string tooltipValue = "";
 
-    private double[] tenantChartData   = Array.Empty<double>();
+    private double[] tenantChartData = Array.Empty<double>();
     private string[] tenantChartLabels = Array.Empty<string>();
-    private double[] userChartData     = Array.Empty<double>();
-    private string[] userChartLabels   = Array.Empty<string>();
+    private double[] userChartData = Array.Empty<double>();
+    private string[] userChartLabels = Array.Empty<string>();
     private int tenantChartRenderKey;
     private int userChartRenderKey;
 
@@ -665,14 +608,8 @@
         ChartPalette = new[] { "#10b981", "#f59e0b", "#ef4444" }
     };
 
-    // ── Lifecycle ─────────────────────────────────────────────────
-    protected override async Task OnInitializedAsync()
-    {
-        selectedYear = DateTime.Now.Year;
-        await LoadData();
-    }
+    protected override async Task OnInitializedAsync() => await LoadData();
 
-    // ── Data load (no year param — fetches everything once) ───────
     private async Task LoadData()
     {
         isLoading = true;
@@ -689,125 +626,63 @@
         }
     }
 
-    // ── Build all chart state after a data fetch ──────────────────
     private void PrepareChartData()
     {
         if (stats == null) return;
 
-        // Donut – Tenants
-        tenantChartData   = new double[] { stats.ActiveCompanies, stats.SuspendedCompanies, stats.BlockedCompanies };
+        tenantChartData = new double[] { stats.ActiveCompanies, stats.SuspendedCompanies, stats.BlockedCompanies };
         tenantChartLabels = new string[] { "Active", "Suspended", "Blocked" };
         tenantChartRenderKey++;
 
-        // Donut – Users
-        userChartData   = new double[] { stats.ActiveUsers, stats.RestrictedUsers, stats.BlockedUsers };
+        userChartData = new double[] { stats.ActiveUsers, stats.RestrictedUsers, stats.BlockedUsers };
         userChartLabels = new string[] { "Active", "Restricted", "Blocked" };
         userChartRenderKey++;
 
-        // Build all points from the full MonthlyRegistrations list
-        BuildAllChartPoints();
-
-        // Derive available years from actual data so pills always match reality
-        availableYears = allChartPoints
-            .Select(p => p.Year)
-            .Distinct()
-            .OrderByDescending(y => y)
-            .ToList();
-
-        // Keep selectedYear valid; fall back to the most recent year in data
-        if (availableYears.Any() && !availableYears.Contains(selectedYear))
-            selectedYear = availableYears.First();
-
-        // Apply initial filter
-        ApplyYearFilter();
+        BuildLineChart();
     }
 
-    // ── Convert raw DTO rows into ChartPoints (all years) ─────────
-    private void BuildAllChartPoints()
+    private void BuildLineChart()
     {
-        allChartPoints.Clear();
+        chartPoints.Clear();
         if (stats?.MonthlyRegistrations == null || !stats.MonthlyRegistrations.Any()) return;
 
-        // Each MonthlyRegistration.Month is expected to be "YYYY-MM"
-        foreach (var m in stats.MonthlyRegistrations)
-        {
-            int parsedYear = ExtractYear(m.Month);
-            allChartPoints.Add(new ChartPoint
-            {
-                Year  = parsedYear,
-                Value = m.Count,
-                Label = FormatMonthLabel(m.Month),
-                // X/Y are recalculated per-filter in ApplyYearFilter
-                X = 0,
-                Y = 0
-            });
-        }
-    }
-
-    // ── Client-side year pill handler ─────────────────────────────
-    private void OnYearChanged(int year)
-    {
-        if (year == selectedYear) return;
-        selectedYear = year;
-        ApplyYearFilter();
-        StateHasChanged();
-    }
-
-    // ── Filter allChartPoints to the selected year and recompute SVG coords ──
-    private void ApplyYearFilter()
-    {
-        var source = allChartPoints
-            .Where(p => p.Year == selectedYear)
-            .OrderBy(p => p.Label) // Jan → Dec order
-            .ToList();
-
-        int count = source.Count;
-
-        if (count == 0)
-        {
-            filteredChartPoints.Clear();
-            linePath = "";
-            areaPath = "";
-            return;
-        }
-
-        yMax = source.Max(p => (double)p.Value);
+        var data = stats.MonthlyRegistrations;
+        int count = data.Count;
+        yMax = data.Max(m => (double)m.Count);
         if (yMax == 0) yMax = 1;
         yMax = Math.Ceiling(yMax / 5.0) * 5;
         if (yMax == 0) yMax = 5;
 
         double stepX = ChartWidth / Math.Max(count - 1, 1);
 
-        filteredChartPoints = source.Select((p, i) => new ChartPoint
+        for (int i = 0; i < count; i++)
         {
-            Year  = p.Year,
-            Value = p.Value,
-            Label = p.Label,
-            X     = PadLeft + (count == 1 ? ChartWidth / 2.0 : i * stepX),
-            Y     = PadTop  + ChartHeight - (p.Value / yMax) * ChartHeight
-        }).ToList();
+            double x = PadLeft + (count == 1 ? ChartWidth / 2.0 : i * stepX);
+            double y = PadTop + ChartHeight - (data[i].Count / yMax) * ChartHeight;
+            chartPoints.Add(new ChartPoint
+            {
+                X = x,
+                Y = y,
+                Value = data[i].Count,
+                Label = FormatMonthLabel(data[i].Month)
+            });
+        }
 
-        BuildPaths();
-    }
-
-    // ── Build SVG line + area paths from filteredChartPoints ─────
-    private void BuildPaths()
-    {
-        if (filteredChartPoints.Count == 1)
+        if (chartPoints.Count == 1)
         {
-            var p = filteredChartPoints[0];
+            var p = chartPoints[0];
             linePath = $"M {p.X:F1},{p.Y:F1}";
             areaPath = $"M {p.X:F1},{PadTop + ChartHeight:F1} L {p.X:F1},{p.Y:F1} Z";
             return;
         }
 
-        var sb     = new System.Text.StringBuilder();
+        var sb = new System.Text.StringBuilder();
         var sbArea = new System.Text.StringBuilder();
         double bottomY = PadTop + ChartHeight;
 
-        for (int i = 0; i < filteredChartPoints.Count; i++)
+        for (int i = 0; i < chartPoints.Count; i++)
         {
-            var cur = filteredChartPoints[i];
+            var cur = chartPoints[i];
             if (i == 0)
             {
                 sb.Append($"M {cur.X:F1},{cur.Y:F1}");
@@ -815,36 +690,33 @@
             }
             else
             {
-                var    prev = filteredChartPoints[i - 1];
-                double cpx  = (prev.X + cur.X) / 2.0;
+                var prev = chartPoints[i - 1];
+                double cpx = (prev.X + cur.X) / 2.0;
                 sb.Append($" C {cpx:F1},{prev.Y:F1} {cpx:F1},{cur.Y:F1} {cur.X:F1},{cur.Y:F1}");
                 sbArea.Append($" C {cpx:F1},{prev.Y:F1} {cpx:F1},{cur.Y:F1} {cur.X:F1},{cur.Y:F1}");
             }
         }
 
-        sbArea.Append($" L {filteredChartPoints[^1].X:F1},{bottomY:F1} Z");
+        var last = chartPoints[^1];
+        sbArea.Append($" L {last.X:F1},{bottomY:F1} Z");
         linePath = sb.ToString();
         areaPath = sbArea.ToString();
     }
 
-    // ── Tooltip ───────────────────────────────────────────────────
     private void ShowTooltip(ChartPoint pt)
     {
-        tooltipX = pt.X; tooltipY = pt.Y;
-        tooltipLabel = pt.Label; tooltipValue = pt.Value.ToString();
+        tooltipX = pt.X;
+        tooltipY = pt.Y;
+        tooltipLabel = pt.Label;
+        tooltipValue = pt.Value.ToString();
         tooltipVisible = true;
         StateHasChanged();
     }
 
-    private void HideTooltip() { tooltipVisible = false; StateHasChanged(); }
-
-    // ── Helpers ───────────────────────────────────────────────────
-    private static int ExtractYear(string yearMonth)
+    private void HideTooltip()
     {
-        // Expects "YYYY-MM"; falls back to current year
-        if (yearMonth != null && yearMonth.Length >= 4 && int.TryParse(yearMonth[..4], out int yr))
-            return yr;
-        return DateTime.Now.Year;
+        tooltipVisible = false;
+        StateHasChanged();
     }
 
     private string FormatMonthLabel(string yearMonth) =>
@@ -853,24 +725,22 @@
     private string GetActionIcon(string action) => action switch
     {
         "COMPANY_STATUS_CHANGE" => Icons.Material.Outlined.Business,
-        "USER_STATUS_CHANGE"    => Icons.Material.Outlined.Person,
-        _                       => Icons.Material.Outlined.Info
+        "USER_STATUS_CHANGE" => Icons.Material.Outlined.Person,
+        _ => Icons.Material.Outlined.Info
     };
 
     private string FormatAction(string action) => action switch
     {
         "COMPANY_STATUS_CHANGE" => "changed status of",
-        "USER_STATUS_CHANGE"    => "changed status of",
-        _                       => "performed action on"
+        "USER_STATUS_CHANGE" => "changed status of",
+        _ => "performed action on"
     };
 
-    // ── Model ─────────────────────────────────────────────────────
     private class ChartPoint
     {
-        public int    Year  { get; set; }
-        public double X     { get; set; }
-        public double Y     { get; set; }
-        public int    Value { get; set; }
+        public double X { get; set; }
+        public double Y { get; set; }
+        public int Value { get; set; }
         public string Label { get; set; } = "";
     }
 }

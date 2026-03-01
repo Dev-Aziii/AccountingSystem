@@ -40,6 +40,64 @@
     color: var(--text-muted) !important;
 }
 
+/* =========================================
+   SHADCN BADGES (GLOBAL)
+========================================= */
+
+.shadcn-badge {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 9999px; /* Pill shape */
+    border: 1px solid transparent;
+    padding: 0.125rem 0.625rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1.25rem;
+    white-space: nowrap;
+}
+
+/* Green (Active / Success) */
+.badge-green {
+    background-color: #f0fdf4;
+    color: #166534;
+    border-color: #bbf7d0;
+}
+
+/* Orange/Amber (Suspended / Restricted) */
+.badge-orange {
+    background-color: #fffbeb;
+    color: #b45309;
+    border-color: #fde68a;
+}
+
+/* Red (Blocked / Error) */
+.badge-red {
+    background-color: #fef2f2;
+    color: #991b1b;
+    border-color: #fecaca;
+}
+
+/* Slate (Default / Management / Standard) */
+.badge-slate {
+    background-color: #f1f5f9;
+    color: #334155;
+    border-color: #e2e8f0;
+}
+
+/* Indigo (Admin) */
+.badge-indigo {
+    background-color: #eef2ff;
+    color: #3730a3;
+    border-color: #c7d2fe;
+}
+
+/* Blue (Accounting) */
+.badge-blue {
+    background-color: #eff6ff;
+    color: #1d4ed8;
+    border-color: #bfdbfe;
+}
+
 /* ========================================
    HEADER STYLES (Flattened)
    ======================================== */
