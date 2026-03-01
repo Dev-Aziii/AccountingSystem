@@ -11,7 +11,7 @@ namespace AccountingSystem.Client.Tests;
 public class AuditDetailsDialogTests : DialogTestContext
 {
     [Fact]
-    public void Render_WhenLogProvided_ShouldShowAuditDetails()
+    public async Task Render_WhenLogProvided_ShouldShowAuditDetails()
     {
         var dialogProvider = Render<MudDialogProvider>();
         var dialogService = Services.GetRequiredService<IDialogService>();
@@ -32,17 +32,14 @@ public class AuditDetailsDialogTests : DialogTestContext
             { nameof(AuditDetailsDialog.Log), log }
         };
 
-        dialogService.Show<AuditDetailsDialog>("Audit Log Details", parameters);
+        await dialogService.ShowAsync<AuditDetailsDialog>("Audit Log Details", parameters);
 
-        dialogProvider.WaitForAssertion(() =>
-        {
-            dialogProvider.Markup.Should().Contain("Audit Log Details");
-            dialogProvider.Markup.Should().Contain("auditor@example.com");
-        });
+        dialogProvider.Markup.Should().Contain("Audit Log Details");
+        dialogProvider.Markup.Should().Contain("auditor@example.com");
     }
 
     [Fact]
-    public void Render_WhenLogActionIsDelete_ShouldUseDeleteBadgeClass()
+    public async Task Render_WhenLogActionIsDelete_ShouldUseDeleteBadgeClass()
     {
         var dialogProvider = Render<MudDialogProvider>();
         var dialogService = Services.GetRequiredService<IDialogService>();
@@ -61,9 +58,8 @@ public class AuditDetailsDialogTests : DialogTestContext
             { nameof(AuditDetailsDialog.Log), log }
         };
 
-        dialogService.Show<AuditDetailsDialog>("Audit Log Details", parameters);
+        await dialogService.ShowAsync<AuditDetailsDialog>("Audit Log Details", parameters);
 
-        dialogProvider.WaitForAssertion(() =>
-            dialogProvider.Markup.Should().Contain("badge-red"));
+        dialogProvider.Markup.Should().Contain("badge-red");
     }
 }

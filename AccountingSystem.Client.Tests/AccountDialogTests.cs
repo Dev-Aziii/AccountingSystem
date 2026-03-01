@@ -10,7 +10,7 @@ namespace AccountingSystem.Client.Tests;
 public class AccountDialogTests : DialogTestContext
 {
     [Fact]
-    public void Render_WhenCreatingAccount_ShouldShowCreateTitle()
+    public async Task Render_WhenCreatingAccount_ShouldShowCreateTitle()
     {
         var dialogProvider = Render<MudDialogProvider>();
         var dialogService = Services.GetRequiredService<IDialogService>();
@@ -20,14 +20,13 @@ public class AccountDialogTests : DialogTestContext
             { nameof(AccountDialog.Account), null }
         };
 
-        dialogService.Show<AccountDialog>("Create New Account", parameters);
+        await dialogService.ShowAsync<AccountDialog>("Create New Account", parameters);
 
-        dialogProvider.WaitForAssertion(() =>
-            dialogProvider.Markup.Should().Contain("Create New Account"));
+        dialogProvider.Markup.Should().Contain("Create New Account");
     }
 
     [Fact]
-    public void Render_WhenEditingAccount_ShouldShowEditTitle()
+    public async Task Render_WhenEditingAccount_ShouldShowEditTitle()
     {
         var dialogProvider = Render<MudDialogProvider>();
         var dialogService = Services.GetRequiredService<IDialogService>();
@@ -37,9 +36,8 @@ public class AccountDialogTests : DialogTestContext
             { nameof(AccountDialog.Account), new AccountDTO { Id = 22, Name = "Cash" } }
         };
 
-        dialogService.Show<AccountDialog>("Edit Account", parameters);
+        await dialogService.ShowAsync<AccountDialog>("Edit Account", parameters);
 
-        dialogProvider.WaitForAssertion(() =>
-            dialogProvider.Markup.Should().Contain("Edit Account"));
+        dialogProvider.Markup.Should().Contain("Edit Account");
     }
 }
