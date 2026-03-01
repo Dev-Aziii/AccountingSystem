@@ -23,7 +23,7 @@ public class AuditDetailsDialogTests : DialogTestContext
             Changes = "{\"amount\":100}"
         };
 
-        var cut = RenderComponent<MudDialogProvider>(parameters => parameters
+        var cut = Render<MudDialogProvider>(parameters => parameters
             .AddChildContent<AuditDetailsDialog>(p => p
                 .Add(d => d.Log, log)));
 
@@ -43,7 +43,7 @@ public class AuditDetailsDialogTests : DialogTestContext
             Changes = "{}"
         };
 
-        var cut = RenderComponent<MudDialogProvider>(parameters => parameters
+        var cut = Render<MudDialogProvider>(parameters => parameters
             .AddChildContent<AuditDetailsDialog>(p => p
                 .Add(d => d.Log, log)));
 

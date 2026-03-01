@@ -11,7 +11,7 @@ public class VendorDialogTests : DialogTestContext
     [Fact]
     public void Render_WhenCreatingVendor_ShouldShowCreateTitle()
     {
-        var cut = RenderComponent<MudDialogProvider>(parameters => parameters
+        var cut = Render<MudDialogProvider>(parameters => parameters
             .AddChildContent<VendorDialog>(p => p
                 .Add(d => d.Vendor, null)));
 
@@ -21,7 +21,7 @@ public class VendorDialogTests : DialogTestContext
     [Fact]
     public void Render_WhenEditingVendor_ShouldShowEditTitle()
     {
-        var cut = RenderComponent<MudDialogProvider>(parameters => parameters
+        var cut = Render<MudDialogProvider>(parameters => parameters
             .AddChildContent<VendorDialog>(p => p
                 .Add(d => d.Vendor, new VendorDTO { Id = 9, Name = "ACME" })));
 

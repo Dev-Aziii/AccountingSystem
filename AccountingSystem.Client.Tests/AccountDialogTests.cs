@@ -11,20 +11,18 @@ public class AccountDialogTests : DialogTestContext
     [Fact]
     public void Render_WhenCreatingAccount_ShouldShowCreateTitle()
     {
-        var cut = RenderComponent<MudDialogProvider>(parameters => parameters
+        var cut = Render<MudDialogProvider>(parameters => parameters
             .AddChildContent<AccountDialog>(p => p
                 .Add(d => d.Account, null)));
-
         cut.Markup.Should().Contain("Create New Account");
     }
 
     [Fact]
     public void Render_WhenEditingAccount_ShouldShowEditTitle()
     {
-        var cut = RenderComponent<MudDialogProvider>(parameters => parameters
+        var cut = Render<MudDialogProvider>(parameters => parameters
             .AddChildContent<AccountDialog>(p => p
                 .Add(d => d.Account, new AccountDTO { Id = 22, Name = "Cash" })));
-
         cut.Markup.Should().Contain("Edit Account");
     }
 }
