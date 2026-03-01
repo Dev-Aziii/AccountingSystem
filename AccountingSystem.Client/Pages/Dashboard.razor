@@ -166,6 +166,12 @@
         border: 1px solid var(--border-color);
         background: var(--bg-surface);
     }
+
+    /* Trend Icon Adjustments */
+    .trend-icon {
+        font-size: 16px !important;
+        display: flex;
+    }
 </style>
 
 <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4 mb-10">
@@ -207,7 +213,7 @@
         </div>
     }
     else
-    {       
+    {        
         <div class="dashboard-grid">
 
             <div class="span-6">
@@ -218,7 +224,17 @@
                     </div>
 
                     <div style="margin-bottom: 2rem; margin-top: 0.5rem;">
-                        <div style="font-size: 0.875rem; font-weight: 500; color: var(--text-muted); margin-bottom: 0.25rem;">Net Profit</div>
+                        <div style="font-size: 0.875rem; font-weight: 500; color: var(--text-muted); margin-bottom: 0.25rem; display: flex; align-items: center; gap: 4px;">
+                            Net Profit
+                            @if (NetProfit >= 0)
+                            {
+                                <MudIcon Icon="@Icons.Material.Outlined.TrendingUp" Class="trend-icon" Style="color: var(--color-success);" />
+                            }
+                            else
+                            {
+                                <MudIcon Icon="@Icons.Material.Outlined.TrendingDown" Class="trend-icon" Style="color: var(--color-destructive);" />
+                            }
+                        </div>
                         <div style="font-size: 2.5rem; font-weight: 700; letter-spacing: -0.05em; color: var(--text-main); line-height: 1;">
                             ₱@FormatCompact(NetProfit)
                         </div>
@@ -247,19 +263,51 @@
 
                     <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem; margin-top: auto;">
                         <div class="stat-grid-item">
-                            <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.25rem;">Cash</div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.25rem; display: flex; align-items: center; gap: 4px;">
+                                Cash
+                                @if (CashBalance >= 0)
+                                {
+                                    <MudIcon Icon="@Icons.Material.Outlined.TrendingUp" Style="font-size: 14px; color: var(--color-success);" />
+                                }
+                                else
+                                {
+                                    <MudIcon Icon="@Icons.Material.Outlined.TrendingDown" Style="font-size: 14px; color: var(--color-destructive);" />
+                                }
+                            </div>
                             <div style="font-size: 1.125rem; font-weight: 600; color: var(--text-main);">₱@FormatCompact(CashBalance)</div>
                         </div>
                         <div class="stat-grid-item">
-                            <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.25rem;">Assets</div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.25rem; display: flex; align-items: center; gap: 4px;">
+                                Assets
+                                @if (TotalAssets >= 0)
+                                {
+                                    <MudIcon Icon="@Icons.Material.Outlined.TrendingUp" Style="font-size: 14px; color: var(--color-success);" />
+                                }
+                                else
+                                {
+                                    <MudIcon Icon="@Icons.Material.Outlined.TrendingDown" Style="font-size: 14px; color: var(--color-destructive);" />
+                                }
+                            </div>
                             <div style="font-size: 1.125rem; font-weight: 600; color: var(--text-main);">₱@FormatCompact(TotalAssets)</div>
                         </div>
                         <div class="stat-grid-item">
-                            <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.25rem;">Liabilities</div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.25rem;">
+                                Liabilities
+                            </div>
                             <div style="font-size: 1.125rem; font-weight: 600; color: var(--text-main);">₱@FormatCompact(TotalLiabilities)</div>
                         </div>
                         <div class="stat-grid-item">
-                            <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.25rem;">Margin</div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.25rem; display: flex; align-items: center; gap: 4px;">
+                                Margin
+                                @if (ProfitMarginPercent >= 0)
+                                {
+                                    <MudIcon Icon="@Icons.Material.Outlined.TrendingUp" Style="font-size: 14px; color: var(--color-success);" />
+                                }
+                                else
+                                {
+                                    <MudIcon Icon="@Icons.Material.Outlined.TrendingDown" Style="font-size: 14px; color: var(--color-destructive);" />
+                                }
+                            </div>
                             <div style="font-size: 1.125rem; font-weight: 600; color: var(--text-main);">@ProfitMarginPercent.ToString("F1")%</div>
                         </div>
                     </div>
