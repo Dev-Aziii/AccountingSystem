@@ -11,212 +11,275 @@
 <PageTitle>Global User Management</PageTitle>
 
 <style>
-    .user-page-header {
+    /* 5-Column Responsive Grid for Stats */
+    .sa-stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    /* Premium KPI Cards */
+    .sa-metric-card {
+        padding: 1.5rem;
+        background: var(--bg-surface);
+        border-radius: var(--radius-lg);
+        border: 1px solid var(--border-color);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        transition: all 0.2s ease;
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        height: 100%;
+    }
+
+    .sa-metric-card:hover {
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+        border-color: #cbd5e1; /* Slate-300 */
+        transform: translateY(-2px);
+    }
+
+    .sa-metric-header {
         display: flex;
         justify-content: space-between;
-        align-items: center;
-        margin-bottom: 1.5rem;
+        align-items: flex-start;
+        margin-bottom: 1rem;
     }
 
-    .user-stats-row {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-        gap: 1rem;
-        margin-bottom: 1.5rem;
+    .sa-metric-label {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: var(--text-muted);
+        letter-spacing: -0.025em;
     }
 
-    .user-stat-card {
-        padding: 1rem 1.25rem;
-        background: white;
-        border-radius: 14px;
-        border: 1px solid rgba(22, 84, 127, 0.1);
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    .sa-metric-icon-wrapper {
+        width: 36px;
+        height: 36px;
+        border-radius: var(--radius-md);
         display: flex;
         align-items: center;
-        gap: 0.75rem;
+        justify-content: center;
+        background-color: var(--bg-muted);
     }
 
-    .user-stat-value {
-        font-size: 1.5rem;
-        font-weight: 800;
-        color: rgb(22, 84, 127);
-        line-height: 1.2;
-    }
-
-    .user-stat-label {
-        font-size: 0.7rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.3px;
-        color: rgb(22, 84, 127);
-        opacity: 0.65;
-    }
-
-    .user-table-card {
-        background: white;
-        border-radius: 20px;
-        border: 1px solid rgba(22, 84, 127, 0.1);
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
-        overflow: hidden;
+    .sa-metric-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--text-main);
+        line-height: 1;
+        letter-spacing: -0.05em;
     }
 </style>
 
-<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4 mb-10">
-    <!-- HEADER -->
-    <div class="user-page-header">
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-6 mb-10">
+    <div class="d-flex justify-space-between align-center mb-8">
         <div>
-            <MudText Typo="Typo.h5" Style="font-weight: 800; color: rgb(22, 84, 127);">
+            <h2 style="font-size: 1.75rem; font-weight: 700; letter-spacing: -0.025em; color: var(--text-main); margin: 0;">
                 Global User Directory
-            </MudText>
-            <MudText Typo="Typo.body2" Style="color: rgb(56, 146, 147);">
-                Manage all users across all tenant companies
-            </MudText>
+            </h2>
+            <p style="color: var(--text-muted); font-size: 0.875rem; margin: 0.25rem 0 0 0;">
+                Manage all users across all tenant companies.
+            </p>
         </div>
-        <MudButton Variant="Variant.Filled"
-                   Style="background: linear-gradient(135deg, rgb(22, 84, 127) 0%, rgb(56, 146, 147) 100%); color: white; border-radius: 12px;"
-                   StartIcon="@Icons.Material.Filled.Refresh"                   Size="Size.Medium" OnClick="LoadData">
-            Refresh
+        <MudButton Variant="Variant.Outlined"
+                   Class="shadcn-btn-outline"
+                   StartIcon="@Icons.Material.Outlined.Refresh"
+                   Size="Size.Small" 
+                   OnClick="LoadData"
+                   Disabled="isLoading">
+            Refresh Data
         </MudButton>
     </div>
 
-    <!-- QUICK STATS -->
-    <div class="user-stats-row">
-        <div class="user-stat-card">
-            <MudIcon Icon="@Icons.Material.Filled.People" Style="color: #1565C0;" />
-            <div>
-                <div class="user-stat-value">@users.Count</div>
-                <div class="user-stat-label">Total Users</div>
-            </div>
+    @if (isLoading)
+    {
+        <div class="sa-stats-grid">
+            @for (int i = 0; i < 5; i++)
+            {
+                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="120px" Style="border-radius: 8px;" />
+            }
         </div>
-        <div class="user-stat-card">
-            <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Style="color: #4CAF50;" />
-            <div>
-                <div class="user-stat-value">@users.Count(u => u.Status == "Active")</div>
-                <div class="user-stat-label">Active</div>
-            </div>
-        </div>
-        <div class="user-stat-card">
-            <MudIcon Icon="@Icons.Material.Filled.Warning" Style="color: #FF9800;" />
-            <div>
-                <div class="user-stat-value">@users.Count(u => u.Status == "Restricted")</div>
-                <div class="user-stat-label">Restricted</div>
-            </div>
-        </div>
-        <div class="user-stat-card">
-            <MudIcon Icon="@Icons.Material.Filled.Block" Style="color: #F44336;" />
-            <div>
-                <div class="user-stat-value">@users.Count(u => u.Status == "Blocked")</div>
-                <div class="user-stat-label">Blocked</div>
-            </div>
-        </div>
-        <div class="user-stat-card">
-            <MudIcon Icon="@Icons.Material.Filled.Business" Style="color: #6A1B9A;" />
-            <div>
-                <div class="user-stat-value">@users.Select(u => u.CompanyName).Distinct().Count()</div>
-                <div class="user-stat-label">Companies</div>
-            </div>
-        </div>
-    </div>
-
-    <!-- TABLE -->
-    <div class="user-table-card">
-        <MudTable Items="@users" Hover="true" Loading="@isLoading" Filter="new Func<GlobalUserDTO, bool>(FilterFunc)"
-                  Dense="false" Elevation="0" Style="background: transparent;">
-            <ToolBarContent>
-                <MudText Typo="Typo.h6" Style="color: rgb(22, 84, 127); font-weight: 700;">All System Users</MudText>
-                <MudSpacer />
-                <MudTextField @bind-Value="searchString" Placeholder="Search users or companies..."
-                              Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"                              IconSize="Size.Medium"
-                              Class="mt-0" Style="max-width: 300px;" />
-                <MudSelect T="string" @bind-Value="statusFilter" Label="Status" Class="ml-4" Style="max-width: 150px;">
-                    <MudSelectItem T="string" Value='@("All")'>All</MudSelectItem>
-                    <MudSelectItem T="string" Value='@("Active")'>Active</MudSelectItem>
-                    <MudSelectItem T="string" Value='@("Restricted")'>Restricted</MudSelectItem>
-                    <MudSelectItem T="string" Value='@("Blocked")'>Blocked</MudSelectItem>
-                </MudSelect>
-                <MudSelect T="string" @bind-Value="roleFilter" Label="Role" Class="ml-4" Style="max-width: 150px;">
-                    <MudSelectItem T="string" Value='@("All")'>All Roles</MudSelectItem>
-                    <MudSelectItem T="string" Value='@("Admin")'>Admin</MudSelectItem>
-                    <MudSelectItem T="string" Value='@("Accounting")'>Accounting</MudSelectItem>
-                    <MudSelectItem T="string" Value='@("Management")'>Management</MudSelectItem>
-                </MudSelect>
-            </ToolBarContent>
-            <HeaderContent>
-                <MudTh>Company</MudTh>
-                <MudTh>Full Name</MudTh>
-                <MudTh>Email</MudTh>
-                <MudTh>Role</MudTh>
-                <MudTh>Joined</MudTh>
-                <MudTh>Status</MudTh>
-                <MudTh Style="text-align: center;">Actions</MudTh>
-            </HeaderContent>
-            <RowTemplate>
-                <MudTd DataLabel="Company">
-                    <div class="d-flex align-center gap-2">
-                        <MudIcon Icon="@Icons.Material.Filled.Business" Size="Size.Small"
-                                 Style="color: rgb(22, 84, 127); opacity: 0.5;" />
-                        <b>@context.CompanyName</b>
+        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="400px" Style="border-radius: 8px;" />
+    }
+    else
+    {
+        <div class="sa-stats-grid">
+            <div class="sa-metric-card">
+                <div class="sa-metric-header">
+                    <div class="sa-metric-label">Total Users</div>
+                    <div class="sa-metric-icon-wrapper">
+                        <MudIcon Icon="@Icons.Material.Outlined.PeopleOutline" Size="Size.Small" Style="color: #3b82f6;" /> 
                     </div>
-                </MudTd>
-                <MudTd DataLabel="Name">@context.FullName</MudTd>
-                <MudTd DataLabel="Email">@context.Email</MudTd>
-                <MudTd DataLabel="Role">
-                    <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined"
-                             Color="@GetRoleColor(context.Role)">
-                        @context.Role
-                    </MudChip>
-                </MudTd>
-                <MudTd DataLabel="Joined">@context.CreatedAt.ToString("MMM dd, yyyy")</MudTd>
-                <MudTd DataLabel="Status">
-                    @switch (context.Status)
-                    {
-                        case "Active":
-                            <MudChip T="string" Color="Color.Success" Size="Size.Small" Variant="Variant.Filled">Active
-                            </MudChip>
-                            break;
-                        case "Restricted":
-                            <MudChip T="string" Color="Color.Warning" Size="Size.Small" Variant="Variant.Filled">Restricted
-                            </MudChip>
-                            break;
-                        case "Blocked":
-                            <MudChip T="string" Color="Color.Error" Size="Size.Small" Variant="Variant.Filled">Blocked</MudChip>
-                            break;
-                        default:
-                            <MudChip T="string" Color="Color.Default" Size="Size.Small">@context.Status</MudChip>
-                            break;
-                    }
-                </MudTd>
-                <MudTd DataLabel="Actions" Style="text-align: center;">
-                    <MudMenu Icon="@Icons.Material.Filled.MoreVert" Dense="true" AnchorOrigin="Origin.BottomRight">
-                        @if (context.Status != "Active")
+                </div>
+                <div class="sa-metric-value">@users.Count</div>
+            </div>
+            
+            <div class="sa-metric-card">
+                <div class="sa-metric-header">
+                    <div class="sa-metric-label">Active</div>
+                    <div class="sa-metric-icon-wrapper" style="background-color: #d1fae5;">
+                        <MudIcon Icon="@Icons.Material.Outlined.CheckCircleOutline" Size="Size.Small" Style="color: #10b981;" /> 
+                    </div>
+                </div>
+                <div class="sa-metric-value">@users.Count(u => u.Status == "Active")</div>
+            </div>
+            
+            <div class="sa-metric-card">
+                <div class="sa-metric-header">
+                    <div class="sa-metric-label">Restricted</div>
+                    <div class="sa-metric-icon-wrapper" style="background-color: #fef3c7;">
+                        <MudIcon Icon="@Icons.Material.Outlined.WarningAmber" Size="Size.Small" Style="color: #f59e0b;" /> 
+                    </div>
+                </div>
+                <div class="sa-metric-value">@users.Count(u => u.Status == "Restricted")</div>
+            </div>
+            
+            <div class="sa-metric-card">
+                <div class="sa-metric-header">
+                    <div class="sa-metric-label">Blocked</div>
+                    <div class="sa-metric-icon-wrapper" style="background-color: #fef2f2;">
+                        <MudIcon Icon="@Icons.Material.Outlined.Block" Size="Size.Small" Style="color: #ef4444;" /> 
+                    </div>
+                </div>
+                <div class="sa-metric-value">@users.Count(u => u.Status == "Blocked")</div>
+            </div>
+            
+            <div class="sa-metric-card">
+                <div class="sa-metric-header">
+                    <div class="sa-metric-label">Companies</div>
+                    <div class="sa-metric-icon-wrapper" style="background-color: #f3e8ff;">
+                        <MudIcon Icon="@Icons.Material.Outlined.Business" Size="Size.Small" Style="color: #8b5cf6;" /> 
+                    </div>
+                </div>
+                <div class="sa-metric-value">@users.Select(u => u.CompanyName).Distinct().Count()</div>
+            </div>
+        </div>
+
+        <MudCard Elevation="0" Outlined="true" Class="shadcn-card">
+            <MudTable Items="@users" Hover="true" Loading="@isLoading" Filter="new Func<GlobalUserDTO, bool>(FilterFunc)"
+                      Dense="false" Elevation="0" Class="shadcn-table">
+                <ToolBarContent>
+                    <div style="font-size: 1.125rem; font-weight: 600; color: var(--text-main); letter-spacing: -0.025em;">
+                        All System Users
+                    </div>
+                    <MudSpacer />
+                    <div class="d-flex align-center gap-3 flex-wrap">
+                        <MudTextField @bind-Value="searchString" 
+                                      Placeholder="Search users or companies..."
+                                      Adornment="Adornment.Start" 
+                                      AdornmentIcon="@Icons.Material.Outlined.Search" 
+                                      IconSize="Size.Small"
+                                      Variant="Variant.Outlined"
+                                      Margin="Margin.Dense"
+                                      Class="shadcn-input bg-surface m-0" 
+                                      Style="width: 250px;" />
+                                      
+                        <MudSelect T="string" 
+                                   @bind-Value="statusFilter" 
+                                   Variant="Variant.Outlined"
+                                   Margin="Margin.Dense"
+                                   Class="shadcn-input bg-surface m-0" 
+                                   Style="width: 140px;">
+                            <MudSelectItem T="string" Value='@("All")'>All Statuses</MudSelectItem>
+                            <MudSelectItem T="string" Value='@("Active")'>Active</MudSelectItem>
+                            <MudSelectItem T="string" Value='@("Restricted")'>Restricted</MudSelectItem>
+                            <MudSelectItem T="string" Value='@("Blocked")'>Blocked</MudSelectItem>
+                        </MudSelect>
+                        
+                        <MudSelect T="string" 
+                                   @bind-Value="roleFilter" 
+                                   Variant="Variant.Outlined"
+                                   Margin="Margin.Dense"
+                                   Class="shadcn-input bg-surface m-0" 
+                                   Style="width: 140px;">
+                            <MudSelectItem T="string" Value='@("All")'>All Roles</MudSelectItem>
+                            <MudSelectItem T="string" Value='@("Admin")'>Admin</MudSelectItem>
+                            <MudSelectItem T="string" Value='@("Accounting")'>Accounting</MudSelectItem>
+                            <MudSelectItem T="string" Value='@("Management")'>Management</MudSelectItem>
+                        </MudSelect>
+                    </div>
+                </ToolBarContent>
+                <HeaderContent>
+                    <MudTh>Company</MudTh>
+                    <MudTh>Full Name</MudTh>
+                    <MudTh>Email</MudTh>
+                    <MudTh>Role</MudTh>
+                    <MudTh>Joined</MudTh>
+                    <MudTh>Status</MudTh>
+                    <MudTh Style="text-align: right;">Actions</MudTh>
+                </HeaderContent>
+                <RowTemplate Context="context">
+                    <MudTd DataLabel="Company">
+                        <div class="d-flex align-center gap-2" style="color: var(--text-main); font-weight: 500;">
+                            <MudIcon Icon="@Icons.Material.Outlined.Business" Size="Size.Small" Style="color: var(--text-muted);" />
+                            @context.CompanyName
+                        </div>
+                    </MudTd>
+                    <MudTd DataLabel="Name">
+                        <div style="font-weight: 500; color: var(--text-main);">@context.FullName</div>
+                    </MudTd>
+                    <MudTd DataLabel="Email">
+                        <div style="color: var(--text-muted); font-size: 0.875rem;">@context.Email</div>
+                    </MudTd>
+                    <MudTd DataLabel="Role">
+                        <span class="shadcn-badge @GetRoleBadgeClass(context.Role)">
+                            @context.Role
+                        </span>
+                    </MudTd>
+                    <MudTd DataLabel="Joined" Style="white-space: nowrap;">
+                        <div style="color: var(--text-muted); font-size: 0.875rem;">@context.CreatedAt.ToString("MMM dd, yyyy")</div>
+                    </MudTd>
+                    <MudTd DataLabel="Status">
+                        @switch (context.Status)
                         {
-                            <MudMenuItem Icon="@Icons.Material.Filled.CheckCircle" IconColor="Color.Success"
-                                         OnClick="@(() => ChangeUserStatus(context, "Active"))">
-                                Activate
-                            </MudMenuItem>
+                            case "Active":
+                                <span class="shadcn-badge badge-green">Active</span>
+                                break;
+                            case "Restricted":
+                                <span class="shadcn-badge badge-orange">Restricted</span>
+                                break;
+                            case "Blocked":
+                                <span class="shadcn-badge badge-red">Blocked</span>
+                                break;
+                            default:
+                                <span class="shadcn-badge badge-slate">@context.Status</span>
+                                break;
                         }
-                        @if (context.Status != "Restricted")
-                        {
-                            <MudMenuItem Icon="@Icons.Material.Filled.Warning" IconColor="Color.Warning"
-                                         OnClick="@(() => ChangeUserStatus(context, "Restricted"))">
-                                Restrict
-                            </MudMenuItem>
-                        }
-                        @if (context.Status != "Blocked")
-                        {
-                            <MudMenuItem Icon="@Icons.Material.Filled.Block" IconColor="Color.Error"
-                                         OnClick="@(() => ConfirmBlockUser(context))">
-                                Block
-                            </MudMenuItem>
-                        }
-                    </MudMenu>
-                </MudTd>
-            </RowTemplate>
-            <PagerContent>
-                <MudTablePager />
-            </PagerContent>
-        </MudTable>
-    </div>
+                    </MudTd>
+                    <MudTd DataLabel="Actions" Style="text-align: right;">
+                        <MudMenu Icon="@Icons.Material.Outlined.MoreVert" Dense="true" AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight">
+                            @if (context.Status != "Active")
+                            {
+                                <MudMenuItem Icon="@Icons.Material.Outlined.CheckCircleOutline" 
+                                             OnClick="@(() => ConfirmActivateUser(context))">
+                                    Activate
+                                </MudMenuItem>
+                            }
+                            @if (context.Status != "Restricted")
+                            {
+                                <MudMenuItem Icon="@Icons.Material.Outlined.WarningAmber" 
+                                             OnClick="@(() => ConfirmRestrictUser(context))">
+                                    Restrict
+                                </MudMenuItem>
+                            }
+                            @if (context.Status != "Blocked")
+                            {
+                                <MudMenuItem Icon="@Icons.Material.Outlined.Block" 
+                                             Style="color: var(--color-destructive);"
+                                             OnClick="@(() => ConfirmBlockUser(context))">
+                                    Block
+                                </MudMenuItem>
+                            }
+                        </MudMenu>
+                    </MudTd>
+                </RowTemplate>
+                <PagerContent>
+                    <MudTablePager />
+                </PagerContent>
+            </MudTable>
+        </MudCard>
+    }
 </MudContainer>
 
 @code {
@@ -264,11 +327,39 @@
         }
     }
 
+    private async Task ConfirmActivateUser(GlobalUserDTO user)
+    {
+        var result = await ShowConfirmDialog(
+            $"Activate user '{user.FullName}'?",
+            $"{user.Email} will be granted full access to their role in the system.",
+            "Activate",
+            Color.Success);
+
+        if (result)
+        {
+            await ChangeUserStatus(user, "Active");
+        }
+    }
+
+    private async Task ConfirmRestrictUser(GlobalUserDTO user)
+    {
+        var result = await ShowConfirmDialog(
+            $"Restrict user '{user.FullName}'?",
+            $"{user.Email} will have limited access within the system.",
+            "Restrict",
+            Color.Warning);
+
+        if (result)
+        {
+            await ChangeUserStatus(user, "Restricted");
+        }
+    }
+
     private async Task ConfirmBlockUser(GlobalUserDTO user)
     {
         var result = await ShowConfirmDialog(
             $"Block user '{user.FullName}'?",
-            $"{user.Email} will be prevented from logging in until unblocked.",
+            $"{user.Email} will be completely prevented from logging in until unblocked.",
             "Block",
             Color.Error);
 
@@ -278,14 +369,13 @@
         }
     }
 
-    private Color GetRoleColor(string? role) => role switch
+    private string GetRoleBadgeClass(string? role) => role switch
     {
-        "Admin" => Color.Primary,
-        "Accounting" => Color.Info,
-        "Management" => Color.Secondary,
-        _ => Color.Default
+        "Admin" => "badge-indigo",
+        "Accounting" => "badge-blue",
+        "Management" => "badge-slate",
+        _ => "badge-slate"
     };
-
 
     private async Task<bool> ShowConfirmDialog(string content, string subText, string buttonText, Color color)
     {

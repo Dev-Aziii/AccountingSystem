@@ -11,195 +11,249 @@
 <PageTitle>Tenant Management</PageTitle>
 
 <style>
-    .tenant-page-header {
+    /* Premium KPI Cards */
+    .sa-metric-card {
+        padding: 1.5rem;
+        background: var(--bg-surface);
+        border-radius: var(--radius-lg);
+        border: 1px solid var(--border-color);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        transition: all 0.2s ease;
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        height: 100%;
+    }
+
+    .sa-metric-card:hover {
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+        border-color: #cbd5e1; /* Slate-300 */
+        transform: translateY(-2px);
+    }
+
+    .sa-metric-header {
         display: flex;
         justify-content: space-between;
-        align-items: center;
-        margin-bottom: 1.5rem;
+        align-items: flex-start;
+        margin-bottom: 1rem;
     }
 
-    .tenant-stats-row {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-        gap: 1rem;
-        margin-bottom: 1.5rem;
+    .sa-metric-label {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: var(--text-muted);
+        letter-spacing: -0.025em;
     }
 
-    .tenant-stat-card {
-        padding: 1rem 1.25rem;
-        background: white;
-        border-radius: 14px;
-        border: 1px solid rgba(22, 84, 127, 0.1);
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    .sa-metric-icon-wrapper {
+        width: 36px;
+        height: 36px;
+        border-radius: var(--radius-md);
         display: flex;
         align-items: center;
-        gap: 0.75rem;
+        justify-content: center;
+        background-color: var(--bg-muted);
     }
 
-    .tenant-stat-value {
-        font-size: 1.5rem;
-        font-weight: 800;
-        color: rgb(22, 84, 127);
-        line-height: 1.2;
-    }
-
-    .tenant-stat-label {
-        font-size: 0.7rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.3px;
-        color: rgb(22, 84, 127);
-        opacity: 0.65;
-    }
-
-    .tenant-table-card {
-        background: white;
-        border-radius: 20px;
-        border: 1px solid rgba(22, 84, 127, 0.1);
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
-        overflow: hidden;
+    .sa-metric-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--text-main);
+        line-height: 1;
+        letter-spacing: -0.05em;
     }
 </style>
 
-<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4 mb-10">
-    <!-- HEADER -->
-    <div class="tenant-page-header">
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-6 mb-10">
+    <div class="d-flex justify-space-between align-center mb-8">
         <div>
-            <MudText Typo="Typo.h5" Style="font-weight: 800; color: rgb(22, 84, 127);">
+            <h2 style="font-size: 1.75rem; font-weight: 700; letter-spacing: -0.025em; color: var(--text-main); margin: 0;">
                 Tenant Management
-            </MudText>
-            <MudText Typo="Typo.body2" Style="color: rgb(56, 146, 147);">
-                Manage all registered companies in the system
-            </MudText>
+            </h2>
+            <p style="color: var(--text-muted); font-size: 0.875rem; margin: 0.25rem 0 0 0;">
+                Manage all registered companies in the system.
+            </p>
         </div>
-        <MudButton Variant="Variant.Filled"
-                   Style="background: linear-gradient(135deg, rgb(22, 84, 127) 0%, rgb(56, 146, 147) 100%); color: white; border-radius: 12px;"
-                   StartIcon="@Icons.Material.Filled.Refresh"                   Size="Size.Medium" OnClick="LoadData">
-            Refresh
+        <MudButton Variant="Variant.Outlined"
+                   Class="shadcn-btn-outline"
+                   StartIcon="@Icons.Material.Outlined.Refresh"
+                   Size="Size.Small" 
+                   OnClick="LoadData"
+                   Disabled="isLoading">
+            Refresh Data
         </MudButton>
     </div>
 
-    <!-- QUICK STATS -->
-    <div class="tenant-stats-row">
-        <div class="tenant-stat-card">
-            <MudIcon Icon="@Icons.Material.Filled.Business" Style="color: #1565C0;" />
-            <div>
-                <div class="tenant-stat-value">@tenants.Count</div>
-                <div class="tenant-stat-label">Total Tenants</div>
-            </div>
-        </div>
-        <div class="tenant-stat-card">
-            <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Style="color: #4CAF50;" />
-            <div>
-                <div class="tenant-stat-value">@tenants.Count(t => t.Status == "Active")</div>
-                <div class="tenant-stat-label">Active</div>
-            </div>
-        </div>
-        <div class="tenant-stat-card">
-            <MudIcon Icon="@Icons.Material.Filled.PauseCircle" Style="color: #FF9800;" />
-            <div>
-                <div class="tenant-stat-value">@tenants.Count(t => t.Status == "Suspended")</div>
-                <div class="tenant-stat-label">Suspended</div>
-            </div>
-        </div>
-        <div class="tenant-stat-card">
-            <MudIcon Icon="@Icons.Material.Filled.Block" Style="color: #F44336;" />
-            <div>
-                <div class="tenant-stat-value">@tenants.Count(t => t.Status == "Blocked")</div>
-                <div class="tenant-stat-label">Blocked</div>
-            </div>
-        </div>
-    </div>
+    @if (isLoading)
+    {
+        <MudGrid Spacing="4" Class="mb-6">
+            @for (int i = 0; i < 4; i++)
+            {
+                <MudItem xs="12" sm="6" lg="3">
+                    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="120px" Style="border-radius: 8px;" />
+                </MudItem>
+            }
+        </MudGrid>
+        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="400px" Style="border-radius: 8px;" />
+    }
+    else
+    {
+        <MudGrid Spacing="4" Class="mb-6">
+            <MudItem xs="12" sm="6" lg="3">
+                <div class="sa-metric-card">
+                    <div class="sa-metric-header">
+                        <div class="sa-metric-label">Total Tenants</div>
+                        <div class="sa-metric-icon-wrapper">
+                            <MudIcon Icon="@Icons.Material.Outlined.Business" Size="Size.Small" Style="color: #3b82f6;" /> 
+                        </div>
+                    </div>
+                    <div class="sa-metric-value">@tenants.Count</div>
+                </div>
+            </MudItem>
+            <MudItem xs="12" sm="6" lg="3">
+                <div class="sa-metric-card">
+                    <div class="sa-metric-header">
+                        <div class="sa-metric-label">Active</div>
+                        <div class="sa-metric-icon-wrapper" style="background-color: #d1fae5;">
+                            <MudIcon Icon="@Icons.Material.Outlined.CheckCircleOutline" Size="Size.Small" Style="color: #10b981;" /> 
+                        </div>
+                    </div>
+                    <div class="sa-metric-value">@tenants.Count(t => t.Status == "Active")</div>
+                </div>
+            </MudItem>
+            <MudItem xs="12" sm="6" lg="3">
+                <div class="sa-metric-card">
+                    <div class="sa-metric-header">
+                        <div class="sa-metric-label">Suspended</div>
+                        <div class="sa-metric-icon-wrapper" style="background-color: #fef3c7;">
+                            <MudIcon Icon="@Icons.Material.Outlined.PauseCircleOutline" Size="Size.Small" Style="color: #f59e0b;" /> 
+                        </div>
+                    </div>
+                    <div class="sa-metric-value">@tenants.Count(t => t.Status == "Suspended")</div>
+                </div>
+            </MudItem>
+            <MudItem xs="12" sm="6" lg="3">
+                <div class="sa-metric-card">
+                    <div class="sa-metric-header">
+                        <div class="sa-metric-label">Blocked</div>
+                        <div class="sa-metric-icon-wrapper" style="background-color: #fef2f2;">
+                            <MudIcon Icon="@Icons.Material.Outlined.Block" Size="Size.Small" Style="color: #ef4444;" /> 
+                        </div>
+                    </div>
+                    <div class="sa-metric-value">@tenants.Count(t => t.Status == "Blocked")</div>
+                </div>
+            </MudItem>
+        </MudGrid>
 
-    <!-- TABLE -->
-    <div class="tenant-table-card">
-        <MudTable Items="@tenants" Hover="true" Loading="@isLoading" Filter="new Func<TenantDTO, bool>(FilterFunc)"
-                  Dense="false" Elevation="0" Style="background: transparent;">
-            <ToolBarContent>
-                <MudText Typo="Typo.h6" Style="color: rgb(22, 84, 127); font-weight: 700;">Registered Companies
-                </MudText>
-                <MudSpacer />
-                <MudTextField @bind-Value="searchString" Placeholder="Search tenants..."                              Adornment="Adornment.Start"
-                              AdornmentIcon="@Icons.Material.Filled.Search"                              IconSize="Size.Medium" Class="mt-0"
-                              Style="max-width: 300px;" />
-                <MudSelect T="string" @bind-Value="statusFilter" Label="Status" Class="ml-4" Style="max-width: 150px;">
-                    <MudSelectItem T="string" Value='@("All")'>All</MudSelectItem>
-                    <MudSelectItem T="string" Value='@("Active")'>Active</MudSelectItem>
-                    <MudSelectItem T="string" Value='@("Suspended")'>Suspended</MudSelectItem>
-                    <MudSelectItem T="string" Value='@("Blocked")'>Blocked</MudSelectItem>
-                </MudSelect>
-            </ToolBarContent>
-            <HeaderContent>
-                <MudTh>Company Name</MudTh>
-                <MudTh>Address</MudTh>
-                <MudTh>Registered</MudTh>
-                <MudTh>Users</MudTh>
-                <MudTh>Last Activity</MudTh>
-                <MudTh>Status</MudTh>
-                <MudTh Style="text-align: center;">Actions</MudTh>
-            </HeaderContent>
-            <RowTemplate>
-                <MudTd DataLabel="Name"><b>@context.Name</b></MudTd>
-                <MudTd DataLabel="Address">@(context.Address ?? "—")</MudTd>
-                <MudTd DataLabel="Registered">@context.CreatedAt.ToString("MMM dd, yyyy")</MudTd>
-                <MudTd DataLabel="Users">
-                    <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="Color.Primary">
-                        @context.UserCount users
-                    </MudChip>
-                </MudTd>
-                <MudTd DataLabel="Last Activity">
-                    @(context.LastActivityDate?.ToString("MMM dd, yyyy") ?? "No activity")
-                </MudTd>
-                <MudTd DataLabel="Status">
-                    @switch (context.Status)
-                    {
-                        case "Active":
-                            <MudChip T="string" Color="Color.Success" Size="Size.Small" Variant="Variant.Filled">Active
-                            </MudChip>
-                            break;
-                        case "Suspended":
-                            <MudChip T="string" Color="Color.Warning" Size="Size.Small" Variant="Variant.Filled">Suspended
-                            </MudChip>
-                            break;
-                        case "Blocked":
-                            <MudChip T="string" Color="Color.Error" Size="Size.Small" Variant="Variant.Filled">Blocked</MudChip>
-                            break;
-                        default:
-                            <MudChip T="string" Color="Color.Default" Size="Size.Small">@context.Status</MudChip>
-                            break;
-                    }
-                </MudTd>
-                <MudTd DataLabel="Actions" Style="text-align: center;">
-                    <MudMenu Icon="@Icons.Material.Filled.MoreVert" Dense="true" AnchorOrigin="Origin.BottomRight">
-                        @if (context.Status != "Active")
+        <MudCard Elevation="0" Outlined="true" Class="shadcn-card">
+            <MudTable Items="@tenants" Hover="true" Loading="@isLoading" Filter="new Func<TenantDTO, bool>(FilterFunc)"
+                      Dense="false" Elevation="0" Class="shadcn-table">
+                <ToolBarContent>
+                    <div style="font-size: 1.125rem; font-weight: 600; color: var(--text-main); letter-spacing: -0.025em;">
+                        Registered Companies
+                    </div>
+                    <MudSpacer />
+                    <div class="d-flex align-center gap-3">
+                        <MudTextField @bind-Value="searchString" 
+                                      Placeholder="Search tenants..." 
+                                      Adornment="Adornment.Start"
+                                      AdornmentIcon="@Icons.Material.Outlined.Search" 
+                                      IconSize="Size.Small" 
+                                      Variant="Variant.Outlined"
+                                      Margin="Margin.Dense"
+                                      Class="shadcn-input bg-surface m-0"
+                                      Style="width: 250px;" />
+                                      
+                        <MudSelect T="string" 
+                                   @bind-Value="statusFilter" 
+                                   Variant="Variant.Outlined" 
+                                   Margin="Margin.Dense"
+                                   Class="shadcn-input bg-surface m-0" 
+                                   Style="width: 150px;">
+                            <MudSelectItem T="string" Value='@("All")'>All Statuses</MudSelectItem>
+                            <MudSelectItem T="string" Value='@("Active")'>Active</MudSelectItem>
+                            <MudSelectItem T="string" Value='@("Suspended")'>Suspended</MudSelectItem>
+                            <MudSelectItem T="string" Value='@("Blocked")'>Blocked</MudSelectItem>
+                        </MudSelect>
+                    </div>
+                </ToolBarContent>
+                <HeaderContent>
+                    <MudTh>Company Name</MudTh>
+                    <MudTh>Address</MudTh>
+                    <MudTh>Registered</MudTh>
+                    <MudTh>Users</MudTh>
+                    <MudTh>Last Activity</MudTh>
+                    <MudTh>Status</MudTh>
+                    <MudTh Style="text-align: right;">Actions</MudTh>
+                </HeaderContent>
+                <RowTemplate Context="context">
+                    <MudTd DataLabel="Name">
+                        <div style="font-weight: 500; color: var(--text-main);">@context.Name</div>
+                    </MudTd>
+                    <MudTd DataLabel="Address">
+                        <div style="color: var(--text-muted); font-size: 0.875rem;">@(context.Address ?? "—")</div>
+                    </MudTd>
+                    <MudTd DataLabel="Registered" Style="white-space: nowrap;">
+                        <div style="color: var(--text-muted); font-size: 0.875rem;">@context.CreatedAt.ToString("MMM dd, yyyy")</div>
+                    </MudTd>
+                    <MudTd DataLabel="Users">
+                        <span class="shadcn-badge badge-slate" style="font-size: 0.7rem;">@context.UserCount users</span>
+                    </MudTd>
+                    <MudTd DataLabel="Last Activity" Style="white-space: nowrap;">
+                        <div style="color: var(--text-muted); font-size: 0.875rem;">
+                            @(context.LastActivityDate?.ToString("MMM dd, yyyy") ?? "No activity")
+                        </div>
+                    </MudTd>
+                    <MudTd DataLabel="Status">
+                        @switch (context.Status)
                         {
-                            <MudMenuItem Icon="@Icons.Material.Filled.CheckCircle" IconColor="Color.Success"
-                                         OnClick="@(() => ChangeStatus(context, "Active"))">
-                                Activate
-                            </MudMenuItem>
+                            case "Active":
+                                <span class="shadcn-badge badge-green">Active</span>
+                                break;
+                            case "Suspended":
+                                <span class="shadcn-badge badge-orange">Suspended</span>
+                                break;
+                            case "Blocked":
+                                <span class="shadcn-badge badge-red">Blocked</span>
+                                break;
+                            default:
+                                <span class="shadcn-badge badge-slate">@context.Status</span>
+                                break;
                         }
-                        @if (context.Status != "Suspended")
-                        {
-                            <MudMenuItem Icon="@Icons.Material.Filled.PauseCircle" IconColor="Color.Warning"
-                                         OnClick="@(() => ChangeStatus(context, "Suspended"))">
-                                Suspend
-                            </MudMenuItem>
-                        }
-                        @if (context.Status != "Blocked")
-                        {
-                            <MudMenuItem Icon="@Icons.Material.Filled.Block" IconColor="Color.Error"
-                                         OnClick="@(() => ConfirmBlock(context))">
-                                Block
-                            </MudMenuItem>
-                        }
-                    </MudMenu>
-                </MudTd>
-            </RowTemplate>
-            <PagerContent>
-                <MudTablePager />
-            </PagerContent>
-        </MudTable>
-    </div>
+                    </MudTd>
+                    <MudTd DataLabel="Actions" Style="text-align: right;">
+                        <MudMenu Icon="@Icons.Material.Outlined.MoreVert" Dense="true" AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight">
+                            @if (context.Status != "Active")
+                            {
+                                <MudMenuItem Icon="@Icons.Material.Outlined.CheckCircleOutline"
+                                             OnClick="@(() => ConfirmActivate(context))">
+                                    Activate
+                                </MudMenuItem>
+                            }
+                            @if (context.Status != "Suspended")
+                            {
+                                <MudMenuItem Icon="@Icons.Material.Outlined.PauseCircleOutline"
+                                             OnClick="@(() => ConfirmSuspend(context))">
+                                    Suspend
+                                </MudMenuItem>
+                            }
+                            @if (context.Status != "Blocked")
+                            {
+                                <MudMenuItem Icon="@Icons.Material.Outlined.Block" 
+                                             Style="color: var(--color-destructive);"
+                                             OnClick="@(() => ConfirmBlock(context))">
+                                    Block
+                                </MudMenuItem>
+                            }
+                        </MudMenu>
+                    </MudTd>
+                </RowTemplate>
+                <PagerContent>
+                    <MudTablePager />
+                </PagerContent>
+            </MudTable>
+        </MudCard>
+    }
 </MudContainer>
 
 @code {
@@ -246,6 +300,34 @@
         }
     }
 
+    private async Task ConfirmActivate(TenantDTO tenant)
+    {
+        var result = await ShowConfirmDialog(
+            $"Activate company '{tenant.Name}'?",
+            "Users from this company will be granted full access to the system.",
+            "Activate",
+            Color.Success);
+
+        if (result)
+        {
+            await ChangeStatus(tenant, "Active");
+        }
+    }
+
+    private async Task ConfirmSuspend(TenantDTO tenant)
+    {
+        var result = await ShowConfirmDialog(
+            $"Suspend company '{tenant.Name}'?",
+            "Users from this company will be temporarily restricted from accessing the system.",
+            "Suspend",
+            Color.Warning);
+
+        if (result)
+        {
+            await ChangeStatus(tenant, "Suspended");
+        }
+    }
+
     private async Task ConfirmBlock(TenantDTO tenant)
     {
         var result = await ShowConfirmDialog(
@@ -259,7 +341,6 @@
             await ChangeStatus(tenant, "Blocked");
         }
     }
-
 
     private async Task<bool> ShowConfirmDialog(string content, string subText, string buttonText, Color color)
     {

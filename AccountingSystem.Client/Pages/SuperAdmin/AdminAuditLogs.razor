@@ -8,70 +8,68 @@
 
 <PageTitle>Super Admin Audit Logs</PageTitle>
 
-<style>
-    .audit-page-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 1.5rem;
-    }
-
-    .audit-table-card {
-        background: white;
-        border-radius: 20px;
-        border: 1px solid rgba(22, 84, 127, 0.1);
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
-        overflow: hidden;
-    }
-
-    .audit-detail-row {
-        background: rgba(22, 84, 127, 0.03);
-        padding: 0.75rem 1rem;
-        border-radius: 8px;
-        margin-top: 0.25rem;
-        font-size: 0.85rem;
-    }
-</style>
-
-<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4 mb-10">
-    <!-- HEADER -->
-    <div class="audit-page-header">
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-6 mb-10">
+    <div class="d-flex justify-space-between align-center mb-8">
         <div>
-            <MudText Typo="Typo.h5" Style="font-weight: 800; color: rgb(22, 84, 127);">
+            <h2 style="font-size: 1.75rem; font-weight: 700; letter-spacing: -0.025em; color: var(--text-main); margin: 0;">
                 Super Admin Audit Logs
-            </MudText>
-            <MudText Typo="Typo.body2" Style="color: rgb(56, 146, 147);">
-                Complete history of all administrative actions performed by Super Admins
-            </MudText>
+            </h2>
+            <p style="color: var(--text-muted); font-size: 0.875rem; margin: 0.25rem 0 0 0;">
+                Complete history of all administrative actions performed by Super Admins.
+            </p>
         </div>
-        <MudButton Variant="Variant.Filled"
-                   Style="background: linear-gradient(135deg, rgb(22, 84, 127) 0%, rgb(56, 146, 147) 100%); color: white; border-radius: 12px;"
-                   StartIcon="@Icons.Material.Filled.Refresh"                   Size="Size.Medium" OnClick="LoadData">
-            Refresh
+        <MudButton Variant="Variant.Outlined"
+                   Class="shadcn-btn-outline"
+                   StartIcon="@Icons.Material.Outlined.Refresh"
+                   Size="Size.Small"
+                   OnClick="LoadData"
+                   Disabled="isLoading">
+            Refresh Data
         </MudButton>
     </div>
 
-    <!-- TABLE -->
-    <div class="audit-table-card">
+    <MudCard Elevation="0" Outlined="true" Class="shadcn-card">
         <MudTable Items="@logs" Hover="true" Loading="@isLoading"
-                  Filter="new Func<SuperAdminAuditLogDTO, bool>(FilterFunc)"                  Dense="false" Elevation="0"
-                  Style="background: transparent;">
+                  Filter="new Func<SuperAdminAuditLogDTO, bool>(FilterFunc)"
+                  Dense="false" Elevation="0" Class="shadcn-table">
             <ToolBarContent>
-                <MudText Typo="Typo.h6" Style="color: rgb(22, 84, 127); font-weight: 700;">Action History</MudText>
+                <div style="font-size: 1.125rem; font-weight: 600; color: var(--text-main); letter-spacing: -0.025em;">
+                    Action History
+                </div>
                 <MudSpacer />
-                <MudTextField @bind-Value="searchString" Placeholder="Search logs..."                              Adornment="Adornment.Start"
-                              AdornmentIcon="@Icons.Material.Filled.Search"                              IconSize="Size.Medium" Class="mt-0"
-                              Style="max-width: 300px;" />
-                <MudSelect T="string" @bind-Value="actionFilter" Label="Action" Class="ml-4" Style="max-width: 200px;">
-                    <MudSelectItem T="string" Value='@("All")'>All Actions</MudSelectItem>
-                    <MudSelectItem T="string" Value='@("COMPANY_STATUS_CHANGE")'>Company Status</MudSelectItem>
-                    <MudSelectItem T="string" Value='@("USER_STATUS_CHANGE")'>User Status</MudSelectItem>
-                </MudSelect>
-                <MudSelect T="string" @bind-Value="targetFilter" Label="Target" Class="ml-4" Style="max-width: 150px;">
-                    <MudSelectItem T="string" Value='@("All")'>All Targets</MudSelectItem>
-                    <MudSelectItem T="string" Value='@("Company")'>Companies</MudSelectItem>
-                    <MudSelectItem T="string" Value='@("User")'>Users</MudSelectItem>
-                </MudSelect>
+                <div class="d-flex align-center gap-3 flex-wrap">
+                    <MudTextField @bind-Value="searchString"
+                                  Placeholder="Search logs..."
+                                  Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Outlined.Search"
+                                  IconSize="Size.Small"
+                                  Variant="Variant.Outlined"
+                                  Margin="Margin.Dense"
+                                  Class="shadcn-input bg-surface m-0"
+                                  Style="width: 250px;" />
+
+                    <MudSelect T="string"
+                               @bind-Value="actionFilter"
+                               Variant="Variant.Outlined"
+                               Margin="Margin.Dense"
+                               Class="shadcn-input bg-surface m-0"
+                               Style="width: 160px;">
+                        <MudSelectItem T="string" Value='@("All")'>All Actions</MudSelectItem>
+                        <MudSelectItem T="string" Value='@("COMPANY_STATUS_CHANGE")'>Company Status</MudSelectItem>
+                        <MudSelectItem T="string" Value='@("USER_STATUS_CHANGE")'>User Status</MudSelectItem>
+                    </MudSelect>
+
+                    <MudSelect T="string"
+                               @bind-Value="targetFilter"
+                               Variant="Variant.Outlined"
+                               Margin="Margin.Dense"
+                               Class="shadcn-input bg-surface m-0"
+                               Style="width: 150px;">
+                        <MudSelectItem T="string" Value='@("All")'>All Targets</MudSelectItem>
+                        <MudSelectItem T="string" Value='@("Company")'>Companies</MudSelectItem>
+                        <MudSelectItem T="string" Value='@("User")'>Users</MudSelectItem>
+                    </MudSelect>
+                </div>
             </ToolBarContent>
             <HeaderContent>
                 <MudTh>Timestamp</MudTh>
@@ -80,62 +78,56 @@
                 <MudTh>Target Type</MudTh>
                 <MudTh>Target</MudTh>
                 <MudTh>Change</MudTh>
-                <MudTh>Details</MudTh>
+                <MudTh Style="text-align: center;">Details</MudTh>
             </HeaderContent>
-            <RowTemplate>
-                <MudTd DataLabel="Timestamp">
-                    <div>
-                        <MudText Typo="Typo.body2">@context.Timestamp.ToString("MMM dd, yyyy")</MudText>
-                        <MudText Typo="Typo.caption" Color="Color.Tertiary">@context.Timestamp.ToString("HH:mm:ss")
-                        </MudText>
-                    </div>
+            <RowTemplate Context="context">
+                <MudTd DataLabel="Timestamp" Style="white-space: nowrap;">
+                    <div style="font-weight: 500; color: var(--text-main);">@context.Timestamp.ToString("MMM dd, yyyy")</div>
+                    <div style="color: var(--text-muted); font-size: 0.75rem;">@context.Timestamp.ToString("HH:mm:ss")</div>
                 </MudTd>
                 <MudTd DataLabel="Admin">
-                    <div class="d-flex align-center gap-2">
-                        <MudIcon Icon="@Icons.Material.Filled.Security" Size="Size.Small"
-                                 Style="color: rgb(22, 84, 127); opacity: 0.5;" />
+                    <div class="d-flex align-center gap-2" style="color: var(--text-main);">
+                        <MudIcon Icon="@Icons.Material.Outlined.Security" Size="Size.Small" Style="color: var(--text-muted);" />
                         @context.AdminEmail
                     </div>
                 </MudTd>
                 <MudTd DataLabel="Action">
-                    <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined"
-                             Color="@GetActionChipColor(context.Action)">
+                    <span class="shadcn-badge @GetActionBadgeClass(context.Action)">
                         @FormatActionName(context.Action)
-                    </MudChip>
+                    </span>
                 </MudTd>
                 <MudTd DataLabel="Target Type">
-                    <MudChip T="string" Size="Size.Small" Variant="Variant.Text"
-                             Icon="@GetTargetIcon(context.TargetType)">
+                    <span class="shadcn-badge badge-slate" style="background: transparent; border-color: var(--border-color);">
+                        <MudIcon Icon="@GetTargetIcon(context.TargetType)" Style="font-size: 14px; margin-right: 4px; color: var(--text-muted);" />
                         @context.TargetType
-                    </MudChip>
+                    </span>
                 </MudTd>
                 <MudTd DataLabel="Target">
-                    <b>@context.TargetName</b>
+                    <span style="font-weight: 500; color: var(--text-main);">@context.TargetName</span>
                 </MudTd>
                 <MudTd DataLabel="Change">
                     @if (!string.IsNullOrEmpty(context.OldValue) && !string.IsNullOrEmpty(context.NewValue))
                     {
-                        <div class="d-flex align-center gap-1">
-                            <MudChip T="string" Size="Size.Small" Color="@GetStatusColor(context.OldValue)"
-                                     Variant="Variant.Filled">
+                        <div class="d-flex align-center gap-2">
+                            <span class="shadcn-badge @GetStatusBadgeClass(context.OldValue)">
                                 @context.OldValue
-                            </MudChip>
-                            <MudIcon Icon="@Icons.Material.Filled.ArrowForward" Size="Size.Small" Style="opacity: 0.5;" />
-                            <MudChip T="string" Size="Size.Small" Color="@GetStatusColor(context.NewValue)"
-                                     Variant="Variant.Filled">
+                            </span>
+                            <MudIcon Icon="@Icons.Material.Outlined.ArrowRightAlt" Size="Size.Small" Style="color: var(--text-muted);" />
+                            <span class="shadcn-badge @GetStatusBadgeClass(context.NewValue)">
                                 @context.NewValue
-                            </MudChip>
+                            </span>
                         </div>
                     }
                     else
                     {
-                        <MudText Typo="Typo.body2" Color="Color.Tertiary">—</MudText>
+                        <span style="color: var(--text-muted); font-size: 0.875rem;">—</span>
                     }
                 </MudTd>
-                <MudTd DataLabel="Details">
-                    <MudTooltip Text="@context.Details">
-                        <MudIcon Icon="@Icons.Material.Filled.Info" Size="Size.Small"
-                                 Style="color: rgb(56, 146, 147); cursor: pointer;" />
+                <MudTd DataLabel="Details" Style="text-align: center;">
+                    <MudTooltip Text="@context.Details" Arrow="true" Placement="Placement.Left">
+                        <MudIconButton Icon="@Icons.Material.Outlined.Info"
+                                       Size="Size.Small"
+                                       Class="shadcn-icon-btn" />
                     </MudTooltip>
                 </MudTd>
             </RowTemplate>
@@ -143,7 +135,7 @@
                 <MudTablePager />
             </PagerContent>
         </MudTable>
-    </div>
+    </MudCard>
 </MudContainer>
 
 @code {
@@ -182,27 +174,27 @@
         _ => action
     };
 
-    private Color GetActionChipColor(string action) => action switch
+    private string GetActionBadgeClass(string action) => action switch
     {
-        "COMPANY_STATUS_CHANGE" => Color.Primary,
-        "USER_STATUS_CHANGE" => Color.Secondary,
-        _ => Color.Default
+        "COMPANY_STATUS_CHANGE" => "badge-blue",
+        "USER_STATUS_CHANGE" => "badge-indigo",
+        _ => "badge-slate"
     };
 
     private string GetTargetIcon(string targetType) => targetType switch
     {
-        "Company" => Icons.Material.Filled.Business,
-        "User" => Icons.Material.Filled.Person,
-        _ => Icons.Material.Filled.Info
+        "Company" => Icons.Material.Outlined.Business,
+        "User" => Icons.Material.Outlined.Person,
+        _ => Icons.Material.Outlined.Info
     };
 
-    private Color GetStatusColor(string status) => status switch
+    private string GetStatusBadgeClass(string status) => status switch
     {
-        "Active" => Color.Success,
-        "Suspended" => Color.Warning,
-        "Restricted" => Color.Warning,
-        "Blocked" => Color.Error,
-        _ => Color.Default
+        "Active" => "badge-green",
+        "Suspended" => "badge-orange",
+        "Restricted" => "badge-orange",
+        "Blocked" => "badge-red",
+        _ => "badge-slate"
     };
 
     private bool FilterFunc(SuperAdminAuditLogDTO element)

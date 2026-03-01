@@ -13,10 +13,12 @@ namespace AccountingSystem.API.Controllers
     public class SuperAdminController : ControllerBase
     {
         private readonly AccountingDbContext _context;
+        private readonly ILogger<SuperAdminController> _logger;
 
-        public SuperAdminController(AccountingDbContext context)
+        public SuperAdminController(AccountingDbContext context, ILogger<SuperAdminController> logger)
         {
             _context = context;
+            _logger = logger;
         }
 
         private int GetCurrentUserId() => int.Parse(User.FindFirst("UserId")?.Value ?? "0");
@@ -90,6 +92,11 @@ namespace AccountingSystem.API.Controllers
             monthlyUserGrowth = allMonths.Select(m =>
                 monthlyUserGrowth.FirstOrDefault(r => r.Month == m) ?? new MonthlyActivityDTO { Month = m, Count = 0 }
             ).ToList();
+
+            _logger.LogInformation("Dashboard MonthlyRegistrations: {MonthlyRegistrations}",
+                string.Join(", ", monthlyRegistrations.Select(m => $"{m.Month}:{m.Count}")));
+            _logger.LogInformation("Dashboard MonthlyUserGrowth: {MonthlyUserGrowth}",
+                string.Join(", ", monthlyUserGrowth.Select(m => $"{m.Month}:{m.Count}")));
 
             // Recent SuperAdmin actions
             var recentActions = await _context.SuperAdminAuditLogs

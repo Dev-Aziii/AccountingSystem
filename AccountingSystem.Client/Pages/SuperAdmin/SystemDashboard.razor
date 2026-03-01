@@ -2,7 +2,6 @@
 @using AccountingSystem.Shared.DTOs
 @using AccountingSystem.Client.Services
 @using MudBlazor
-@using MudBlazor.Charts
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "SuperAdmin")]
 @inject SuperAdminService SuperAdminService
 @inject NavigationManager NavManager
@@ -10,104 +9,83 @@
 <PageTitle>System Overview</PageTitle>
 
 <style>
-    .sa-dashboard-grid {
-        display: grid;
-        grid-template-columns: repeat(12, 1fr);
-        gap: 1.5rem;
-    }
-
-    .sa-span-3 { grid-column: span 3; }
-    .sa-span-4 { grid-column: span 4; }
-    .sa-span-6 { grid-column: span 6; }
-    .sa-span-8 { grid-column: span 8; }
-    .sa-span-12 { grid-column: span 12; }
-
-    @@media (max-width: 1400px) {
-        .sa-span-3 { grid-column: span 6; }
-        .sa-span-4 { grid-column: span 6; }
-    }
-
-    @@media (max-width: 768px) {
-        .sa-span-3, .sa-span-4, .sa-span-6, .sa-span-8 { grid-column: span 12; }
-    }
-
     .sa-metric-card {
-        padding: 1.25rem;
-        background: white;
-        border-radius: 16px;
-        border: 1px solid rgba(22, 84, 127, 0.1);
+        padding: 1.5rem;
+        background: var(--bg-surface);
+        border-radius: var(--radius-lg);
+        border: 1px solid var(--border-color);
         display: flex;
-        align-items: center;
-        gap: 1rem;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+        flex-direction: column;
+        justify-content: space-between;
+        transition: all 0.2s ease;
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
         cursor: pointer;
+        height: 100%;
     }
 
-    .sa-metric-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 12px 24px rgba(22, 84, 127, 0.12);
-        border-color: var(--theme-primary);
-    }
+        .sa-metric-card:hover {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+            border-color: #cbd5e1;
+            transform: translateY(-2px);
+        }
 
-    .sa-metric-icon {
-        width: 48px;
-        height: 48px;
-        border-radius: 14px;
+    .sa-metric-header {
         display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        flex-shrink: 0;
-    }
-
-    .sa-metric-value {
-        font-size: 1.75rem;
-        font-weight: 800;
-        background: linear-gradient(135deg, rgb(22, 84, 127) 0%, rgb(56, 146, 147) 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        line-height: 1.2;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 1rem;
     }
 
     .sa-metric-label {
-        font-size: 0.7rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        color: rgb(22, 84, 127);
-        opacity: 0.7;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: var(--text-muted);
+        letter-spacing: -0.025em;
+    }
+
+    .sa-metric-icon-wrapper {
+        width: 36px;
+        height: 36px;
+        border-radius: var(--radius-md);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: var(--bg-muted);
+    }
+
+    .sa-metric-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--text-main);
+        line-height: 1;
+        letter-spacing: -0.05em;
     }
 
     .sa-featured-card {
-        background: white;
-        border-radius: 20px;
+        background: var(--bg-surface);
+        border-radius: var(--radius-lg);
         padding: 1.5rem;
-        border: 1px solid rgba(22, 84, 127, 0.1);
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+        border: 1px solid var(--border-color);
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
         height: 100%;
         display: flex;
         flex-direction: column;
-    }
-
-    .sa-featured-card:hover {
-        box-shadow: 0 16px 40px rgba(22, 84, 127, 0.12);
     }
 
     .sa-section-header {
         display: flex;
         align-items: center;
         gap: 0.5rem;
-        margin-bottom: 1rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 1px solid var(--bg-muted);
+        padding-bottom: 1rem;
     }
 
     .sa-section-title {
-        font-size: 0.85rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        color: rgb(22, 84, 127);
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--text-main);
+        letter-spacing: -0.025em;
     }
 
     .sa-status-dot {
@@ -119,147 +97,408 @@
     }
 
     .sa-log-item {
-        padding: 0.75rem 0;
-        border-bottom: 1px solid rgba(0,0,0,0.06);
+        padding: 1rem 0;
+        border-bottom: 1px solid var(--bg-muted);
         display: flex;
         align-items: flex-start;
-        gap: 0.75rem;
+        gap: 1rem;
     }
 
-    .sa-log-item:last-child {
-        border-bottom: none;
+        .sa-log-item:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+    .sa-health-banner {
+        background-color: #f0fdf4;
+        border: 1px solid #a7f3d0;
+        border-radius: var(--radius-lg);
+        padding: 1.25rem 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    /* ── Year filter pill group (inside chart header) ── */
+    .sa-year-filter {
+        display: flex;
+        align-items: center;
+        gap: 0.2rem;
+        background: var(--bg-muted, #f1f5f9);
+        border-radius: 9999px;
+        padding: 0.175rem;
+    }
+
+    .sa-year-btn {
+        padding: 0.2rem 0.7rem;
+        border-radius: 9999px;
+        border: none;
+        background: transparent;
+        font-size: 0.75rem;
+        font-weight: 500;
+        color: var(--text-muted, #64748b);
+        cursor: pointer;
+        transition: all 0.15s ease;
+        white-space: nowrap;
+        line-height: 1.6;
+    }
+
+        .sa-year-btn:hover {
+            color: var(--text-main, #0f172a);
+        }
+
+        .sa-year-btn.active {
+            background: var(--bg-surface, #fff);
+            color: var(--text-main, #0f172a);
+            font-weight: 600;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+    /* ── Custom SVG Chart ── */
+    .custom-chart-wrap {
+        width: 100%;
+        flex: 1;
+        min-height: 300px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .custom-chart-svg {
+        width: 100%;
+        height: 300px;
+        display: block;
+        overflow: visible;
+    }
+
+    .chart-area-path {
+        fill: url(#areaGradient);
+        opacity: 0.35;
+        animation: fadeInArea 0.8s ease forwards;
+    }
+
+    .chart-line-path {
+        fill: none;
+        stroke: #10b981;
+        stroke-width: 2.5px;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        animation: drawLine 1.2s ease forwards;
+    }
+
+    .chart-marker {
+        fill: #10b981;
+        stroke: #fff;
+        stroke-width: 2.5px;
+        cursor: pointer;
+        transition: opacity 0.15s ease;
+        animation: popIn 0.3s ease backwards;
+    }
+
+    .chart-grid-line {
+        stroke: var(--border-color, #e2e8f0);
+        stroke-width: 1;
+        stroke-dasharray: 4 4;
+        opacity: 0.6;
+    }
+
+    .chart-axis-label {
+        font-size: 11px;
+        fill: var(--text-muted, #94a3b8);
+        font-family: inherit;
+        font-weight: 500;
+        letter-spacing: -0.01em;
+    }
+
+    .chart-tooltip {
+        position: absolute;
+        background: var(--bg-surface, #fff);
+        border: 1px solid var(--border-color, #e2e8f0);
+        border-radius: 8px;
+        padding: 8px 12px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: var(--text-main, #0f172a);
+        pointer-events: none;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        white-space: nowrap;
+        transition: opacity 0.15s ease;
+        opacity: 0;
+        z-index: 10;
+        transform: translate(-50%, -110%);
+    }
+
+    .chart-tooltip.visible {
+        opacity: 1;
+    }
+
+    .chart-tooltip-label {
+        font-weight: 400;
+        color: var(--text-muted, #64748b);
+        font-size: 0.72rem;
+        display: block;
+        margin-bottom: 2px;
     }
 
     .sa-chart-container {
         flex: 1;
         min-height: 250px;
+        width: 100%;
     }
 </style>
 
-<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4 mb-10">
-    <!-- HEADER -->
-    <div class="d-flex justify-space-between align-center mb-6">
+@((MarkupString)@"<style>
+    @@keyframes fadeInArea {
+        from { opacity: 0; }
+        to   { opacity: 0.35; }
+    }
+    @@keyframes drawLine {
+        from { stroke-dashoffset: 2000; }
+        to   { stroke-dashoffset: 0; }
+    }
+    @@keyframes popIn {
+        from { opacity: 0; }
+        to   { opacity: 1; }
+    }
+</style>".Replace("@@keyframes", "@keyframes"))
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-6 mb-10">
+
+    <div class="d-flex justify-space-between align-center mb-8">
         <div>
             @if (isLoading)
             {
-                <MudSkeleton SkeletonType="SkeletonType.Text" Width="280px" Height="28px" Class="mb-1" />
-                <MudSkeleton SkeletonType="SkeletonType.Text" Width="200px" Height="16px" />
+                <MudSkeleton SkeletonType="SkeletonType.Text" Width="280px" Height="32px" Class="mb-1" />
+                <MudSkeleton SkeletonType="SkeletonType.Text" Width="300px" Height="16px" />
             }
             else
             {
-                <MudText Typo="Typo.h5" Style="font-weight: 800; color: rgb(22, 84, 127);">
+                <h2 style="font-size: 1.75rem; font-weight: 700; letter-spacing: -0.025em; color: var(--text-main); margin: 0;">
                     System Overview
-                </MudText>
-                <MudText Typo="Typo.body2" Style="color: rgb(56, 146, 147);">
-                    @DateTime.Now.ToString("dddd, MMMM dd, yyyy") &mdash; Super Administrator Dashboard
-                </MudText>
+                </h2>
+                <p style="color: var(--text-muted); font-size: 0.875rem; margin: 0.25rem 0 0 0;">
+                    Super Administrator Dashboard &bull; @DateTime.Now.ToString("MMMM dd, yyyy")
+                </p>
             }
         </div>
         @if (!isLoading)
         {
-            <MudButton Variant="Variant.Filled"
-                       Style="background: linear-gradient(135deg, rgb(22, 84, 127) 0%, rgb(56, 146, 147) 100%); color: white; border-radius: 12px;"
-                       StartIcon="@Icons.Material.Filled.Refresh"
-                       Size="Size.Medium" OnClick="LoadData">
-                Refresh
+            <MudButton Variant="Variant.Outlined"
+                       Class="shadcn-btn-outline"
+                       StartIcon="@Icons.Material.Outlined.Refresh"
+                       Size="Size.Small"
+                       OnClick="LoadData">
+                Refresh Data
             </MudButton>
         }
     </div>
 
     @if (isLoading)
     {
-        <div class="sa-dashboard-grid">
+        <MudGrid Spacing="4">
             @for (int i = 0; i < 4; i++)
             {
-                <div class="sa-span-3">
-                    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="90px" Style="border-radius: 16px;" />
-                </div>
+                <MudItem xs="12" sm="6" lg="3">
+                    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="120px" Style="border-radius: 8px;" />
+                </MudItem>
             }
-            <div class="sa-span-6">
-                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="350px" Style="border-radius: 20px;" />
-            </div>
-            <div class="sa-span-6">
-                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="350px" Style="border-radius: 20px;" />
-            </div>
-        </div>
+            <MudItem xs="12">
+                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="380px" Style="border-radius: 8px;" />
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="350px" Style="border-radius: 8px;" />
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="350px" Style="border-radius: 8px;" />
+            </MudItem>
+        </MudGrid>
     }
     else if (stats != null)
     {
-        <div class="sa-dashboard-grid">
-            <!-- ROW 1: KPI METRIC CARDS -->
-            <div class="sa-span-3">
-                <div class="sa-metric-card" @onclick='() => NavManager.NavigateTo("/superadmin/tenants")'>
-                    <div class="sa-metric-icon" style="background: linear-gradient(135deg, #1565C0, #42A5F5);">
-                        <MudIcon Icon="@Icons.Material.Filled.Business" Size="Size.Medium" />
-                    </div>
-                    <div>
-                        <div class="sa-metric-value">@stats.TotalCompanies</div>
-                        <div class="sa-metric-label">Total Tenants</div>
-                    </div>
-                </div>
-            </div>
-            <div class="sa-span-3">
-                <div class="sa-metric-card" @onclick='() => NavManager.NavigateTo("/superadmin/tenants")'>
-                    <div class="sa-metric-icon" style="background: linear-gradient(135deg, #2E7D32, #66BB6A);">
-                        <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Medium" />
-                    </div>
-                    <div>
-                        <div class="sa-metric-value">@stats.ActiveCompanies</div>
-                        <div class="sa-metric-label">Active Tenants</div>
-                    </div>
-                </div>
-            </div>
-            <div class="sa-span-3">
-                <div class="sa-metric-card" @onclick='() => NavManager.NavigateTo("/superadmin/users")'>
-                    <div class="sa-metric-icon" style="background: linear-gradient(135deg, #6A1B9A, #AB47BC);">
-                        <MudIcon Icon="@Icons.Material.Filled.People" Size="Size.Medium" />
-                    </div>
-                    <div>
-                        <div class="sa-metric-value">@stats.TotalUsers</div>
-                        <div class="sa-metric-label">Total Users</div>
-                    </div>
-                </div>
-            </div>
-            <div class="sa-span-3">
-                <div class="sa-metric-card" @onclick='() => NavManager.NavigateTo("/superadmin/users")'>
-                    <div class="sa-metric-icon" style="background: linear-gradient(135deg, #C62828, #EF5350);">
-                        <MudIcon Icon="@Icons.Material.Filled.Block" Size="Size.Medium" />
-                    </div>
-                    <div>
-                        <div class="sa-metric-value">@(stats.SuspendedCompanies + stats.BlockedCompanies)</div>
-                        <div class="sa-metric-label">Issues</div>
-                    </div>
-                </div>
-            </div>
+        <MudGrid Spacing="4">
 
-            <!-- ROW 2: STATUS BREAKDOWN CARDS -->
-            <div class="sa-span-6">
+            <!-- KPI: Total Tenants -->
+            <MudItem xs="12" sm="6" lg="3">
+                <div class="sa-metric-card" @onclick='() => NavManager.NavigateTo("/superadmin/tenants")'>
+                    <div class="sa-metric-header">
+                        <div class="sa-metric-label">Total Tenants</div>
+                        <div class="sa-metric-icon-wrapper">
+                            <MudIcon Icon="@Icons.Material.Outlined.Business" Size="Size.Small" Style="color: #3b82f6;" />
+                        </div>
+                    </div>
+                    <div class="sa-metric-value">@stats.TotalCompanies</div>
+                </div>
+            </MudItem>
+
+            <!-- KPI: Active Tenants -->
+            <MudItem xs="12" sm="6" lg="3">
+                <div class="sa-metric-card" @onclick='() => NavManager.NavigateTo("/superadmin/tenants")'>
+                    <div class="sa-metric-header">
+                        <div class="sa-metric-label">Active Tenants</div>
+                        <div class="sa-metric-icon-wrapper" style="background-color: #d1fae5;">
+                            <MudIcon Icon="@Icons.Material.Outlined.CheckCircleOutline" Size="Size.Small" Style="color: #10b981;" />
+                        </div>
+                    </div>
+                    <div class="sa-metric-value">@stats.ActiveCompanies</div>
+                </div>
+            </MudItem>
+
+            <!-- KPI: Total Users -->
+            <MudItem xs="12" sm="6" lg="3">
+                <div class="sa-metric-card" @onclick='() => NavManager.NavigateTo("/superadmin/users")'>
+                    <div class="sa-metric-header">
+                        <div class="sa-metric-label">Total Users</div>
+                        <div class="sa-metric-icon-wrapper">
+                            <MudIcon Icon="@Icons.Material.Outlined.PeopleOutline" Size="Size.Small" Style="color: #8b5cf6;" />
+                        </div>
+                    </div>
+                    <div class="sa-metric-value">@stats.TotalUsers</div>
+                </div>
+            </MudItem>
+
+            <!-- KPI: System Issues -->
+            <MudItem xs="12" sm="6" lg="3">
+                <div class="sa-metric-card" @onclick='() => NavManager.NavigateTo("/superadmin/users")'>
+                    <div class="sa-metric-header">
+                        <div class="sa-metric-label">System Issues</div>
+                        <div class="sa-metric-icon-wrapper" style="background-color: #fef2f2;">
+                            <MudIcon Icon="@Icons.Material.Outlined.WarningAmber" Size="Size.Small" Style="color: #ef4444;" />
+                        </div>
+                    </div>
+                    <div class="sa-metric-value">@(stats.SuspendedCompanies + stats.BlockedCompanies)</div>
+                </div>
+            </MudItem>
+
+            <!-- Custom SVG Line Chart: Tenant Registrations -->
+            <MudItem xs="12">
+                <div class="sa-featured-card">
+
+                    <!-- Chart header: title left, year pills + peak right -->
+                    <div class="sa-section-header">
+                        <MudIcon Icon="@Icons.Material.Outlined.TrendingUp" Size="Size.Small" Style="color: var(--text-muted);" />
+                        <span class="sa-section-title">Tenant Registrations</span>
+                        <MudSpacer />
+
+                        <!-- peak badge -->
+                        @if (filteredChartPoints.Count > 0)
+                        {
+                            <span style="font-size: 0.78rem; color: var(--text-muted); font-weight: 500; margin-right: 0.75rem;">
+                                Peak: @filteredChartPoints.Max(p => p.Value) tenants
+                            </span>
+                        }
+
+                        <!-- year pill filter -->
+                        <div class="sa-year-filter">
+                            @foreach (var yr in availableYears)
+                            {
+                                var capturedYr = yr;
+                                <button class="sa-year-btn @(selectedYear == capturedYr ? "active" : "")"
+                                        @onclick="() => OnYearChanged(capturedYr)">
+                                    @capturedYr
+                                </button>
+                            }
+                        </div>
+                    </div>
+
+                    @if (filteredChartPoints.Count > 0)
+                    {
+                        <div class="custom-chart-wrap" id="chart-container">
+                            <div class="chart-tooltip @(tooltipVisible ? "visible" : "")"
+                                 style="left: @(tooltipX)px; top: @(tooltipY)px;">
+                                <span class="chart-tooltip-label">@tooltipLabel</span>
+                                @tooltipValue tenants
+                            </div>
+
+                            <svg class="custom-chart-svg"
+                                 viewBox="0 0 @SvgWidth @SvgHeight"
+                                 preserveAspectRatio="none"
+                                 xmlns="http://www.w3.org/2000/svg">
+                                <defs>
+                                    <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="0%" stop-color="#10b981" stop-opacity="0.5"></stop>
+                                        <stop offset="100%" stop-color="#10b981" stop-opacity="0"></stop>
+                                    </linearGradient>
+                                </defs>
+
+                                @for (int g = 0; g <= 4; g++)
+                                {
+                                    double gy    = PadTop + (ChartHeight / 4.0) * g;
+                                    double gVal  = yMax - (yMax / 4.0) * g;
+                                    int    gInt  = (int)Math.Round(gVal);
+                                    string gyStr = gy.ToString("F1", System.Globalization.CultureInfo.InvariantCulture);
+                                    string lx    = ((int)(PadLeft - 8)).ToString(System.Globalization.CultureInfo.InvariantCulture);
+                                    string ly    = (gy + 4).ToString("F1", System.Globalization.CultureInfo.InvariantCulture);
+                                    string x2Str = (SvgWidth - PadRight).ToString("F1", System.Globalization.CultureInfo.InvariantCulture);
+                                    string plStr = PadLeft.ToString("F1", System.Globalization.CultureInfo.InvariantCulture);
+
+                                    @((MarkupString)$"<line class=\"chart-grid-line\" x1=\"{plStr}\" y1=\"{gyStr}\" x2=\"{x2Str}\" y2=\"{gyStr}\" />")
+                                    @((MarkupString)$"<text class=\"chart-axis-label\" x=\"{lx}\" y=\"{ly}\" text-anchor=\"end\">{gInt}</text>")
+                                }
+
+                                @foreach (var pt in filteredChartPoints)
+                                {
+                                    string ptx = pt.X.ToString("F1", System.Globalization.CultureInfo.InvariantCulture);
+                                    string pty = (SvgHeight - PadBottom + 18).ToString("F1", System.Globalization.CultureInfo.InvariantCulture);
+                                    string lbl = System.Net.WebUtility.HtmlEncode(pt.Label);
+                                    @((MarkupString)$"<text class=\"chart-axis-label\" x=\"{ptx}\" y=\"{pty}\" text-anchor=\"middle\">{lbl}</text>")
+                                }
+
+                                <path class="chart-area-path" d="@areaPath"></path>
+                                <path class="chart-line-path" d="@linePath"></path>
+
+                                @foreach (var pt in filteredChartPoints)
+                                {
+                                    var capturedPt = pt;
+                                    <circle class="chart-marker"
+                                            cx="@pt.X.ToString("F1", System.Globalization.CultureInfo.InvariantCulture)"
+                                            cy="@pt.Y.ToString("F1", System.Globalization.CultureInfo.InvariantCulture)"
+                                            r="5"
+                                            stroke-width="2.5"
+                                            @onmouseover="@(() => ShowTooltip(capturedPt))"
+                                            @onmouseout="@HideTooltip">
+                                    </circle>
+                                }
+                            </svg>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="d-flex align-center justify-center" style="height: 300px;">
+                            <MudText Typo="Typo.body2" Color="Color.Tertiary">No registration data for @selectedYear</MudText>
+                        </div>
+                    }
+                </div>
+            </MudItem>
+
+            <!-- Donut Chart: Tenant Status -->
+            <MudItem xs="12" md="6">
                 <div class="sa-featured-card">
                     <div class="sa-section-header">
-                        <MudIcon Icon="@Icons.Material.Filled.Business" Size="Size.Small" Style="color: rgb(22, 84, 127);" />
-                        <span class="sa-section-title">Tenant Status Breakdown</span>
+                        <MudIcon Icon="@Icons.Material.Outlined.PieChart" Size="Size.Small" Style="color: var(--text-muted);" />
+                        <span class="sa-section-title">Tenant Status</span>
                     </div>
-                    <div class="d-flex gap-4 mb-4">
-                        <div class="d-flex align-center gap-2">
-                            <span class="sa-status-dot" style="background: #4CAF50;"></span>
-                            <MudText Typo="Typo.body2"><b>@stats.ActiveCompanies</b> Active</MudText>
+                    <div class="d-flex gap-4 mb-2" style="font-size: 0.875rem;">
+                        <div class="d-flex align-center gap-1">
+                            <span class="sa-status-dot" style="background: #10b981;"></span>
+                            <span><b>@stats.ActiveCompanies</b> Active</span>
                         </div>
-                        <div class="d-flex align-center gap-2">
-                            <span class="sa-status-dot" style="background: #FF9800;"></span>
-                            <MudText Typo="Typo.body2"><b>@stats.SuspendedCompanies</b> Suspended</MudText>
+                        <div class="d-flex align-center gap-1">
+                            <span class="sa-status-dot" style="background: #f59e0b;"></span>
+                            <span><b>@stats.SuspendedCompanies</b> Suspended</span>
                         </div>
-                        <div class="d-flex align-center gap-2">
-                            <span class="sa-status-dot" style="background: #F44336;"></span>
-                            <MudText Typo="Typo.body2"><b>@stats.BlockedCompanies</b> Blocked</MudText>
+                        <div class="d-flex align-center gap-1">
+                            <span class="sa-status-dot" style="background: #ef4444;"></span>
+                            <span><b>@stats.BlockedCompanies</b> Blocked</span>
                         </div>
                     </div>
                     <div class="sa-chart-container">
                         @if (stats.TotalCompanies > 0)
                         {
-                            <MudChart ChartType="ChartType.Donut"
+                            <MudChart @key="tenantChartRenderKey"
+                                      ChartType="ChartType.Donut"
                                       InputData="@tenantChartData"
                                       InputLabels="@tenantChartLabels"
-                                      Width="100%" Height="250px"
+                                      Width="100%"
+                                      Height="250px"
                                       ChartOptions="@donutOptions" />
                         }
                         else
@@ -270,35 +509,38 @@
                         }
                     </div>
                 </div>
-            </div>
+            </MudItem>
 
-            <div class="sa-span-6">
+            <!-- Donut Chart: User Status -->
+            <MudItem xs="12" md="6">
                 <div class="sa-featured-card">
                     <div class="sa-section-header">
-                        <MudIcon Icon="@Icons.Material.Filled.People" Size="Size.Small" Style="color: rgb(22, 84, 127);" />
-                        <span class="sa-section-title">User Status Breakdown</span>
+                        <MudIcon Icon="@Icons.Material.Outlined.DonutLarge" Size="Size.Small" Style="color: var(--text-muted);" />
+                        <span class="sa-section-title">User Status</span>
                     </div>
-                    <div class="d-flex gap-4 mb-4">
-                        <div class="d-flex align-center gap-2">
-                            <span class="sa-status-dot" style="background: #4CAF50;"></span>
-                            <MudText Typo="Typo.body2"><b>@stats.ActiveUsers</b> Active</MudText>
+                    <div class="d-flex gap-4 mb-2" style="font-size: 0.875rem;">
+                        <div class="d-flex align-center gap-1">
+                            <span class="sa-status-dot" style="background: #10b981;"></span>
+                            <span><b>@stats.ActiveUsers</b> Active</span>
                         </div>
-                        <div class="d-flex align-center gap-2">
-                            <span class="sa-status-dot" style="background: #FF9800;"></span>
-                            <MudText Typo="Typo.body2"><b>@stats.RestrictedUsers</b> Restricted</MudText>
+                        <div class="d-flex align-center gap-1">
+                            <span class="sa-status-dot" style="background: #f59e0b;"></span>
+                            <span><b>@stats.RestrictedUsers</b> Restricted</span>
                         </div>
-                        <div class="d-flex align-center gap-2">
-                            <span class="sa-status-dot" style="background: #F44336;"></span>
-                            <MudText Typo="Typo.body2"><b>@stats.BlockedUsers</b> Blocked</MudText>
+                        <div class="d-flex align-center gap-1">
+                            <span class="sa-status-dot" style="background: #ef4444;"></span>
+                            <span><b>@stats.BlockedUsers</b> Blocked</span>
                         </div>
                     </div>
                     <div class="sa-chart-container">
                         @if (stats.TotalUsers > 0)
                         {
-                            <MudChart ChartType="ChartType.Donut"
+                            <MudChart @key="userChartRenderKey"
+                                      ChartType="ChartType.Donut"
                                       InputData="@userChartData"
                                       InputLabels="@userChartLabels"
-                                      Width="100%" Height="250px"
+                                      Width="100%"
+                                      Height="250px"
                                       ChartOptions="@donutOptions" />
                         }
                         else
@@ -309,55 +551,21 @@
                         }
                     </div>
                 </div>
-            </div>
+            </MudItem>
 
-            <!-- ROW 3: TREND CHARTS -->
-            <div class="sa-span-6">
+            <!-- Recent Actions Log -->
+            <MudItem xs="12">
                 <div class="sa-featured-card">
                     <div class="sa-section-header">
-                        <MudIcon Icon="@Icons.Material.Filled.TrendingUp" Size="Size.Small" Style="color: rgb(22, 84, 127);" />
-                        <span class="sa-section-title">Tenant Registrations (12 Months)</span>
-                    </div>
-                    <div class="sa-chart-container">
-                        <MudChart ChartType="ChartType.Bar"
-                                  InputData="@registrationChartData"
-                                  InputLabels="@registrationChartLabels"
-                                  XAxisLabels="@registrationChartLabels"
-                                  Width="100%" Height="250px"
-                                  ChartOptions="@barOptions" />
-                    </div>
-                </div>
-            </div>
-
-            <div class="sa-span-6">
-                <div class="sa-featured-card">
-                    <div class="sa-section-header">
-                        <MudIcon Icon="@Icons.Material.Filled.GroupAdd" Size="Size.Small" Style="color: rgb(22, 84, 127);" />
-                        <span class="sa-section-title">User Growth (12 Months)</span>
-                    </div>
-                    <div class="sa-chart-container">
-                        <MudChart ChartType="ChartType.Line"
-                                  InputData="@userGrowthChartData"
-                                  InputLabels="@userGrowthChartLabels"
-                                  XAxisLabels="@userGrowthChartLabels"
-                                  Width="100%" Height="250px"
-                                  ChartOptions="@lineOptions" />
-                    </div>
-                </div>
-            </div>
-
-            <!-- ROW 4: RECENT ACTIVITY -->
-            <div class="sa-span-12">
-                <div class="sa-featured-card">
-                    <div class="sa-section-header">
-                        <MudIcon Icon="@Icons.Material.Filled.History" Size="Size.Small" Style="color: rgb(22, 84, 127);" />
-                        <span class="sa-section-title">Recent Super Admin Actions</span>
+                        <MudIcon Icon="@Icons.Material.Outlined.History" Size="Size.Small" Style="color: var(--text-muted);" />
+                        <span class="sa-section-title">Recent Actions</span>
                         <MudSpacer />
-                        <MudButton Variant="Variant.Text" Size="Size.Small"
-                                   StartIcon="@Icons.Material.Filled.OpenInNew"
+                        <MudButton Variant="Variant.Text"
+                                   Size="Size.Small"
+                                   EndIcon="@Icons.Material.Outlined.ArrowForward"
                                    OnClick='() => NavManager.NavigateTo("/superadmin/audit-logs")'
-                                   Style="color: rgb(56, 146, 147);">
-                            View All
+                                   Style="color: var(--text-muted); text-transform: none; font-weight: 500;">
+                            View Audit Logs
                         </MudButton>
                     </div>
                     @if (stats.RecentActions.Any())
@@ -365,88 +573,106 @@
                         @foreach (var log in stats.RecentActions.Take(5))
                         {
                             <div class="sa-log-item">
-                                <MudIcon Icon="@GetActionIcon(log.Action)" Size="Size.Small"
-                                         Style="@($"color: {GetActionColor(log.Action)}; margin-top: 2px;")" />
+                                <MudIcon Icon="@GetActionIcon(log.Action)" Size="Size.Small" Style="color: var(--text-muted); margin-top: 2px;" />
                                 <div style="flex: 1;">
-                                    <MudText Typo="Typo.body2">
-                                        <b>@log.AdminEmail</b> @FormatAction(log.Action)
-                                        <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined"
-                                                 Style="font-size: 0.7rem;">@log.TargetType</MudChip>
-                                        <b>@log.TargetName</b>
-                                    </MudText>
+                                    <div style="font-size: 0.875rem; color: var(--text-main);">
+                                        <span style="font-weight: 600;">@log.AdminEmail</span> @FormatAction(log.Action)
+                                        <span style="font-weight: 600;">@log.TargetName</span>
+                                        <span class="shadcn-badge badge-slate" style="font-size: 0.65rem; margin-left: 4px;">@log.TargetType</span>
+                                    </div>
                                     @if (!string.IsNullOrEmpty(log.OldValue) && !string.IsNullOrEmpty(log.NewValue))
                                     {
-                                        <MudText Typo="Typo.caption" Color="Color.Tertiary">
+                                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">
                                             @log.OldValue &rarr; @log.NewValue
-                                        </MudText>
+                                        </div>
                                     }
                                 </div>
-                                <MudText Typo="Typo.caption" Color="Color.Tertiary" Style="white-space: nowrap;">
+                                <div style="font-size: 0.75rem; color: var(--text-muted); white-space: nowrap;">
                                     @log.Timestamp.ToString("MMM dd, HH:mm")
-                                </MudText>
+                                </div>
                             </div>
                         }
                     }
                     else
                     {
                         <div class="d-flex align-center justify-center pa-6">
-                            <MudText Typo="Typo.body2" Color="Color.Tertiary">No recent actions recorded.</MudText>
+                            <div style="font-size: 0.875rem; color: var(--text-muted);">No recent actions recorded.</div>
                         </div>
                     }
                 </div>
-            </div>
+            </MudItem>
 
-            <!-- ROW 5: SYSTEM HEALTH -->
-            <div class="sa-span-12">
-                <div class="sa-featured-card" style="background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%); border-color: rgba(76, 175, 80, 0.3);">
-                    <div class="d-flex align-center gap-3">
-                        <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" Size="Size.Large" />
-                        <div>
-                            <MudText Typo="Typo.h6" Style="color: #2E7D32; font-weight: 700;">System Operational</MudText>
-                            <MudText Typo="Typo.body2" Style="color: #388E3C;">
-                                All services running normally &bull; @stats.TotalCompanies tenants &bull; @stats.TotalUsers users
-                            </MudText>
+            <!-- System Health Banner -->
+            <MudItem xs="12">
+                <div class="sa-health-banner">
+                    <MudIcon Icon="@Icons.Material.Outlined.CheckCircleOutline" Size="Size.Large" Style="color: #059669;" />
+                    <div>
+                        <div style="font-size: 1rem; font-weight: 600; color: #064e3b; letter-spacing: -0.025em;">System Operational</div>
+                        <div style="font-size: 0.875rem; color: #047857; margin-top: 0.125rem;">
+                            All microservices and database instances running normally &bull; @stats.TotalCompanies active tenants
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
+            </MudItem>
+
+        </MudGrid>
     }
+
 </MudContainer>
 
 @code {
     private SystemDashboardDTO? stats;
     private bool isLoading = true;
 
-    // Chart data
-    private double[] tenantChartData = Array.Empty<double>();
+    // ── Year filter (chart-scoped, client-side only) ──────────────
+    private int       selectedYear;
+    private List<int> availableYears = new();
+
+    // ── SVG constants ─────────────────────────────────────────────
+    private const double SvgWidth  = 1000;
+    private const double SvgHeight = 300;
+    private const double PadLeft   = 40;
+    private const double PadRight  = 20;
+    private const double PadTop    = 20;
+    private const double PadBottom = 36;
+    private double ChartWidth  => SvgWidth  - PadLeft - PadRight;
+    private double ChartHeight => SvgHeight - PadTop  - PadBottom;
+
+    // allChartPoints holds every data point loaded from the API.
+    // filteredChartPoints is the client-side subset for the selected year.
+    private List<ChartPoint> allChartPoints      = new();
+    private List<ChartPoint> filteredChartPoints = new();
+
+    private string linePath = "";
+    private string areaPath = "";
+    private double yMax     = 1;
+
+    private bool   tooltipVisible = false;
+    private double tooltipX       = 0;
+    private double tooltipY       = 0;
+    private string tooltipLabel   = "";
+    private string tooltipValue   = "";
+
+    private double[] tenantChartData   = Array.Empty<double>();
     private string[] tenantChartLabels = Array.Empty<string>();
-    private double[] userChartData = Array.Empty<double>();
-    private string[] userChartLabels = Array.Empty<string>();
-    private double[] registrationChartData = Array.Empty<double>();
-    private string[] registrationChartLabels = Array.Empty<string>();
-    private double[] userGrowthChartData = Array.Empty<double>();
-    private string[] userGrowthChartLabels = Array.Empty<string>();
+    private double[] userChartData     = Array.Empty<double>();
+    private string[] userChartLabels   = Array.Empty<string>();
+    private int tenantChartRenderKey;
+    private int userChartRenderKey;
 
     private ChartOptions donutOptions = new()
     {
+        ChartPalette = new[] { "#10b981", "#f59e0b", "#ef4444" }
     };
 
-    private ChartOptions barOptions = new()
-    {
-        YAxisTicks = 1
-    };
-
-    private ChartOptions lineOptions = new()
-    {
-        YAxisTicks = 1
-    };
-
+    // ── Lifecycle ─────────────────────────────────────────────────
     protected override async Task OnInitializedAsync()
     {
+        selectedYear = DateTime.Now.Year;
         await LoadData();
     }
 
+    // ── Data load (no year param — fetches everything once) ───────
     private async Task LoadData()
     {
         isLoading = true;
@@ -454,65 +680,197 @@
         {
             stats = await SuperAdminService.GetDashboardStatsAsync();
             PrepareChartData();
+            await InvokeAsync(StateHasChanged);
         }
         finally
         {
             isLoading = false;
+            await InvokeAsync(StateHasChanged);
         }
     }
 
+    // ── Build all chart state after a data fetch ──────────────────
     private void PrepareChartData()
     {
         if (stats == null) return;
 
-        // Tenant donut chart
-        tenantChartData = new double[] { stats.ActiveCompanies, stats.SuspendedCompanies, stats.BlockedCompanies };
+        // Donut – Tenants
+        tenantChartData   = new double[] { stats.ActiveCompanies, stats.SuspendedCompanies, stats.BlockedCompanies };
         tenantChartLabels = new string[] { "Active", "Suspended", "Blocked" };
+        tenantChartRenderKey++;
 
-        // User donut chart 
-        userChartData = new double[] { stats.ActiveUsers, stats.RestrictedUsers, stats.BlockedUsers };
+        // Donut – Users
+        userChartData   = new double[] { stats.ActiveUsers, stats.RestrictedUsers, stats.BlockedUsers };
         userChartLabels = new string[] { "Active", "Restricted", "Blocked" };
+        userChartRenderKey++;
 
-        // Registration bar chart
-        if (stats.MonthlyRegistrations.Any())
-        {
-            registrationChartData = stats.MonthlyRegistrations.Select(m => (double)m.Count).ToArray();
-            registrationChartLabels = stats.MonthlyRegistrations.Select(m => FormatMonthLabel(m.Month)).ToArray();
-        }
+        // Build all points from the full MonthlyRegistrations list
+        BuildAllChartPoints();
 
-        // User growth line chart
-        if (stats.MonthlyUserGrowth.Any())
-        {
-            userGrowthChartData = stats.MonthlyUserGrowth.Select(m => (double)m.Count).ToArray();
-            userGrowthChartLabels = stats.MonthlyUserGrowth.Select(m => FormatMonthLabel(m.Month)).ToArray();
-        }
+        // Derive available years from actual data so pills always match reality
+        availableYears = allChartPoints
+            .Select(p => p.Year)
+            .Distinct()
+            .OrderByDescending(y => y)
+            .ToList();
+
+        // Keep selectedYear valid; fall back to the most recent year in data
+        if (availableYears.Any() && !availableYears.Contains(selectedYear))
+            selectedYear = availableYears.First();
+
+        // Apply initial filter
+        ApplyYearFilter();
     }
 
-    private string FormatMonthLabel(string yearMonth)
+    // ── Convert raw DTO rows into ChartPoints (all years) ─────────
+    private void BuildAllChartPoints()
     {
-        if (DateTime.TryParse(yearMonth + "-01", out var date))
-            return date.ToString("MMM");
-        return yearMonth;
+        allChartPoints.Clear();
+        if (stats?.MonthlyRegistrations == null || !stats.MonthlyRegistrations.Any()) return;
+
+        // Each MonthlyRegistration.Month is expected to be "YYYY-MM"
+        foreach (var m in stats.MonthlyRegistrations)
+        {
+            int parsedYear = ExtractYear(m.Month);
+            allChartPoints.Add(new ChartPoint
+            {
+                Year  = parsedYear,
+                Value = m.Count,
+                Label = FormatMonthLabel(m.Month),
+                // X/Y are recalculated per-filter in ApplyYearFilter
+                X = 0,
+                Y = 0
+            });
+        }
     }
+
+    // ── Client-side year pill handler ─────────────────────────────
+    private void OnYearChanged(int year)
+    {
+        if (year == selectedYear) return;
+        selectedYear = year;
+        ApplyYearFilter();
+        StateHasChanged();
+    }
+
+    // ── Filter allChartPoints to the selected year and recompute SVG coords ──
+    private void ApplyYearFilter()
+    {
+        var source = allChartPoints
+            .Where(p => p.Year == selectedYear)
+            .OrderBy(p => p.Label) // Jan → Dec order
+            .ToList();
+
+        int count = source.Count;
+
+        if (count == 0)
+        {
+            filteredChartPoints.Clear();
+            linePath = "";
+            areaPath = "";
+            return;
+        }
+
+        yMax = source.Max(p => (double)p.Value);
+        if (yMax == 0) yMax = 1;
+        yMax = Math.Ceiling(yMax / 5.0) * 5;
+        if (yMax == 0) yMax = 5;
+
+        double stepX = ChartWidth / Math.Max(count - 1, 1);
+
+        filteredChartPoints = source.Select((p, i) => new ChartPoint
+        {
+            Year  = p.Year,
+            Value = p.Value,
+            Label = p.Label,
+            X     = PadLeft + (count == 1 ? ChartWidth / 2.0 : i * stepX),
+            Y     = PadTop  + ChartHeight - (p.Value / yMax) * ChartHeight
+        }).ToList();
+
+        BuildPaths();
+    }
+
+    // ── Build SVG line + area paths from filteredChartPoints ─────
+    private void BuildPaths()
+    {
+        if (filteredChartPoints.Count == 1)
+        {
+            var p = filteredChartPoints[0];
+            linePath = $"M {p.X:F1},{p.Y:F1}";
+            areaPath = $"M {p.X:F1},{PadTop + ChartHeight:F1} L {p.X:F1},{p.Y:F1} Z";
+            return;
+        }
+
+        var sb     = new System.Text.StringBuilder();
+        var sbArea = new System.Text.StringBuilder();
+        double bottomY = PadTop + ChartHeight;
+
+        for (int i = 0; i < filteredChartPoints.Count; i++)
+        {
+            var cur = filteredChartPoints[i];
+            if (i == 0)
+            {
+                sb.Append($"M {cur.X:F1},{cur.Y:F1}");
+                sbArea.Append($"M {cur.X:F1},{bottomY:F1} L {cur.X:F1},{cur.Y:F1}");
+            }
+            else
+            {
+                var    prev = filteredChartPoints[i - 1];
+                double cpx  = (prev.X + cur.X) / 2.0;
+                sb.Append($" C {cpx:F1},{prev.Y:F1} {cpx:F1},{cur.Y:F1} {cur.X:F1},{cur.Y:F1}");
+                sbArea.Append($" C {cpx:F1},{prev.Y:F1} {cpx:F1},{cur.Y:F1} {cur.X:F1},{cur.Y:F1}");
+            }
+        }
+
+        sbArea.Append($" L {filteredChartPoints[^1].X:F1},{bottomY:F1} Z");
+        linePath = sb.ToString();
+        areaPath = sbArea.ToString();
+    }
+
+    // ── Tooltip ───────────────────────────────────────────────────
+    private void ShowTooltip(ChartPoint pt)
+    {
+        tooltipX = pt.X; tooltipY = pt.Y;
+        tooltipLabel = pt.Label; tooltipValue = pt.Value.ToString();
+        tooltipVisible = true;
+        StateHasChanged();
+    }
+
+    private void HideTooltip() { tooltipVisible = false; StateHasChanged(); }
+
+    // ── Helpers ───────────────────────────────────────────────────
+    private static int ExtractYear(string yearMonth)
+    {
+        // Expects "YYYY-MM"; falls back to current year
+        if (yearMonth != null && yearMonth.Length >= 4 && int.TryParse(yearMonth[..4], out int yr))
+            return yr;
+        return DateTime.Now.Year;
+    }
+
+    private string FormatMonthLabel(string yearMonth) =>
+        DateTime.TryParse(yearMonth + "-01", out var date) ? date.ToString("MMM") : yearMonth;
 
     private string GetActionIcon(string action) => action switch
     {
-        "COMPANY_STATUS_CHANGE" => Icons.Material.Filled.Business,
-        "USER_STATUS_CHANGE" => Icons.Material.Filled.Person,
-        _ => Icons.Material.Filled.Info
-    };
-
-    private string GetActionColor(string action) => action switch
-    {
-        "COMPANY_STATUS_CHANGE" => "#1565C0",
-        "USER_STATUS_CHANGE" => "#6A1B9A",
-        _ => "#757575"
+        "COMPANY_STATUS_CHANGE" => Icons.Material.Outlined.Business,
+        "USER_STATUS_CHANGE"    => Icons.Material.Outlined.Person,
+        _                       => Icons.Material.Outlined.Info
     };
 
     private string FormatAction(string action) => action switch
     {
         "COMPANY_STATUS_CHANGE" => "changed status of",
-        "USER_STATUS_CHANGE" => "changed status of",
-        _ => "performed action on"
+        "USER_STATUS_CHANGE"    => "changed status of",
+        _                       => "performed action on"
     };
+
+    // ── Model ─────────────────────────────────────────────────────
+    private class ChartPoint
+    {
+        public int    Year  { get; set; }
+        public double X     { get; set; }
+        public double Y     { get; set; }
+        public int    Value { get; set; }
+        public string Label { get; set; } = "";
+    }
 }
