@@ -212,6 +212,7 @@ namespace AccountingSystem.API.Data
                         DueDate = invoiceDueDate,
                         TotalAmount = invoiceAmount,
                         PaidAmount = invoicePaidAmount,
+                        ReferenceNumber = $"INV-{invoiceSequence:D4}",
                         Description = $"Seeded sales transaction for {selectedCustomer.Name} ({year}-{month:D2})",
                         Status = DocumentStatus.Paid
                     };
@@ -237,7 +238,7 @@ namespace AccountingSystem.API.Data
                         Amount = invoicePaidAmount,
                         PaymentMethod = GetPaymentMethod(rng),
                         Type = PaymentType.Incoming,
-                        ReferenceNumber = $"SEED-REC-{paymentSequence:D4}",
+                        ReferenceNumber = $"PR-{paymentSequence:D4}",
                         Remarks = $"Seed receipt for invoice {invoice.Id}"
                     };
 
@@ -270,7 +271,8 @@ namespace AccountingSystem.API.Data
                         DueDate = billDueDate,
                         Amount = billAmount,
                         AmountPaid = billPaidAmount,
-                        ReferenceNumber = $"SEED-BILL-{year}{month:D2}-{billSequence:D3}",
+                        VendorReferenceNumber = $"SEED-BILL-{year}{month:D2}-{billSequence:D3}",
+                        SystemReferenceNumber = $"CHK-{billSequence:D4}",
                         Description = $"Seeded expense transaction from {selectedVendor.Name} ({year}-{month:D2})",
                         Status = DocumentStatus.Paid
                     };
@@ -297,7 +299,7 @@ namespace AccountingSystem.API.Data
                         PaymentMethod = GetPaymentMethod(rng),
                         Type = PaymentType.Outgoing,
                         ReferenceNumber = $"SEED-PAY-{paymentSequence:D4}",
-                        Remarks = $"Seed disbursement for bill {bill.ReferenceNumber}"
+                        Remarks = $"Seed disbursement for bill {bill.SystemReferenceNumber}"
                     };
 
                     context.Payments.Add(outgoingPayment);
@@ -343,6 +345,27 @@ namespace AccountingSystem.API.Data
             };
 
             context.JournalEntries.Add(entry);
+            await context.SaveChangesAsync();
+        }
+
+
+        private static async Task SeedDocumentSequencesAsync(AccountingDbContext context, int companyId)
+        {
+            var defaults = new[]
+            {
+                new DocumentSequence { CompanyId = companyId, DocumentType = DocumentType.Invoice, Prefix = "INV-", NextNumber = 1 },
+                new DocumentSequence { CompanyId = companyId, DocumentType = DocumentType.JournalEntry, Prefix = "JE-", NextNumber = 1 },
+                new DocumentSequence { CompanyId = companyId, DocumentType = DocumentType.PaymentReceived, Prefix = "PR-", NextNumber = 1 },
+                new DocumentSequence { CompanyId = companyId, DocumentType = DocumentType.CheckPayment, Prefix = "CHK-", NextNumber = 1 }
+            };
+
+            foreach (var item in defaults)
+            {
+                var exists = await context.DocumentSequences.IgnoreQueryFilters()
+                    .AnyAsync(x => x.CompanyId == companyId && x.DocumentType == item.DocumentType);
+                if (!exists) context.DocumentSequences.Add(item);
+            }
+
             await context.SaveChangesAsync();
         }
 

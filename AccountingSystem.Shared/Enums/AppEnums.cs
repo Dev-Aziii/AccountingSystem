@@ -19,6 +19,15 @@ namespace AccountingSystem.Shared.Enums
     }
 
     [JsonConverter(typeof(JsonStringEnumConverter))]
+    public enum DocumentType
+    {
+        Invoice,
+        JournalEntry,
+        PaymentReceived,
+        CheckPayment
+    }
+
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum PaymentMethod
     {
         Cash,

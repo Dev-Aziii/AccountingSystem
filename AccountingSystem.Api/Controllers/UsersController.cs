@@ -63,11 +63,13 @@ namespace AccountingSystem.API.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteUser(int id)
         {
-            var user = await _context.Users.FindAsync(id);
+            var user = await _context.Users
+                .Include(u => u.Role)
+                .FirstOrDefaultAsync(u => u.Id == id);
             if (user == null) return NotFound("User not found");
 
-            if (user.Email == "adzyl.jipos@gmail.com")
-                return BadRequest(new { error = "Cannot delete the default System Administrator." });
+            if (user.Role.Name == "Admin")
+                return BadRequest(new { error = "Cannot archive admin account" });
 
             // SOFT DELETE
             user.IsDeleted = true;

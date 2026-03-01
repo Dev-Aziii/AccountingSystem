@@ -49,7 +49,7 @@ namespace AccountingSystem.Client.Services
             }
         }
 
-        public async Task PayBillAsync(RecordPaymentDTO paymentDto)
+        public async Task<PaymentCreationResultDTO?> PayBillAsync(RecordPaymentDTO paymentDto)
         {
             var response = await _api.PostAsync($"api/payables/bill/{paymentDto.ReferenceId}/pay", paymentDto);
             if (!response.IsSuccessStatusCode)
@@ -57,6 +57,8 @@ namespace AccountingSystem.Client.Services
                 var error = await response.Content.ReadAsStringAsync();
                 throw new Exception(error);
             }
+
+            return await response.Content.ReadFromJsonAsync<PaymentCreationResultDTO>();
         }
 
         public async Task<VendorDTO?> CreateVendorAsync(CreateVendorDTO vendor)

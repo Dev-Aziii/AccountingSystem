@@ -327,7 +327,7 @@ namespace AccountingSystem.API.Controllers
         }
 
         // ===== HELPER: Log SuperAdmin Actions =====
-        private async Task LogSuperAdminAction(string action, string targetType, int targetId, string targetName,
+        private Task LogSuperAdminAction(string action, string targetType, int targetId, string targetName,
             string oldValue, string newValue, string details)
         {
             var log = new SuperAdminAuditLog
@@ -345,7 +345,7 @@ namespace AccountingSystem.API.Controllers
             };
 
             _context.SuperAdminAuditLogs.Add(log);
-            // Don't save here -- caller will SaveChangesAsync
+            return Task.CompletedTask;
         }
     }
 }

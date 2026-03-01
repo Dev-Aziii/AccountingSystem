@@ -6,6 +6,7 @@ using Blazored.LocalStorage;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
+using MudBlazor;
 using MudBlazor.Services;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
@@ -13,7 +14,19 @@ builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
 // 1. Infrastructure Services
-builder.Services.AddMudServices();
+builder.Services.AddMudServices(config =>
+{
+    // Set the global Snackbar variant to Outlined
+    config.SnackbarConfiguration.SnackbarVariant = Variant.Text;
+
+    // behaviors
+    config.SnackbarConfiguration.PositionClass = Defaults.Classes.Position.TopRight; 
+    config.SnackbarConfiguration.ShowCloseIcon = true; 
+    config.SnackbarConfiguration.VisibleStateDuration = 3000; 
+    config.SnackbarConfiguration.HideTransitionDuration = 200;
+    config.SnackbarConfiguration.ShowTransitionDuration = 200;
+    config.SnackbarConfiguration.PreventDuplicates = false;
+});
 builder.Services.AddBlazoredLocalStorage();
 builder.Services.AddScoped<TokenStorageService>();
 builder.Services.AddScoped<ApiService>();

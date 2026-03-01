@@ -108,15 +108,9 @@
                                            HelperText="Date the payment was received"
                                            MaxDate="DateTime.Today" />
                         </MudItem>
-                        <MudItem xs="12" sm="6">
-                            <MudTextField Label="Reference Number"
-                                          @bind-Value="model.ReferenceNumber"
-                                          Variant="Variant.Outlined"
-                                          Margin="Margin.Dense"
-                                          Class="shadcn-input"
-                                          Placeholder="Check No. / Trans ID"
-                                          HelperText="Optional transaction reference" />
-                        </MudItem>
+                    <MudItem xs="12" sm="6">
+                            <MudTextField Label="Reference Number" Value="@("[Auto-Generated]")" Disabled="true" Variant="Variant.Outlined" Margin="Margin.Dense" Class="shadcn-input" />
+                    </MudItem>
                     }
 
                     <MudItem xs="12">
@@ -245,8 +239,8 @@
             else
             {
                 model.PaymentDate = date ?? DateTime.Today;
-                await ReceivableService.ReceivePaymentAsync(model);
-                Snackbar.Add("Payment received successfully!", Severity.Success);
+                var result = await ReceivableService.ReceivePaymentAsync(model);
+                Snackbar.Add($"Payment {result?.ReferenceNumber ?? ""} received successfully!", Severity.Success);
                 MudDialog.Close(DialogResult.Ok(true));
             }
         }
