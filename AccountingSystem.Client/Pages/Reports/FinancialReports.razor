@@ -59,11 +59,11 @@
     }
     else if (currentCompany == null)
     {
-        <MudAlert Severity="Severity.Warning" Elevation="0" Outlined="true" Class="shadcn-card">Company profile is missing. Please configure it in settings.</MudAlert>
+        <MudAlert Severity="Severity.Warning" Elevation="0" Class="shadcn-card">Company profile is missing. Please configure it in settings.</MudAlert>
     }
     else if (selectedFiscalYear == 0 || incomeTrialBalance == null || balanceTrialBalance == null)
     {
-        <MudAlert Severity="Severity.Info" Elevation="0" Outlined="true" Class="shadcn-card">No fiscal-year data available yet.</MudAlert>
+        <MudAlert Severity="Severity.Info" Elevation="0" Class="shadcn-card">No fiscal-year data available yet.</MudAlert>
     }
     else
     {

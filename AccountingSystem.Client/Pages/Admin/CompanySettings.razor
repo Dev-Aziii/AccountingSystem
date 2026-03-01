@@ -250,8 +250,8 @@
                             </HeaderContent>
                             <RowTemplate>
                                 <MudTd>@context.DocumentType</MudTd>
-                                <MudTd><MudTextField @bind-Value="context.Prefix" Dense="true" Variant="Variant.Outlined" /></MudTd>
-                                <MudTd><MudNumericField T="int" @bind-Value="context.NextNumber" Dense="true" Variant="Variant.Outlined" Min="1" /></MudTd>
+                                <MudTextField @bind-Value="context.Prefix" Margin="Margin.Dense" Variant="Variant.Outlined" />
+                                <MudNumericField T="int" @bind-Value="context.NextNumber" Margin="Margin.Dense" Variant="Variant.Outlined" Min="1" />
                                 <MudTd><MudButton Variant="Variant.Text" OnClick="@(() => SaveSequenceAsync(context))">Save</MudButton></MudTd>
                             </RowTemplate>
                         </MudTable>

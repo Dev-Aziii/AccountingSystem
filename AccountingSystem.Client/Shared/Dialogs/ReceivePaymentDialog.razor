@@ -11,7 +11,7 @@
 @inject NavigationManager NavManager
 @inject ILocalStorageService LocalStorage
 
-<MudDialog Class="shadcn-dialog" DisableSidePadding="true">
+<MudDialog Class="shadcn-dialog">
     <TitleContent>
         <div class="d-flex align-center px-6 pt-6 pb-4">
             <MudIcon Icon="@Icons.Material.Outlined.Receipt" Class="mr-2 text-muted" Size="Size.Small" />
@@ -104,7 +104,6 @@
                                            Class="shadcn-input"
                                            Required="true"
                                            RequiredError="Payment date is required"
-                                           Immediate="true"
                                            HelperText="Date the payment was received"
                                            MaxDate="DateTime.Today" />
                         </MudItem>
