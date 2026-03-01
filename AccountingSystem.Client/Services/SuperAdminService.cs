@@ -15,13 +15,15 @@ namespace AccountingSystem.Client.Services
         // ===== Dashboard =====
         public async Task<SystemDashboardDTO> GetDashboardStatsAsync()
         {
-            return await _api.GetAsync<SystemDashboardDTO>("api/superadmin/dashboard");
+            return await _api.GetAsync<SystemDashboardDTO>("api/superadmin/dashboard")
+                ?? throw new Exception("Failed to retrieve dashboard stats.");
         }
 
         // ===== Tenant Management =====
         public async Task<List<TenantDTO>> GetAllCompaniesAsync()
         {
-            return await _api.GetAsync<List<TenantDTO>>("api/superadmin/companies");
+            return await _api.GetAsync<List<TenantDTO>>("api/superadmin/companies")
+                ?? new List<TenantDTO>();
         }
 
         public async Task UpdateCompanyStatusAsync(int id, string status)
@@ -36,7 +38,7 @@ namespace AccountingSystem.Client.Services
 
         public async Task ToggleCompanyStatusAsync(int id)
         {
-            var response = await _api.PutAsync<object>($"api/superadmin/companies/{id}/toggle", null);
+            var response = await _api.PutAsync<object?>($"api/superadmin/companies/{id}/toggle", null);
             if (!response.IsSuccessStatusCode)
             {
                 var error = await response.Content.ReadAsStringAsync();
@@ -47,7 +49,8 @@ namespace AccountingSystem.Client.Services
         // ===== Global User Management =====
         public async Task<List<GlobalUserDTO>> GetAllUsersAsync()
         {
-            return await _api.GetAsync<List<GlobalUserDTO>>("api/superadmin/users");
+            return await _api.GetAsync<List<GlobalUserDTO>>("api/superadmin/users")
+                ?? new List<GlobalUserDTO>();
         }
 
         public async Task UpdateUserStatusAsync(int id, string status)
@@ -62,7 +65,7 @@ namespace AccountingSystem.Client.Services
 
         public async Task ToggleUserStatusAsync(int id)
         {
-            var response = await _api.PutAsync<object>($"api/superadmin/users/{id}/toggle", null);
+            var response = await _api.PutAsync<object?>($"api/superadmin/users/{id}/toggle", null);
             if (!response.IsSuccessStatusCode)
             {
                 var error = await response.Content.ReadAsStringAsync();
@@ -73,7 +76,8 @@ namespace AccountingSystem.Client.Services
         // ===== Super Admin Audit Logs =====
         public async Task<List<SuperAdminAuditLogDTO>> GetAuditLogsAsync()
         {
-            return await _api.GetAsync<List<SuperAdminAuditLogDTO>>("api/superadmin/audit-logs");
+            return await _api.GetAsync<List<SuperAdminAuditLogDTO>>("api/superadmin/audit-logs")
+                ?? new List<SuperAdminAuditLogDTO>();
         }
     }
 }

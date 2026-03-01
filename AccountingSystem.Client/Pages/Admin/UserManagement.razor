@@ -164,7 +164,8 @@
             }
         </MudItem>
     </MudGrid>
-</MudContainer> 
+</MudContainer>
+
 <style>
     .archive-hover:hover {
         color: #ff9800 !important;
@@ -227,64 +228,62 @@
     private async Task ConfirmDelete(int id)
     {
         var parameters = new DialogParameters<ShadcnConfirmDialog>
-    {
-        { x => x.ContentText, "Archive User?" },
-        { x => x.SubText, "This user will lose system access immediately. You can restore them from the Archived tab." },
-        { x => x.ButtonText, "Archive User" },
-        { x => x.Color, Color.Error }
-    };
+        {
+            { x => x.ContentText, "Archive User?" },
+            { x => x.SubText, "This user will lose system access immediately. You can restore them from the Archived tab." },
+            { x => x.ButtonText, "Archive User" },
+            { x => x.Color, Color.Error }
+        };
 
         var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.ExtraSmall };
         var dialog = await DialogService.ShowAsync<ShadcnConfirmDialog>("Confirm", parameters, options);
         var result = await dialog.Result;
 
-        if (!result.Canceled)
+        if (result is null || result.Canceled) return;
+
+        try
         {
-            try
-            {
-                _loading = true;
-                await UserService.DeleteUserAsync(id);
-                Snackbar.Add("User archived successfully", Severity.Success);
-                await LoadUsers(false);
-            }
-            catch (Exception ex) { Snackbar.Add(ex.Message, Severity.Error); }
-            finally
-            {
-                _loading = false;
-                StateHasChanged();
-            }
+            _loading = true;
+            await UserService.DeleteUserAsync(id);
+            Snackbar.Add("User archived successfully", Severity.Success);
+            await LoadUsers(false);
+        }
+        catch (Exception ex) { Snackbar.Add(ex.Message, Severity.Error); }
+        finally
+        {
+            _loading = false;
+            StateHasChanged();
         }
     }
 
     private async Task ConfirmRestore(int id)
     {
         var parameters = new DialogParameters<ShadcnConfirmDialog>
-    {
-        { x => x.ContentText, "Restore User?" },
-        { x => x.SubText, "This will reactivate the account with their previous permissions." },
-        { x => x.ButtonText, "Restore Account" },
-        { x => x.Color, Color.Success }
-    };
+        {
+            { x => x.ContentText, "Restore User?" },
+            { x => x.SubText, "This will reactivate the account with their previous permissions." },
+            { x => x.ButtonText, "Restore Account" },
+            { x => x.Color, Color.Success }
+        };
 
         var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.ExtraSmall };
         var dialog = await DialogService.ShowAsync<ShadcnConfirmDialog>("Confirm", parameters, options);
         var result = await dialog.Result;
 
-        if (!result.Canceled)
+        if (result is null || result.Canceled) return;
+
+        try
         {
-            try
-            {
-                _loading = true;
-                await UserService.RestoreUserAsync(id);
-                Snackbar.Add("User restored successfully", Severity.Success);
-                await LoadUsers(true);
-            }
-            catch (Exception ex) { Snackbar.Add(ex.Message, Severity.Error); }
-            finally
-            {
-                _loading = false;
-                StateHasChanged();
-            }
+            _loading = true;
+            await UserService.RestoreUserAsync(id);
+            Snackbar.Add("User restored successfully", Severity.Success);
+            await LoadUsers(true);
+        }
+        catch (Exception ex) { Snackbar.Add(ex.Message, Severity.Error); }
+        finally
+        {
+            _loading = false;
+            StateHasChanged();
         }
     }
 }

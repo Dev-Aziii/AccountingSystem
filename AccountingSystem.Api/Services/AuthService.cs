@@ -16,6 +16,7 @@ namespace AccountingSystem.API.Services
         private readonly AccountingDbContext _context;
         private readonly IConfiguration _configuration;
         private readonly ICaptchaService _captchaService;
+
         public AuthService(AccountingDbContext context, IConfiguration configuration, ICaptchaService captchaService)
         {
             _context = context;
@@ -23,17 +24,14 @@ namespace AccountingSystem.API.Services
             _captchaService = captchaService;
         }
 
-        // --- NEW: Update Profile ---
+        // --- Update Profile ---
         public async Task UpdateProfileAsync(int userId, UpdateProfileDTO dto)
         {
             var user = await _context.Users.FindAsync(userId);
             if (user == null) throw new Exception("User not found.");
 
-            // Check if email is being changed and if it is already taken by ANOTHER user
             if (user.Email != dto.Email)
             {
-                // We use IgnoreQueryFilters to ensure global uniqueness across tenants if required, 
-                // or just within tenant depending on design. Here we assume standard checks.
                 bool emailExists = await _context.Users.AnyAsync(u => u.Email == dto.Email && u.Id != userId);
                 if (emailExists) throw new Exception("Email is already in use.");
             }
@@ -44,23 +42,18 @@ namespace AccountingSystem.API.Services
             await _context.SaveChangesAsync();
         }
 
-        // --- NEW: Change Password ---
+        // --- Change Password ---
         public async Task ChangePasswordAsync(int userId, ChangePasswordDTO dto)
         {
             var user = await _context.Users.FindAsync(userId);
             if (user == null) throw new Exception("User not found.");
 
-            // Check for null PasswordSalt before conversion
-            if (string.IsNullOrEmpty(user.PasswordSalt))
+            if (string.IsNullOrEmpty(user.PasswordHash) || string.IsNullOrEmpty(user.PasswordSalt))
                 throw new Exception("User password data is corrupted.");
 
-            // Verify Current Password
             if (!VerifyPasswordHash(dto.CurrentPassword, Convert.FromBase64String(user.PasswordHash), Convert.FromBase64String(user.PasswordSalt)))
-            {
                 throw new Exception("Incorrect current password.");
-            }
 
-            // Hash New Password
             CreatePasswordHash(dto.NewPassword, out byte[] newHash, out byte[] newSalt);
 
             user.PasswordHash = Convert.ToBase64String(newHash);
@@ -69,14 +62,11 @@ namespace AccountingSystem.API.Services
             await _context.SaveChangesAsync();
         }
 
-        // ... Existing Methods (RegisterCompanyAsync, RegisterAsync, LoginAsync) ...
-
+        // --- Register Company ---
         public async Task<AuthResponseDTO> RegisterCompanyAsync(CompanyRegisterDTO dto)
         {
             if (!await _captchaService.VerifyTokenAsync(dto.RecaptchaToken))
-            {
                 throw new Exception("Security check failed. Automated activity detected.");
-            }
 
             if (await _context.Users.IgnoreQueryFilters().AnyAsync(u => u.Email == dto.AdminEmail))
                 throw new Exception("Email already exists.");
@@ -115,6 +105,8 @@ namespace AccountingSystem.API.Services
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
 
+                var expiryMinutes = int.Parse(_configuration["JwtSettings:ExpiryMinutes"] ?? "60");
+
                 var token = GenerateJwtToken(user, company);
                 return new AuthResponseDTO
                 {
@@ -123,7 +115,7 @@ namespace AccountingSystem.API.Services
                     Role = "Admin",
                     CompanyId = company.Id,
                     CompanyName = company.Name,
-                    ExpiresAt = DateTime.UtcNow.AddMinutes(int.Parse(_configuration["JwtSettings:ExpiryMinutes"]!))
+                    ExpiresAt = DateTime.UtcNow.AddMinutes(expiryMinutes)
                 };
             }
             catch
@@ -133,6 +125,7 @@ namespace AccountingSystem.API.Services
             }
         }
 
+        // --- Register User ---
         public async Task<User> RegisterAsync(RegisterDTO registerDto)
         {
             if (await _context.Users.AnyAsync(u => u.Email == registerDto.Email))
@@ -142,6 +135,7 @@ namespace AccountingSystem.API.Services
             var role = await _context.Roles
                 .AsNoTracking()
                 .FirstOrDefaultAsync(r => r.Name.ToLower() == normalizedRoleName.ToLower());
+
             if (role == null)
                 throw new Exception($"Role '{registerDto.RoleName}' does not exist.");
 
@@ -165,9 +159,9 @@ namespace AccountingSystem.API.Services
             return user;
         }
 
+        // --- Login ---
         public async Task<AuthResponseDTO> LoginAsync(LoginDTO loginDto)
         {
-            // Ignore filters to find user regardless of tenant context (since we aren't logged in yet)
             var user = await _context.Users
                 .IgnoreQueryFilters()
                 .Include(u => u.Role)
@@ -176,22 +170,21 @@ namespace AccountingSystem.API.Services
             if (user == null || user.IsDeleted)
                 throw new Exception("Invalid email or password.");
 
-            // 1. Check User Status (granular: Active, Restricted, Blocked)
             if (user.Status == "Blocked")
                 throw new Exception("Your account has been blocked. Please contact the System Administrator.");
 
             if (!user.IsActive)
                 throw new Exception("Your account has been deactivated. Please contact your administrator.");
 
+            if (string.IsNullOrEmpty(user.PasswordHash) || string.IsNullOrEmpty(user.PasswordSalt))
+                throw new Exception("User password data is corrupted.");
+
             if (!VerifyPasswordHash(loginDto.Password, Convert.FromBase64String(user.PasswordHash), Convert.FromBase64String(user.PasswordSalt)))
                 throw new Exception("Invalid email or password.");
 
-            // 2. Check Company Status (The "Kill Switch")
             var company = await _context.Companies.IgnoreQueryFilters().FirstOrDefaultAsync(c => c.Id == user.CompanyId);
             if (company == null) throw new Exception("Company data not found.");
 
-            // Allow SuperAdmin to login even if their "SaaS Operations" company is technically inactive (failsafe), 
-            // but block everyone else if their company is suspended or blocked.
             if (user.Role.Name != "SuperAdmin")
             {
                 if (company.Status == "Blocked")
@@ -200,8 +193,9 @@ namespace AccountingSystem.API.Services
                     throw new Exception("This organization's access has been suspended. Please contact the System Owner.");
             }
 
-            var token = GenerateJwtToken(user, company);
+            var expiryMinutes = int.Parse(_configuration["JwtSettings:ExpiryMinutes"] ?? "60");
 
+            var token = GenerateJwtToken(user, company);
             return new AuthResponseDTO
             {
                 Token = token,
@@ -209,7 +203,7 @@ namespace AccountingSystem.API.Services
                 Role = user.Role.Name,
                 CompanyId = company.Id,
                 CompanyName = company.Name,
-                ExpiresAt = DateTime.UtcNow.AddMinutes(int.Parse(_configuration["JwtSettings:ExpiryMinutes"]))
+                ExpiresAt = DateTime.UtcNow.AddMinutes(expiryMinutes)
             };
         }
 
@@ -218,17 +212,17 @@ namespace AccountingSystem.API.Services
         {
             var accounts = new List<Account>
             {
-                new() { CompanyId = companyId, Code = "1000", Name = "Cash on Hand", Type = "Asset" },
-                new() { CompanyId = companyId, Code = "1010", Name = "Bank", Type = "Asset" },
-                new() { CompanyId = companyId, Code = "1100", Name = "Accounts Receivable", Type = "Asset" },
-                new() { CompanyId = companyId, Code = "2000", Name = "Accounts Payable", Type = "Liability" },
-                new() { CompanyId = companyId, Code = "3000", Name = "Owner's Capital", Type = "Equity" },
-                new() { CompanyId = companyId, Code = "4000", Name = "Sales Revenue", Type = "Revenue" },
-                new() { CompanyId = companyId, Code = "5000", Name = "General Expense", Type = "Expense" }
+                new() { CompanyId = companyId, Code = "1000", Name = "Cash on Hand",        Type = "Asset"     },
+                new() { CompanyId = companyId, Code = "1010", Name = "Bank",                Type = "Asset"     },
+                new() { CompanyId = companyId, Code = "1100", Name = "Accounts Receivable", Type = "Asset"     },
+                new() { CompanyId = companyId, Code = "2000", Name = "Accounts Payable",    Type = "Liability" },
+                new() { CompanyId = companyId, Code = "3000", Name = "Owner's Capital",     Type = "Equity"    },
+                new() { CompanyId = companyId, Code = "4000", Name = "Sales Revenue",       Type = "Revenue"   },
+                new() { CompanyId = companyId, Code = "5000", Name = "General Expense",     Type = "Expense"   }
             };
 
             _context.Accounts.AddRange(accounts);
-            await _context.SaveChangesAsync(); // Added await to ensure the method is truly asynchronous
+            await _context.SaveChangesAsync();
         }
 
         private static void CreatePasswordHash(string password, out byte[] passwordHash, out byte[] passwordSalt)
@@ -257,15 +251,15 @@ namespace AccountingSystem.API.Services
             {
                 Subject = new ClaimsIdentity(new[]
                 {
-                    new Claim(ClaimTypes.Name, user.Email),
-                    new Claim(ClaimTypes.Role, user.Role.Name),
-                    new Claim("UserId", user.Id.ToString()),
-                    new Claim("role", user.Role.Name),
-                    new Claim("FullName", user.FullName ?? user.Email),
-                    new Claim("CompanyId", company.Id.ToString()),
-                    new Claim("CompanyName", company.Name)
+                    new Claim(ClaimTypes.Name,  user.Email),
+                    new Claim(ClaimTypes.Role,  user.Role.Name),
+                    new Claim("UserId",         user.Id.ToString()),
+                    new Claim("role",           user.Role.Name),
+                    new Claim("FullName",       user.FullName ?? user.Email),
+                    new Claim("CompanyId",      company.Id.ToString()),
+                    new Claim("CompanyName",    company.Name)
                 }),
-                Expires = DateTime.UtcNow.AddMinutes(double.Parse(_configuration["JwtSettings:ExpiryMinutes"]!)),
+                Expires = DateTime.UtcNow.AddMinutes(double.Parse(_configuration["JwtSettings:ExpiryMinutes"] ?? "60")),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature),
                 Issuer = _configuration["JwtSettings:Issuer"],
                 Audience = _configuration["JwtSettings:Audience"]

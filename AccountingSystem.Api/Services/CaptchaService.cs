@@ -20,13 +20,14 @@ namespace AccountingSystem.API.Services
             try
             {
                 var secretKey = _configuration["Recaptcha:SecretKey"];
-          
-                var response = await _httpClient.GetAsync($"https://www.google.com/recaptcha/api/siteverify?secret={secretKey}&response={token}");
 
+                var response = await _httpClient.GetAsync($"https://www.google.com/recaptcha/api/siteverify?secret={secretKey}&response={token}");
                 if (!response.IsSuccessStatusCode) return false;
 
                 var jsonString = await response.Content.ReadAsStringAsync();
                 var result = JsonSerializer.Deserialize<GoogleCaptchaResponse>(jsonString);
+
+                if (result is null) return false;
 
                 if (result.Score.HasValue)
                 {
@@ -48,15 +49,14 @@ namespace AccountingSystem.API.Services
             [JsonPropertyName("success")]
             public bool Success { get; set; }
 
-            // FIX: Made nullable so v2 responses don't default to 0.0 (Bot)
             [JsonPropertyName("score")]
             public double? Score { get; set; }
 
             [JsonPropertyName("action")]
-            public string Action { get; set; }
+            public string? Action { get; set; }
 
             [JsonPropertyName("error-codes")]
-            public string[] ErrorCodes { get; set; }
+            public string[]? ErrorCodes { get; set; }
         }
     }
 }
