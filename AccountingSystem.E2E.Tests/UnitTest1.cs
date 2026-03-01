@@ -18,7 +18,7 @@ public class AuthenticationFlowTests
         var protectedRoute = "/admin/users";
         var fallbackRoute = "/";
 
-        protectedRoute.Should().StartWith('/');
+        protectedRoute.Should().StartWith("/");
         fallbackRoute.Should().Be("/");
     }
 }

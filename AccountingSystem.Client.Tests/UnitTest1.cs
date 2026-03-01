@@ -5,11 +5,12 @@ using AccountingSystem.Shared.DTOs;
 using Bunit;
 using FluentAssertions;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.Extensions.DependencyInjection;
 using MudBlazor.Services;
 
 namespace AccountingSystem.Client.Tests;
 
-public class RedirectToLoginTests : TestContext
+public class RedirectToLoginTests : BunitContext
 {
     [Fact]
     public void OnInitializedAsync_WhenUserIsAnonymous_ShouldRedirectToRoot()
@@ -17,14 +18,17 @@ public class RedirectToLoginTests : TestContext
         var anonymousPrincipal = new ClaimsPrincipal(new ClaimsIdentity());
         var authState = new AuthenticationState(anonymousPrincipal);
 
-        RenderComponent<RedirectToLogin>(parameters => parameters
+        Render<RedirectToLogin>(parameters => parameters
             .AddCascadingValue(Task.FromResult(authState)));
 
-        Services.GetRequiredService<Microsoft.AspNetCore.Components.NavigationManager>().Uri.Should().EndWith('/');
+        var navigationManager = Services.GetService<Microsoft.AspNetCore.Components.NavigationManager>();
+
+        navigationManager.Should().NotBeNull();
+        navigationManager!.Uri.Should().EndWith('/');
     }
 }
 
-public class AuditDetailsDialogTests : TestContext
+public class AuditDetailsDialogTests : BunitContext
 {
     public AuditDetailsDialogTests()
     {
@@ -43,7 +47,7 @@ public class AuditDetailsDialogTests : TestContext
             Timestamp = DateTime.UtcNow
         };
 
-        var cut = RenderComponent<AuditDetailsDialog>(parameters => parameters.Add(p => p.Log, log));
+        var cut = Render<AuditDetailsDialog>(parameters => parameters.Add(p => p.Log, log));
 
         cut.Markup.Should().Contain("Audit Log Details");
         cut.Markup.Should().Contain("auditor@contoso.com");
@@ -62,7 +66,7 @@ public class AuditDetailsDialogTests : TestContext
             Timestamp = DateTime.UtcNow
         };
 
-        var cut = RenderComponent<AuditDetailsDialog>(parameters => parameters.Add(p => p.Log, log));
+        var cut = Render<AuditDetailsDialog>(parameters => parameters.Add(p => p.Log, log));
 
         cut.Markup.Should().Contain("badge-red");
     }
