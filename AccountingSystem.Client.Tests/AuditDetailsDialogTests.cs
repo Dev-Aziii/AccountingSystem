@@ -2,6 +2,7 @@ using System;
 using AccountingSystem.Client.Shared.Dialogs;
 using AccountingSystem.Shared.DTOs;
 using FluentAssertions;
+using Microsoft.Extensions.DependencyInjection;
 using MudBlazor;
 using Xunit;
 
@@ -12,6 +13,9 @@ public class AuditDetailsDialogTests : DialogTestContext
     [Fact]
     public void Render_WhenLogProvided_ShouldShowAuditDetails()
     {
+        var dialogProvider = Render<MudDialogProvider>();
+        var dialogService = Services.GetRequiredService<IDialogService>();
+
         var log = new AuditLogDTO
         {
             Id = 1,
@@ -23,17 +27,26 @@ public class AuditDetailsDialogTests : DialogTestContext
             Changes = "{\"amount\":100}"
         };
 
-        var cut = Render<MudDialogProvider>(parameters => parameters
-            .AddChildContent<AuditDetailsDialog>(p => p
-                .Add(d => d.Log, log)));
+        var parameters = new DialogParameters
+        {
+            { nameof(AuditDetailsDialog.Log), log }
+        };
 
-        cut.Markup.Should().Contain("Audit Log Details");
-        cut.Markup.Should().Contain("auditor@example.com");
+        dialogService.Show<AuditDetailsDialog>("Audit Log Details", parameters);
+
+        dialogProvider.WaitForAssertion(() =>
+        {
+            dialogProvider.Markup.Should().Contain("Audit Log Details");
+            dialogProvider.Markup.Should().Contain("auditor@example.com");
+        });
     }
 
     [Fact]
     public void Render_WhenLogActionIsDelete_ShouldUseDeleteBadgeClass()
     {
+        var dialogProvider = Render<MudDialogProvider>();
+        var dialogService = Services.GetRequiredService<IDialogService>();
+
         var log = new AuditLogDTO
         {
             UserEmail = "auditor@example.com",
@@ -43,10 +56,14 @@ public class AuditDetailsDialogTests : DialogTestContext
             Changes = "{}"
         };
 
-        var cut = Render<MudDialogProvider>(parameters => parameters
-            .AddChildContent<AuditDetailsDialog>(p => p
-                .Add(d => d.Log, log)));
+        var parameters = new DialogParameters
+        {
+            { nameof(AuditDetailsDialog.Log), log }
+        };
 
-        cut.Markup.Should().Contain("badge-red");
+        dialogService.Show<AuditDetailsDialog>("Audit Log Details", parameters);
+
+        dialogProvider.WaitForAssertion(() =>
+            dialogProvider.Markup.Should().Contain("badge-red"));
     }
 }
