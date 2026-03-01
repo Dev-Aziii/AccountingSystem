@@ -58,12 +58,58 @@
         background-color: #e0e7ff;
         color: #4338ca;
     }
+
+    /* Responsive Filters & Tweaks */
+    .table-toolbar-wrapper {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        gap: 1rem;
+    }
+
+    .table-toolbar-actions {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .filter-search {
+        width: 100%;
+        max-width: 300px;
+    }
+
+    .shadcn-table .mud-table-toolbar {
+        height: auto !important;
+        padding-top: 1rem !important;
+        padding-bottom: 1rem !important;
+    }
+
+    /* Mobile Overrides */
+    @@media (max-width: 599px) {
+        .table-toolbar-wrapper {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .table-toolbar-actions {
+            flex-direction: column;
+            width: 100%;
+            align-items: stretch; /* Make inputs fill the container */
+        }
+
+        .filter-search {
+            max-width: 100%;
+        }
+    }
 </style>
 
 <PageTitle>Chart of Accounts - AccSys</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.Large" Class="mt-6 mb-10">
-    <div class="d-flex justify-space-between align-center mb-6">
+    <div class="d-flex flex-column flex-sm-row justify-space-between align-start align-sm-center mb-6 gap-3">
         <div>
             @if (_initialLoading)
             {
@@ -146,18 +192,20 @@
 
             <MudTabPanel Text="Active Accounts" OnClick="@(() => LoadList(false))">
                 <MudCard Elevation="0" Outlined="true" Class="shadcn-card">
-                    <MudTable Items="@accounts" Dense="true" Hover="true" Elevation="0" Filter="new Func<AccountDTO, bool>(FilterFunc)" Loading="@_loading" Class="shadcn-table">
+                    <MudTable Items="@accounts" Dense="true" Hover="true" Elevation="0" Filter="new Func<AccountDTO, bool>(FilterFunc)" Loading="@_loading" Class="shadcn-table" Breakpoint="Breakpoint.Sm">
                         <ToolBarContent>
-                            <div style="font-size: 1.125rem; font-weight: 600; color: var(--text-main);">Active List</div>
-                            <MudSpacer />
-                            <MudTextField @bind-Value="searchString"
-                                          Placeholder="Search accounts..."
-                                          Adornment="Adornment.Start"
-                                          AdornmentIcon="@Icons.Material.Outlined.Search"
-                                          Variant="Variant.Outlined"
-                                          Margin="Margin.Dense"
-                                          Class="shadcn-input"
-                                          Style="max-width: 300px; margin-top: 0;"></MudTextField>
+                            <div class="table-toolbar-wrapper">
+                                <div style="font-size: 1.125rem; font-weight: 600; color: var(--text-main);">Active List</div>
+                                <div class="table-toolbar-actions">
+                                    <MudTextField @bind-Value="searchString"
+                                                  Placeholder="Search accounts..."
+                                                  Adornment="Adornment.Start"
+                                                  AdornmentIcon="@Icons.Material.Outlined.Search"
+                                                  Variant="Variant.Outlined"
+                                                  Margin="Margin.Dense"
+                                                  Class="shadcn-input filter-search m-0"></MudTextField>
+                                </div>
+                            </div>
                         </ToolBarContent>
                         <HeaderContent>
                             <MudTh>Code</MudTh>
@@ -194,18 +242,20 @@
             <AuthorizeView Roles="Admin,Accounting" Context="authContext">
                 <MudTabPanel Text="Archived Accounts" OnClick="@(() => LoadList(true))">
                     <MudCard Elevation="0" Outlined="true" Class="shadcn-card">
-                        <MudTable Items="@accounts" Dense="true" Hover="true" Elevation="0" Filter="new Func<AccountDTO, bool>(FilterFunc)" Loading="@_loading" Class="shadcn-table">
+                        <MudTable Items="@accounts" Dense="true" Hover="true" Elevation="0" Filter="new Func<AccountDTO, bool>(FilterFunc)" Loading="@_loading" Class="shadcn-table" Breakpoint="Breakpoint.Sm">
                             <ToolBarContent>
-                                <div style="font-size: 1.125rem; font-weight: 600; color: var(--text-main);">Archived List</div>
-                                <MudSpacer />
-                                <MudTextField @bind-Value="searchString"
-                                              Placeholder="Search archived..."
-                                              Adornment="Adornment.Start"
-                                              AdornmentIcon="@Icons.Material.Outlined.Search"
-                                              Variant="Variant.Outlined"
-                                              Margin="Margin.Dense"
-                                              Class="shadcn-input"
-                                              Style="max-width: 300px; margin-top: 0;"></MudTextField>
+                                <div class="table-toolbar-wrapper">
+                                    <div style="font-size: 1.125rem; font-weight: 600; color: var(--text-main);">Archived List</div>
+                                    <div class="table-toolbar-actions">
+                                        <MudTextField @bind-Value="searchString"
+                                                      Placeholder="Search archived..."
+                                                      Adornment="Adornment.Start"
+                                                      AdornmentIcon="@Icons.Material.Outlined.Search"
+                                                      Variant="Variant.Outlined"
+                                                      Margin="Margin.Dense"
+                                                      Class="shadcn-input filter-search m-0"></MudTextField>
+                                    </div>
+                                </div>
                             </ToolBarContent>
                             <HeaderContent>
                                 <MudTh>Code</MudTh>

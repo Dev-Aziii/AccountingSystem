@@ -208,20 +208,31 @@
         min-height: 250px;
         width: 100%;
     }
+
+    /* Mobile Overrides for KPI grid */
+    @@media (max-width: 599px) {
+        .sa-metric-value {
+            font-size: 1.5rem; /* Scale down big numbers for 2x2 grid */
+        }
+
+        .sa-metric-card {
+            padding: 1rem; /* Less padding to maximize space */
+        }
+    }
 </style>
 
 @* FIX RZ1003: @@keyframes blocks are moved out of <style> into a MarkupString
    to prevent Razor from misreading the CSS braces as code blocks. *@
 @((MarkupString)@"<style>
-    @@keyframes fadeInArea {
+    @keyframes fadeInArea {
         from { opacity: 0; }
         to   { opacity: 0.35; }
     }
-    @@keyframes drawLine {
+    @keyframes drawLine {
         from { stroke-dashoffset: 2000; }
         to   { stroke-dashoffset: 0; }
     }
-    @@keyframes popIn {
+    @keyframes popIn {
         from { opacity: 0; }
         to   { opacity: 1; }
     }
@@ -229,7 +240,7 @@
 
 <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-6 mb-10">
 
-    <div class="d-flex justify-space-between align-center mb-8">
+    <div class="d-flex flex-column flex-sm-row justify-space-between align-start align-sm-center mb-8 gap-3">
         <div>
             @if (isLoading)
             {
@@ -263,7 +274,7 @@
         <MudGrid Spacing="4">
             @for (int i = 0; i < 4; i++)
             {
-                <MudItem xs="12" sm="6" lg="3">
+                <MudItem xs="6" sm="6" lg="3">
                     <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="120px" Style="border-radius: 8px;" />
                 </MudItem>
             }
@@ -282,8 +293,7 @@
     {
         <MudGrid Spacing="4">
 
-            <!-- KPI: Total Tenants -->
-            <MudItem xs="12" sm="6" lg="3">
+            <MudItem xs="6" sm="6" lg="3">
                 <div class="sa-metric-card" @onclick='() => NavManager.NavigateTo("/superadmin/tenants")'>
                     <div class="sa-metric-header">
                         <div class="sa-metric-label">Total Tenants</div>
@@ -295,8 +305,7 @@
                 </div>
             </MudItem>
 
-            <!-- KPI: Active Tenants -->
-            <MudItem xs="12" sm="6" lg="3">
+            <MudItem xs="6" sm="6" lg="3">
                 <div class="sa-metric-card" @onclick='() => NavManager.NavigateTo("/superadmin/tenants")'>
                     <div class="sa-metric-header">
                         <div class="sa-metric-label">Active Tenants</div>
@@ -308,8 +317,7 @@
                 </div>
             </MudItem>
 
-            <!-- KPI: Total Users -->
-            <MudItem xs="12" sm="6" lg="3">
+            <MudItem xs="6" sm="6" lg="3">
                 <div class="sa-metric-card" @onclick='() => NavManager.NavigateTo("/superadmin/users")'>
                     <div class="sa-metric-header">
                         <div class="sa-metric-label">Total Users</div>
@@ -321,8 +329,7 @@
                 </div>
             </MudItem>
 
-            <!-- KPI: System Issues -->
-            <MudItem xs="12" sm="6" lg="3">
+            <MudItem xs="6" sm="6" lg="3">
                 <div class="sa-metric-card" @onclick='() => NavManager.NavigateTo("/superadmin/users")'>
                     <div class="sa-metric-header">
                         <div class="sa-metric-label">System Issues</div>
@@ -334,10 +341,9 @@
                 </div>
             </MudItem>
 
-            <!-- Custom SVG Line Chart: Tenant Registrations -->
             <MudItem xs="12">
                 <div class="sa-featured-card">
-                    <div class="sa-section-header">
+                    <div class="sa-section-header flex-wrap">
                         <MudIcon Icon="@Icons.Material.Outlined.TrendingUp" Size="Size.Small" Style="color: var(--text-muted);" />
                         <span class="sa-section-title">Tenant Registrations (12 Months)</span>
                         @if (chartPoints.Count > 0)
@@ -353,7 +359,7 @@
                     {
                         <div class="custom-chart-wrap" id="chart-container">
                             <div class="chart-tooltip @(tooltipVisible ? "visible" : "")"
-                                 style="left: @(tooltipX)px; top: @(tooltipY)px;">
+                                 style="left: @((tooltipX / SvgWidth) * 100)%; top: @((tooltipY / SvgHeight) * 100)%;">
                                 <span class="chart-tooltip-label">@tooltipLabel</span>
                                 @tooltipValue tenants
                             </div>
@@ -395,8 +401,6 @@
                                 <path class="chart-area-path" d="@areaPath"></path>
                                 <path class="chart-line-path" d="@linePath"></path>
 
-                                @* FIX RZ9980: <circle> must use explicit closing tag, not self-closing />,
-                                   when Blazor event directives (@onmouseover / @onmouseout) are present. *@
                                 @foreach (var pt in chartPoints)
                                 {
                                     var capturedPt = pt;
@@ -421,14 +425,13 @@
                 </div>
             </MudItem>
 
-            <!-- Donut Chart: Tenant Status -->
             <MudItem xs="12" md="6">
                 <div class="sa-featured-card">
                     <div class="sa-section-header">
                         <MudIcon Icon="@Icons.Material.Outlined.PieChart" Size="Size.Small" Style="color: var(--text-muted);" />
                         <span class="sa-section-title">Tenant Status</span>
                     </div>
-                    <div class="d-flex gap-4 mb-2" style="font-size: 0.875rem;">
+                    <div class="d-flex flex-wrap gap-2 gap-sm-4 mb-2" style="font-size: 0.875rem;">
                         <div class="d-flex align-center gap-1">
                             <span class="sa-status-dot" style="background: #10b981;"></span>
                             <span><b>@stats.ActiveCompanies</b> Active</span>
@@ -463,14 +466,13 @@
                 </div>
             </MudItem>
 
-            <!-- Donut Chart: User Status -->
             <MudItem xs="12" md="6">
                 <div class="sa-featured-card">
                     <div class="sa-section-header">
                         <MudIcon Icon="@Icons.Material.Outlined.DonutLarge" Size="Size.Small" Style="color: var(--text-muted);" />
                         <span class="sa-section-title">User Status</span>
                     </div>
-                    <div class="d-flex gap-4 mb-2" style="font-size: 0.875rem;">
+                    <div class="d-flex flex-wrap gap-2 gap-sm-4 mb-2" style="font-size: 0.875rem;">
                         <div class="d-flex align-center gap-1">
                             <span class="sa-status-dot" style="background: #10b981;"></span>
                             <span><b>@stats.ActiveUsers</b> Active</span>
@@ -505,18 +507,20 @@
                 </div>
             </MudItem>
 
-            <!-- Recent Actions Log -->
             <MudItem xs="12">
                 <div class="sa-featured-card">
-                    <div class="sa-section-header">
-                        <MudIcon Icon="@Icons.Material.Outlined.History" Size="Size.Small" Style="color: var(--text-muted);" />
-                        <span class="sa-section-title">Recent Actions</span>
-                        <MudSpacer />
+                    <div class="sa-section-header flex-column flex-sm-row align-start align-sm-center">
+                        <div class="d-flex align-center gap-2">
+                            <MudIcon Icon="@Icons.Material.Outlined.History" Size="Size.Small" Style="color: var(--text-muted);" />
+                            <span class="sa-section-title">Recent Actions</span>
+                        </div>
+                        <MudSpacer Class="d-none d-sm-block" />
                         <MudButton Variant="Variant.Text"
                                    Size="Size.Small"
                                    EndIcon="@Icons.Material.Outlined.ArrowForward"
                                    OnClick='() => NavManager.NavigateTo("/superadmin/audit-logs")'
-                                   Style="color: var(--text-muted); text-transform: none; font-weight: 500;">
+                                   Style="color: var(--text-muted); text-transform: none; font-weight: 500;"
+                                   Class="mt-2 mt-sm-0 px-0 px-sm-2">
                             View Audit Logs
                         </MudButton>
                     </div>
@@ -554,9 +558,8 @@
                 </div>
             </MudItem>
 
-            <!-- System Health Banner -->
             <MudItem xs="12">
-                <div class="sa-health-banner">
+                <div class="sa-health-banner flex-column flex-sm-row align-start align-sm-center text-start">
                     <MudIcon Icon="@Icons.Material.Outlined.CheckCircleOutline" Size="Size.Large" Style="color: #059669;" />
                     <div>
                         <div style="font-size: 1rem; font-weight: 600; color: #064e3b; letter-spacing: -0.025em;">System Operational</div>

@@ -8,8 +8,62 @@
 
 <PageTitle>Audit Logs - AccSys</PageTitle>
 
+<style>
+    /* Responsive Filters & Tweaks */
+    .table-toolbar-wrapper {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        gap: 1rem;
+    }
+
+    .table-toolbar-actions {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+
+    .filter-search {
+        width: 100%;
+        max-width: 250px;
+    }
+
+    .filter-dropdown {
+        width: 100%;
+        max-width: 160px;
+    }
+
+    .shadcn-table .mud-table-toolbar {
+        height: auto !important;
+        padding-top: 1rem !important;
+        padding-bottom: 1rem !important;
+    }
+
+    /* Mobile Overrides */
+    @@media (max-width: 599px) {
+        .table-toolbar-wrapper {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .table-toolbar-actions {
+            flex-direction: column;
+            width: 100%;
+            align-items: stretch; /* Make inputs fill the container */
+        }
+
+        .filter-search, .filter-dropdown {
+            max-width: 100%;
+        }
+    }
+</style>
+
 <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-6 mb-10">
-    <div class="d-flex justify-space-between align-center mb-8">
+    <div class="d-flex flex-column flex-sm-row justify-space-between align-start align-sm-center mb-8 gap-3">
         <div>
             <h2 style="font-size: 1.75rem; font-weight: 700; letter-spacing: -0.025em; color: var(--text-main); margin: 0;">
                 Super Admin Audit Logs
@@ -31,44 +85,43 @@
     <MudCard Elevation="0" Outlined="true" Class="shadcn-card">
         <MudTable Items="@logs" Hover="true" Loading="@isLoading"
                   Filter="new Func<SuperAdminAuditLogDTO, bool>(FilterFunc)"
-                  Dense="false" Elevation="0" Class="shadcn-table">
+                  Dense="false" Elevation="0" Class="shadcn-table" Breakpoint="Breakpoint.Sm">
             <ToolBarContent>
-                <div style="font-size: 1.125rem; font-weight: 600; color: var(--text-main); letter-spacing: -0.025em;">
-                    Action History
-                </div>
-                <MudSpacer />
-                <div class="d-flex align-center gap-3 flex-wrap">
-                    <MudTextField @bind-Value="searchString"
-                                  Placeholder="Search logs..."
-                                  Adornment="Adornment.Start"
-                                  AdornmentIcon="@Icons.Material.Outlined.Search"
-                                  IconSize="Size.Small"
-                                  Variant="Variant.Outlined"
-                                  Margin="Margin.Dense"
-                                  Class="shadcn-input bg-surface m-0"
-                                  Style="width: 250px;" />
+                <div class="table-toolbar-wrapper">
+                    <div style="font-size: 1.125rem; font-weight: 600; color: var(--text-main); letter-spacing: -0.025em;">
+                        Action History
+                    </div>
 
-                    <MudSelect T="string"
-                               @bind-Value="actionFilter"
-                               Variant="Variant.Outlined"
-                               Margin="Margin.Dense"
-                               Class="shadcn-input bg-surface m-0"
-                               Style="width: 160px;">
-                        <MudSelectItem T="string" Value='@("All")'>All Actions</MudSelectItem>
-                        <MudSelectItem T="string" Value='@("COMPANY_STATUS_CHANGE")'>Company Status</MudSelectItem>
-                        <MudSelectItem T="string" Value='@("USER_STATUS_CHANGE")'>User Status</MudSelectItem>
-                    </MudSelect>
+                    <div class="table-toolbar-actions">
+                        <MudTextField @bind-Value="searchString"
+                                      Placeholder="Search logs..."
+                                      Adornment="Adornment.Start"
+                                      AdornmentIcon="@Icons.Material.Outlined.Search"
+                                      IconSize="Size.Small"
+                                      Variant="Variant.Outlined"
+                                      Margin="Margin.Dense"
+                                      Class="shadcn-input bg-surface m-0 filter-search" />
 
-                    <MudSelect T="string"
-                               @bind-Value="targetFilter"
-                               Variant="Variant.Outlined"
-                               Margin="Margin.Dense"
-                               Class="shadcn-input bg-surface m-0"
-                               Style="width: 150px;">
-                        <MudSelectItem T="string" Value='@("All")'>All Targets</MudSelectItem>
-                        <MudSelectItem T="string" Value='@("Company")'>Companies</MudSelectItem>
-                        <MudSelectItem T="string" Value='@("User")'>Users</MudSelectItem>
-                    </MudSelect>
+                        <MudSelect T="string"
+                                   @bind-Value="actionFilter"
+                                   Variant="Variant.Outlined"
+                                   Margin="Margin.Dense"
+                                   Class="shadcn-input bg-surface m-0 filter-dropdown">
+                            <MudSelectItem T="string" Value='@("All")'>All Actions</MudSelectItem>
+                            <MudSelectItem T="string" Value='@("COMPANY_STATUS_CHANGE")'>Company Status</MudSelectItem>
+                            <MudSelectItem T="string" Value='@("USER_STATUS_CHANGE")'>User Status</MudSelectItem>
+                        </MudSelect>
+
+                        <MudSelect T="string"
+                                   @bind-Value="targetFilter"
+                                   Variant="Variant.Outlined"
+                                   Margin="Margin.Dense"
+                                   Class="shadcn-input bg-surface m-0 filter-dropdown">
+                            <MudSelectItem T="string" Value='@("All")'>All Targets</MudSelectItem>
+                            <MudSelectItem T="string" Value='@("Company")'>Companies</MudSelectItem>
+                            <MudSelectItem T="string" Value='@("User")'>Users</MudSelectItem>
+                        </MudSelect>
+                    </div>
                 </div>
             </ToolBarContent>
             <HeaderContent>
