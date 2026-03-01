@@ -1,6 +1,7 @@
 using AccountingSystem.Client.Shared.Dialogs;
 using AccountingSystem.Shared.DTOs;
 using FluentAssertions;
+using Microsoft.Extensions.DependencyInjection;
 using MudBlazor;
 using Xunit;
 
@@ -11,20 +12,34 @@ public class VendorDialogTests : DialogTestContext
     [Fact]
     public void Render_WhenCreatingVendor_ShouldShowCreateTitle()
     {
-        var cut = Render<MudDialogProvider>(parameters => parameters
-            .AddChildContent<VendorDialog>(p => p
-                .Add(d => d.Vendor, null)));
+        var dialogProvider = Render<MudDialogProvider>();
+        var dialogService = Services.GetRequiredService<IDialogService>();
 
-        cut.Markup.Should().Contain("Create New Vendor");
+        var parameters = new DialogParameters
+        {
+            { nameof(VendorDialog.Vendor), null }
+        };
+
+        dialogService.Show<VendorDialog>("Create New Vendor", parameters);
+
+        dialogProvider.WaitForAssertion(() =>
+            dialogProvider.Markup.Should().Contain("Create New Vendor"));
     }
 
     [Fact]
     public void Render_WhenEditingVendor_ShouldShowEditTitle()
     {
-        var cut = Render<MudDialogProvider>(parameters => parameters
-            .AddChildContent<VendorDialog>(p => p
-                .Add(d => d.Vendor, new VendorDTO { Id = 9, Name = "ACME" })));
+        var dialogProvider = Render<MudDialogProvider>();
+        var dialogService = Services.GetRequiredService<IDialogService>();
 
-        cut.Markup.Should().Contain("Edit Vendor");
+        var parameters = new DialogParameters
+        {
+            { nameof(VendorDialog.Vendor), new VendorDTO { Id = 9, Name = "ACME" } }
+        };
+
+        dialogService.Show<VendorDialog>("Edit Vendor", parameters);
+
+        dialogProvider.WaitForAssertion(() =>
+            dialogProvider.Markup.Should().Contain("Edit Vendor"));
     }
 }

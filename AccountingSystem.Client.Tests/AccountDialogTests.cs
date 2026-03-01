@@ -1,6 +1,7 @@
 using AccountingSystem.Client.Shared.Dialogs;
 using AccountingSystem.Shared.DTOs;
 using FluentAssertions;
+using Microsoft.Extensions.DependencyInjection;
 using MudBlazor;
 using Xunit;
 
@@ -11,18 +12,34 @@ public class AccountDialogTests : DialogTestContext
     [Fact]
     public void Render_WhenCreatingAccount_ShouldShowCreateTitle()
     {
-        var cut = Render<MudDialogProvider>(parameters => parameters
-            .AddChildContent<AccountDialog>(p => p
-                .Add(d => d.Account, null)));
-        cut.Markup.Should().Contain("Create New Account");
+        var dialogProvider = Render<MudDialogProvider>();
+        var dialogService = Services.GetRequiredService<IDialogService>();
+
+        var parameters = new DialogParameters
+        {
+            { nameof(AccountDialog.Account), null }
+        };
+
+        dialogService.Show<AccountDialog>("Create New Account", parameters);
+
+        dialogProvider.WaitForAssertion(() =>
+            dialogProvider.Markup.Should().Contain("Create New Account"));
     }
 
     [Fact]
     public void Render_WhenEditingAccount_ShouldShowEditTitle()
     {
-        var cut = Render<MudDialogProvider>(parameters => parameters
-            .AddChildContent<AccountDialog>(p => p
-                .Add(d => d.Account, new AccountDTO { Id = 22, Name = "Cash" })));
-        cut.Markup.Should().Contain("Edit Account");
+        var dialogProvider = Render<MudDialogProvider>();
+        var dialogService = Services.GetRequiredService<IDialogService>();
+
+        var parameters = new DialogParameters
+        {
+            { nameof(AccountDialog.Account), new AccountDTO { Id = 22, Name = "Cash" } }
+        };
+
+        dialogService.Show<AccountDialog>("Edit Account", parameters);
+
+        dialogProvider.WaitForAssertion(() =>
+            dialogProvider.Markup.Should().Contain("Edit Account"));
     }
 }
