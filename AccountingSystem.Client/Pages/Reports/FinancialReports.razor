@@ -87,42 +87,44 @@
                         <hr style="border: 0; border-top: 1px solid var(--border-color); width: 100px; margin: 1.5rem auto;" />
                     </div>
 
-                    <table class="w-100 shadcn-report-table">
-                        <thead>
-                            <tr>
-                                <th style="text-align: left;">ACCOUNT CODE</th>
-                                <th style="text-align: left;">ACCOUNT NAME</th>
-                                <th style="text-align: right;">DEBIT</th>
-                                <th style="text-align: right;">CREDIT</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var line in balanceTrialBalance.Accounts.OrderBy(a => a.AccountCode))
-                            {
-                                var net = line.Debit - line.Credit;
-                                var displayDebit = net > 0 ? net : 0;
-                                var displayCredit = net < 0 ? Math.Abs(net) : 0;
-
+                    <div class="table-responsive-wrapper">
+                        <table class="w-100 shadcn-report-table">
+                            <thead>
                                 <tr>
-                                    <td style="color: var(--text-muted);">@line.AccountCode</td>
-                                    <td>@line.AccountName</td>
-                                    <td class="tabular-nums text-right">@displayDebit.ToString("C2", _phCulture)</td>
-                                    <td class="tabular-nums text-right">@displayCredit.ToString("C2", _phCulture)</td>
+                                    <th style="text-align: left;">ACCOUNT CODE</th>
+                                    <th style="text-align: left;">ACCOUNT NAME</th>
+                                    <th style="text-align: right;">DEBIT</th>
+                                    <th style="text-align: right;">CREDIT</th>
                                 </tr>
-                            }
-                        </tbody>
-                        <tfoot>
-                            @{
-                                var totalNetDebit = balanceTrialBalance.Accounts.Sum(a => (a.Debit - a.Credit) > 0 ? (a.Debit - a.Credit) : 0);
-                                var totalNetCredit = balanceTrialBalance.Accounts.Sum(a => (a.Debit - a.Credit) < 0 ? Math.Abs(a.Debit - a.Credit) : 0);
-                            }
-                            <tr class="totals-row">
-                                <td colspan="2" style="text-align:right; font-weight: 600;">TOTALS:</td>
-                                <td class="tabular-nums text-right double-underline" style="font-weight: 700;">@totalNetDebit.ToString("C2", _phCulture)</td>
-                                <td class="tabular-nums text-right double-underline" style="font-weight: 700;">@totalNetCredit.ToString("C2", _phCulture)</td>
-                            </tr>
-                        </tfoot>
-                    </table>
+                            </thead>
+                            <tbody>
+                                @foreach (var line in balanceTrialBalance.Accounts.OrderBy(a => a.AccountCode))
+                                {
+                                    var net = line.Debit - line.Credit;
+                                    var displayDebit = net > 0 ? net : 0;
+                                    var displayCredit = net < 0 ? Math.Abs(net) : 0;
+
+                                    <tr>
+                                        <td style="color: var(--text-muted);">@line.AccountCode</td>
+                                        <td>@line.AccountName</td>
+                                        <td class="tabular-nums text-right">@displayDebit.ToString("C2", _phCulture)</td>
+                                        <td class="tabular-nums text-right">@displayCredit.ToString("C2", _phCulture)</td>
+                                    </tr>
+                                }
+                            </tbody>
+                            <tfoot>
+                                @{
+                                    var totalNetDebit = balanceTrialBalance.Accounts.Sum(a => (a.Debit - a.Credit) > 0 ? (a.Debit - a.Credit) : 0);
+                                    var totalNetCredit = balanceTrialBalance.Accounts.Sum(a => (a.Debit - a.Credit) < 0 ? Math.Abs(a.Debit - a.Credit) : 0);
+                                }
+                                <tr class="totals-row">
+                                    <td colspan="2" style="text-align:right; font-weight: 600;">TOTALS:</td>
+                                    <td class="tabular-nums text-right double-underline" style="font-weight: 700;">@totalNetDebit.ToString("C2", _phCulture)</td>
+                                    <td class="tabular-nums text-right double-underline" style="font-weight: 700;">@totalNetCredit.ToString("C2", _phCulture)</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
                 </MudCard>
             </MudTabPanel>
 
@@ -144,44 +146,46 @@
                         <hr style="border: 0; border-top: 1px solid var(--border-color); width: 100px; margin: 1.5rem auto;" />
                     </div>
 
-                    <table class="w-100 shadcn-report-table">
-                        <tbody>
-                            <tr class="category-header"><td colspan="2">REVENUE</td></tr>
-                            @foreach (var line in GetAccountsByType(incomeTrialBalance, "Revenue"))
-                            {
-                                <tr>
-                                    <td class="pl-8">@line.AccountName</td>
-                                    <td class="tabular-nums text-right">@((line.Credit - line.Debit).ToString("C2", _phCulture))</td>
+                    <div class="table-responsive-wrapper">
+                        <table class="w-100 shadcn-report-table">
+                            <tbody>
+                                <tr class="category-header"><td colspan="2">REVENUE</td></tr>
+                                @foreach (var line in GetAccountsByType(incomeTrialBalance, "Revenue"))
+                                {
+                                    <tr>
+                                        <td class="pl-8">@line.AccountName</td>
+                                        <td class="tabular-nums text-right">@((line.Credit - line.Debit).ToString("C2", _phCulture))</td>
+                                    </tr>
+                                }
+                                <tr class="subtotal-row">
+                                    <td class="text-right font-weight-600">Total Revenue</td>
+                                    <td class="tabular-nums text-right font-weight-600">@TotalRevenue.ToString("C2", _phCulture)</td>
                                 </tr>
-                            }
-                            <tr class="subtotal-row">
-                                <td class="text-right font-weight-600">Total Revenue</td>
-                                <td class="tabular-nums text-right font-weight-600">@TotalRevenue.ToString("C2", _phCulture)</td>
-                            </tr>
 
-                            <tr><td colspan="2" class="py-4 border-0"></td></tr>
+                                <tr><td colspan="2" class="py-4 border-0"></td></tr>
 
-                            <tr class="category-header"><td colspan="2">OPERATING EXPENSES</td></tr>
-                            @foreach (var line in GetAccountsByType(incomeTrialBalance, "Expense"))
-                            {
-                                <tr>
-                                    <td class="pl-8">@line.AccountName</td>
-                                    <td class="tabular-nums text-right">@((line.Debit - line.Credit).ToString("C2", _phCulture))</td>
+                                <tr class="category-header"><td colspan="2">OPERATING EXPENSES</td></tr>
+                                @foreach (var line in GetAccountsByType(incomeTrialBalance, "Expense"))
+                                {
+                                    <tr>
+                                        <td class="pl-8">@line.AccountName</td>
+                                        <td class="tabular-nums text-right">@((line.Debit - line.Credit).ToString("C2", _phCulture))</td>
+                                    </tr>
+                                }
+                                <tr class="subtotal-row">
+                                    <td class="text-right font-weight-600">Total Expenses</td>
+                                    <td class="tabular-nums text-right font-weight-600">(@TotalExpense.ToString("C2", _phCulture))</td>
                                 </tr>
-                            }
-                            <tr class="subtotal-row">
-                                <td class="text-right font-weight-600">Total Expenses</td>
-                                <td class="tabular-nums text-right font-weight-600">(@TotalExpense.ToString("C2", _phCulture))</td>
-                            </tr>
 
-                            <tr><td colspan="2" class="py-6 border-0"></td></tr>
+                                <tr><td colspan="2" class="py-6 border-0"></td></tr>
 
-                            <tr class="grand-total-row">
-                                <td style="font-size: 1.125rem;">NET INCOME</td>
-                                <td class="tabular-nums text-right double-underline" style="font-size: 1.125rem;">@NetIncome.ToString("C2", _phCulture)</td>
-                            </tr>
-                        </tbody>
-                    </table>
+                                <tr class="grand-total-row">
+                                    <td style="font-size: 1.125rem;">NET INCOME</td>
+                                    <td class="tabular-nums text-right double-underline" style="font-size: 1.125rem;">@NetIncome.ToString("C2", _phCulture)</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </MudCard>
             </MudTabPanel>
 
@@ -203,63 +207,65 @@
                         <hr style="border: 0; border-top: 1px solid var(--border-color); width: 100px; margin: 1.5rem auto;" />
                     </div>
 
-                    <table class="w-100 shadcn-report-table">
-                        <tbody>
-                            <tr class="category-header"><td colspan="2">ASSETS</td></tr>
-                            @foreach (var line in GetAccountsByType(balanceTrialBalance, "Asset"))
-                            {
-                                <tr>
-                                    <td class="pl-8">@line.AccountName</td>
-                                    <td class="tabular-nums text-right">@((line.Debit - line.Credit).ToString("C2", _phCulture))</td>
+                    <div class="table-responsive-wrapper">
+                        <table class="w-100 shadcn-report-table">
+                            <tbody>
+                                <tr class="category-header"><td colspan="2">ASSETS</td></tr>
+                                @foreach (var line in GetAccountsByType(balanceTrialBalance, "Asset"))
+                                {
+                                    <tr>
+                                        <td class="pl-8">@line.AccountName</td>
+                                        <td class="tabular-nums text-right">@((line.Debit - line.Credit).ToString("C2", _phCulture))</td>
+                                    </tr>
+                                }
+                                <tr class="subtotal-row">
+                                    <td class="text-right font-weight-600">TOTAL ASSETS</td>
+                                    <td class="tabular-nums text-right font-weight-700 double-underline">@TotalAssets.ToString("C2", _phCulture)</td>
                                 </tr>
-                            }
-                            <tr class="subtotal-row">
-                                <td class="text-right font-weight-600">TOTAL ASSETS</td>
-                                <td class="tabular-nums text-right font-weight-700 double-underline">@TotalAssets.ToString("C2", _phCulture)</td>
-                            </tr>
 
-                            <tr><td colspan="2" class="py-6 border-0"></td></tr>
+                                <tr><td colspan="2" class="py-6 border-0"></td></tr>
 
-                            <tr class="category-header"><td colspan="2">LIABILITIES</td></tr>
-                            @foreach (var line in GetAccountsByType(balanceTrialBalance, "Liability"))
-                            {
-                                <tr>
-                                    <td class="pl-8">@line.AccountName</td>
-                                    <td class="tabular-nums text-right">@((line.Credit - line.Debit).ToString("C2", _phCulture))</td>
+                                <tr class="category-header"><td colspan="2">LIABILITIES</td></tr>
+                                @foreach (var line in GetAccountsByType(balanceTrialBalance, "Liability"))
+                                {
+                                    <tr>
+                                        <td class="pl-8">@line.AccountName</td>
+                                        <td class="tabular-nums text-right">@((line.Credit - line.Debit).ToString("C2", _phCulture))</td>
+                                    </tr>
+                                }
+                                <tr class="subtotal-row">
+                                    <td class="text-right font-weight-600">Total Liabilities</td>
+                                    <td class="tabular-nums text-right font-weight-600">@TotalLiabilities.ToString("C2", _phCulture)</td>
                                 </tr>
-                            }
-                            <tr class="subtotal-row">
-                                <td class="text-right font-weight-600">Total Liabilities</td>
-                                <td class="tabular-nums text-right font-weight-600">@TotalLiabilities.ToString("C2", _phCulture)</td>
-                            </tr>
 
-                            <tr><td colspan="2" class="py-4 border-0"></td></tr>
+                                <tr><td colspan="2" class="py-4 border-0"></td></tr>
 
-                            <tr class="category-header"><td colspan="2">EQUITY</td></tr>
-                            @foreach (var line in GetAccountsByType(balanceTrialBalance, "Equity"))
-                            {
+                                <tr class="category-header"><td colspan="2">EQUITY</td></tr>
+                                @foreach (var line in GetAccountsByType(balanceTrialBalance, "Equity"))
+                                {
+                                    <tr>
+                                        <td class="pl-8">@line.AccountName</td>
+                                        <td class="tabular-nums text-right">@((line.Credit - line.Debit).ToString("C2", _phCulture))</td>
+                                    </tr>
+                                }
                                 <tr>
-                                    <td class="pl-8">@line.AccountName</td>
-                                    <td class="tabular-nums text-right">@((line.Credit - line.Debit).ToString("C2", _phCulture))</td>
+                                    <td class="pl-8" style="color: var(--text-muted); font-style: italic;">Net Income (Current Fiscal Year)</td>
+                                    <td class="tabular-nums text-right">@NetIncome.ToString("C2", _phCulture)</td>
                                 </tr>
-                            }
-                            <tr>
-                                <td class="pl-8" style="color: var(--text-muted); font-style: italic;">Net Income (Current Fiscal Year)</td>
-                                <td class="tabular-nums text-right">@NetIncome.ToString("C2", _phCulture)</td>
-                            </tr>
-                            <tr class="subtotal-row">
-                                <td class="text-right font-weight-600">Total Equity</td>
-                                <td class="tabular-nums text-right font-weight-600">@TotalEquity.ToString("C2", _phCulture)</td>
-                            </tr>
+                                <tr class="subtotal-row">
+                                    <td class="text-right font-weight-600">Total Equity</td>
+                                    <td class="tabular-nums text-right font-weight-600">@TotalEquity.ToString("C2", _phCulture)</td>
+                                </tr>
 
-                            <tr><td colspan="2" class="py-6 border-0"></td></tr>
+                                <tr><td colspan="2" class="py-6 border-0"></td></tr>
 
-                            <tr class="grand-total-row">
-                                <td style="font-size: 1.125rem;">TOTAL LIABILITIES & EQUITY</td>
-                                <td class="tabular-nums text-right double-underline" style="font-size: 1.125rem;">@((TotalLiabilities + TotalEquity).ToString("C2", _phCulture))</td>
-                            </tr>
-                        </tbody>
-                    </table>
+                                <tr class="grand-total-row">
+                                    <td style="font-size: 1.125rem;">TOTAL LIABILITIES & EQUITY</td>
+                                    <td class="tabular-nums text-right double-underline" style="font-size: 1.125rem;">@((TotalLiabilities + TotalEquity).ToString("C2", _phCulture))</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </MudCard>
             </MudTabPanel>
         </MudTabs>
@@ -267,12 +273,20 @@
 </MudContainer>
 
 <style>
+    /* Responsive Table Wrapper */
+    .table-responsive-wrapper {
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+    }
+
     /* Shadcn Report Table Styles */
     .shadcn-report-table {
         border-collapse: collapse;
         width: 100%;
         color: var(--text-main);
         font-size: 0.875rem;
+        min-width: 600px; /* Forces scrollbar on small screens instead of squishing */
     }
 
         .shadcn-report-table th {
@@ -382,6 +396,14 @@
             box-shadow: none !important;
             border: none !important;
             padding: 0 !important;
+        }
+
+        .table-responsive-wrapper {
+            overflow-x: visible !important; /* Remove scroll behavior on print */
+        }
+
+        .shadcn-report-table {
+            min-width: 100% !important; /* Ensure table fits page on print */
         }
 
         .category-header td {
