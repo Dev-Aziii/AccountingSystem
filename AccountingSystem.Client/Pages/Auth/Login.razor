@@ -16,12 +16,10 @@
     <!-- ===== LEFT BRANDING PANEL ===== -->
     <div class="branding-panel">
         <div class="branding-inner">
-            <!-- Floating decorative circles -->
             <div class="deco-circle deco-circle--lg"></div>
             <div class="deco-circle deco-circle--sm"></div>
             <div class="deco-circle deco-circle--xs"></div>
 
-            <!-- Illustration -->
             <div class="branding-illustration">
                 <div class="img-skeleton @(illustrationLoaded ? "img-skeleton--hidden" : "")"></div>
                 <img src="graphics3.png"
@@ -30,7 +28,6 @@
                      @onload="OnIllustrationLoaded" />
             </div>
 
-            <!-- Text content -->
             <div class="branding-text">
                 <h1 class="branding-title">AccSys Solutions</h1>
                 <p class="branding-subtitle">
@@ -38,7 +35,6 @@
                 </p>
             </div>
 
-            <!-- Bottom trust badges -->
             <div class="branding-badges">
                 <div class="badge-item">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="badge-icon"><path fill-rule="evenodd" d="M12.516 2.17a.75.75 0 0 0-1.032 0 11.209 11.209 0 0 1-7.877 3.08.75.75 0 0 0-.722.515A12.74 12.74 0 0 0 2.25 9.75c0 5.942 4.064 10.933 9.563 12.348a.749.749 0 0 0 .374 0c5.499-1.415 9.563-6.406 9.563-12.348 0-1.39-.223-2.73-.635-3.985a.75.75 0 0 0-.722-.516l-.143.001c-2.996 0-5.717-1.17-7.734-3.08Z" clip-rule="evenodd" /></svg>
@@ -60,16 +56,19 @@
     <div class="form-panel">
         <div class="form-inner">
 
-            <!-- Logo + Header -->
             <div class="form-header">
                 <div class="logo-wrap">
-                    <img src="AccsysLogo.png" alt="AccSys Logo" class="form-logo" />
+                    <!-- Logo skeleton shimmer -->
+                    <div class="logo-skeleton @(logoLoaded ? "logo-skeleton--hidden" : "")"></div>
+                    <img src="AccsysLogo.png"
+                         alt="AccSys Logo"
+                         class="form-logo @(logoLoaded ? "form-logo--visible" : "")"
+                         @onload="OnLogoLoaded" />
                 </div>
                 <h2 class="form-title">Welcome to AccSys</h2>
                 <p class="form-subtitle">Sign in to access your accounting system</p>
             </div>
 
-            <!-- Login Form -->
             <EditForm Model="@loginModel" OnValidSubmit="HandleLogin">
                 <DataAnnotationsValidator />
 
@@ -111,7 +110,6 @@
                 </div>
             </EditForm>
 
-            <!-- Footer -->
             <div class="form-footer">
                 <MudDivider Class="mb-5" />
                 <MudText Typo="Typo.body2" Class="mb-2">
@@ -176,14 +174,14 @@
         }
     }
 
-    /* ── Reset & Base ─────────────────────────────────────────────── */
+    /* ── Base ─────────────────────────────────────────────────────── */
     .split-login-container {
         display: flex;
-        min-height: 100vh; 
+        min-height: 100vh;
         width: 100%;
     }
 
-    /* ── LEFT BRANDING PANEL ──────────────────────────────────────── */
+    /* ── Left branding panel ──────────────────────────────────────── */
     .branding-panel {
         display: none;
         width: 50%;
@@ -214,11 +212,10 @@
         width: 100%;
     }
 
-    /* Decorative floating circles */
     .deco-circle {
         position: absolute;
         border-radius: 50%;
-        background: rgba(255, 255, 255, 0.06);
+        background: rgba(255,255,255,0.06);
         pointer-events: none;
     }
 
@@ -234,7 +231,7 @@
         height: 220px;
         bottom: 40px;
         left: -80px;
-        background: rgba(255, 255, 255, 0.05);
+        background: rgba(255,255,255,0.05);
     }
 
     .deco-circle--xs {
@@ -242,10 +239,10 @@
         height: 110px;
         top: 50%;
         left: 15%;
-        background: rgba(255, 255, 255, 0.04);
+        background: rgba(255,255,255,0.04);
     }
 
-    /* ── Illustration wrapper + skeleton ─────────────────────────── */
+    /* Illustration */
     .branding-illustration {
         width: 100%;
         max-width: 300px;
@@ -262,7 +259,6 @@
             transform: scale(1.03) translateY(-4px);
         }
 
-    /* Skeleton shimmer overlay */
     .img-skeleton {
         position: absolute;
         inset: 0;
@@ -279,7 +275,6 @@
         pointer-events: none;
     }
 
-    /* Image starts invisible, fades in once loaded */
     .branding-img {
         width: 100%;
         display: block;
@@ -294,7 +289,6 @@
         opacity: 1;
     }
 
-    /* Text */
     .branding-title {
         font-size: 2.25rem;
         font-weight: 800;
@@ -311,7 +305,6 @@
         margin: 0 0 1.25rem 0;
     }
 
-    /* Trust badges */
     .branding-badges {
         display: flex;
         gap: 1.25rem;
@@ -335,7 +328,7 @@
         color: rgba(255,255,255,0.85);
     }
 
-    /* ── RIGHT FORM PANEL ────────────────────────────────────────── */
+    /* ── Right form panel ─────────────────────────────────────────── */
     .form-panel {
         width: 100%;
         display: flex;
@@ -374,22 +367,50 @@
         animation: fadeUp 0.5s 0.1s cubic-bezier(0.22, 1, 0.36, 1) both;
     }
 
+    /* ── Logo skeleton ───────────────────────────────────────────── */
     .logo-wrap {
         display: flex;
         justify-content: center;
+        align-items: center;
         margin-bottom: 0.75rem;
+        position: relative;
+        height: 62px;
+    }
+
+    .logo-skeleton {
+        position: absolute;
+        width: 130px;
+        height: 62px;
+        border-radius: 8px;
+        background: linear-gradient( 90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75% );
+        background-size: 600px 100%;
+        animation: shimmer 1.4s infinite linear;
+        transition: opacity 0.35s ease;
+        z-index: 1;
+    }
+
+    .logo-skeleton--hidden {
+        opacity: 0;
+        pointer-events: none;
     }
 
     .form-logo {
         height: 62px;
         width: auto;
         filter: drop-shadow(0 4px 12px rgba(19, 70, 88, 0.18));
-        transition: transform 0.3s ease;
+        transition: transform 0.3s ease, opacity 0.45s ease;
+        position: relative;
+        z-index: 2;
+        opacity: 0;
     }
 
-        .form-logo:hover {
-            transform: scale(1.06);
-        }
+    .form-logo--visible {
+        opacity: 1;
+    }
+
+    .form-logo:hover {
+        transform: scale(1.06);
+    }
 
     .form-title {
         font-size: 1.9rem;
@@ -432,7 +453,7 @@
         color: #4a6274 !important;
     }
 
-    /* Submit button */
+    /* Button */
     .accsys-btn {
         background: linear-gradient(to right, #1a5370, #429497) !important;
         border-radius: 10px !important;
@@ -508,6 +529,7 @@
     private LoginDTO loginModel = new LoginDTO();
     private bool isLoading = false;
     private bool illustrationLoaded = false;
+    private bool logoLoaded = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -517,6 +539,12 @@
             var role = authState.User.FindFirst("role")?.Value;
             NavManager.NavigateTo(role == "SuperAdmin" ? "/superadmin/dashboard" : "/dashboard");
         }
+    }
+
+    private void OnLogoLoaded()
+    {
+        logoLoaded = true;
+        StateHasChanged();
     }
 
     private void OnIllustrationLoaded()
