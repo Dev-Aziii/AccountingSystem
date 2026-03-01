@@ -17,7 +17,7 @@ builder.RootComponents.Add<HeadOutlet>("head::after");
 builder.Services.AddMudServices(config =>
 {
     // Set the global Snackbar variant to Outlined
-    config.SnackbarConfiguration.SnackbarVariant = Variant.Outlined;
+    config.SnackbarConfiguration.SnackbarVariant = Variant.Text;
 
     // behaviors
     config.SnackbarConfiguration.PositionClass = Defaults.Classes.Position.TopRight; 

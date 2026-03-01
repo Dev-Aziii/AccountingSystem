@@ -215,7 +215,7 @@
 ========================================= */
 
 .mud-snackbar {
-    background-color: transparent !important;
+    background-color: var(--bg-surface) !important;
     border-radius: var(--radius-md) !important; 
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important; 
 }
