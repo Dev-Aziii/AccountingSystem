@@ -35,7 +35,7 @@
 
     .sa-metric-card:hover {
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
-        border-color: #cbd5e1; /* Slate-300 */
+        border-color: #cbd5e1;
         transform: translateY(-2px);
     }
 
@@ -71,7 +71,12 @@
         letter-spacing: -0.05em;
     }
 
-    /* Responsive Filters & Tweaks */
+    /* ─── Toolbar ─────────────────────────────────────────────── */
+    .shadcn-table .mud-table-toolbar {
+        height: auto !important;
+        padding: 1rem !important;
+    }
+
     .table-toolbar-wrapper {
         display: flex;
         flex-direction: row;
@@ -79,6 +84,16 @@
         align-items: center;
         width: 100%;
         gap: 1rem;
+        flex-wrap: nowrap;
+    }
+
+    .table-toolbar-title {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: var(--text-main);
+        letter-spacing: -0.025em;
+        white-space: nowrap;
+        flex-shrink: 0;
     }
 
     .table-toolbar-actions {
@@ -86,53 +101,68 @@
         flex-direction: row;
         align-items: center;
         gap: 0.75rem;
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
     }
 
+    /* Neutralise every MudBlazor internal margin/padding that
+       pushes form controls out of vertical alignment */
+    .table-toolbar-actions .mud-input-control,
+    .table-toolbar-actions .mud-input-control > .mud-input-control-input-shrink,
+    .table-toolbar-actions .mud-form-control,
+    .table-toolbar-actions .mud-select,
+    .table-toolbar-actions .mud-text-field {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    /* Inner helper text / label rows can add invisible height — kill them */
+    .table-toolbar-actions .mud-input-helper-text,
+    .table-toolbar-actions .mud-input-label {
+        display: none !important;
+    }
+
+    /* Fixed widths so everything sits flush on one line */
     .filter-search {
-        width: 100%;
-        max-width: 250px;
+        width: 240px;
+        min-width: 0;
     }
 
     .filter-dropdown {
-        width: 100%;
-        max-width: 140px;
+        width: 140px;
+        min-width: 0;
     }
 
-    .shadcn-table .mud-table-toolbar {
-        height: auto !important;
-        padding-top: 1rem !important;
-        padding-bottom: 1rem !important;
-    }
-
-    /* Mobile Overrides */
+    /* ─── Mobile ──────────────────────────────────────────────── */
     @@media (max-width: 599px) {
         .sa-stats-grid {
-            grid-template-columns: repeat(2, 1fr); /* Force 2x2 grid on mobile */
+            grid-template-columns: repeat(2, 1fr);
             gap: 1rem;
         }
 
         .sa-metric-value {
-            font-size: 1.5rem; /* Scale down big numbers for 2x2 grid */
+            font-size: 1.5rem;
         }
 
         .sa-metric-card {
-            padding: 1rem; /* Less padding to maximize space */
+            padding: 1rem;
         }
 
         .table-toolbar-wrapper {
             flex-direction: column;
             align-items: flex-start;
+            flex-wrap: wrap;
         }
 
         .table-toolbar-actions {
             flex-direction: column;
             width: 100%;
-            align-items: stretch; /* Make inputs fill the container */
+            align-items: stretch;
+            flex-wrap: wrap;
         }
 
-        .filter-search, .filter-dropdown {
-            max-width: 100%;
+        .filter-search,
+        .filter-dropdown {
+            width: 100%;
         }
     }
 </style>
@@ -150,7 +180,7 @@
         <MudButton Variant="Variant.Outlined"
                    Class="shadcn-btn-outline"
                    StartIcon="@Icons.Material.Outlined.Refresh"
-                   Size="Size.Small" 
+                   Size="Size.Small"
                    OnClick="LoadData"
                    Disabled="isLoading">
             Refresh Data
@@ -170,42 +200,41 @@
     else
     {
         <div class="sa-stats-grid">
-            
             <div class="sa-metric-card">
                 <div class="sa-metric-header">
                     <div class="sa-metric-label">Active</div>
                     <div class="sa-metric-icon-wrapper" style="background-color: #d1fae5;">
-                        <MudIcon Icon="@Icons.Material.Outlined.CheckCircleOutline" Size="Size.Small" Style="color: #10b981;" /> 
+                        <MudIcon Icon="@Icons.Material.Outlined.CheckCircleOutline" Size="Size.Small" Style="color: #10b981;" />
                     </div>
                 </div>
                 <div class="sa-metric-value">@users.Count(u => u.Status == "Active")</div>
             </div>
-            
+
             <div class="sa-metric-card">
                 <div class="sa-metric-header">
                     <div class="sa-metric-label">Restricted</div>
                     <div class="sa-metric-icon-wrapper" style="background-color: #fef3c7;">
-                        <MudIcon Icon="@Icons.Material.Outlined.WarningAmber" Size="Size.Small" Style="color: #f59e0b;" /> 
+                        <MudIcon Icon="@Icons.Material.Outlined.WarningAmber" Size="Size.Small" Style="color: #f59e0b;" />
                     </div>
                 </div>
                 <div class="sa-metric-value">@users.Count(u => u.Status == "Restricted")</div>
             </div>
-            
+
             <div class="sa-metric-card">
                 <div class="sa-metric-header">
                     <div class="sa-metric-label">Blocked</div>
                     <div class="sa-metric-icon-wrapper" style="background-color: #fef2f2;">
-                        <MudIcon Icon="@Icons.Material.Outlined.Block" Size="Size.Small" Style="color: #ef4444;" /> 
+                        <MudIcon Icon="@Icons.Material.Outlined.Block" Size="Size.Small" Style="color: #ef4444;" />
                     </div>
                 </div>
                 <div class="sa-metric-value">@users.Count(u => u.Status == "Blocked")</div>
             </div>
-            
+
             <div class="sa-metric-card">
                 <div class="sa-metric-header">
                     <div class="sa-metric-label">Companies</div>
                     <div class="sa-metric-icon-wrapper" style="background-color: #f3e8ff;">
-                        <MudIcon Icon="@Icons.Material.Outlined.Business" Size="Size.Small" Style="color: #8b5cf6;" /> 
+                        <MudIcon Icon="@Icons.Material.Outlined.Business" Size="Size.Small" Style="color: #8b5cf6;" />
                     </div>
                 </div>
                 <div class="sa-metric-value">@users.Select(u => u.CompanyName).Distinct().Count()</div>
@@ -217,35 +246,35 @@
                       Dense="false" Elevation="0" Class="shadcn-table" Breakpoint="Breakpoint.Sm">
                 <ToolBarContent>
                     <div class="table-toolbar-wrapper">
-                        <div style="font-size: 1.125rem; font-weight: 600; color: var(--text-main); letter-spacing: -0.025em;">
-                            All System Users
-                        </div>
+                        <span class="table-toolbar-title">All System Users</span>
+
                         <div class="table-toolbar-actions">
-                            <MudTextField @bind-Value="searchString" 
+                            <MudTextField @bind-Value="searchString"
                                           Placeholder="Search users or companies..."
-                                          Adornment="Adornment.Start" 
-                                          AdornmentIcon="@Icons.Material.Outlined.Search" 
+                                          Adornment="Adornment.Start"
+                                          AdornmentIcon="@Icons.Material.Outlined.Search"
                                           IconSize="Size.Small"
                                           Variant="Variant.Outlined"
                                           Margin="Margin.Dense"
-                                          Class="shadcn-input bg-surface m-0 filter-search" />
-                                          
-                            <MudSelect T="string" 
-                                       @bind-Value="statusFilter" 
+                                          DisableUnderLine="true"
+                                          Class="shadcn-input filter-search" />
+
+                            <MudSelect T="string"
+                                       @bind-Value="statusFilter"
                                        Variant="Variant.Outlined"
                                        Margin="Margin.Dense"
-                                       Class="shadcn-input bg-surface m-0 filter-dropdown">
+                                       Class="shadcn-input filter-dropdown">
                                 <MudSelectItem T="string" Value='@("All")'>All Statuses</MudSelectItem>
                                 <MudSelectItem T="string" Value='@("Active")'>Active</MudSelectItem>
                                 <MudSelectItem T="string" Value='@("Restricted")'>Restricted</MudSelectItem>
                                 <MudSelectItem T="string" Value='@("Blocked")'>Blocked</MudSelectItem>
                             </MudSelect>
-                            
-                            <MudSelect T="string" 
-                                       @bind-Value="roleFilter" 
+
+                            <MudSelect T="string"
+                                       @bind-Value="roleFilter"
                                        Variant="Variant.Outlined"
                                        Margin="Margin.Dense"
-                                       Class="shadcn-input bg-surface m-0 filter-dropdown">
+                                       Class="shadcn-input filter-dropdown">
                                 <MudSelectItem T="string" Value='@("All")'>All Roles</MudSelectItem>
                                 <MudSelectItem T="string" Value='@("Admin")'>Admin</MudSelectItem>
                                 <MudSelectItem T="string" Value='@("Accounting")'>Accounting</MudSelectItem>
@@ -305,21 +334,21 @@
                         <MudMenu Icon="@Icons.Material.Outlined.MoreVert" Dense="true" AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight">
                             @if (context.Status != "Active")
                             {
-                                <MudMenuItem Icon="@Icons.Material.Outlined.CheckCircleOutline" 
+                                <MudMenuItem Icon="@Icons.Material.Outlined.CheckCircleOutline"
                                              OnClick="@(() => ConfirmActivateUser(context))">
                                     Activate
                                 </MudMenuItem>
                             }
                             @if (context.Status != "Restricted")
                             {
-                                <MudMenuItem Icon="@Icons.Material.Outlined.WarningAmber" 
+                                <MudMenuItem Icon="@Icons.Material.Outlined.WarningAmber"
                                              OnClick="@(() => ConfirmRestrictUser(context))">
                                     Restrict
                                 </MudMenuItem>
                             }
                             @if (context.Status != "Blocked")
                             {
-                                <MudMenuItem Icon="@Icons.Material.Outlined.Block" 
+                                <MudMenuItem Icon="@Icons.Material.Outlined.Block"
                                              Style="color: var(--color-destructive);"
                                              OnClick="@(() => ConfirmBlockUser(context))">
                                     Block
@@ -389,10 +418,7 @@
             "Activate",
             Color.Success);
 
-        if (result)
-        {
-            await ChangeUserStatus(user, "Active");
-        }
+        if (result) await ChangeUserStatus(user, "Active");
     }
 
     private async Task ConfirmRestrictUser(GlobalUserDTO user)
@@ -403,10 +429,7 @@
             "Restrict",
             Color.Warning);
 
-        if (result)
-        {
-            await ChangeUserStatus(user, "Restricted");
-        }
+        if (result) await ChangeUserStatus(user, "Restricted");
     }
 
     private async Task ConfirmBlockUser(GlobalUserDTO user)
@@ -417,18 +440,15 @@
             "Block",
             Color.Error);
 
-        if (result)
-        {
-            await ChangeUserStatus(user, "Blocked");
-        }
+        if (result) await ChangeUserStatus(user, "Blocked");
     }
 
     private string GetRoleBadgeClass(string? role) => role switch
     {
-        "Admin" => "badge-indigo",
+        "Admin"      => "badge-indigo",
         "Accounting" => "badge-blue",
         "Management" => "badge-slate",
-        _ => "badge-slate"
+        _            => "badge-slate"
     };
 
     private async Task<bool> ShowConfirmDialog(string content, string subText, string buttonText, Color color)
@@ -436,12 +456,12 @@
         var parameters = new DialogParameters
         {
             [nameof(ShadcnConfirmDialog.ContentText)] = content,
-            [nameof(ShadcnConfirmDialog.SubText)] = subText,
-            [nameof(ShadcnConfirmDialog.ButtonText)] = buttonText,
-            [nameof(ShadcnConfirmDialog.Color)] = color
+            [nameof(ShadcnConfirmDialog.SubText)]     = subText,
+            [nameof(ShadcnConfirmDialog.ButtonText)]  = buttonText,
+            [nameof(ShadcnConfirmDialog.Color)]       = color
         };
         var options = new DialogOptions { MaxWidth = MaxWidth.ExtraSmall, FullWidth = true };
-        var dialog = await DialogService.ShowAsync<ShadcnConfirmDialog>("Confirm", parameters, options);
+        var dialog  = await DialogService.ShowAsync<ShadcnConfirmDialog>("Confirm", parameters, options);
         var dialogResult = await dialog.Result;
         return dialogResult is not null && !dialogResult.Canceled;
     }
@@ -454,7 +474,7 @@
             (element.FullName?.Contains(searchString, StringComparison.OrdinalIgnoreCase) ?? false);
 
         bool matchesStatus = statusFilter == "All" || element.Status == statusFilter;
-        bool matchesRole = roleFilter == "All" || element.Role == roleFilter;
+        bool matchesRole   = roleFilter   == "All" || element.Role   == roleFilter;
 
         return matchesSearch && matchesStatus && matchesRole;
     }
