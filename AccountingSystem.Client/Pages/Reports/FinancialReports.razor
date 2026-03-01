@@ -52,7 +52,7 @@
 
     @if (isLoading)
     {
-        <MudCard Elevation="0" Outlined="true" Class="shadcn-card pa-10 text-center">
+        <MudCard Elevation="0" Outlined="true" Class="shadcn-card pa-10" Style="text-align: center;">
             <MudProgressCircular Color="Color.Default" Indeterminate="true" Size="Size.Medium" Style="color: var(--text-muted);" />
             <div style="color: var(--text-muted); font-size: 0.875rem; margin-top: 1rem;">Loading financial data...</div>
         </MudCard>
@@ -71,7 +71,7 @@
 
             <MudTabPanel Text="Trial Balance">
                 <MudCard Elevation="0" Outlined="true" Class="shadcn-card pa-8 report-paper">
-                    <div class="report-header text-center mb-8">
+                    <div class="report-header mb-8" style="text-align: center; display: flex; flex-direction: column; align-items: center;">
                         <div style="font-size: 1.5rem; font-weight: 700; color: var(--text-main); letter-spacing: -0.025em;">@currentCompany.Name</div>
                         @if (!string.IsNullOrEmpty(currentCompany.Address))
                         {
@@ -128,7 +128,7 @@
 
             <MudTabPanel Text="Income Statement">
                 <MudCard Elevation="0" Outlined="true" Class="shadcn-card pa-8 report-paper">
-                    <div class="report-header text-center mb-8">
+                    <div class="report-header mb-8" style="text-align: center; display: flex; flex-direction: column; align-items: center;">
                         <div style="font-size: 1.5rem; font-weight: 700; color: var(--text-main); letter-spacing: -0.025em;">@currentCompany.Name</div>
                         @if (!string.IsNullOrEmpty(currentCompany.Address))
                         {
@@ -187,7 +187,7 @@
 
             <MudTabPanel Text="Balance Sheet">
                 <MudCard Elevation="0" Outlined="true" Class="shadcn-card pa-8 report-paper">
-                    <div class="report-header text-center mb-8">
+                    <div class="report-header mb-8" style="text-align: center; display: flex; flex-direction: column; align-items: center;">
                         <div style="font-size: 1.5rem; font-weight: 700; color: var(--text-main); letter-spacing: -0.025em;">@currentCompany.Name</div>
                         @if (!string.IsNullOrEmpty(currentCompany.Address))
                         {
