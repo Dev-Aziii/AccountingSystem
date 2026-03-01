@@ -9,30 +9,26 @@ namespace AccountingSystem.Client.Services
 
         public FrankfurterService()
         {
-            // Dedicated client for external API to avoid CORS/Auth issues with the main API client
             _http = new HttpClient();
         }
 
-        public async Task<decimal> GetUsdToPhpRateAsync()
+        public async Task<decimal> GetExchangeRateAsync(string baseCurr, string targetCurr)
         {
+            if (baseCurr == targetCurr) return 1;
             try
             {
-                // Fetch latest rate for 1 USD to PHP
-                string url = "https://api.frankfurter.app/latest?from=USD&to=PHP";
-
+                string url = $"https://api.frankfurter.app/latest?from={baseCurr}&to={targetCurr}";
                 var response = await _http.GetFromJsonAsync<FrankfurterResponse>(url);
-
-                if (response != null && response.Rates != null)
+                if (response?.Rates != null && response.Rates.TryGetValue(targetCurr, out decimal rate))
                 {
-                    return response.Rates.PHP;
+                    return rate;
                 }
-
                 return 0;
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Frankfurter API Error: {ex.Message}");
-                return 0; // Return 0 on failure so UI can handle gracefully
+                return 0;
             }
         }
     }

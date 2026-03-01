@@ -1,13 +1,8 @@
 ﻿using System.Text.Json.Serialization;
+using System.Collections.Generic;
 
 namespace AccountingSystem.Shared.DTOs
 {
-    public class FrankfurterRates
-    {
-        [JsonPropertyName("PHP")]
-        public decimal PHP { get; set; }
-    }
-
     public class FrankfurterResponse
     {
         [JsonPropertyName("amount")]
@@ -20,6 +15,6 @@ namespace AccountingSystem.Shared.DTOs
         public string? Date { get; set; }
 
         [JsonPropertyName("rates")]
-        public FrankfurterRates? Rates { get; set; }
+        public Dictionary<string, decimal>? Rates { get; set; }
     }
 }

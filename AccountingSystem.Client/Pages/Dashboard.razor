@@ -49,7 +49,6 @@
         .span-3, .span-4, .span-6, .span-8 { grid-column: span 12; }
     }
 
-    /* Responsive Layout Helpers */
     .dashboard-header {
         display: flex;
         justify-content: space-between;
@@ -71,7 +70,6 @@
         margin-top: auto;
     }
 
-    /* Mobile overrides */
     @@media (max-width: 768px) {
         .dashboard-header {
             flex-direction: column;
@@ -88,7 +86,6 @@
         }
     }
 
-    /* Shadcn Card Core */
     .shadcn-card {
         background-color: var(--bg-surface);
         border: 1px solid var(--border-color);
@@ -125,7 +122,6 @@
         opacity: 0.8;
     }
 
-    /* Big Numbers */
     .metric-value-huge {
         font-size: 2rem;
         font-weight: 700;
@@ -140,7 +136,6 @@
         margin-top: 0.25rem;
     }
 
-    /* Flat Progress Bars */
     .flat-progress-bg {
         height: 8px;
         background-color: var(--bg-muted);
@@ -154,7 +149,6 @@
         border-radius: 9999px;
     }
 
-    /* Inputs & Buttons */
     .shadcn-input {
         background: var(--bg-surface);
         border: 1px solid var(--border-color);
@@ -165,7 +159,7 @@
         width: 100%;
         transition: outline 0.15s ease;
     }
-    
+
     .shadcn-input:focus {
         outline: 2px solid var(--text-main);
         outline-offset: -1px;
@@ -185,7 +179,6 @@
         background: var(--bg-muted) !important;
     }
 
-    /* Table/List rows */
     .list-row {
         display: flex;
         justify-content: space-between;
@@ -198,7 +191,6 @@
         border-bottom: none;
     }
 
-    /* Stat Grid Item */
     .stat-grid-item {
         padding: 1rem;
         border-radius: var(--radius-md);
@@ -206,7 +198,6 @@
         background: var(--bg-surface);
     }
 
-    /* Trend Icon Adjustments */
     .trend-icon {
         font-size: 16px !important;
         display: flex;
@@ -242,7 +233,7 @@
     </div>
 
     @if (isLoading)
-    {        
+    {
         <div class="dashboard-grid">
             <div class="span-6"><MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="350px" Style="border-radius: 8px;" /></div>
             <div class="span-3"><MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="350px" Style="border-radius: 8px;" /></div>
@@ -252,9 +243,10 @@
         </div>
     }
     else
-    {        
+    {
         <div class="dashboard-grid">
 
+            <!-- Financial Summary -->
             <div class="span-6">
                 <div class="shadcn-card">
                     <div class="shadcn-card-header">
@@ -353,13 +345,14 @@
                 </div>
             </div>
 
+            <!-- Active Transactions -->
             <div class="span-3">
                 <div class="shadcn-card">
                     <div class="shadcn-card-header">
                         <span class="shadcn-card-title">Active Transactions</span>
                         <MudIcon Icon="@Icons.Material.Outlined.SwapHoriz" Size="Size.Small" Class="shadcn-card-icon" />
                     </div>
-                    
+
                     <div style="margin-top: 0.5rem; margin-bottom: 1.5rem;">
                         <div class="metric-value-huge">@ActiveTransactions</div>
                         <div class="metric-subtitle">Pending payments & collections</div>
@@ -388,52 +381,69 @@
                 </div>
             </div>
 
+            <!-- Currency Converter -->
             <div class="span-3">
                 <div class="shadcn-card">
                     <div class="shadcn-card-header">
-                        <span class="shadcn-card-title">USD to PHP</span>
+                        <span class="shadcn-card-title">Currency Converter</span>
                         <MudIcon Icon="@Icons.Material.Outlined.CurrencyExchange" Size="Size.Small" Class="shadcn-card-icon" />
                     </div>
 
-                    @if (usdToPhpRate > 0)
+                    @if (isForexLoading)
                     {
-                        <div style="margin-top: 0.5rem; margin-bottom: 2rem;">
-                            <div class="metric-value-huge">₱@usdToPhpRate.ToString("F2")</div>
-                            <div class="metric-subtitle">Live Exchange Rate • @DateTime.Now.ToString("HH:mm")</div>
+                        <div style="padding: 2rem; text-align: center;">
+                            <MudProgressCircular Color="Color.Default" Indeterminate="true" Size="Size.Small" />
+                        </div>
+                    }
+                    else
+                    {
+                        <div style="margin-top: 0.5rem; margin-bottom: 1.5rem;">
+                            <div class="metric-value-huge">
+                                ₱@((usdInputAmount * exchangeRate).ToString("N2"))
+                            </div>
+                            <div class="metric-subtitle">
+                                1 @baseCurrency = ₱@exchangeRate.ToString("F4") PHP
+                            </div>
                         </div>
 
-                        <div style="margin-top: auto;">
-                            <div style="font-size: 0.75rem; font-weight: 500; color: var(--text-main); margin-bottom: 0.5rem;">Convert Amount</div>
-                            
-                            <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
-                                <input type="number" class="shadcn-input" @bind-value="usdInputAmount" @bind-value:event="oninput" min="0" placeholder="USD" />
+                        <div style="margin-top: auto; display: flex; flex-direction: column; gap: 0.75rem;">
+                            <div style="display: flex; gap: 0.5rem;">
+                                <div style="flex: 1;">
+                                    <label style="font-size: 0.7rem; color: var(--text-muted); font-weight: 500;">FROM</label>
+                                    <select class="shadcn-input" value="@baseCurrency" @onchange="OnBaseCurrencyChanged" style="height: 36px; padding: 2px 8px;">
+                                        @foreach (var curr in allCurrencies)
+                                        {
+                                            <option value="@curr.Key" selected="@(curr.Key == baseCurrency)">@curr.Key - @curr.Value</option>
+                                        }
+                                    </select>
+                                </div>
+                                <div style="flex: 1;">
+                                    <label style="font-size: 0.7rem; color: var(--text-muted); font-weight: 500;">TO</label>
+                                    <input class="shadcn-input" value="PHP - Philippine Peso" disabled
+                                           style="height: 36px; padding: 2px 8px; opacity: 0.6; cursor: not-allowed;" />
+                                </div>
                             </div>
 
-                            <div style="background: var(--bg-muted); border-radius: var(--radius-md); padding: 1rem; display: flex; justify-content: space-between; align-items: center;">
-                                <span style="font-size: 0.875rem; font-weight: 500; color: var(--text-muted);">Result</span>
-                                <span style="font-size: 1.25rem; font-weight: 600; color: var(--text-main);">₱@((usdInputAmount * usdToPhpRate).ToString("N2"))</span>
+                            <div>
+                                <label style="font-size: 0.7rem; color: var(--text-muted); font-weight: 500;">AMOUNT (@baseCurrency)</label>
+                                <input type="number" class="shadcn-input" @bind-value="usdInputAmount" @bind-value:event="oninput" min="0" />
                             </div>
 
-                            <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+                            <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
                                 @foreach (var amount in new[] { 100, 500, 1000 })
                                 {
-                                    <button class="shadcn-btn-outline" style="flex: 1; padding: 0.25rem; font-size: 0.75rem;" @onclick="@(() => usdInputAmount = amount)">
-                                        $@amount
+                                    <button class="shadcn-btn-outline" style="flex: 1; padding: 0.25rem; font-size: 0.75rem;"
+                                            @onclick="@(() => usdInputAmount = amount)">
+                                        @amount
                                     </button>
                                 }
                             </div>
                         </div>
                     }
-                    else
-                    {
-                        <div style="text-align: center; padding: 2rem; color: var(--text-muted); margin: auto;">
-                            <MudIcon Icon="@Icons.Material.Outlined.CloudOff" Size="Size.Medium" Class="mb-2" />
-                            <div style="font-size: 0.875rem;">Loading forex...</div>
-                        </div>
-                    }
                 </div>
             </div>
 
+            <!-- World Bank Inflation -->
             <div class="span-6">
                 <div class="shadcn-card">
                     <div class="shadcn-card-header">
@@ -452,10 +462,10 @@
                         </div>
 
                         <div style="margin: 1rem 0; flex: 1;">
-                            <MudChart ChartType="ChartType.Line" 
-                                      ChartSeries="@inflationChartSeries" 
+                            <MudChart ChartType="ChartType.Line"
+                                      ChartSeries="@inflationChartSeries"
                                       XAxisLabels="@inflationYears"
-                                      Width="100%" 
+                                      Width="100%"
                                       Height="220px"
                                       ChartOptions="@inflationChartOptions">
                             </MudChart>
@@ -492,6 +502,7 @@
                 </div>
             </div>
 
+            <!-- Inflation History -->
             <div class="span-6">
                 <div class="shadcn-card">
                     <div class="shadcn-card-header" style="margin-bottom: 0.5rem;">
@@ -507,7 +518,7 @@
                                 var prevVal = GetPreviousInflationValue(data.Date);
                                 var isUp = prevVal.HasValue && data.Value > prevVal;
                                 var changeAmount = prevVal.HasValue ? data.Value - prevVal : null;
-                                
+
                                 <div class="list-row">
                                     <div style="display: flex; align-items: center; gap: 1rem;">
                                         <span style="font-size: 0.875rem; font-weight: 500; color: var(--text-main); width: 40px;">@data.Date</span>
@@ -545,27 +556,44 @@
                     }
                 </div>
             </div>
-            
+
         </div>
     }
 
 </MudContainer>
 
 @code {
+    // --- State ---
     private TrialBalanceDTO? trialBalance;
     private Dictionary<string, string> accountTypes = new();
     private List<CalendarItem> _events = new();
     private bool isLoading = false;
-    private List<WorldBankDataPoint> inflationData = new();
-    private decimal usdToPhpRate = 0;
-    private decimal usdInputAmount = 100; // Default conversion amount
+    private bool isForexLoading = false;
 
-    // Chart data for MudBlazor
+    // --- Inflation ---
+    private List<WorldBankDataPoint> inflationData = new();
     private List<ChartSeries> inflationChartSeries = new();
     private string[] inflationYears = Array.Empty<string>();
     private ChartOptions inflationChartOptions = new();
 
-    // --- KPI Properties ---
+    // --- Currency Converter ---
+    private static readonly Dictionary<string, string> allCurrencies = new()
+    {
+        { "USD", "US Dollar" },
+        { "EUR", "Euro" },
+        { "JPY", "Japanese Yen" },
+        { "SGD", "Singapore Dollar" },
+        { "GBP", "British Pound" },
+        { "AUD", "Australian Dollar" },
+        { "HKD", "Hong Kong Dollar" }
+    };
+
+    private string baseCurrency  = "USD";
+    private string targetCurrency = "PHP"; // always fixed
+    private decimal exchangeRate  = 0;
+    private decimal usdInputAmount = 100;
+
+    // --- KPIs ---
     private decimal CashBalance;
     private decimal NetProfit;
     private decimal ArOutstanding;
@@ -575,11 +603,10 @@
     private decimal TotalRevenue;
     private decimal TotalExpenses;
 
-    // --- Calculated Properties ---
+    // --- Computed ---
     private int ActiveTransactions => BillsToPay + InvoicesToCollect;
     private int BillsToPay;
     private int InvoicesToCollect;
-    private int ActiveAccounts => trialBalance?.Accounts.Count ?? 0;
     private decimal CurrentInflationValue => inflationData.FirstOrDefault()?.Value ?? 0;
     private decimal ProfitMarginPercent => TotalRevenue > 0 ? (NetProfit / TotalRevenue * 100) : 0;
 
@@ -593,55 +620,43 @@
         isLoading = true;
         try
         {
-            var tbTask = ReportService.GetTrialBalance();
-            var acctsTask = LedgerService.GetAccountsAsync();
-            var billsTask = PayableService.GetBillsAsync();
-            var invoicesTask = ReceivableService.GetInvoicesAsync();
+            var tbTask        = ReportService.GetTrialBalance();
+            var acctsTask     = LedgerService.GetAccountsAsync();
+            var billsTask     = PayableService.GetBillsAsync();
+            var invoicesTask  = ReceivableService.GetInvoicesAsync();
             var worldBankTask = WorldBankService.GetInflationDataAsync();
-            var forexTask = FrankfurterService.GetUsdToPhpRateAsync();
 
-            await Task.WhenAll(tbTask, acctsTask, billsTask, invoicesTask, worldBankTask, forexTask);
+            await Task.WhenAll(tbTask, acctsTask, billsTask, invoicesTask, worldBankTask);
 
             trialBalance = tbTask.Result;
+
             var accountsList = acctsTask.Result;
+            accountTypes = accountsList?.ToDictionary(a => a.Code, a => a.Type)
+                           ?? new Dictionary<string, string>();
 
-            accountTypes = accountsList?.ToDictionary(a => a.Code, a => a.Type) ?? new Dictionary<string, string>();
-            inflationData = worldBankTask.Result.Where(x => x.Value.HasValue).OrderByDescending(x => x.Date).ToList();
-            usdToPhpRate = forexTask.Result;
+            inflationData = worldBankTask.Result
+                .Where(x => x.Value.HasValue)
+                .OrderByDescending(x => x.Date)
+                .ToList();
 
-            // Prepare chart data
             PrepareInflationChartData();
 
-            var bills = (billsTask.Result ?? new List<BillDTO>()).Where(b => b.Balance > 0).ToList();
+            var bills    = (billsTask.Result    ?? new List<BillDTO>())   .Where(b => b.Balance > 0).ToList();
             var invoices = (invoicesTask.Result ?? new List<InvoiceDTO>()).Where(i => i.Balance > 0).ToList();
 
-            BillsToPay = bills.Count;
+            BillsToPay        = bills.Count;
             InvoicesToCollect = invoices.Count;
 
             if (trialBalance != null)
-            {
                 CalculateKPIs(trialBalance.Accounts);
-            }
 
             _events.Clear();
-
             foreach (var bill in bills)
-            {
-                _events.Add(new CalendarItem
-                    {
-                        Start = bill.DueDate,
-                        Text = $"PAY: {bill.VendorName} (₱{bill.Balance:N0})"
-                    });
-            }
-
+                _events.Add(new CalendarItem { Start = bill.DueDate, Text = $"PAY: {bill.VendorName} (₱{bill.Balance:N0})" });
             foreach (var inv in invoices)
-            {
-                _events.Add(new CalendarItem
-                    {
-                        Start = inv.DueDate,
-                        Text = $"COLLECT: {inv.CustomerName} (₱{inv.Balance:N0})"
-                    });
-            }
+                _events.Add(new CalendarItem { Start = inv.DueDate, Text = $"COLLECT: {inv.CustomerName} (₱{inv.Balance:N0})" });
+
+            await RefreshExchangeRate();
         }
         catch (Exception ex)
         {
@@ -650,6 +665,32 @@
         finally
         {
             isLoading = false;
+        }
+    }
+
+    private async Task OnBaseCurrencyChanged(ChangeEventArgs e)
+    {
+        baseCurrency = e.Value?.ToString() ?? baseCurrency;
+        await RefreshExchangeRate();
+    }
+
+    private async Task RefreshExchangeRate()
+    {
+        isForexLoading = true;
+        StateHasChanged();
+        try
+        {
+            exchangeRate = await FrankfurterService.GetExchangeRateAsync(baseCurrency, targetCurrency);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Forex refresh error: {ex.Message}");
+            exchangeRate = 0;
+        }
+        finally
+        {
+            isForexLoading = false;
+            StateHasChanged();
         }
     }
 
@@ -669,15 +710,14 @@
             }
         };
 
-        // SHADCNIFIED CHART OPTIONS
         inflationChartOptions = new ChartOptions
         {
-            YAxisTicks = 1,
-            MaxNumYAxisTicks = 10,
-            YAxisLines = true,
-            XAxisLines = false,
-            LineStrokeWidth = 2, // Thinner, sharper line
-            ChartPalette = new[] { "#0f172a", "#64748b" }, // Flat slate colors
+            YAxisTicks          = 1,
+            MaxNumYAxisTicks    = 10,
+            YAxisLines          = true,
+            XAxisLines          = false,
+            LineStrokeWidth     = 2,
+            ChartPalette        = new[] { "#0f172a", "#64748b" },
             InterpolationOption = InterpolationOption.Straight
         };
     }
@@ -718,28 +758,23 @@
         var absValue = Math.Abs(value);
         var sign = value < 0 ? "-" : "";
 
-        if (absValue >= 1000000000)
-            return $"{sign}{(absValue / 1000000000):F1}B";
-        if (absValue >= 1000000)
-            return $"{sign}{(absValue / 1000000):F1}M";
-        if (absValue >= 1000)
-            return $"{sign}{(absValue / 1000):F1}K";
+        if (absValue >= 1_000_000_000) return $"{sign}{absValue / 1_000_000_000:F1}B";
+        if (absValue >= 1_000_000)     return $"{sign}{absValue / 1_000_000:F1}M";
+        if (absValue >= 1_000)         return $"{sign}{absValue / 1_000:F1}K";
         return $"{sign}{absValue:N0}";
     }
 
     private string GetInflationStatus(decimal? value)
     {
         if (!value.HasValue) return "No Data";
-        if (value < 2) return "Low";
-        if (value <= 4) return "Moderate";
+        if (value < 2)       return "Low";
+        if (value <= 4)      return "Moderate";
         return "High";
     }
 
     private decimal? GetPreviousInflationValue(string? currentYear)
     {
         if (string.IsNullOrEmpty(currentYear) || !int.TryParse(currentYear, out int year)) return null;
-        var previousYear = (year - 1).ToString();
-        var previousData = inflationData.FirstOrDefault(x => x.Date == previousYear);
-        return previousData?.Value;
+        return inflationData.FirstOrDefault(x => x.Date == (year - 1).ToString())?.Value;
     }
 }
