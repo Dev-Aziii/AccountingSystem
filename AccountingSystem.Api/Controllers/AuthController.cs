@@ -45,7 +45,7 @@ namespace AccountingSystem.API.Controllers
             }
         }
 
-        // --- NEW: Profile & Password Endpoints ---
+        // Profile & Password Endpoints ---
 
         [HttpPut("profile")]
         [Authorize]

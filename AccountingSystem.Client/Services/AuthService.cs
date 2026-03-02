@@ -72,7 +72,7 @@ namespace AccountingSystem.Client.Services
             ((CustomAuthStateProvider)_authStateProvider).NotifyUserLogout();
         }
 
-        // --- NEW: Profile & Password Methods ---
+        //  Profile & Password Methods ---
         public async Task UpdateProfile(UpdateProfileDTO dto)
         {
             // ApiService handles the Bearer token attachment automatically

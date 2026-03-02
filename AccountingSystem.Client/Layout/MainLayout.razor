@@ -1,11 +1,14 @@
 ﻿@inherits LayoutComponentBase
 @using AccountingSystem.Client.Services
-@using Microsoft.AspNetCore.Components.Authorization
+@using AccountingSystem.Client.Shared.Components @using Microsoft.AspNetCore.Components.Authorization
 @using MudBlazor
 @inject AuthService AuthService
 @inject NavigationManager NavManager
+@inject Blazored.LocalStorage.ILocalStorageService LocalStorage
 
-<MudLayout Class="shadcn-layout">
+<MudThemeProvider Theme="_shadcnTheme" @bind-IsDarkMode="_isDarkMode" />
+
+<MudLayout Class="@(_isDarkMode ? "shadcn-layout dark-theme" : "shadcn-layout")">
     <MudAppBar Class="shadcn-app-bar" Elevation="0">
 
         <div class="app-bar-content">
@@ -30,6 +33,10 @@
             </div>
 
             <MudSpacer />
+
+            <div class="mr-2">
+                <ThemeToggle IsDarkMode="_isDarkMode" IsDarkModeChanged="HandleThemeChange" />
+            </div>
 
             <AuthorizeView>
                 <Authorized Context="authContext">
@@ -109,20 +116,6 @@
 </MudLayout>
 
 <style>
-    /* CSS Variables for Shadcn equivalents */
-    :root {
-        --border-color: #e2e8f0;
-        --bg-background: #f8fafc;
-        --bg-surface: #ffffff;
-        --bg-muted: #f1f5f9;
-        --text-main: #0f172a;
-        --text-muted: #64748b;
-        --radius-md: 6px;
-        --radius-lg: 8px;
-        --color-destructive: #ef4444;
-        --color-success: #10b981;
-    }
-
     /* Main Layout */
     .shadcn-layout {
         min-height: 100vh;
@@ -289,7 +282,7 @@
         text-transform: none !important;
         font-weight: 500 !important;
         background-color: var(--text-main) !important;
-        color: white !important;
+        color: var(--bg-surface) !important;
         box-shadow: none !important;
         padding: 6px 16px !important;
     }
@@ -346,6 +339,49 @@
 
 @code {
     bool _drawerOpen = true;
+    bool _isDarkMode = false;
+
+    private MudTheme _shadcnTheme = new MudTheme()
+    {
+        PaletteLight = new PaletteLight()
+        {
+            Primary = "#0f172a", // slate-900
+            Secondary = "#64748b", // slate-500
+            AppbarBackground = "#ffffff",
+            AppbarText = "#0f172a",
+            Background = "#f8fafc", // slate-50
+            Surface = "#ffffff",
+            DrawerBackground = "#ffffff",
+            DrawerText = "#0f172a",
+            ActionDefault = "#64748b",
+            TextPrimary = "#0f172a",
+            TextSecondary = "#64748b",
+            LinesDefault = "#e2e8f0", // slate-200
+            Divider = "#e2e8f0"
+        },
+        PaletteDark = new PaletteDark()
+        {
+            Primary = "#f8fafc", // slate-50
+            Secondary = "#94a3b8", // slate-400
+            AppbarBackground = "#0f172a", // slate-900
+            AppbarText = "#f8fafc",
+            Background = "#020817", // slate-950
+            Surface = "#0f172a", // slate-900
+            DrawerBackground = "#0f172a", // slate-900
+            DrawerText = "#f8fafc",
+            ActionDefault = "#94a3b8",
+            TextPrimary = "#f8fafc",
+            TextSecondary = "#94a3b8",
+            LinesDefault = "#1e293b", // slate-800
+            Divider = "#1e293b",
+        }
+    };
+
+    private async Task HandleThemeChange(bool isDark)
+    {
+        _isDarkMode = isDark;
+        await LocalStorage.SetItemAsync("isDarkMode", _isDarkMode);
+    }
 
     void DrawerToggle()
     {

@@ -2,7 +2,7 @@
 
 namespace AccountingSystem.Shared.DTOs
 {
-    // --- NEW: Profile & Password Management ---
+    //  Profile & Password Management ---
     public class UpdateProfileDTO
     {
         [Required]

@@ -3,11 +3,11 @@
 }
 
 /* ========================================
-   SHADCN/UI THEME STYLES - GLOBAL
+   1. SHADCN/UI THEME STYLES - GLOBAL
    ======================================== */
 
 :root {
-    /* Base Shadcn Colors (Slate/Zinc vibe) */
+    /* Base Shadcn Colors (Light Mode) */
     --border-color: #e2e8f0;
     --bg-background: #f8fafc;
     --bg-surface: #ffffff;
@@ -27,6 +27,21 @@
     --color-warning: #f59e0b;
 }
 
+/* DARK THEME OVERRIDES */
+.dark-theme {
+    --border-color: #1e293b;
+    --bg-background: #020817;
+    --bg-surface: #0f172a;
+    --bg-muted: #1e293b;
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+    /* In dark mode, primary buttons are white/light gray */
+    --theme-primary: #f8fafc;
+    --theme-primary-hover: #e2e8f0;
+    --theme-secondary: #1e293b;
+    --theme-secondary-hover: #334155;
+}
+
 /* Base Overrides */
 .custom-bg-gradient {
     background: var(--bg-surface);
@@ -41,7 +56,7 @@
 }
 
 /* =========================================
-   SHADCN BADGES (GLOBAL)
+   2. SHADCN BADGES (GLOBAL)
 ========================================= */
 
 .shadcn-badge {
@@ -56,50 +71,83 @@
     white-space: nowrap;
 }
 
-/* Green (Active / Success) */
+/* LIGHT MODE BADGES */
 .badge-green {
     background-color: #f0fdf4;
     color: #166534;
     border-color: #bbf7d0;
 }
 
-/* Orange/Amber (Suspended / Restricted) */
 .badge-orange {
     background-color: #fffbeb;
     color: #b45309;
     border-color: #fde68a;
 }
 
-/* Red (Blocked / Error) */
 .badge-red {
     background-color: #fef2f2;
     color: #991b1b;
     border-color: #fecaca;
 }
 
-/* Slate (Default / Management / Standard) */
 .badge-slate {
     background-color: #f1f5f9;
     color: #334155;
     border-color: #e2e8f0;
 }
 
-/* Indigo (Admin) */
 .badge-indigo {
     background-color: #eef2ff;
     color: #3730a3;
     border-color: #c7d2fe;
 }
 
-/* Blue (Accounting) */
 .badge-blue {
     background-color: #eff6ff;
     color: #1d4ed8;
     border-color: #bfdbfe;
 }
 
+/* DARK MODE BADGES (Translucent neon effect) */
+.dark-theme .badge-green {
+    background-color: rgba(22, 163, 74, 0.2);
+    color: #4ade80;
+    border-color: rgba(74, 222, 128, 0.2);
+}
+
+.dark-theme .badge-orange {
+    background-color: rgba(217, 119, 6, 0.2);
+    color: #fbbf24;
+    border-color: rgba(251, 191, 36, 0.2);
+}
+
+.dark-theme .badge-red {
+    background-color: rgba(220, 38, 38, 0.2);
+    color: #f87171;
+    border-color: rgba(248, 113, 113, 0.2);
+}
+
+.dark-theme .badge-slate {
+    background-color: rgba(51, 65, 85, 0.5);
+    color: #cbd5e1;
+    border-color: rgba(148, 163, 184, 0.3);
+}
+
+.dark-theme .badge-indigo {
+    background-color: rgba(79, 70, 229, 0.2);
+    color: #818cf8;
+    border-color: rgba(129, 140, 248, 0.2);
+}
+
+.dark-theme .badge-blue {
+    background-color: rgba(37, 99, 235, 0.2);
+    color: #60a5fa;
+    border-color: rgba(96, 165, 250, 0.2);
+}
+
+
 /* ========================================
-   HEADER STYLES (Flattened)
+   3. HEADER STYLES (Flattened)
    ======================================== */
 
 .dashboard-header, .page-header {
@@ -120,10 +168,9 @@
 }
 
 /* ========================================
-   CARD STYLES (Formerly KPI/WorldBank/Sections)
+   4. CARD STYLES (Formerly KPI/WorldBank/Sections)
    ======================================== */
 
-/* Replaced heavy gradients and 20px radii with 8px crisp borders */
 .kpi-card, .content-section, .calendar-section, .ledger-section, .worldbank-card, .worldbank-chart-section {
     background: var(--bg-surface) !important;
     border: 1px solid var(--border-color) !important;
@@ -133,10 +180,9 @@
 }
 
     .kpi-card::before, .section-title::after, .worldbank-card::before {
-        display: none; /* Remove colorful pseudo-element lines */
+        display: none;
     }
 
-    /* Remove the floaty hover states */
     .kpi-card:hover, .worldbank-card:hover {
         transform: none !important;
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05) !important;
@@ -148,14 +194,14 @@
     font-weight: 600;
     letter-spacing: -0.025em;
     color: var(--text-main) !important;
-    background: none !important; /* Strip gradient text */
+    background: none !important;
     -webkit-text-fill-color: var(--text-main) !important;
 }
 
 .kpi-label, .worldbank-label {
     font-size: 0.75rem;
     font-weight: 500;
-    text-transform: none; /* Shadcn rarely uses uppercase */
+    text-transform: none;
     color: var(--text-muted) !important;
 }
 
@@ -166,7 +212,7 @@
 }
 
 /* ========================================
-   TABLE STYLES
+   5. TABLE STYLES
    ======================================== */
 
 .custom-table .mud-table-head, .shadcn-table .mud-table-head {
@@ -185,55 +231,46 @@
 }
 
 /* ========================================
-   BUTTON STYLES (SHADCN/UI)
+   6. BUTTON STYLES (SHADCN/UI)
    ======================================== */
 
-/* 1. Global Reset for Custom Buttons */
 .custom-button, .create-btn, .save-btn, .refresh-btn {
-    text-transform: none !important; /* No forced uppercase */
-    font-weight: 500 !important; /* Medium weight, not too bold */
-    border-radius: var(--radius-md) !important; /* 6px crisp corners */
+    text-transform: none !important;
+    font-weight: 500 !important;
+    border-radius: var(--radius-md) !important;
     transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, transform 0.1s ease !important;
-    transform: none !important; /* Kill legacy floating animations */
+    transform: none !important;
     letter-spacing: normal !important;
 }
 
-    /* Kill all legacy gradient slide animations */
     .create-btn::before, .save-btn::before, .custom-button::before {
         display: none !important;
     }
 
-    /* Ensure MudBlazor text wrapper inherits the right color */
-    .custom-button .mud-button-text,
-    .create-btn .mud-button-text,
-    .save-btn .mud-button-text,
-    .refresh-btn .mud-button-text {
+    .custom-button .mud-button-text, .create-btn .mud-button-text, .save-btn .mud-button-text, .refresh-btn .mud-button-text {
         color: inherit !important;
     }
 
-/* 2. PRIMARY BUTTONS (.create-btn, .save-btn, .custom-button) */
+/* PRIMARY BUTTONS */
 .create-btn, .save-btn, .custom-button {
-    background-color: var(--theme-primary) !important; 
-    color: var(--bg-surface) !important; 
+    background-color: var(--theme-primary) !important;
+    color: var(--bg-surface) !important;
     border: 1px solid transparent !important;
-    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important; 
-    padding: 8px 16px !important; 
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+    padding: 8px 16px !important;
 }
 
-    /* Hover: Slightly lighter background, no floating */
     .create-btn:hover, .save-btn:hover, .custom-button:hover {
         background-color: var(--theme-primary-hover) !important;
         box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
         transform: none !important;
     }
 
-    /* Active/Click: Subtle press effect */
     .create-btn:active, .save-btn:active, .custom-button:active {
         transform: scale(0.98) !important;
         box-shadow: none !important;
     }
 
-    /* Disabled state: Flat grey */
     .create-btn:disabled, .save-btn:disabled, .custom-button:disabled {
         background-color: var(--bg-muted) !important;
         color: var(--text-muted) !important;
@@ -242,23 +279,21 @@
         box-shadow: none !important;
     }
 
-/* 3. SECONDARY / OUTLINE BUTTONS (.refresh-btn) */
+/* SECONDARY / OUTLINE BUTTONS */
 .refresh-btn {
-    background-color: var(--bg-surface) !important; /* White Background */
-    color: var(--text-main) !important; /* Slate 900 Text */
-    border: 1px solid var(--border-color) !important; /* 1px outline */
+    background-color: var(--bg-surface) !important;
+    color: var(--text-main) !important;
+    border: 1px solid var(--border-color) !important;
     box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
     padding: 8px 16px !important;
 }
 
-    /* Hover: Light grey background */
     .refresh-btn:hover {
         background-color: var(--bg-muted) !important;
         color: var(--text-main) !important;
         transform: none !important;
     }
 
-    /* Active/Click: Subtle press effect */
     .refresh-btn:active {
         transform: scale(0.98) !important;
     }
@@ -269,23 +304,51 @@
     }
 
 /* =========================================
-   SHADCN SNACKBAR (TOAST) STYLES
+   7. DYNAMIC INPUT & FOCUS RINGS
+========================================= */
+
+.mud-input-outlined:focus-within .mud-input-outlined-border {
+    border-color: var(--text-main) !important;
+    border-width: 1px !important;
+    box-shadow: 0 0 0 2px var(--bg-background), 0 0 0 4px var(--text-main) !important;
+}
+
+.mud-input-outlined:focus-within .mud-input-label.mud-input-label-inputcontrol {
+    color: var(--text-main) !important;
+}
+
+.mud-tabs-toolbar .mud-tab.mud-tab-active {
+    color: var(--text-main) !important;
+    font-weight: 600 !important;
+}
+
+.mud-tabs-toolbar .mud-tab-slider {
+    background-color: var(--text-main) !important;
+    height: 2px !important;
+}
+
+.mud-button:focus-visible, .mud-icon-button:focus-visible {
+    outline: 2px solid var(--text-main) !important;
+    outline-offset: 2px !important;
+}
+
+/* =========================================
+   8. SHADCN SNACKBAR (TOAST) STYLES
 ========================================= */
 
 .mud-snackbar {
     background-color: var(--bg-surface) !important;
-    border-radius: var(--radius-md) !important; 
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important; 
+    border-radius: var(--radius-md) !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+    border: 1px solid var(--border-color) !important;
 }
 
-/* Ensure the text inside the snackbar uses your dark slate color */
 .mud-snackbar-content-message {
     color: var(--text-main) !important;
     font-weight: 500 !important;
     font-size: 0.875rem !important;
 }
 
-/* Colorize the left-side icons based on the severity */
 .mud-alert-text-success .mud-icon-root {
     color: var(--color-success) !important;
 }
@@ -297,13 +360,13 @@
 .mud-alert-text-warning .mud-icon-root {
     color: #f59e0b !important;
 }
-/* Amber-500 */
+
 .mud-alert-text-info .mud-icon-root {
     color: var(--text-main) !important;
 }
 
 /* ========================================
-   NEW SHADCN UTILITIES
+   9. NEW SHADCN UTILITIES
    ======================================== */
 
 .shadcn-card {
@@ -326,6 +389,11 @@
     font-weight: 500;
 }
 
+.dark-theme .shadcn-chip-destructive {
+    background-color: rgba(220, 38, 38, 0.2) !important;
+    color: #f87171 !important;
+}
+
 /* Icon Buttons (Archive/Restore) */
 .shadcn-icon-btn {
     transition: background-color 0.15s ease;
@@ -336,6 +404,7 @@
         background-color: var(--bg-muted) !important;
     }
 
+/* Text Utilities with Dark Mode Hover Support */
 .text-destructive {
     color: var(--text-muted) !important;
 }
@@ -345,6 +414,11 @@
         background-color: #fef2f2 !important;
     }
 
+.dark-theme .text-destructive:hover {
+    background-color: rgba(220, 38, 38, 0.2) !important;
+    color: #f87171 !important;
+}
+
 .text-success {
     color: var(--text-muted) !important;
 }
@@ -353,6 +427,11 @@
         color: var(--color-success) !important;
         background-color: #f0fdf4 !important;
     }
+
+.dark-theme .text-success:hover {
+    background-color: rgba(22, 163, 74, 0.2) !important;
+    color: #4ade80 !important;
+}
 
 .peso::before {
     content: "₱";

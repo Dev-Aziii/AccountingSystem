@@ -620,11 +620,11 @@
         isLoading = true;
         try
         {
-            var tbTask        = ReportService.GetTrialBalance();
-            var acctsTask     = LedgerService.GetAccountsAsync();
-            var billsTask     = PayableService.GetBillsAsync();
-            var invoicesTask  = ReceivableService.GetInvoicesAsync();
-            var worldBankTask = WorldBankService.GetInflationDataAsync();
+            var tbTask        = SafeLoad(() => ReportService.GetTrialBalance(), "trial balance");
+            var acctsTask     = SafeLoad(() => LedgerService.GetAccountsAsync(), "chart of accounts");
+            var billsTask     = SafeLoad(() => PayableService.GetBillsAsync(), "bills");
+            var invoicesTask  = SafeLoad(() => ReceivableService.GetInvoicesAsync(), "invoices");
+            var worldBankTask = SafeLoad(() => WorldBankService.GetInflationDataAsync(), "inflation data");
 
             await Task.WhenAll(tbTask, acctsTask, billsTask, invoicesTask, worldBankTask);
 
@@ -634,7 +634,7 @@
             accountTypes = accountsList?.ToDictionary(a => a.Code, a => a.Type)
                            ?? new Dictionary<string, string>();
 
-            inflationData = worldBankTask.Result
+            inflationData = (worldBankTask.Result ?? new List<WorldBankDataPoint>())
                 .Where(x => x.Value.HasValue)
                 .OrderByDescending(x => x.Date)
                 .ToList();
@@ -665,6 +665,19 @@
         finally
         {
             isLoading = false;
+        }
+    }
+
+    private async Task<T?> SafeLoad<T>(Func<Task<T>> loader, string label)
+    {
+        try
+        {
+            return await loader();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Dashboard {label} load error: {ex.Message}");
+            return default;
         }
     }
 

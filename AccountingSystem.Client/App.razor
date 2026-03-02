@@ -2,11 +2,11 @@
 @using AccountingSystem.Client.Shared
 @using MudBlazor
 
+<MudDialogProvider />
+<MudSnackbarProvider />
+
 <CascadingAuthenticationState>
-    <MudThemeProvider Theme="_shadcnTheme" />
     <MudPopoverProvider />
-    <MudDialogProvider />
-    <MudSnackbarProvider />
 
     <Router AppAssembly="@typeof(App).Assembly">
         <Found Context="routeData">
@@ -37,21 +37,3 @@
         </NotFound>
     </Router>
 </CascadingAuthenticationState>
-
-@code {
-    private MudTheme _shadcnTheme = new MudTheme()
-    {
-        PaletteLight = new PaletteLight()
-        {
-            Primary = "#0f172a", 
-            Secondary = "#64748b", 
-            AppbarBackground = "#ffffff",
-            AppbarText = "#0f172a",
-            Background = "#f8fafc",
-            Surface = "#ffffff",
-            DrawerBackground = "#ffffff",
-            DrawerText = "#0f172a",
-            ActionDefault = "#64748b"
-        }
-    };
-}

@@ -1,0 +1,19 @@
+﻿@using MudBlazor
+
+<MudIconButton Icon="@(IsDarkMode ? Icons.Material.Outlined.LightMode : Icons.Material.Outlined.DarkMode)"
+               Color="Color.Inherit"
+               OnClick="ToggleTheme"
+               Class="shadcn-icon-btn"
+               Style="color: var(--text-muted);"
+               title="Toggle theme" />
+
+@code {
+    [Parameter] public bool IsDarkMode { get; set; }
+    [Parameter] public EventCallback<bool> IsDarkModeChanged { get; set; }
+
+    private async Task ToggleTheme()
+    {
+        IsDarkMode = !IsDarkMode;
+        await IsDarkModeChanged.InvokeAsync(IsDarkMode);
+    }
+}
