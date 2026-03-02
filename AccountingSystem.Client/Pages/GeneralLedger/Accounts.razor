@@ -24,40 +24,13 @@
     }
 
     /* The Colors: Light pastel background with deep colored text */
-    .badge-slate {
-        background-color: #f1f5f9;
-        color: #475569;
-    }
-
-    .badge-purple {
-        background-color: #f3e8ff;
-        color: #7e22ce;
-    }
-
-    .badge-blue {
-        background-color: #e0f2fe;
-        color: #0369a1;
-    }
-
-    .badge-orange {
-        background-color: #ffedd5;
-        color: #c2410c;
-    }
-
-    .badge-green {
-        background-color: #dcfce7;
-        color: #15803d;
-    }
-
-    .badge-red {
-        background-color: #fee2e2;
-        color: #b91c1c;
-    }
-
-    .badge-indigo {
-        background-color: #e0e7ff;
-        color: #4338ca;
-    }
+    .badge-slate { background-color: #f1f5f9; color: #475569; }
+    .badge-purple { background-color: #f3e8ff; color: #7e22ce; }
+    .badge-blue { background-color: #e0f2fe; color: #0369a1; }
+    .badge-orange { background-color: #ffedd5; color: #c2410c; }
+    .badge-green { background-color: #dcfce7; color: #15803d; }
+    .badge-red { background-color: #fee2e2; color: #b91c1c; }
+    .badge-indigo { background-color: #e0e7ff; color: #4338ca; }
 
     /* Responsive Filters & Tweaks */
     .table-toolbar-wrapper {
@@ -81,14 +54,17 @@
         max-width: 300px;
     }
 
+    /* Fix for MudTable ToolBar overlapping on mobile */
     .shadcn-table .mud-table-toolbar {
         height: auto !important;
         padding-top: 1rem !important;
         padding-bottom: 1rem !important;
     }
 
-    /* Mobile Overrides */
+    /* Responsive Skeletons */
     @@media (max-width: 599px) {
+        .desktop-skeleton { display: none !important; }
+        
         .table-toolbar-wrapper {
             flex-direction: column;
             align-items: flex-start;
@@ -104,6 +80,10 @@
             max-width: 100%;
         }
     }
+    
+    @@media (min-width: 600px) {
+        .mobile-skeleton { display: none !important; }
+    }
 </style>
 
 <PageTitle>Chart of Accounts - AccSys</PageTitle>
@@ -114,7 +94,7 @@
             @if (_initialLoading)
             {
                 <MudSkeleton SkeletonType="SkeletonType.Text" Width="200px" Height="32px" Class="mb-1" />
-                <MudSkeleton SkeletonType="SkeletonType.Text" Width="350px" Height="16px" />
+                <MudSkeleton SkeletonType="SkeletonType.Text" Width="100%" Style="max-width: 350px;" Height="16px" />
             }
             else
             {
@@ -149,16 +129,16 @@
         <MudCard Elevation="0" Outlined="true" Class="shadcn-card">
             <div class="d-flex pa-4 border-b">
                 <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="140px" Height="24px" Class="mr-4" />
-                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="160px" Height="24px" />
+                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="160px" Height="24px" Class="desktop-skeleton" />
             </div>
 
             <MudCardContent Class="pa-0">
-                <div class="d-flex justify-space-between align-center pa-4 border-b">
+                <div class="d-flex flex-column flex-sm-row justify-space-between align-start align-sm-center pa-4 border-b gap-3">
                     <MudSkeleton SkeletonType="SkeletonType.Text" Width="120px" Height="24px" />
-                    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="250px" Height="36px" Style="border-radius: 6px;" />
+                    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Style="max-width: 250px;" Height="36px" Class="rounded-md" />
                 </div>
 
-                <div class="d-flex justify-space-between mb-2 pa-4 border-b">
+                <div class="d-flex justify-space-between mb-2 pa-4 border-b desktop-skeleton">
                     <MudSkeleton SkeletonType="SkeletonType.Text" Width="80px" Height="20px" />
                     <MudSkeleton SkeletonType="SkeletonType.Text" Width="150px" Height="20px" />
                     <MudSkeleton SkeletonType="SkeletonType.Text" Width="90px" Height="20px" />
@@ -167,7 +147,7 @@
 
                 @for (int i = 0; i < 6; i++)
                 {
-                    <div class="d-flex justify-space-between align-center py-3 px-4" style="border-bottom: 1px solid var(--border-color);">
+                    <div class="d-flex justify-space-between align-center py-3 px-4 desktop-skeleton" style="border-bottom: 1px solid var(--border-color);">
                         <div style="flex: 1;"><MudSkeleton SkeletonType="SkeletonType.Text" Width="60px" Height="16px" /></div>
                         <div style="flex: 2;"><MudSkeleton SkeletonType="SkeletonType.Text" Width="180px" Height="16px" /></div>
                         <div style="flex: 1;"><MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="70px" Height="24px" Style="border-radius: 4px;" /></div>
@@ -178,10 +158,22 @@
                             </div>
                         </div>
                     </div>
+
+                    <div class="d-flex flex-column py-3 px-4 mobile-skeleton gap-2" style="border-bottom: 1px solid var(--border-color);">
+                        <div class="d-flex justify-space-between align-center">
+                            <MudSkeleton SkeletonType="SkeletonType.Text" Width="60px" Height="16px" />
+                            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="70px" Height="24px" Style="border-radius: 4px;" />
+                        </div>
+                        <MudSkeleton SkeletonType="SkeletonType.Text" Width="80%" Height="16px" />
+                        <div class="d-flex justify-end gap-2 mt-1">
+                            <MudSkeleton SkeletonType="SkeletonType.Circle" Width="28px" Height="28px" />
+                            <MudSkeleton SkeletonType="SkeletonType.Circle" Width="28px" Height="28px" />
+                        </div>
+                    </div>
                 }
 
                 <div class="d-flex justify-end pa-4">
-                    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="250px" Height="32px" Style="border-radius: 6px;" />
+                    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Style="max-width: 250px;" Height="32px" Class="rounded-md" />
                 </div>
             </MudCardContent>
         </MudCard>

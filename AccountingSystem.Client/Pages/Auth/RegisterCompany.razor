@@ -93,7 +93,7 @@
                     <MudLink Href="/" Class="signin-link">Sign In Here</MudLink>
                 </MudText>
                 <MudText Typo="Typo.caption" Class="help-text">
-                    By creating an account, you agree to our
+                    By signing up, you agree to our
                     <span class="tos-link" @onclick="OpenTermsModal">Terms of Service</span>
                 </MudText>
             </div>
@@ -142,9 +142,7 @@
 
 </div>
 
-<!-- ── Terms Modal rendered OUTSIDE split-register-container so CSS
-     transforms on the panels cannot create a new stacking context
-     that would clip position:fixed children. ──────────────────── -->
+<!-- Terms Modal -->
 @if (showTermsModal)
 {
     <div class="tos-backdrop" @onclick="CloseTermsModal">
@@ -650,7 +648,7 @@
 
     /* ── ToS link ────────────────────────────────────────────────── */
     .tos-link {
-        color: #0d9488;
+        color: #6e6e6e;
         font-weight: 700;
         cursor: pointer;
         text-decoration: underline;
@@ -662,8 +660,7 @@
             color: #0a7a70;
         }
 
-    /* ── Modal backdrop — rendered at root so panel transforms
-             cannot create a clipping stacking context ──────────────── */
+    /*  Modal backdrop  */
     .tos-backdrop {
         position: fixed;
         inset: 0;

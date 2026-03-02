@@ -341,6 +341,38 @@
     bool _drawerOpen = true;
     bool _isDarkMode = false;
 
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // Check if there's a saved preference
+            var savedTheme = await LocalStorage.GetItemAsync<bool?>("isDarkMode");
+            if (savedTheme.HasValue)
+            {
+                _isDarkMode = savedTheme.Value;
+                StateHasChanged(); 
+            }
+        }
+    }
+
+
+    private async Task HandleThemeChange(bool isDark)
+    {
+        _isDarkMode = isDark;
+        await LocalStorage.SetItemAsync("isDarkMode", _isDarkMode);
+    }
+
+    void DrawerToggle()
+    {
+        _drawerOpen = !_drawerOpen;
+    }
+
+    private async Task Logout()
+    {
+        await AuthService.Logout();
+        NavManager.NavigateTo("/");
+    }
+
     private MudTheme _shadcnTheme = new MudTheme()
     {
         PaletteLight = new PaletteLight()
@@ -377,20 +409,4 @@
         }
     };
 
-    private async Task HandleThemeChange(bool isDark)
-    {
-        _isDarkMode = isDark;
-        await LocalStorage.SetItemAsync("isDarkMode", _isDarkMode);
-    }
-
-    void DrawerToggle()
-    {
-        _drawerOpen = !_drawerOpen;
-    }
-
-    private async Task Logout()
-    {
-        await AuthService.Logout();
-        NavManager.NavigateTo("/");
-    }
 }

@@ -1,4 +1,5 @@
-﻿@using AccountingSystem.Shared.DTOs
+﻿@page "/customers"
+@using AccountingSystem.Shared.DTOs
 @using AccountingSystem.Client.Services
 @using AccountingSystem.Client.Shared.Dialogs
 @using Microsoft.AspNetCore.Authorization
@@ -11,13 +12,61 @@
 
 <PageTitle>Account Recievable - AccSys</PageTitle>
 
+<style>
+    /* Responsive Filters & Tweaks */
+    .table-toolbar-wrapper {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        gap: 1rem;
+    }
+
+    .table-toolbar-actions {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .filter-search {
+        width: 100%;
+        max-width: 300px;
+    }
+
+    /* Responsive Skeletons */
+    @@media (max-width: 599px) {
+        .desktop-skeleton { display: none !important; }
+
+        .table-toolbar-wrapper {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .table-toolbar-actions {
+            flex-direction: column;
+            width: 100%;
+            align-items: stretch; /* Make inputs fill the container */
+        }
+
+        .filter-search {
+            max-width: 100%;
+        }
+    }
+
+    @@media (min-width: 600px) {
+        .mobile-skeleton { display: none !important; }
+    }
+</style>
+
 <MudContainer MaxWidth="MaxWidth.Large" Class="mt-6 mb-10">
     <div class="d-flex flex-column flex-sm-row justify-space-between align-start align-sm-center mb-6 gap-3">
         <div>
             @if (_initialLoading)
             {
                 <MudSkeleton SkeletonType="SkeletonType.Text" Width="230px" Height="32px" Class="mb-1" />
-                <MudSkeleton SkeletonType="SkeletonType.Text" Width="440px" Height="16px" />
+                <MudSkeleton SkeletonType="SkeletonType.Text" Width="100%" Style="max-width: 440px;" Height="16px" />
             }
             else
             {
@@ -52,16 +101,16 @@
         <MudCard Elevation="0" Outlined="true" Class="shadcn-card">
             <div class="d-flex pa-4 border-b">
                 <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="150px" Height="24px" Class="mr-4" />
-                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="170px" Height="24px" />
+                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="170px" Height="24px" Class="desktop-skeleton" />
             </div>
 
             <MudCardContent Class="pa-0">
-                <div class="d-flex justify-space-between align-center pa-4 border-b">
+                <div class="d-flex flex-column flex-sm-row justify-space-between align-start align-sm-center pa-4 border-b gap-3">
                     <MudSkeleton SkeletonType="SkeletonType.Text" Width="120px" Height="24px" />
-                    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="250px" Height="36px" Style="border-radius: 6px;" />
+                    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Style="max-width: 250px;" Height="36px" Class="rounded-md" />
                 </div>
 
-                <div class="d-flex justify-space-between mb-2 pa-4 border-b">
+                <div class="d-flex justify-space-between mb-2 pa-4 border-b desktop-skeleton gap-2">
                     <MudSkeleton SkeletonType="SkeletonType.Text" Width="40px" Height="20px" />
                     <MudSkeleton SkeletonType="SkeletonType.Text" Width="150px" Height="20px" />
                     <MudSkeleton SkeletonType="SkeletonType.Text" Width="180px" Height="20px" />
@@ -71,7 +120,7 @@
 
                 @for (int i = 0; i < 6; i++)
                 {
-                    <div class="d-flex justify-space-between align-center py-3 px-4" style="border-bottom: 1px solid var(--border-color);">
+                    <div class="d-flex justify-space-between align-center py-3 px-4 desktop-skeleton gap-4" style="border-bottom: 1px solid var(--border-color);">
                         <div style="flex: 0.5;"><MudSkeleton SkeletonType="SkeletonType.Text" Width="30px" Height="16px" /></div>
                         <div style="flex: 2;"><MudSkeleton SkeletonType="SkeletonType.Text" Width="160px" Height="16px" /></div>
                         <div style="flex: 2;"><MudSkeleton SkeletonType="SkeletonType.Text" Width="180px" Height="16px" /></div>
@@ -83,10 +132,25 @@
                             </div>
                         </div>
                     </div>
+
+                    <div class="d-flex flex-column py-3 px-4 mobile-skeleton gap-2" style="border-bottom: 1px solid var(--border-color);">
+                        <div class="d-flex justify-space-between align-center">
+                            <MudSkeleton SkeletonType="SkeletonType.Text" Width="40%" Height="16px" />
+                            <MudSkeleton SkeletonType="SkeletonType.Text" Width="20%" Height="14px" />
+                        </div>
+                        <MudSkeleton SkeletonType="SkeletonType.Text" Width="60%" Height="14px" />
+                        <div class="d-flex justify-space-between align-center mt-1">
+                            <MudSkeleton SkeletonType="SkeletonType.Text" Width="40%" Height="14px" />
+                            <div class="d-flex gap-2">
+                                <MudSkeleton SkeletonType="SkeletonType.Circle" Width="28px" Height="28px" />
+                                <MudSkeleton SkeletonType="SkeletonType.Circle" Width="28px" Height="28px" />
+                            </div>
+                        </div>
+                    </div>
                 }
 
                 <div class="d-flex justify-end pa-4">
-                    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="250px" Height="32px" Style="border-radius: 6px;" />
+                    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Style="max-width: 250px;" Height="32px" Class="rounded-md" />
                 </div>
             </MudCardContent>
         </MudCard>
@@ -97,18 +161,20 @@
 
             <MudTabPanel Text="Active Customers" OnClick="@(() => LoadList(false))">
                 <MudCard Elevation="0" Outlined="true" Class="shadcn-card">
-                    <MudTable Items="@customers" Dense="true" Hover="true" Elevation="0" Filter="new Func<CustomerDTO, bool>(FilterFunc)" Loading="@_loading" Class="shadcn-table">
+                    <MudTable Items="@customers" Dense="true" Hover="true" Elevation="0" Filter="new Func<CustomerDTO, bool>(FilterFunc)" Loading="@_loading" Class="shadcn-table" Breakpoint="Breakpoint.Sm">
                         <ToolBarContent>
-                            <div style="font-size: 1.125rem; font-weight: 600; color: var(--text-main);">Active List</div>
-                            <MudSpacer />
-                            <MudTextField @bind-Value="searchString"
-                                          Placeholder="Search customers..."
-                                          Adornment="Adornment.Start"
-                                          AdornmentIcon="@Icons.Material.Outlined.Search"
-                                          Variant="Variant.Outlined"
-                                          Margin="Margin.Dense"
-                                          Class="shadcn-input"
-                                          Style="max-width: 300px; margin-top: 0;"></MudTextField>
+                            <div class="table-toolbar-wrapper">
+                                <div style="font-size: 1.125rem; font-weight: 600; color: var(--text-main);">Active List</div>
+                                <div class="table-toolbar-actions">
+                                    <MudTextField @bind-Value="searchString"
+                                                  Placeholder="Search customers..."
+                                                  Adornment="Adornment.Start"
+                                                  AdornmentIcon="@Icons.Material.Outlined.Search"
+                                                  Variant="Variant.Outlined"
+                                                  Margin="Margin.Dense"
+                                                  Class="shadcn-input filter-search m-0"></MudTextField>
+                                </div>
+                            </div>
                         </ToolBarContent>
                         <HeaderContent>
                             <MudTh>ID</MudTh>
@@ -145,18 +211,20 @@
             <AuthorizeView Roles="Admin,Accounting" Context="authContext">
                 <MudTabPanel Text="Archived Customers" OnClick="@(() => LoadList(true))">
                     <MudCard Elevation="0" Outlined="true" Class="shadcn-card">
-                        <MudTable Items="@customers" Dense="true" Hover="true" Elevation="0" Filter="new Func<CustomerDTO, bool>(FilterFunc)" Loading="@_loading" Class="shadcn-table">
+                        <MudTable Items="@customers" Dense="true" Hover="true" Elevation="0" Filter="new Func<CustomerDTO, bool>(FilterFunc)" Loading="@_loading" Class="shadcn-table" Breakpoint="Breakpoint.Sm">
                             <ToolBarContent>
-                                <div style="font-size: 1.125rem; font-weight: 600; color: var(--text-main);">Archived List</div>
-                                <MudSpacer />
-                                <MudTextField @bind-Value="searchString"
-                                              Placeholder="Search archived..."
-                                              Adornment="Adornment.Start"
-                                              AdornmentIcon="@Icons.Material.Outlined.Search"
-                                              Variant="Variant.Outlined"
-                                              Margin="Margin.Dense"
-                                              Class="shadcn-input"
-                                              Style="max-width: 300px; margin-top: 0;"></MudTextField>
+                                <div class="table-toolbar-wrapper">
+                                    <div style="font-size: 1.125rem; font-weight: 600; color: var(--text-main);">Archived List</div>
+                                    <div class="table-toolbar-actions">
+                                        <MudTextField @bind-Value="searchString"
+                                                      Placeholder="Search archived..."
+                                                      Adornment="Adornment.Start"
+                                                      AdornmentIcon="@Icons.Material.Outlined.Search"
+                                                      Variant="Variant.Outlined"
+                                                      Margin="Margin.Dense"
+                                                      Class="shadcn-input filter-search m-0"></MudTextField>
+                                    </div>
+                                </div>
                             </ToolBarContent>
                             <HeaderContent>
                                 <MudTh>ID</MudTh>

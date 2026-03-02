@@ -14,13 +14,23 @@
 
 <PageTitle>Journal Entries - AccSys</PageTitle>
 
+<style>
+    /* Responsive Skeletons */
+    @@media (max-width: 599px) {
+        .desktop-skeleton { display: none !important; }
+    }
+    @@media (min-width: 600px) {
+        .mobile-skeleton { display: none !important; }
+    }
+</style>
+
 <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-6 mb-10">
-    <div class="d-flex justify-space-between align-center mb-6">
+    <div class="d-flex flex-column flex-sm-row justify-space-between align-start align-sm-center mb-6 gap-3">
         <div>
             @if (_initialLoading)
             {
                 <MudSkeleton SkeletonType="SkeletonType.Text" Width="200px" Height="32px" Class="mb-1" />
-                <MudSkeleton SkeletonType="SkeletonType.Text" Width="350px" Height="16px" />
+                <MudSkeleton SkeletonType="SkeletonType.Text" Width="100%" Style="max-width: 350px;" Height="16px" />
             }
             else
             {
@@ -59,7 +69,7 @@
 
         <MudCard Elevation="0" Outlined="true" Class="shadcn-card">
             <MudCardContent Class="pa-0">
-                <div class="d-flex justify-space-between mb-3 pa-4 border-b">
+                <div class="d-flex justify-space-between mb-3 pa-4 border-b desktop-skeleton">
                     <MudSkeleton SkeletonType="SkeletonType.Text" Width="100px" Height="20px" />
                     <MudSkeleton SkeletonType="SkeletonType.Text" Width="80px" Height="20px" />
                     <MudSkeleton SkeletonType="SkeletonType.Text" Width="80px" Height="20px" />
@@ -68,19 +78,45 @@
 
                 @for (int i = 0; i < 2; i++)
                 {
-                    <div class="d-flex justify-space-between align-center mb-3 px-4 pb-3" style="border-bottom: 1px solid var(--border-color);">
+                    <div class="d-flex justify-space-between align-center mb-3 px-4 pb-3 desktop-skeleton" style="border-bottom: 1px solid var(--border-color);">
                         <div style="flex: 2;"><MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="40px" Style="border-radius: 6px;" /></div>
                         <div style="flex: 1; padding-left: 16px;"><MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="40px" Style="border-radius: 6px;" /></div>
                         <div style="flex: 1; padding-left: 16px;"><MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="40px" Style="border-radius: 6px;" /></div>
                         <div style="flex: 0.5; padding-left: 16px; text-align: center;"><MudSkeleton SkeletonType="SkeletonType.Circle" Width="32px" Height="32px" Class="mx-auto" /></div>
                     </div>
+
+                    <div class="mobile-skeleton d-flex flex-column pa-4 gap-3" style="border-bottom: 1px solid var(--border-color);">
+                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="40px" Style="border-radius: 6px;" />
+                        <div class="d-flex gap-3">
+                            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="40px" Style="border-radius: 6px;" />
+                            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="40px" Style="border-radius: 6px;" />
+                        </div>
+                        <div class="d-flex justify-end">
+                            <MudSkeleton SkeletonType="SkeletonType.Circle" Width="32px" Height="32px" />
+                        </div>
+                    </div>
                 }
 
-                <div class="d-flex justify-space-between align-center pa-4" style="background: var(--bg-muted);">
+                <div class="d-flex justify-space-between align-center pa-4 desktop-skeleton" style="background: var(--bg-muted);">
                     <div style="flex: 2;"><MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100px" Height="32px" Style="border-radius: 6px;" /></div>
                     <div style="flex: 1; padding-left: 16px;"><MudSkeleton SkeletonType="SkeletonType.Text" Width="100px" Height="24px" /></div>
                     <div style="flex: 1; padding-left: 16px;"><MudSkeleton SkeletonType="SkeletonType.Text" Width="100px" Height="24px" /></div>
                     <div style="flex: 0.5; padding-left: 16px; text-align: center;"><MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="80px" Height="24px" Style="border-radius: 4px;" Class="mx-auto" /></div>
+                </div>
+
+                <div class="mobile-skeleton d-flex flex-column pa-4 gap-3" style="background: var(--bg-muted);">
+                    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100px" Height="32px" Style="border-radius: 6px;" />
+                    <div class="d-flex justify-space-between align-center">
+                        <MudSkeleton SkeletonType="SkeletonType.Text" Width="80px" Height="24px" />
+                        <MudSkeleton SkeletonType="SkeletonType.Text" Width="100px" Height="24px" />
+                    </div>
+                    <div class="d-flex justify-space-between align-center">
+                        <MudSkeleton SkeletonType="SkeletonType.Text" Width="80px" Height="24px" />
+                        <MudSkeleton SkeletonType="SkeletonType.Text" Width="100px" Height="24px" />
+                    </div>
+                    <div class="d-flex justify-end mt-2">
+                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="80px" Height="24px" Style="border-radius: 4px;" />
+                    </div>
                 </div>
             </MudCardContent>
         </MudCard>
@@ -165,7 +201,7 @@
                                           OnBlur="@(() => FormatCreditValue(lineContext))" />
                         </MudTd>
 
-                        <MudTd Style="text-align: center;">
+                        <MudTd Style="text-align: center;" DataLabel="Action">
                             <MudIconButton Icon="@Icons.Material.Outlined.Delete"
                                            Class="shadcn-icon-btn text-destructive"
                                            Size="Size.Small"
@@ -214,7 +250,7 @@
             <div class="d-flex justify-end mt-4">
                 <MudButton ButtonType="ButtonType.Submit"
                            Variant="Variant.Filled"
-                           Class="create-btn"
+                           Class="custom-button"
                            Disabled="@(!IsBalanced || isSubmitting)"
                            Size="Size.Medium"
                            StartIcon="@Icons.Material.Outlined.Check">

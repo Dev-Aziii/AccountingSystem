@@ -246,7 +246,6 @@
     {
         <div class="dashboard-grid">
 
-            <!-- Financial Summary -->
             <div class="span-6">
                 <div class="shadcn-card">
                     <div class="shadcn-card-header">
@@ -345,7 +344,6 @@
                 </div>
             </div>
 
-            <!-- Active Transactions -->
             <div class="span-3">
                 <div class="shadcn-card">
                     <div class="shadcn-card-header">
@@ -381,7 +379,6 @@
                 </div>
             </div>
 
-            <!-- Currency Converter -->
             <div class="span-3">
                 <div class="shadcn-card">
                     <div class="shadcn-card-header">
@@ -443,7 +440,6 @@
                 </div>
             </div>
 
-            <!-- World Bank Inflation -->
             <div class="span-6">
                 <div class="shadcn-card">
                     <div class="shadcn-card-header">
@@ -502,7 +498,6 @@
                 </div>
             </div>
 
-            <!-- Inflation History -->
             <div class="span-6">
                 <div class="shadcn-card">
                     <div class="shadcn-card-header" style="margin-bottom: 0.5rem;">
@@ -723,6 +718,7 @@
             }
         };
 
+        // By changing this to use var(--text-main), the chart automatically handles light & dark mode!
         inflationChartOptions = new ChartOptions
         {
             YAxisTicks          = 1,
@@ -730,7 +726,7 @@
             YAxisLines          = true,
             XAxisLines          = false,
             LineStrokeWidth     = 2,
-            ChartPalette        = new[] { "#0f172a", "#64748b" },
+            ChartPalette        = new[] { "var(--text-main)", "var(--text-muted)" }, 
             InterpolationOption = InterpolationOption.Straight
         };
     }

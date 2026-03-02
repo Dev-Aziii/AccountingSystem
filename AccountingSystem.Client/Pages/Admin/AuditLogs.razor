@@ -23,54 +23,35 @@
         white-space: nowrap;
     }
 
-    .badge-slate {
-        background-color: #f1f5f9;
-        color: #475569;
-    }
-
-    .badge-purple {
-        background-color: #f3e8ff;
-        color: #7e22ce;
-    }
-
-    .badge-blue {
-        background-color: #e0f2fe;
-        color: #0369a1;
-    }
-
-    .badge-orange {
-        background-color: #ffedd5;
-        color: #c2410c;
-    }
-
-    .badge-green {
-        background-color: #dcfce7;
-        color: #15803d;
-    }
-
-    .badge-red {
-        background-color: #fee2e2;
-        color: #b91c1c;
-    }
-
-    .badge-indigo {
-        background-color: #e0e7ff;
-        color: #4338ca;
-    }
+    .badge-slate { background-color: #f1f5f9; color: #475569; }
+    .badge-purple { background-color: #f3e8ff; color: #7e22ce; }
+    .badge-blue { background-color: #e0f2fe; color: #0369a1; }
+    .badge-orange { background-color: #ffedd5; color: #c2410c; }
+    .badge-green { background-color: #dcfce7; color: #15803d; }
+    .badge-red { background-color: #fee2e2; color: #b91c1c; }
+    .badge-indigo { background-color: #e0e7ff; color: #4338ca; }
 
     /* Fix for MudBlazor inputs inside a shadcn aesthetic */
     .shadcn-filter-panel .mud-input-control-input-container {
         border-radius: var(--radius-md);
     }
+
+    /* Responsive Skeletons */
+    @@media (max-width: 599px) {
+        .desktop-skeleton { display: none !important; }
+    }
+    @@media (min-width: 600px) {
+        .mobile-skeleton { display: none !important; }
+    }
 </style>
 
 <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-6 mb-10">
-    <div class="d-flex justify-space-between align-center mb-6">
+    <div class="d-flex flex-column flex-sm-row justify-space-between align-start align-sm-center mb-6 gap-3">
         <div>
             @if (_initialLoading)
             {
                 <MudSkeleton SkeletonType="SkeletonType.Text" Width="150px" Height="32px" Class="mb-1" />
-                <MudSkeleton SkeletonType="SkeletonType.Text" Width="300px" Height="16px" />
+                <MudSkeleton SkeletonType="SkeletonType.Text" Width="100%" Style="max-width: 300px;" Height="16px" />
             }
             else
             {
@@ -88,12 +69,12 @@
     {
         <MudCard Elevation="0" Outlined="true" Class="shadcn-card">
             <MudCardContent Class="pa-4">
-                <div class="d-flex justify-space-between align-center mb-4">
+                <div class="d-flex flex-column flex-sm-row justify-space-between align-start align-sm-center mb-4 gap-3">
                     <MudSkeleton SkeletonType="SkeletonType.Text" Width="150px" Height="24px" />
-                    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="300px" Height="32px" Style="border-radius: 6px;" />
+                    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Style="max-width: 300px;" Height="32px" Class="rounded-md" />
                 </div>
 
-                <div class="d-flex justify-space-between mb-3 border-b pb-2">
+                <div class="d-flex justify-space-between mb-3 border-b pb-2 desktop-skeleton gap-2">
                     <MudSkeleton SkeletonType="SkeletonType.Text" Width="120px" Height="20px" />
                     <MudSkeleton SkeletonType="SkeletonType.Text" Width="80px" Height="20px" />
                     <MudSkeleton SkeletonType="SkeletonType.Text" Width="70px" Height="20px" />
@@ -101,19 +82,31 @@
                     <MudSkeleton SkeletonType="SkeletonType.Text" Width="60px" Height="20px" />
                 </div>
 
-                @for (int i = 0; i < 8; i++)
+                @for (int i = 0; i < 6; i++)
                 {
-                    <div class="d-flex justify-space-between align-center py-3" style="border-bottom: 1px solid var(--border-color);">
-                        <div style="flex: 1;"><MudSkeleton SkeletonType="SkeletonType.Text" Width="140px" Height="16px" /></div>
-                        <div style="flex: 1;"><MudSkeleton SkeletonType="SkeletonType.Text" Width="160px" Height="16px" /></div>
+                    <div class="d-flex justify-space-between align-center py-3 desktop-skeleton gap-4" style="border-bottom: 1px solid var(--border-color);">
+                        <div style="flex: 1;"><MudSkeleton SkeletonType="SkeletonType.Text" Width="80%" Height="16px" /></div>
+                        <div style="flex: 1;"><MudSkeleton SkeletonType="SkeletonType.Text" Width="90%" Height="16px" /></div>
                         <div style="flex: 1;"><MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="80px" Height="24px" Style="border-radius: 4px;" /></div>
-                        <div style="flex: 1;"><MudSkeleton SkeletonType="SkeletonType.Text" Width="120px" Height="16px" /></div>
-                        <div style="flex: 1; text-align: center;"><MudSkeleton SkeletonType="SkeletonType.Circle" Width="32px" Height="32px" Class="mx-auto" /></div>
+                        <div style="flex: 1;"><MudSkeleton SkeletonType="SkeletonType.Text" Width="70%" Height="16px" /></div>
+                        <div style="flex: 1; text-align: right;"><MudSkeleton SkeletonType="SkeletonType.Circle" Width="32px" Height="32px" Class="ml-auto" /></div>
+                    </div>
+
+                    <div class="d-flex flex-column py-3 mobile-skeleton gap-2" style="border-bottom: 1px solid var(--border-color);">
+                        <div class="d-flex justify-space-between align-center">
+                            <MudSkeleton SkeletonType="SkeletonType.Text" Width="140px" Height="16px" />
+                            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="80px" Height="24px" Style="border-radius: 4px;" />
+                        </div>
+                        <MudSkeleton SkeletonType="SkeletonType.Text" Width="60%" Height="14px" />
+                        <div class="d-flex justify-space-between align-center mt-2">
+                            <MudSkeleton SkeletonType="SkeletonType.Text" Width="40%" Height="14px" />
+                            <MudSkeleton SkeletonType="SkeletonType.Circle" Width="32px" Height="32px" />
+                        </div>
                     </div>
                 }
 
                 <div class="d-flex justify-center mt-4">
-                    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="250px" Height="32px" Style="border-radius: 6px;" />
+                    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Style="max-width: 250px;" Height="32px" Class="rounded-md" />
                 </div>
             </MudCardContent>
         </MudCard>
@@ -209,7 +202,7 @@
 
         <MudCard Elevation="0" Outlined="true" Class="shadcn-card">
             <MudTable Items="@FilteredLogs" Dense="true" Hover="true" Bordered="false" Striped="false"
-                      Loading="@_loading" Elevation="0" Class="shadcn-table">
+                      Loading="@_loading" Elevation="0" Class="shadcn-table" Breakpoint="Breakpoint.Sm">
                 <HeaderContent>
                     <MudTh><MudTableSortLabel SortBy="new Func<AuditLogDTO, object>(x => x.Timestamp)">Date & Time</MudTableSortLabel></MudTh>
                     <MudTh><MudTableSortLabel SortBy="new Func<AuditLogDTO, object>(x => x.UserEmail)">User</MudTableSortLabel></MudTh>

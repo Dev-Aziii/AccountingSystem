@@ -230,6 +230,41 @@
     background-color: var(--bg-muted) !important;
 }
 
+/* Responsive Table Toolbars & Pagination */
+@media (max-width: 599px) {
+    /* Allow the top toolbar (where filters go) to expand its height dynamically */
+    .custom-table .mud-table-toolbar,
+    .shadcn-table .mud-table-toolbar {
+        height: auto !important;
+        padding-top: 1rem !important;
+        padding-bottom: 1rem !important;
+    }
+
+    /* Wrap the pagination controls so they don't overflow */
+    .custom-table .mud-table-pagination-toolbar,
+    .shadcn-table .mud-table-pagination-toolbar {
+        flex-wrap: wrap !important;
+        height: auto !important;
+        padding: 12px 8px !important;
+        justify-content: center !important;
+        gap: 12px;
+    }
+
+    /* Hide the blank space that pushes controls to the right */
+    .custom-table .mud-table-pagination-spacer,
+    .shadcn-table .mud-table-pagination-spacer {
+        display: none !important;
+    }
+
+    /* Remove hardcoded right margins so items center perfectly */
+    .custom-table .mud-table-pagination-select,
+    .shadcn-table .mud-table-pagination-select,
+    .custom-table .mud-table-pagination-information,
+    .shadcn-table .mud-table-pagination-information {
+        margin-right: 0 !important;
+    }
+}
+
 /* ========================================
    6. BUTTON STYLES (SHADCN/UI)
    ======================================== */
