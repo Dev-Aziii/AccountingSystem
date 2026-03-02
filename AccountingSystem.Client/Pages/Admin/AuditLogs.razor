@@ -78,7 +78,6 @@
                     <MudSkeleton SkeletonType="SkeletonType.Text" Width="120px" Height="20px" />
                     <MudSkeleton SkeletonType="SkeletonType.Text" Width="80px" Height="20px" />
                     <MudSkeleton SkeletonType="SkeletonType.Text" Width="70px" Height="20px" />
-                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="140px" Height="20px" />
                     <MudSkeleton SkeletonType="SkeletonType.Text" Width="60px" Height="20px" />
                 </div>
 
@@ -88,7 +87,6 @@
                         <div style="flex: 1;"><MudSkeleton SkeletonType="SkeletonType.Text" Width="80%" Height="16px" /></div>
                         <div style="flex: 1;"><MudSkeleton SkeletonType="SkeletonType.Text" Width="90%" Height="16px" /></div>
                         <div style="flex: 1;"><MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="80px" Height="24px" Style="border-radius: 4px;" /></div>
-                        <div style="flex: 1;"><MudSkeleton SkeletonType="SkeletonType.Text" Width="70%" Height="16px" /></div>
                         <div style="flex: 1; text-align: right;"><MudSkeleton SkeletonType="SkeletonType.Circle" Width="32px" Height="32px" Class="ml-auto" /></div>
                     </div>
 
@@ -207,7 +205,6 @@
                     <MudTh><MudTableSortLabel SortBy="new Func<AuditLogDTO, object>(x => x.Timestamp)">Date & Time</MudTableSortLabel></MudTh>
                     <MudTh><MudTableSortLabel SortBy="new Func<AuditLogDTO, object>(x => x.UserEmail)">User</MudTableSortLabel></MudTh>
                     <MudTh><MudTableSortLabel SortBy="new Func<AuditLogDTO, object>(x => x.Action)">Action</MudTableSortLabel></MudTh>
-                    <MudTh>Target Endpoint</MudTh>
                     <MudTh Style="text-align:right">Details</MudTh>
                 </HeaderContent>
                 <RowTemplate>
@@ -221,11 +218,6 @@
                     </MudTd>
                     <MudTd DataLabel="Action">
                         <span class="shadcn-badge @GetActionBadgeClass(context.Action)">@context.Action</span>
-                    </MudTd>
-                    <MudTd DataLabel="Target">
-                        <code style="font-size: 0.75rem; background: var(--bg-muted); padding: 2px 6px; border-radius: 4px; color: var(--text-main); border: 1px solid var(--border-color);">
-                            @context.EntityName
-                        </code>
                     </MudTd>
                     <MudTd DataLabel="Details" Style="text-align:right">
                         <MudIconButton Icon="@Icons.Material.Outlined.Visibility" Size="Size.Small" Class="shadcn-icon-btn" OnClick="@(async () => await ViewDetails(context))" />
