@@ -13,7 +13,6 @@
 
 <div class="split-login-container">
 
-    <!-- ===== LEFT BRANDING PANEL ===== -->
     <div class="branding-panel">
         <div class="branding-inner">
             <div class="deco-circle deco-circle--lg"></div>
@@ -52,13 +51,11 @@
         </div>
     </div>
 
-    <!-- ===== RIGHT FORM PANEL ===== -->
     <div class="form-panel">
         <div class="form-inner">
 
             <div class="form-header">
                 <div class="logo-wrap">
-                    <!-- Logo skeleton shimmer -->
                     <div class="logo-skeleton @(logoLoaded ? "logo-skeleton--hidden" : "")"></div>
                     <img src="AccsysLogo.png"
                          alt="AccSys Logo"
@@ -85,8 +82,20 @@
                                   For="@(() => loginModel.Password)"
                                   Variant="Variant.Outlined"
                                   InputType="InputType.Password"
-                                  Class="accsys-field mb-7"
+                                  Class="accsys-field mb-3"
                                   FullWidth="true" />
+
+                    <div class="d-flex align-center justify-space-between mb-5">
+                        <MudCheckBox @bind-Value="rememberMe" Color="Color.Primary" Label="Remember me" Class="ml-n2" Style="font-size: 0.875rem; color: var(--text-main);" />
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(errorMessage))
+                    {
+                        <div class="error-alert mb-5">
+                            <MudIcon Icon="@Icons.Material.Outlined.ErrorOutline" Size="Size.Small" Class="mr-2" />
+                            <span>@errorMessage</span>
+                        </div>
+                    }
 
                     <MudButton ButtonType="ButtonType.Submit"
                                Variant="Variant.Filled"
@@ -453,6 +462,20 @@
         color: #4a6274 !important;
     }
 
+    /* Error Alert */
+    .error-alert {
+        display: flex;
+        align-items: center;
+        background-color: #fef2f2;
+        border: 1px solid #fecaca;
+        color: #b91c1c;
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        animation: fadeUp 0.3s ease;
+    }
+
     /* Button */
     .accsys-btn {
         background: linear-gradient(to right, #1a5370, #429497) !important;
@@ -530,6 +553,8 @@
     private bool isLoading = false;
     private bool illustrationLoaded = false;
     private bool logoLoaded = false;
+    private string errorMessage = "";
+    private bool rememberMe = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -556,6 +581,7 @@
     private async Task HandleLogin()
     {
         isLoading = true;
+        errorMessage = ""; 
         try
         {
             var result = await AuthService.Login(loginModel);
@@ -564,7 +590,7 @@
         }
         catch (Exception ex)
         {
-            Snackbar.Add("Invalid email or password. Please try again.", Severity.Error);
+            errorMessage = "Invalid email or password. Please try again.";
             Console.WriteLine(ex.Message);
         }
         finally
