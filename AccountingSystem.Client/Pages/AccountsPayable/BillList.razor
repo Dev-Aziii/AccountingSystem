@@ -1,4 +1,5 @@
-﻿@using AccountingSystem.Shared.DTOs
+﻿@page "/ap/bills"
+@using AccountingSystem.Shared.DTOs
 @using AccountingSystem.Client.Services
 @using AccountingSystem.Client.Shared.Dialogs
 @using AccountingSystem.Shared.Enums
@@ -12,13 +13,23 @@
 
 <PageTitle>Vendor Bills</PageTitle>
 
+<style>
+    /* Responsive Skeletons */
+    @@media (max-width: 599px) {
+        .desktop-skeleton { display: none !important; }
+    }
+    @@media (min-width: 600px) {
+        .mobile-skeleton { display: none !important; }
+    }
+</style>
+
 <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-6 mb-10">
-    <div class="d-flex justify-space-between align-center mb-6">
+    <div class="d-flex flex-column flex-sm-row justify-space-between align-start align-sm-center mb-6 gap-3">
         <div>
             @if (_initialLoading)
             {
                 <MudSkeleton SkeletonType="SkeletonType.Text" Width="120px" Height="32px" Class="mb-1" />
-                <MudSkeleton SkeletonType="SkeletonType.Text" Width="400px" Height="16px" />
+                <MudSkeleton SkeletonType="SkeletonType.Text" Width="100%" Style="max-width: 400px;" Height="16px" />
             }
             else
             {
@@ -36,15 +47,15 @@
     {
         <MudCard Elevation="0" Outlined="true" Class="shadcn-card">
             <MudCardContent Class="pa-0">
-                <div class="d-flex justify-space-between align-center pa-4 border-b">
+                <div class="d-flex flex-column flex-sm-row justify-space-between align-start align-sm-center pa-4 border-b gap-3">
                     <MudSkeleton SkeletonType="SkeletonType.Text" Width="140px" Height="24px" />
-                    <div class="d-flex align-center gap-3">
-                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="300px" Height="36px" Style="border-radius: 6px;" />
-                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="140px" Height="36px" Style="border-radius: 6px;" />
+                    <div class="d-flex flex-column flex-sm-row align-stretch align-sm-center gap-3 w-100" style="max-width: 460px;">
+                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="36px" Style="border-radius: 6px; max-width: 300px;" />
+                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Height="36px" Style="border-radius: 6px; max-width: 140px;" />
                     </div>
                 </div>
 
-                <div class="d-flex justify-space-between mb-2 pa-4 border-b">
+                <div class="d-flex justify-space-between mb-2 pa-4 border-b desktop-skeleton gap-2">
                     <MudSkeleton SkeletonType="SkeletonType.Text" Width="70px" Height="20px" />
                     <MudSkeleton SkeletonType="SkeletonType.Text" Width="150px" Height="20px" />
                     <MudSkeleton SkeletonType="SkeletonType.Text" Width="90px" Height="20px" />
@@ -54,9 +65,9 @@
                     <MudSkeleton SkeletonType="SkeletonType.Text" Width="70px" Height="20px" />
                 </div>
 
-                @for (int i = 0; i < 8; i++)
+                @for (int i = 0; i < 6; i++)
                 {
-                    <div class="d-flex justify-space-between align-center py-3 px-4" style="border-bottom: 1px solid var(--border-color);">
+                    <div class="d-flex justify-space-between align-center py-3 px-4 desktop-skeleton gap-4" style="border-bottom: 1px solid var(--border-color);">
                         <div style="flex: 1;"><MudSkeleton SkeletonType="SkeletonType.Text" Width="90px" Height="16px" /></div>
                         <div style="flex: 1.5;"><MudSkeleton SkeletonType="SkeletonType.Text" Width="140px" Height="16px" /></div>
                         <div style="flex: 1;"><MudSkeleton SkeletonType="SkeletonType.Text" Width="90px" Height="16px" /></div>
@@ -65,10 +76,23 @@
                         <div style="flex: 0.8;"><MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="70px" Height="24px" Style="border-radius: 4px;" /></div>
                         <div style="flex: 0.8;"><MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="60px" Height="28px" Style="border-radius: 6px;" /></div>
                     </div>
+
+                    <div class="d-flex flex-column py-3 px-4 mobile-skeleton gap-2" style="border-bottom: 1px solid var(--border-color);">
+                        <div class="d-flex justify-space-between align-center">
+                            <MudSkeleton SkeletonType="SkeletonType.Text" Width="90px" Height="16px" />
+                            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="70px" Height="24px" Style="border-radius: 4px;" />
+                        </div>
+                        <MudSkeleton SkeletonType="SkeletonType.Text" Width="70%" Height="16px" />
+                        <MudSkeleton SkeletonType="SkeletonType.Text" Width="40%" Height="14px" />
+                        <div class="d-flex justify-space-between align-center mt-2">
+                            <MudSkeleton SkeletonType="SkeletonType.Text" Width="100px" Height="18px" />
+                            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="60px" Height="28px" Style="border-radius: 6px;" />
+                        </div>
+                    </div>
                 }
 
                 <div class="d-flex justify-end pa-4">
-                    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="250px" Height="32px" Style="border-radius: 6px;" />
+                    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100%" Style="max-width: 250px;" Height="32px" Class="rounded-md" />
                 </div>
             </MudCardContent>
         </MudCard>
@@ -152,7 +176,7 @@
         </MudCard>
 
         <MudCard Elevation="0" Outlined="true" Class="shadcn-card">
-            <MudTable Items="@bills" Dense="true" Hover="true" Elevation="0" Filter="new Func<BillDTO, bool>(FilterFunc)" Loading="@_loading" Class="shadcn-table">
+            <MudTable Items="@bills" Dense="true" Hover="true" Elevation="0" Filter="new Func<BillDTO, bool>(FilterFunc)" Loading="@_loading" Class="shadcn-table" Breakpoint="Breakpoint.Sm">
                 <ToolBarContent>
                     <div style="font-size: 1.125rem; font-weight: 600; color: var(--text-main);">Vendor Bills</div>
                     <MudSpacer />

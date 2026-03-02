@@ -6,21 +6,20 @@
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
 
-<Microsoft.AspNetCore.Components.Authorization.AuthorizeView Roles="Admin,Accounting">
-    <MudSelect T="int"
-               Label="Account"
-               @bind-Value="InternalAccountId"
-               Adornment="Adornment.End"
-               AdornmentIcon="@Icons.Material.Outlined.Add"
-               OnAdornmentClick="OpenAddDialog"
-               Variant="Variant.Outlined"
-               Margin="Margin.Dense"
-               Class="shadcn-input"
-               AnchorOrigin="Origin.BottomCenter"
-               Disabled="@(accounts == null)"
-               Clearable="true">
+<MudSelect T="int"
+           Label="Account"
+           @bind-Value="InternalAccountId"
+           Adornment="Adornment.End"
+           AdornmentIcon="@Icons.Material.Outlined.Add"
+           OnAdornmentClick="OpenAddDialog"
+           Variant="Variant.Outlined"
+           Margin="Margin.Dense"
+           Class="shadcn-input"
+           AnchorOrigin="Origin.BottomCenter"
+           Disabled="@(accounts == null)"
+           Clearable="true">
 
-        <MudSelectItem Value="0" Disabled="true">Select an account...</MudSelectItem>
+    <MudSelectItem Value="0" Disabled="true">Select an account...</MudSelectItem>
 
         @if (accounts != null)
         {
@@ -30,7 +29,7 @@
             }
         }
     </MudSelect>
-</Microsoft.AspNetCore.Components.Authorization.AuthorizeView>
+
 
 @code {
     [Parameter] public int SelectedAccountId { get; set; }
