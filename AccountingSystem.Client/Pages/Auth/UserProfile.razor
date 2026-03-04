@@ -8,6 +8,7 @@
 @inject AuthService AuthService
 @inject AuthenticationStateProvider AuthStateProvider
 @inject ISnackbar Snackbar
+@inject ILogger<UserProfile> Logger
 
 <PageTitle>Profile - AccSys</PageTitle>
 
@@ -159,7 +160,8 @@
         }
         catch (Exception ex)
         {
-            Snackbar.Add(ex.Message, Severity.Error);
+            Logger.LogError(ex, "Failed to update user profile.");
+            Snackbar.Add("Unable to update profile. Please try again.", Severity.Error);
         }
         finally
         {
@@ -180,7 +182,8 @@
         }
         catch (Exception ex)
         {
-            Snackbar.Add(ex.Message, Severity.Error);
+            Logger.LogError(ex, "Failed to change user password.");
+            Snackbar.Add("Unable to change password. Please try again.", Severity.Error);
         }
         finally
         {

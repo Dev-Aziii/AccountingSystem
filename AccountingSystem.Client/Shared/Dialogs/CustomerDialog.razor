@@ -4,6 +4,7 @@
 @using System.ComponentModel.DataAnnotations
 @inject ReceivableService ReceivableService
 @inject ISnackbar Snackbar
+@inject ILogger<CustomerDialog> Logger
 
 <MudDialog Class="shadcn-dialog">
     <TitleContent>
@@ -156,7 +157,8 @@
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Error: {ex.Message}", Severity.Error);
+            Logger.LogError(ex, "Failed to save customer.");
+            Snackbar.Add("Unable to save customer. Please try again.", Severity.Error);
         }
         finally
         {

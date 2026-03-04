@@ -8,6 +8,7 @@
 @inject AuditLogService AuditService
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
+@inject ILogger<AuditLogs> Logger
 
 <PageTitle>Audit Logs - AccSys</PageTitle>
 
@@ -267,7 +268,8 @@
         }
         catch (Exception ex)
         {
-            Snackbar.Add("Failed to load logs: " + ex.Message, Severity.Error);
+            Logger.LogError(ex, "Failed to load audit logs.");
+            Snackbar.Add("Failed to load logs. Please try again.", Severity.Error);
         }
         finally
         {

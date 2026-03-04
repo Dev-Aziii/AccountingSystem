@@ -7,6 +7,7 @@
 @inject NavigationManager NavManager
 @inject ISnackbar Snackbar
 @inject IJSRuntime JS
+@inject ILogger<RegisterCompany> Logger
 
 <PageTitle>Register - AccSys</PageTitle>
 
@@ -983,7 +984,8 @@
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Registration failed: {ex.Message}", Severity.Error);
+            Logger.LogError(ex, "Company registration failed.");
+            Snackbar.Add("Registration failed. Please try again.", Severity.Error);
         }
         finally
         {

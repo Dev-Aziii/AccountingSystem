@@ -5,6 +5,7 @@
 @inject ReceivableService ReceivableService
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
+@inject ILogger<CustomerSelect> Logger
 
 <Microsoft.AspNetCore.Components.Authorization.AuthorizeView Roles="Admin,Accounting,Management">
     <MudAutocomplete T="CustomerDTO"
@@ -64,7 +65,7 @@
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error loading customers: {ex.Message}");
+            Logger.LogError(ex, "Failed to load customers for customer selector.");
         }
     }
 

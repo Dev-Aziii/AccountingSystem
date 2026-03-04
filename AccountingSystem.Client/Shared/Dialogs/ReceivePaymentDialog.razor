@@ -10,6 +10,7 @@
 @inject ISnackbar Snackbar
 @inject NavigationManager NavManager
 @inject ILocalStorageService LocalStorage
+@inject ILogger<ReceivePaymentDialog> Logger
 
 <MudDialog Class="shadcn-dialog">
     <TitleContent>
@@ -245,7 +246,8 @@
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Error: {ex.Message}", Severity.Error);
+            Logger.LogError(ex, "Failed to record invoice payment.");
+            Snackbar.Add("Unable to record payment. Please try again.", Severity.Error);
         }
         finally
         {

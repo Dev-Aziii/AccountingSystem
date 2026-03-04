@@ -5,6 +5,7 @@
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "SuperAdmin")]
 @inject SuperAdminService SuperAdminService
 @inject ISnackbar Snackbar
+@inject ILogger<AdminAuditLogs> Logger
 
 <PageTitle>Audit Logs - AccSys</PageTitle>
 
@@ -236,7 +237,8 @@
         }
         catch (Exception ex)
         {
-            Snackbar.Add(ex.Message, Severity.Error);
+            Logger.LogError(ex, "Failed to load super admin audit logs.");
+            Snackbar.Add("Failed to load audit logs. Please try again.", Severity.Error);
         }
         finally
         {

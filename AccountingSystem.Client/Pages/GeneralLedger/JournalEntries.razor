@@ -11,6 +11,7 @@
 @inject NavigationManager NavManager
 @inject ISnackbar Snackbar
 @inject IJSRuntime JSRuntime
+@inject ILogger<JournalEntries> Logger
 
 <PageTitle>Journal Entries - AccSys</PageTitle>
 
@@ -357,7 +358,8 @@
         }
         catch (Exception ex)
         {
-            Snackbar.Add(ex.Message, Severity.Error);
+            Logger.LogError(ex, "Failed to post journal entry.");
+            Snackbar.Add("Unable to post journal entry. Please try again.", Severity.Error);
         }
         finally
         {

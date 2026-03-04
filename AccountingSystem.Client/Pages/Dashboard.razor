@@ -11,6 +11,7 @@
 @inject ReceivableService ReceivableService
 @inject WorldBankService WorldBankService
 @inject FrankfurterService FrankfurterService
+@inject ILogger<Dashboard> Logger
 
 <PageTitle>Financial Dashboard - AccSys</PageTitle>
 
@@ -655,7 +656,7 @@
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Dashboard Error: {ex.Message}");
+            Logger.LogError(ex, "Failed to load dashboard data.");
         }
         finally
         {
@@ -671,7 +672,7 @@
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Dashboard {label} load error: {ex.Message}");
+            Logger.LogError(ex, "Failed to load dashboard metric {MetricLabel}.", label);
             return default;
         }
     }
@@ -692,7 +693,7 @@
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Forex refresh error: {ex.Message}");
+            Logger.LogError(ex, "Failed to refresh forex exchange rate.");
             exchangeRate = 0;
         }
         finally

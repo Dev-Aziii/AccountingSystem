@@ -5,6 +5,7 @@
 @inject LedgerService LedgerService
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
+@inject ILogger<AccountSelect> Logger
 
 <MudSelect T="int"
            Label="Account"
@@ -66,7 +67,7 @@
         }
         catch (Exception ex)
         {
-            Console.WriteLine(ex.Message);
+            Logger.LogError(ex, "Failed to load accounts for account selector.");
         }
     }
 

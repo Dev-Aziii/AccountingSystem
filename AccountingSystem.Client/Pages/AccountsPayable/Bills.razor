@@ -8,6 +8,7 @@
 @inject PayableService PayableService
 @inject NavigationManager NavManager
 @inject ISnackbar Snackbar
+@inject ILogger<Bills> Logger
 
 <PageTitle>Create Bill</PageTitle>
 
@@ -202,7 +203,8 @@
         }
         catch (Exception ex)
         {
-            Snackbar.Add(ex.Message, Severity.Error);
+            Logger.LogError(ex, "Failed to create bill.");
+            Snackbar.Add("Unable to create bill. Please try again.", Severity.Error);
         }
         finally
         {

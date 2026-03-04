@@ -11,6 +11,7 @@
 @inject LedgerService LedgerService
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
+@inject ILogger<CompanySettings> Logger
 
 <PageTitle>Company Settings - AccSys</PageTitle>
 
@@ -324,7 +325,8 @@
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Failed to load settings: {ex.Message}", Severity.Error);
+            Logger.LogError(ex, "Failed to load company settings.");
+            Snackbar.Add("Failed to load settings. Please try again.", Severity.Error);
         }
         finally
         {
@@ -347,7 +349,8 @@
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Failed to save sequence: {ex.Message}", Severity.Error);
+            Logger.LogError(ex, "Failed to save document sequence for {DocumentType}.", sequence.DocumentType);
+            Snackbar.Add("Failed to save sequence. Please try again.", Severity.Error);
         }
     }
 
@@ -362,7 +365,8 @@
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Update failed: {ex.Message}", Severity.Error);
+            Logger.LogError(ex, "Failed to update company profile.");
+            Snackbar.Add("Update failed. Please try again.", Severity.Error);
         }
         finally
         {
@@ -380,7 +384,8 @@
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Failed to load fiscal years: {ex.Message}", Severity.Error);
+            Logger.LogError(ex, "Failed to load fiscal years.");
+            Snackbar.Add("Failed to load fiscal years. Please try again.", Severity.Error);
         }
     }
 
@@ -421,7 +426,8 @@
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Year-end close failed: {ex.Message}", Severity.Error);
+            Logger.LogError(ex, "Year-end close failed for fiscal year {FiscalYear}.", fiscalYear);
+            Snackbar.Add("Year-end close failed. Please try again.", Severity.Error);
         }
         finally
         {

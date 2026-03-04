@@ -4,6 +4,7 @@
 @using System.ComponentModel.DataAnnotations
 @inject PayableService PayableService
 @inject ISnackbar Snackbar
+@inject ILogger<VendorDialog> Logger
 
 <MudDialog Class="shadcn-dialog">
     <TitleContent>
@@ -155,7 +156,8 @@
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Error: {ex.Message}", Severity.Error);
+            Logger.LogError(ex, "Failed to save vendor.");
+            Snackbar.Add("Unable to save vendor. Please try again.", Severity.Error);
         }
         finally
         {

@@ -7,6 +7,7 @@
 @inject ReceivableService ReceivableService
 @inject NavigationManager NavManager
 @inject ISnackbar Snackbar
+@inject ILogger<Invoices> Logger
 
 <PageTitle>Create Invoice</PageTitle>
 
@@ -185,7 +186,8 @@
         }
         catch (Exception ex)
         {
-            Snackbar.Add(ex.Message, Severity.Error);
+            Logger.LogError(ex, "Failed to create invoice.");
+            Snackbar.Add("Unable to create invoice. Please try again.", Severity.Error);
         }
         finally
         {

@@ -8,6 +8,7 @@
 @inject NavigationManager NavManager
 @inject ISnackbar Snackbar
 @inject ILocalStorageService LocalStorage
+@inject ILogger<PaymentCallback> Logger
 
 <PageTitle>Payment Verification</PageTitle>
 
@@ -110,7 +111,8 @@
         }
         catch (Exception ex)
         {
-            errorMessage = "Verification Failed: " + ex.Message;
+            Logger.LogError(ex, "Payment callback verification failed.");
+            errorMessage = "Verification failed. Please try again or contact support.";
             Snackbar.Add(errorMessage, Severity.Error);
         }
         finally

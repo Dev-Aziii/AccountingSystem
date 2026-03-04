@@ -6,6 +6,7 @@
 @using System.Globalization
 @inject PayableService PayableService
 @inject ISnackbar Snackbar
+@inject ILogger<PayBillDialog> Logger
 
 <MudDialog Class="shadcn-dialog">
     <TitleContent>
@@ -210,7 +211,8 @@
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Error: {ex.Message}", Severity.Error);
+            Logger.LogError(ex, "Failed to record bill payment.");
+            Snackbar.Add("Unable to record payment. Please try again.", Severity.Error);
         }
         finally
         {

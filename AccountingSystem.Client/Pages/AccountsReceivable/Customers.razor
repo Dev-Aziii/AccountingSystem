@@ -9,6 +9,7 @@
 @inject ReceivableService ReceivableService
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
+@inject ILogger<Customers> Logger
 
 <PageTitle>Account Recievable - AccSys</PageTitle>
 
@@ -280,7 +281,11 @@
                 // Trust API default filter for Active
                 customers = all ?? new List<CustomerDTO>();
         }
-        catch (Exception ex) { Snackbar.Add(ex.Message, Severity.Error); }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to load customers.");
+            Snackbar.Add("Failed to load customers. Please try again.", Severity.Error);
+        }
         finally { _loading = false; }
     }
 
@@ -319,7 +324,11 @@
         if (result == true)
         {
             try { await ReceivableService.DeleteCustomerAsync(id); Snackbar.Add("Customer archived.", Severity.Success); await LoadList(false); }
-            catch (Exception ex) { Snackbar.Add(ex.Message, Severity.Error); }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Failed to archive customer with id {CustomerId}.", id);
+                Snackbar.Add("Unable to archive customer. Please try again.", Severity.Error);
+            }
         }
     }
 
@@ -333,7 +342,11 @@
         if (result == true)
         {
             try { await ReceivableService.RestoreCustomerAsync(id); Snackbar.Add("Customer restored.", Severity.Success); await LoadList(true); }
-            catch (Exception ex) { Snackbar.Add(ex.Message, Severity.Error); }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Failed to restore customer with id {CustomerId}.", id);
+                Snackbar.Add("Unable to restore customer. Please try again.", Severity.Error);
+            }
         }
     }
 

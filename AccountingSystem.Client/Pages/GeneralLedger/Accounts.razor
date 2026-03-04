@@ -9,6 +9,7 @@
 @inject LedgerService LedgerService
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
+@inject ILogger<Accounts> Logger
 
 <style>
     /* Shadcn-style custom colored badges */
@@ -314,7 +315,8 @@
         }
         catch (Exception ex)
         {
-            Snackbar.Add(ex.Message, Severity.Error);
+            Logger.LogError(ex, "Failed to load chart of accounts.");
+            Snackbar.Add("Failed to load accounts. Please try again.", Severity.Error);
             accounts = new List<AccountDTO>();
         }
         finally { _loading = false; }
@@ -357,7 +359,11 @@
                 Snackbar.Add("Account archived.", Severity.Success);
                 await LoadList(false); // Refresh Active list
             }
-            catch (Exception ex) { Snackbar.Add(ex.Message, Severity.Error); }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Failed to archive account with id {AccountId}.", id);
+                Snackbar.Add("Unable to archive account. Please try again.", Severity.Error);
+            }
         }
     }
 
@@ -376,7 +382,11 @@
                 Snackbar.Add("Account restored.", Severity.Success);
                 await LoadList(true); // Refresh Archived list
             }
-            catch (Exception ex) { Snackbar.Add(ex.Message, Severity.Error); }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Failed to restore account with id {AccountId}.", id);
+                Snackbar.Add("Unable to restore account. Please try again.", Severity.Error);
+            }
         }
     }
 

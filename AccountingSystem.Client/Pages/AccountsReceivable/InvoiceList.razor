@@ -11,6 +11,7 @@
 @inject LedgerService LedgerService
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
+@inject ILogger<InvoiceList> Logger
 
 <PageTitle>Customer Invoices</PageTitle>
 
@@ -285,7 +286,8 @@
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Failed to load fiscal years: {ex.Message}", Severity.Error);
+            Logger.LogError(ex, "Failed to load fiscal years for invoice list.");
+            Snackbar.Add("Failed to load fiscal years. Please try again.", Severity.Error);
             fiscalYears = new List<FiscalYearSummaryDTO>();
         }
     }
@@ -298,7 +300,11 @@
             int? fiscalYear = selectedFiscalYear > 0 ? selectedFiscalYear : null;
             invoices = await ReceivableService.GetInvoicesAsync(fiscalYear, ParseStatusFilter(selectedStatus)) ?? new List<InvoiceDTO>();
         }
-        catch (Exception ex) { Snackbar.Add(ex.Message, Severity.Error); }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to load invoices.");
+            Snackbar.Add("Failed to load invoices. Please try again.", Severity.Error);
+        }
         finally { _loading = false; }
     }
 
@@ -354,7 +360,8 @@
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Download failed: {ex.Message}", Severity.Error);
+            Logger.LogError(ex, "Failed to download invoice PDF for invoice id {InvoiceId}.", id);
+            Snackbar.Add("Download failed. Please try again.", Severity.Error);
         }
     }
 

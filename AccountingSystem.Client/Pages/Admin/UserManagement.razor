@@ -8,6 +8,7 @@
 @inject UserService UserService
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
+@inject ILogger<UserManagement> Logger
 
 <PageTitle>User Management - AccSys</PageTitle>
 
@@ -207,7 +208,11 @@
             else
                 users = all?.Where(u => !u.IsDeleted).ToList() ?? new List<UserDTO>();
         }
-        catch (Exception ex) { Snackbar.Add(ex.Message, Severity.Error); }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to load users.");
+            Snackbar.Add("Failed to load users. Please try again.", Severity.Error);
+        }
         finally { _loading = false; }
     }
 
@@ -221,7 +226,11 @@
             newUser = new RegisterDTO();
             await LoadUsers(false);
         }
-        catch (Exception ex) { Snackbar.Add(ex.Message, Severity.Error); }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to create user.");
+            Snackbar.Add("Unable to create user. Please try again.", Severity.Error);
+        }
         finally { isSubmitting = false; }
     }
 
@@ -248,7 +257,11 @@
             Snackbar.Add("User archived successfully", Severity.Success);
             await LoadUsers(false);
         }
-        catch (Exception ex) { Snackbar.Add(ex.Message, Severity.Error); }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to archive user with id {UserId}.", id);
+            Snackbar.Add("Unable to archive user. Please try again.", Severity.Error);
+        }
         finally
         {
             _loading = false;
@@ -279,7 +292,11 @@
             Snackbar.Add("User restored successfully", Severity.Success);
             await LoadUsers(true);
         }
-        catch (Exception ex) { Snackbar.Add(ex.Message, Severity.Error); }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to restore user with id {UserId}.", id);
+            Snackbar.Add("Unable to restore user. Please try again.", Severity.Error);
+        }
         finally
         {
             _loading = false;

@@ -8,6 +8,7 @@
 @inject LedgerService LedgerService
 @inject CompanyService CompanyService
 @inject ISnackbar Snackbar
+@inject ILogger<FinancialReports> Logger
 
 <PageTitle>Financial Reports - AccSys</PageTitle>
 
@@ -472,7 +473,8 @@
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Failed to load reports: {ex.Message}", Severity.Error);
+            Logger.LogError(ex, "Failed to load financial report data.");
+            Snackbar.Add("Failed to load reports. Please try again.", Severity.Error);
         }
         finally
         {
@@ -529,7 +531,8 @@
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Error: {ex.Message}", Severity.Error);
+            Logger.LogError(ex, "Failed to generate financial reports PDF.");
+            Snackbar.Add("Download failed. Please try again.", Severity.Error);
         }
     }
 }

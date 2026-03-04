@@ -8,6 +8,7 @@
 @inject IPaymentClientService PaymentService
 @inject NavigationManager NavManager
 @inject ISnackbar Snackbar
+@inject ILogger<ReceivePayment> Logger
 
 <PageTitle>Receive Payment</PageTitle>
 
@@ -86,7 +87,8 @@
         }
         catch (Exception ex)
         {
-            Snackbar.Add(ex.Message, Severity.Error);
+            Logger.LogError(ex, "Failed to initialize payment checkout.");
+            Snackbar.Add("Unable to process payment. Please try again.", Severity.Error);
             isProcessing = false;
         }
     }

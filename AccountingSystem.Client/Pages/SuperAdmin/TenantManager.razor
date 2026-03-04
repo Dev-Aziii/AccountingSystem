@@ -7,6 +7,7 @@
 @inject SuperAdminService SuperAdminService
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
+@inject ILogger<TenantManager> Logger
 
 <PageTitle>Tenant Management - AccSys</PageTitle>
 
@@ -334,7 +335,8 @@
         }
         catch (Exception ex)
         {
-            Snackbar.Add(ex.Message, Severity.Error);
+            Logger.LogError(ex, "Failed to load tenants.");
+            Snackbar.Add("Failed to load tenants. Please try again.", Severity.Error);
         }
         finally
         {
@@ -353,7 +355,8 @@
         }
         catch (Exception ex)
         {
-            Snackbar.Add(ex.Message, Severity.Error);
+            Logger.LogError(ex, "Failed to update tenant status for tenant id {TenantId}.", tenant.Id);
+            Snackbar.Add("Unable to update tenant status. Please try again.", Severity.Error);
             await LoadData();
         }
     }

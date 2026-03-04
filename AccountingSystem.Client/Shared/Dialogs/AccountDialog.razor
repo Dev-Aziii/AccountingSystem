@@ -3,6 +3,7 @@
 @using MudBlazor
 @inject LedgerService LedgerService
 @inject ISnackbar Snackbar
+@inject ILogger<AccountDialog> Logger
 
 <MudDialog Class="shadcn-dialog">
     <TitleContent>
@@ -175,7 +176,8 @@
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Error: {ex.Message}", Severity.Error);
+            Logger.LogError(ex, "Failed to save account.");
+            Snackbar.Add("Unable to save account. Please try again.", Severity.Error);
         }
         finally
         {

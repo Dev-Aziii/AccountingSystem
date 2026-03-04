@@ -8,6 +8,7 @@
 @inject NavigationManager NavManager
 @inject AuthenticationStateProvider AuthStateProvider
 @inject ISnackbar Snackbar
+@inject ILogger<Login> Logger
 
 <PageTitle>AccSys</PageTitle>
 
@@ -591,7 +592,7 @@
         catch (Exception ex)
         {
             errorMessage = "Invalid email or password. Please try again.";
-            Console.WriteLine(ex.Message);
+            Logger.LogError(ex, "Login failed.");
         }
         finally
         {

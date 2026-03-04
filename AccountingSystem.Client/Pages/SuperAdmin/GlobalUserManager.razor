@@ -7,6 +7,7 @@
 @inject SuperAdminService SuperAdminService
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
+@inject ILogger<GlobalUserManager> Logger
 
 <PageTitle>Global User Management - AccSys</PageTitle>
 
@@ -385,7 +386,8 @@
         }
         catch (Exception ex)
         {
-            Snackbar.Add(ex.Message, Severity.Error);
+            Logger.LogError(ex, "Failed to load global users.");
+            Snackbar.Add("Failed to load users. Please try again.", Severity.Error);
         }
         finally
         {
@@ -404,7 +406,8 @@
         }
         catch (Exception ex)
         {
-            Snackbar.Add(ex.Message, Severity.Error);
+            Logger.LogError(ex, "Failed to update status for user id {UserId}.", user.Id);
+            Snackbar.Add("Unable to update user status. Please try again.", Severity.Error);
             await LoadData();
         }
     }
