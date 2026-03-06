@@ -65,6 +65,14 @@
                         <div id="recaptcha_container"></div>
                     </div>
 
+                    @if (!string.IsNullOrEmpty(errorMessage))
+                    {
+                        <div class="error-alert mb-3">
+                            <MudIcon Icon="@Icons.Material.Outlined.ErrorOutline" Size="Size.Small" Class="mr-2" />
+                            <span>@errorMessage</span>
+                        </div>
+                    }
+
                     <MudButton ButtonType="ButtonType.Submit"
                                Variant="Variant.Filled"
                                Class="accsys-btn"
@@ -443,6 +451,19 @@
         margin-bottom: 0.5rem;
         transform: scale(0.88);
         transform-origin: center;
+    }
+
+    .error-alert {
+        display: flex;
+        align-items: center;
+        background-color: #fef2f2;
+        border: 1px solid #fecaca;
+        color: #b91c1c;
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        animation: fadeUp 0.3s ease;
     }
 
     .accsys-btn {
@@ -934,6 +955,7 @@
     private bool illustrationLoaded = false;
     private bool logoLoaded = false;
     private bool showTermsModal = false;
+    private string errorMessage = "";
 
     private const string SiteKey = "6LcUNGEsAAAAAJKM0sgFbG3mKWAiYq-cXaz2Wv_8";
 
@@ -942,7 +964,12 @@
         if (firstRender)
         {
             await Task.Delay(500);
-            await JS.InvokeVoidAsync("renderRecaptcha", "recaptcha_container", SiteKey);
+            var isCaptchaRendered = await JS.InvokeAsync<bool>("renderRecaptcha", "recaptcha_container", SiteKey);
+            if (!isCaptchaRendered)
+            {
+                errorMessage = "Security verification failed to load. Please refresh and try again.";
+                StateHasChanged();
+            }
         }
     }
 
@@ -964,14 +991,15 @@
     private async Task HandleRegistration()
     {
         isLoading = true;
+        errorMessage = "";
         try
         {
             string token = await JS.InvokeAsync<string>("getCaptchaResponse");
 
             if (string.IsNullOrEmpty(token))
             {
-                Snackbar.Add("Please complete the CAPTCHA verification.", Severity.Warning);
-                isLoading = false;
+                errorMessage = "Please complete the CAPTCHA verification.";
+                await JS.InvokeVoidAsync("resetCaptcha");
                 return;
             }
 
@@ -985,7 +1013,10 @@
         catch (Exception ex)
         {
             Logger.LogError(ex, "Company registration failed.");
-            Snackbar.Add("Registration failed. Please try again.", Severity.Error);
+            errorMessage = string.IsNullOrWhiteSpace(ex.Message)
+                ? "Registration failed. Please try again."
+                : ex.Message;
+            await JS.InvokeVoidAsync("resetCaptcha");
         }
         finally
         {

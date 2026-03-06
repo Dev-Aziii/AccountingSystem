@@ -1,25 +1,60 @@
-﻿window.renderRecaptcha = (containerId, siteKey) => {
-    if (window.grecaptcha && window.grecaptcha.render) {
-        // Clear previous instances if any to prevent "placeholder already created" error
-        const container = document.getElementById(containerId);
-        if (container) {
-            container.innerHTML = '';
+window.recaptchaWidgetId = null;
+
+window.renderRecaptcha = async (containerId, siteKey, maxAttempts = 10, retryDelayMs = 300) => {
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        if (window.grecaptcha && window.grecaptcha.render) {
+            const container = document.getElementById(containerId);
+            if (!container) {
+                console.warn("reCAPTCHA container not found:", containerId);
+                return false;
+            }
+
+            container.innerHTML = "";
+            window.recaptchaWidgetId = null;
+
             try {
-                grecaptcha.render(containerId, {
-                    'sitekey': siteKey
+                window.recaptchaWidgetId = window.grecaptcha.render(containerId, {
+                    sitekey: siteKey
                 });
+                return true;
             } catch (error) {
-                console.error("Recaptcha render error:", error);
+                console.error("reCAPTCHA render error:", error);
+                return false;
             }
         }
-    } else {
-        console.warn("grecaptcha not loaded yet.");
+
+        await new Promise(resolve => setTimeout(resolve, retryDelayMs));
     }
+
+    console.warn("grecaptcha did not load after retrying.");
+    return false;
 };
 
 window.getCaptchaResponse = () => {
-    if (window.grecaptcha) {
-        return grecaptcha.getResponse();
+    if (!window.grecaptcha) {
+        return "";
     }
-    return "";
+
+    if (window.recaptchaWidgetId !== null && window.recaptchaWidgetId !== undefined) {
+        return window.grecaptcha.getResponse(window.recaptchaWidgetId);
+    }
+
+    return window.grecaptcha.getResponse();
+};
+
+window.resetCaptcha = () => {
+    if (!window.grecaptcha) {
+        return;
+    }
+
+    try {
+        if (window.recaptchaWidgetId !== null && window.recaptchaWidgetId !== undefined) {
+            window.grecaptcha.reset(window.recaptchaWidgetId);
+            return;
+        }
+
+        window.grecaptcha.reset();
+    } catch (error) {
+        console.warn("reCAPTCHA reset error:", error);
+    }
 };
