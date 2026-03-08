@@ -12,14 +12,14 @@ namespace AccountingSystem.Client.Services
             _api = api;
         }
 
-        // ===== Dashboard =====
+        //  Dashboard 
         public async Task<SystemDashboardDTO> GetDashboardStatsAsync()
         {
             return await _api.GetAsync<SystemDashboardDTO>("api/superadmin/dashboard")
                 ?? throw new Exception("Failed to retrieve dashboard stats.");
         }
 
-        // ===== Tenant Management =====
+        // Tenant Management
         public async Task<List<TenantDTO>> GetAllCompaniesAsync()
         {
             return await _api.GetAsync<List<TenantDTO>>("api/superadmin/companies")
@@ -46,7 +46,7 @@ namespace AccountingSystem.Client.Services
             }
         }
 
-        // ===== Global User Management =====
+        // Global User Management 
         public async Task<List<GlobalUserDTO>> GetAllUsersAsync()
         {
             return await _api.GetAsync<List<GlobalUserDTO>>("api/superadmin/users")
@@ -73,7 +73,7 @@ namespace AccountingSystem.Client.Services
             }
         }
 
-        // ===== Super Admin Audit Logs =====
+        // Super Admin Audit Logs 
         public async Task<List<SuperAdminAuditLogDTO>> GetAuditLogsAsync()
         {
             return await _api.GetAsync<List<SuperAdminAuditLogDTO>>("api/superadmin/audit-logs")

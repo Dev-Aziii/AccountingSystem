@@ -71,7 +71,7 @@ namespace AccountingSystem.API.Controllers
             return File(pdfBytes, "application/pdf", $"Invoice-{id}.pdf");
         }
 
-        // NEW: Financial Reports Endpoint
+        // Financial Reports Endpoint
         [HttpGet("financials/pdf")]
         public async Task<IActionResult> DownloadFinancialsPdf([FromQuery] int fiscalYear)
         {

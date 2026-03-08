@@ -31,7 +31,6 @@ namespace AccountingSystem.API.Middleware
             {
                 var tokenHandler = new JwtSecurityTokenHandler();
 
-                // Fix: Handle potential null from configuration
                 var secret = _configuration["JwtSettings:Secret"];
                 if (string.IsNullOrEmpty(secret))
                 {
@@ -53,7 +52,7 @@ namespace AccountingSystem.API.Middleware
 
                 var jwtToken = (JwtSecurityToken)validatedToken;
 
-                // Existing Claims
+                // Claims
                 context.Items["User"] = jwtToken.Claims.First(x => x.Type == "unique_name").Value;
                 context.Items["Role"] = jwtToken.Claims.First(x => x.Type == "role").Value;
 
@@ -63,7 +62,7 @@ namespace AccountingSystem.API.Middleware
                     context.Items["UserId"] = userIdClaim.Value;
                 }
 
-                // NEW: Extract CompanyId
+                // Extract CompanyId
                 var companyIdClaim = jwtToken.Claims.FirstOrDefault(x => x.Type == "CompanyId");
                 if (companyIdClaim != null)
                 {
@@ -72,7 +71,7 @@ namespace AccountingSystem.API.Middleware
             }
             catch
             {
-                // Do nothing if jwt validation fails
+                // Do nothing if JWT validation fails, user is not attached to context
             }
         }
     }

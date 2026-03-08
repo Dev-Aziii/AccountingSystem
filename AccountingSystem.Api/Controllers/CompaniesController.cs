@@ -41,7 +41,7 @@ namespace AccountingSystem.API.Controllers
             });
         }
 
-        // NEW: Update Company Profile
+        // Update Company Profile
         [HttpPut("current")]
         [Authorize(Roles = "Admin")] // Only Admins can update company settings
         public async Task<IActionResult> UpdateCompany([FromBody] UpdateCompanyDTO dto)

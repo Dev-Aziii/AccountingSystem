@@ -31,7 +31,7 @@ namespace AccountingSystem.API.Controllers
             return host?.Id ?? 0;
         }
 
-        // ===== 1. DASHBOARD STATS =====
+        // 1. DASHBOARD STATS
         [HttpGet("dashboard")]
         public async Task<IActionResult> GetDashboardStats()
         {
@@ -98,7 +98,6 @@ namespace AccountingSystem.API.Controllers
             _logger.LogInformation("Dashboard MonthlyUserGrowth: {MonthlyUserGrowth}",
                 string.Join(", ", monthlyUserGrowth.Select(m => $"{m.Month}:{m.Count}")));
 
-            // Recent SuperAdmin actions
             var recentActions = await _context.SuperAdminAuditLogs
                 .OrderByDescending(l => l.Timestamp)
                 .Take(10)
@@ -135,7 +134,7 @@ namespace AccountingSystem.API.Controllers
             return Ok(stats);
         }
 
-        // ===== 2. TENANT MANAGEMENT =====
+        // 2. TENANT MANAGEMENT
         [HttpGet("companies")]
         public async Task<IActionResult> GetAllCompanies()
         {
@@ -193,7 +192,7 @@ namespace AccountingSystem.API.Controllers
             return Ok(new { message = $"Company '{company.Name}' is now {dto.Status}." });
         }
 
-        // Legacy toggle endpoint (kept for backward compatibility)
+        //not used
         [HttpPut("companies/{id}/toggle")]
         public async Task<IActionResult> ToggleCompanyStatus(int id)
         {
@@ -215,7 +214,7 @@ namespace AccountingSystem.API.Controllers
             return Ok(new { message = company.IsActive ? "Company activated." : "Company suspended." });
         }
 
-        // ===== 3. GLOBAL USER MANAGEMENT =====
+        // 3. GLOBAL USER MANAGEMENT
         [HttpGet("users")]
         public async Task<IActionResult> GetAllUsers()
         {
@@ -280,7 +279,7 @@ namespace AccountingSystem.API.Controllers
             return Ok(new { message = $"User '{user.Email}' is now {dto.Status}." });
         }
 
-        // Legacy toggle endpoint (kept for backward compatibility)
+        // not used
         [HttpPut("users/{id}/toggle")]
         public async Task<IActionResult> ToggleUserStatus(int id)
         {
@@ -308,7 +307,7 @@ namespace AccountingSystem.API.Controllers
             return Ok(new { message = user.IsActive ? "User activated." : "User blocked." });
         }
 
-        // ===== 4. SUPER ADMIN AUDIT LOGS =====
+        // 4. SUPER ADMIN AUDIT LOGS
         [HttpGet("audit-logs")]
         public async Task<IActionResult> GetSuperAdminAuditLogs()
         {
@@ -333,7 +332,7 @@ namespace AccountingSystem.API.Controllers
             return Ok(logs);
         }
 
-        // ===== HELPER: Log SuperAdmin Actions =====
+        // HELPER: Log SuperAdmin Actions 
         private Task LogSuperAdminAction(string action, string targetType, int targetId, string targetName,
             string oldValue, string newValue, string details)
         {

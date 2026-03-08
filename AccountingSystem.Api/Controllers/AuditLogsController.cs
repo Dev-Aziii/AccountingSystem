@@ -8,7 +8,7 @@ namespace AccountingSystem.API.Controllers
 {
     [ApiController]
     [Route("api/audit-logs")]
-    [Authorize(Roles = "Admin")] // Strictly for Admins
+    [Authorize(Roles = "Admin")] 
     public class AuditLogsController : ControllerBase
     {
         private readonly AccountingDbContext _context;
@@ -22,7 +22,6 @@ namespace AccountingSystem.API.Controllers
         public async Task<IActionResult> GetAuditLogs()
         {
             // Join AuditLogs with Users to resolve the Email
-            // We use a Left Join logic because UserId might be null (System actions) or user might be deleted
             var query = from log in _context.AuditLogs
                         join user in _context.Users on log.UserId equals user.Id into userJoin
                         from u in userJoin.DefaultIfEmpty()

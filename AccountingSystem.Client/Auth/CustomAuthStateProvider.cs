@@ -45,7 +45,6 @@ namespace AccountingSystem.Client.Auth
             var payload = jwt.Split('.')[1];
             var jsonBytes = ParseBase64WithoutPadding(payload);
 
-            // Fix: Handle potential null from deserialization
             var keyValuePairs = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonBytes);
 
             if (keyValuePairs == null)
@@ -64,7 +63,6 @@ namespace AccountingSystem.Client.Auth
                 }
                 else
                 {
-                    // Fix: Handle potential null value
                     var claimValue = kvp.Value?.ToString();
                     if (claimValue != null)
                     {

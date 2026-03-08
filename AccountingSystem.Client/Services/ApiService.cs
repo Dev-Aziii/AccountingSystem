@@ -50,7 +50,6 @@ namespace AccountingSystem.Client.Services
             return await _httpClient.DeleteAsync(uri);
         }
 
-        // NEW: Method to download files
         public async Task DownloadFileAsync(string uri, string fileName)
         {
             await AddAuthHeader();

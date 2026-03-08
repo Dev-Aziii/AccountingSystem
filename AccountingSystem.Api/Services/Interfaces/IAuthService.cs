@@ -8,8 +8,6 @@ namespace AccountingSystem.API.Services.Interfaces
         Task<AuthResponseDTO> LoginAsync(LoginDTO loginDto);
         Task<User> RegisterAsync(RegisterDTO registerDto);
         Task<AuthResponseDTO> RegisterCompanyAsync(CompanyRegisterDTO dto);
-
-        // NEW: Profile Management
         Task UpdateProfileAsync(int userId, UpdateProfileDTO dto);
         Task ChangePasswordAsync(int userId, ChangePasswordDTO dto);
     }

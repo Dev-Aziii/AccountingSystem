@@ -16,7 +16,6 @@ builder.RootComponents.Add<HeadOutlet>("head::after");
 // 1. Infrastructure Services
 builder.Services.AddMudServices(config =>
 {
-    // Set the global Snackbar variant to Outlined
     config.SnackbarConfiguration.SnackbarVariant = Variant.Text;
 
     // behaviors

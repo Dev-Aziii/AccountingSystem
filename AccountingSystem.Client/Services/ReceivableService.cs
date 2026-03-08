@@ -13,20 +13,17 @@ namespace AccountingSystem.Client.Services
             _api = api;
         }
 
-        // Updated to accept includeArchived
         public async Task<List<CustomerDTO>?> GetCustomersAsync(bool includeArchived = false)
         {
             return await _api.GetAsync<List<CustomerDTO>>($"api/receivables/customers?includeArchived={includeArchived}");
         }
 
-        // New Restore Method
         public async Task RestoreCustomerAsync(int id)
         {
             var response = await _api.PutAsync<object?>($"api/receivables/customers/{id}/restore", null);
             if (!response.IsSuccessStatusCode) throw new Exception(await response.Content.ReadAsStringAsync());
         }
 
-        // ... Existing methods ...
         public async Task<List<InvoiceDTO>?> GetInvoicesAsync(int? fiscalYear = null, DocumentStatus? status = null)
         {
             var queryParams = new List<string>();

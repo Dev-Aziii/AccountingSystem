@@ -79,12 +79,12 @@ namespace AccountingSystem.API.Data
                 .HasForeignKey(f => f.ClosingJournalEntryId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // --- UPDATED ROLES ---
+            // ---  ROLES ---
             modelBuilder.Entity<Role>().HasData(
                 new Role { Id = 1, Name = "Admin" },
                 new Role { Id = 2, Name = "Accounting" },
                 new Role { Id = 3, Name = "Management" },
-                new Role { Id = 4, Name = "SuperAdmin" } // NEW: System Owner Role
+                new Role { Id = 4, Name = "SuperAdmin" } 
             );
         }
 

@@ -12,13 +12,11 @@ namespace AccountingSystem.Client.Services
             _api = api;
         }
 
-        // Updated to accept includeArchived
         public async Task<List<UserDTO>?> GetAllUsersAsync(bool includeArchived = false)
         {
             return await _api.GetAsync<List<UserDTO>>($"api/users?includeArchived={includeArchived}");
         }
 
-        // New Restore Method
         public async Task RestoreUserAsync(int id)
         {
             var response = await _api.PutAsync<object?>($"api/users/{id}/restore", null);

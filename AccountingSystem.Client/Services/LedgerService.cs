@@ -12,20 +12,17 @@ namespace AccountingSystem.Client.Services
             _api = api;
         }
 
-        // Updated to accept includeArchived
         public async Task<List<AccountDTO>?> GetAccountsAsync(bool includeArchived = false)
         {
             return await _api.GetAsync<List<AccountDTO>>($"api/ledger/accounts?includeArchived={includeArchived}");
         }
 
-        // New Restore Method
         public async Task RestoreAccountAsync(int id)
         {
             var response = await _api.PutAsync<object?>($"api/ledger/accounts/{id}/restore", null);
             if (!response.IsSuccessStatusCode) throw new Exception(await response.Content.ReadAsStringAsync());
         }
 
-        // ... Existing methods ...
         public async Task<AccountDTO?> CreateAccountAsync(CreateAccountDTO account)
         {
             var response = await _api.PostAsync("api/ledger/accounts", account);

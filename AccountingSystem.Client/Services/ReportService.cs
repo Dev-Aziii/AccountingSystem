@@ -33,7 +33,6 @@ namespace AccountingSystem.Client.Services
             await _api.DownloadFileAsync($"api/reports/invoices/{invoiceId}/pdf", $"Invoice-{invoiceId}.pdf");
         }
 
-        // NEW: Financials PDF
         public async Task DownloadFinancialsPdf(int fiscalYear)
         {
             await _api.DownloadFileAsync($"api/reports/financials/pdf?fiscalYear={fiscalYear}", $"FinancialStatements-FY{fiscalYear}.pdf");

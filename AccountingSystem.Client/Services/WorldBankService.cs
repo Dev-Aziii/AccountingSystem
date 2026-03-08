@@ -9,8 +9,7 @@ namespace AccountingSystem.Client.Services
 
         public WorldBankService()
         {
-            // We create a dedicated client for external calls to avoid Auth headers 
-            // meant for our own API being sent to World Bank.
+
             _http = new HttpClient();
         }
 
@@ -26,8 +25,6 @@ namespace AccountingSystem.Client.Services
 
                 var content = await response.Content.ReadAsStringAsync();
 
-                // World Bank returns [ Metadata, [Data, Data...] ]
-                // We need to parse this manually to get the second element
                 using var doc = JsonDocument.Parse(content);
                 var root = doc.RootElement;
 
