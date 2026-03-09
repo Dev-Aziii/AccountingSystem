@@ -16,12 +16,18 @@ namespace AccountingSystem.API.Services
         private readonly AccountingDbContext _context;
         private readonly IConfiguration _configuration;
         private readonly ICaptchaService _captchaService;
+        private readonly ILogger<AuthService> _logger;
 
-        public AuthService(AccountingDbContext context, IConfiguration configuration, ICaptchaService captchaService)
+        public AuthService(
+            AccountingDbContext context,
+            IConfiguration configuration,
+            ICaptchaService captchaService,
+            ILogger<AuthService> logger)
         {
             _context = context;
             _configuration = configuration;
             _captchaService = captchaService;
+            _logger = logger;
         }
 
         // --- Update Profile ---
@@ -96,6 +102,7 @@ namespace AccountingSystem.API.Services
                     Email = dto.AdminEmail,
                     FullName = dto.AdminFullName,
                     RoleId = adminRole.Id,
+                    Role = adminRole,
                     PasswordHash = Convert.ToBase64String(passwordHash),
                     PasswordSalt = Convert.ToBase64String(passwordSalt),
                     IsActive = true
@@ -117,6 +124,18 @@ namespace AccountingSystem.API.Services
                     CompanyName = company.Name,
                     ExpiresAt = DateTime.UtcNow.AddMinutes(expiryMinutes)
                 };
+            }
+            catch (DbUpdateException ex)
+            {
+                await transaction.RollbackAsync();
+                var databaseError = ex.InnerException?.Message ?? ex.Message;
+                _logger.LogError(
+                    ex,
+                    "RegisterCompany failed for email {AdminEmail} and company {CompanyName}. Database error: {DatabaseError}",
+                    dto.AdminEmail,
+                    dto.CompanyName,
+                    databaseError);
+                throw new Exception("Registration failed while saving your company account. Please try again.");
             }
             catch
             {

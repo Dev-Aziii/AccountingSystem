@@ -98,7 +98,7 @@ namespace AccountingSystem.API.Data
                 if (entry.State == EntityState.Added)
                 {
                     entry.Entity.CreatedAt = DateTime.UtcNow;
-                    if (currentTenantId != 0)
+                    if (currentTenantId != 0 && entry.Entity.CompanyId == 0)
                     {
                         entry.Entity.CompanyId = currentTenantId;
                     }

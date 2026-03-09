@@ -17,42 +17,59 @@ namespace AccountingSystem.Client.Services
             _js = js;
         }
 
-        private async Task AddAuthHeader()
+        private async Task PrepareAuthHeaderAsync(bool requiresAuth)
         {
-            var token = await _tokenService.GetTokenAsync();
-            if (!string.IsNullOrEmpty(token))
+            if (!requiresAuth)
             {
-                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                ClearAuthHeader();
+                return;
+            }
+
+            var token = await _tokenService.GetTokenAsync();
+            if (string.IsNullOrWhiteSpace(token))
+            {
+                ClearAuthHeader();
+                return;
+            }
+
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        }
+
+        public void ClearAuthHeader()
+        {
+            if (_httpClient.DefaultRequestHeaders.Authorization != null)
+            {
+                _httpClient.DefaultRequestHeaders.Authorization = null;
             }
         }
 
-        public async Task<T?> GetAsync<T>(string uri)
+        public async Task<T?> GetAsync<T>(string uri, bool requiresAuth = true)
         {
-            await AddAuthHeader();
+            await PrepareAuthHeaderAsync(requiresAuth);
             return await _httpClient.GetFromJsonAsync<T>(uri);
         }
 
-        public async Task<HttpResponseMessage> PostAsync<T>(string uri, T data)
+        public async Task<HttpResponseMessage> PostAsync<T>(string uri, T data, bool requiresAuth = true)
         {
-            await AddAuthHeader();
+            await PrepareAuthHeaderAsync(requiresAuth);
             return await _httpClient.PostAsJsonAsync(uri, data);
         }
 
-        public async Task<HttpResponseMessage> PutAsync<T>(string uri, T data)
+        public async Task<HttpResponseMessage> PutAsync<T>(string uri, T data, bool requiresAuth = true)
         {
-            await AddAuthHeader();
+            await PrepareAuthHeaderAsync(requiresAuth);
             return await _httpClient.PutAsJsonAsync(uri, data);
         }
 
-        public async Task<HttpResponseMessage> DeleteAsync(string uri)
+        public async Task<HttpResponseMessage> DeleteAsync(string uri, bool requiresAuth = true)
         {
-            await AddAuthHeader();
+            await PrepareAuthHeaderAsync(requiresAuth);
             return await _httpClient.DeleteAsync(uri);
         }
 
-        public async Task DownloadFileAsync(string uri, string fileName)
+        public async Task DownloadFileAsync(string uri, string fileName, bool requiresAuth = true)
         {
-            await AddAuthHeader();
+            await PrepareAuthHeaderAsync(requiresAuth);
             var response = await _httpClient.GetAsync(uri);
             if (!response.IsSuccessStatusCode)
             {

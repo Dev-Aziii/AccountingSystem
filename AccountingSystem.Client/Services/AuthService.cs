@@ -21,7 +21,7 @@ namespace AccountingSystem.Client.Services
 
         public async Task<AuthResponseDTO> Login(LoginDTO loginDto)
         {
-            var response = await _api.PostAsync("api/auth/login", loginDto);
+            var response = await _api.PostAsync("api/auth/login", loginDto, requiresAuth: false);
             if (!response.IsSuccessStatusCode)
             {
                 var error = await response.Content.ReadAsStringAsync();
@@ -46,7 +46,7 @@ namespace AccountingSystem.Client.Services
 
         public async Task<AuthResponseDTO> RegisterCompany(CompanyRegisterDTO registerDto)
         {
-            var response = await _api.PostAsync("api/auth/register-company", registerDto);
+            var response = await _api.PostAsync("api/auth/register-company", registerDto, requiresAuth: false);
             if (!response.IsSuccessStatusCode)
             {
                 var error = await response.Content.ReadAsStringAsync();
@@ -123,6 +123,7 @@ namespace AccountingSystem.Client.Services
         public async Task Logout()
         {
             await _tokenService.RemoveTokenAsync();
+            _api.ClearAuthHeader();
             ((CustomAuthStateProvider)_authStateProvider).NotifyUserLogout();
         }
 
