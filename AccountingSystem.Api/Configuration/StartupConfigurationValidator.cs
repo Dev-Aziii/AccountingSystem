@@ -34,6 +34,7 @@ namespace AccountingSystem.API.Configuration
             CheckPositiveInteger(configuration["AuthSecurity:RateLimiting:RegisterCompany:WindowSeconds"], "AuthSecurity:RateLimiting:RegisterCompany:WindowSeconds", invalidKeys);
             CheckPositiveInteger(configuration["AuthSecurity:RateLimiting:ChangePassword:PermitLimit"], "AuthSecurity:RateLimiting:ChangePassword:PermitLimit", invalidKeys);
             CheckPositiveInteger(configuration["AuthSecurity:RateLimiting:ChangePassword:WindowSeconds"], "AuthSecurity:RateLimiting:ChangePassword:WindowSeconds", invalidKeys);
+            ValidateSqlServerConnectionString(configuration.GetConnectionString("DefaultConnection"), invalidKeys);
 
             if (!environment.IsDevelopment())
             {
@@ -102,6 +103,38 @@ namespace AccountingSystem.API.Configuration
                 (!int.TryParse(value, out var parsedValue) || parsedValue < 0))
             {
                 invalidKeys.Add($"{configurationKey} (must be zero or a positive integer)");
+            }
+        }
+
+        private static void ValidateSqlServerConnectionString(string? connectionString, ICollection<string> invalidKeys)
+        {
+            if (IsMissingOrPlaceholder(connectionString))
+            {
+                return;
+            }
+
+            try
+            {
+                var builder = new Microsoft.Data.SqlClient.SqlConnectionStringBuilder(connectionString);
+                var dataSource = builder.DataSource?.Trim();
+
+                if (string.IsNullOrWhiteSpace(dataSource))
+                {
+                    invalidKeys.Add("ConnectionStrings:DefaultConnection (missing Data Source / Server)");
+                    return;
+                }
+
+                if (dataSource.Contains(@"\\", StringComparison.Ordinal) &&
+                    !dataSource.StartsWith(@"\\", StringComparison.Ordinal) &&
+                    !dataSource.StartsWith("np:", StringComparison.OrdinalIgnoreCase))
+                {
+                    invalidKeys.Add(
+                        "ConnectionStrings:DefaultConnection (SQL Server instance name contains a doubled backslash at runtime; use 'Server=HOST\\INSTANCE' in user-secrets or environment variables)");
+                }
+            }
+            catch (ArgumentException)
+            {
+                invalidKeys.Add("ConnectionStrings:DefaultConnection (invalid SQL Server connection string format)");
             }
         }
     }
