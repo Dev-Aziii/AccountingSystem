@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+using AccountingSystem.Shared.Validation;
+using System.ComponentModel.DataAnnotations;
 
 namespace AccountingSystem.Shared.DTOs
 {
@@ -19,7 +20,7 @@ namespace AccountingSystem.Shared.DTOs
         public string CurrentPassword { get; set; } = string.Empty;
 
         [Required]
-        [MinLength(6, ErrorMessage = "Password must be at least 6 characters.")]
+        [StrongPassword]
         public string NewPassword { get; set; } = string.Empty;
 
         [Required]
@@ -41,6 +42,7 @@ namespace AccountingSystem.Shared.DTOs
         public string AdminFullName { get; set; } = string.Empty;
 
         [Required]
+        [StrongPassword]
         public string Password { get; set; } = string.Empty;
 
         public string RecaptchaToken { get; set; } = string.Empty;
@@ -53,6 +55,7 @@ namespace AccountingSystem.Shared.DTOs
         public string Email { get; set; } = string.Empty;
 
         [Required]
+        [StrongPassword]
         public string Password { get; set; } = string.Empty;
 
         [Required]

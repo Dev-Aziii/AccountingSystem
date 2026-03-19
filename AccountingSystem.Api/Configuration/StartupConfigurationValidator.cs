@@ -14,13 +14,26 @@ namespace AccountingSystem.API.Configuration
             CheckRequiredValue(configuration["JwtSettings:Issuer"], "JwtSettings:Issuer", missingKeys);
             CheckRequiredValue(configuration["JwtSettings:Audience"], "JwtSettings:Audience", missingKeys);
             CheckRequiredValue(configuration["JwtSettings:ExpiryMinutes"], "JwtSettings:ExpiryMinutes", missingKeys);
+            CheckRequiredValue(configuration["JwtSettings:ClockSkewSeconds"], "JwtSettings:ClockSkewSeconds", missingKeys);
+            CheckRequiredValue(configuration["AuthSecurity:Lockout:MaxFailedAccessAttempts"], "AuthSecurity:Lockout:MaxFailedAccessAttempts", missingKeys);
+            CheckRequiredValue(configuration["AuthSecurity:Lockout:LockoutMinutes"], "AuthSecurity:Lockout:LockoutMinutes", missingKeys);
+            CheckRequiredValue(configuration["AuthSecurity:RateLimiting:Login:PermitLimit"], "AuthSecurity:RateLimiting:Login:PermitLimit", missingKeys);
+            CheckRequiredValue(configuration["AuthSecurity:RateLimiting:Login:WindowSeconds"], "AuthSecurity:RateLimiting:Login:WindowSeconds", missingKeys);
+            CheckRequiredValue(configuration["AuthSecurity:RateLimiting:RegisterCompany:PermitLimit"], "AuthSecurity:RateLimiting:RegisterCompany:PermitLimit", missingKeys);
+            CheckRequiredValue(configuration["AuthSecurity:RateLimiting:RegisterCompany:WindowSeconds"], "AuthSecurity:RateLimiting:RegisterCompany:WindowSeconds", missingKeys);
+            CheckRequiredValue(configuration["AuthSecurity:RateLimiting:ChangePassword:PermitLimit"], "AuthSecurity:RateLimiting:ChangePassword:PermitLimit", missingKeys);
+            CheckRequiredValue(configuration["AuthSecurity:RateLimiting:ChangePassword:WindowSeconds"], "AuthSecurity:RateLimiting:ChangePassword:WindowSeconds", missingKeys);
 
-            var expiryMinutes = configuration["JwtSettings:ExpiryMinutes"];
-            if (!IsMissingOrPlaceholder(expiryMinutes) &&
-                (!int.TryParse(expiryMinutes, out var parsedMinutes) || parsedMinutes <= 0))
-            {
-                invalidKeys.Add("JwtSettings:ExpiryMinutes (must be a positive integer)");
-            }
+            CheckPositiveInteger(configuration["JwtSettings:ExpiryMinutes"], "JwtSettings:ExpiryMinutes", invalidKeys);
+            CheckNonNegativeInteger(configuration["JwtSettings:ClockSkewSeconds"], "JwtSettings:ClockSkewSeconds", invalidKeys);
+            CheckPositiveInteger(configuration["AuthSecurity:Lockout:MaxFailedAccessAttempts"], "AuthSecurity:Lockout:MaxFailedAccessAttempts", invalidKeys);
+            CheckPositiveInteger(configuration["AuthSecurity:Lockout:LockoutMinutes"], "AuthSecurity:Lockout:LockoutMinutes", invalidKeys);
+            CheckPositiveInteger(configuration["AuthSecurity:RateLimiting:Login:PermitLimit"], "AuthSecurity:RateLimiting:Login:PermitLimit", invalidKeys);
+            CheckPositiveInteger(configuration["AuthSecurity:RateLimiting:Login:WindowSeconds"], "AuthSecurity:RateLimiting:Login:WindowSeconds", invalidKeys);
+            CheckPositiveInteger(configuration["AuthSecurity:RateLimiting:RegisterCompany:PermitLimit"], "AuthSecurity:RateLimiting:RegisterCompany:PermitLimit", invalidKeys);
+            CheckPositiveInteger(configuration["AuthSecurity:RateLimiting:RegisterCompany:WindowSeconds"], "AuthSecurity:RateLimiting:RegisterCompany:WindowSeconds", invalidKeys);
+            CheckPositiveInteger(configuration["AuthSecurity:RateLimiting:ChangePassword:PermitLimit"], "AuthSecurity:RateLimiting:ChangePassword:PermitLimit", invalidKeys);
+            CheckPositiveInteger(configuration["AuthSecurity:RateLimiting:ChangePassword:WindowSeconds"], "AuthSecurity:RateLimiting:ChangePassword:WindowSeconds", invalidKeys);
 
             if (!environment.IsDevelopment())
             {
@@ -71,6 +84,24 @@ namespace AccountingSystem.API.Configuration
             if (IsMissingOrPlaceholder(value))
             {
                 missingKeys.Add(configurationKey);
+            }
+        }
+
+        private static void CheckPositiveInteger(string? value, string configurationKey, ICollection<string> invalidKeys)
+        {
+            if (!IsMissingOrPlaceholder(value) &&
+                (!int.TryParse(value, out var parsedValue) || parsedValue <= 0))
+            {
+                invalidKeys.Add($"{configurationKey} (must be a positive integer)");
+            }
+        }
+
+        private static void CheckNonNegativeInteger(string? value, string configurationKey, ICollection<string> invalidKeys)
+        {
+            if (!IsMissingOrPlaceholder(value) &&
+                (!int.TryParse(value, out var parsedValue) || parsedValue < 0))
+            {
+                invalidKeys.Add($"{configurationKey} (must be zero or a positive integer)");
             }
         }
     }

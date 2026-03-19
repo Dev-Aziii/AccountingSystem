@@ -5,29 +5,28 @@ using AccountingSystem.API.Services;
 using AccountingSystem.API.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Components.WebAssembly.Server;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using QuestPDF.Infrastructure;
-using System.Text;
+using System.Globalization;
+using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// --- 1. License Setup ---
 QuestPDF.Settings.License = LicenseType.Community;
 
 StartupConfigurationValidator.ValidateRequiredSettings(builder.Configuration, builder.Environment);
 
-builder.Services.AddHttpContextAccessor(); // REQUIRED for TenantService
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ITenantService, TenantService>();
 
-// --- 2. Database Context Setup ---
 var defaultConnection = builder.Configuration.GetConnectionString("DefaultConnection")!;
 builder.Services.AddDbContext<AccountingDbContext>(options =>
     options.UseSqlServer(defaultConnection));
 
-// --- 3. Dependency Injection (Register Services) ---
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IAuthSecurityAuditService, AuthSecurityAuditService>();
 builder.Services.AddScoped<IYearEndCloseService, YearEndCloseService>();
 builder.Services.AddScoped<IDocumentSequenceService, DocumentSequenceService>();
 builder.Services.AddScoped<ILedgerService, LedgerService>();
@@ -38,10 +37,7 @@ builder.Services.AddScoped<IPdfService, PdfService>();
 builder.Services.AddHttpClient<ICaptchaService, CaptchaService>();
 builder.Services.AddScoped<ICaptchaService, CaptchaService>();
 
-// --- 4. Authentication Setup (JWT) ---
-var jwtSettings = builder.Configuration.GetSection("JwtSettings");
-var secret = jwtSettings["Secret"]!;
-var key = Encoding.ASCII.GetBytes(secret);
+var tokenValidationParameters = JwtSettingsHelper.CreateTokenValidationParameters(builder.Configuration);
 
 builder.Services.AddAuthentication(options =>
 {
@@ -50,21 +46,62 @@ builder.Services.AddAuthentication(options =>
 })
 .AddJwtBearer(options =>
 {
-    options.RequireHttpsMetadata = false;
+    options.RequireHttpsMetadata = !builder.Environment.IsDevelopment();
     options.SaveToken = true;
-    options.TokenValidationParameters = new TokenValidationParameters
-    {
-        ValidateIssuerSigningKey = true,
-        IssuerSigningKey = new SymmetricSecurityKey(key),
-        ValidateIssuer = true,
-        ValidIssuer = jwtSettings["Issuer"],
-        ValidateAudience = true,
-        ValidAudience = jwtSettings["Audience"],
-        ClockSkew = TimeSpan.Zero
-    };
+    options.TokenValidationParameters = tokenValidationParameters;
 });
 
-// Configure CORS for Blazor Client
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.OnRejected = async (context, cancellationToken) =>
+    {
+        if (context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter))
+        {
+            context.HttpContext.Response.Headers.RetryAfter =
+                Math.Ceiling(retryAfter.TotalSeconds).ToString(CultureInfo.InvariantCulture);
+        }
+
+        var auditService = context.HttpContext.RequestServices.GetRequiredService<IAuthSecurityAuditService>();
+        await auditService.WriteAsync(
+            "AUTH-RATE-LIMIT",
+            userId: TryParseClaim(context.HttpContext.User, "UserId"),
+            companyId: TryParseClaim(context.HttpContext.User, "CompanyId"),
+            email: context.HttpContext.User.Identity?.Name,
+            reason: context.HttpContext.Request.Path.Value,
+            policy: context.HttpContext.GetEndpoint()?.Metadata.GetMetadata<EnableRateLimitingAttribute>()?.PolicyName);
+
+        if (!context.HttpContext.Response.HasStarted)
+        {
+            context.HttpContext.Response.ContentType = "application/json";
+            await context.HttpContext.Response.WriteAsJsonAsync(
+                new { error = "Too many requests. Please wait before retrying." },
+                cancellationToken: cancellationToken);
+        }
+    };
+
+    options.AddPolicy(AuthRateLimitPolicyNames.Login, httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: $"ip:{GetRemoteIpAddress(httpContext)}",
+            factory: _ => CreateFixedWindowOptions(
+                GetConfiguredPositiveInt("AuthSecurity:RateLimiting:Login:PermitLimit", 5),
+                GetConfiguredPositiveInt("AuthSecurity:RateLimiting:Login:WindowSeconds", 60))));
+
+    options.AddPolicy(AuthRateLimitPolicyNames.RegisterCompany, httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: $"ip:{GetRemoteIpAddress(httpContext)}",
+            factory: _ => CreateFixedWindowOptions(
+                GetConfiguredPositiveInt("AuthSecurity:RateLimiting:RegisterCompany:PermitLimit", 3),
+                GetConfiguredPositiveInt("AuthSecurity:RateLimiting:RegisterCompany:WindowSeconds", 600))));
+
+    options.AddPolicy(AuthRateLimitPolicyNames.ChangePassword, httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: GetUserOrIpPartitionKey(httpContext),
+            factory: _ => CreateFixedWindowOptions(
+                GetConfiguredPositiveInt("AuthSecurity:RateLimiting:ChangePassword:PermitLimit", 5),
+                GetConfiguredPositiveInt("AuthSecurity:RateLimiting:ChangePassword:WindowSeconds", 600))));
+});
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowBlazorClient",
@@ -78,7 +115,6 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddControllers();
 
-// --- 5. Swagger Configuration (OpenAPI) ---
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
@@ -110,7 +146,6 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
-// --- 6. DATA SEEDING ---
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
@@ -127,37 +162,64 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-// --- 7. HTTP Request Pipeline ---
-
 if (app.Environment.IsDevelopment())
 {
-    app.UseWebAssemblyDebugging(); // Enable WASM debugging locally
+    app.UseWebAssemblyDebugging();
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
 app.UseHttpsRedirection();
-
-// --- CRITICAL DEPLOYMENT SETTINGS START ---
-// 1. Serve the Blazor WebAssembly framework files (.wasm, .dll)
 app.UseBlazorFrameworkFiles();
-
-// 2. Serve static files (css, images, js)
 app.UseStaticFiles();
-// --- CRITICAL DEPLOYMENT SETTINGS END ---
-
+app.UseRouting();
 app.UseCors("AllowBlazorClient");
 
 app.UseAuthentication();
+app.UseRateLimiter();
 app.UseMiddleware<JwtMiddleware>();
 app.UseMiddleware<TenantAccessMiddleware>();
 app.UseAuthorization();
 app.UseMiddleware<AuditMiddleware>();
 
 app.MapControllers();
-
-// --- CRITICAL FALLBACK ROUTING ---
-// 3. If the user requests a page that isn't an API endpoint (like /dashboard), load the Blazor app.
 app.MapFallbackToFile("index.html");
 
 app.Run();
+
+int GetConfiguredPositiveInt(string key, int fallbackValue)
+{
+    var configuredValue = builder.Configuration.GetValue<int?>(key);
+    return configuredValue is > 0 ? configuredValue.Value : fallbackValue;
+}
+
+static FixedWindowRateLimiterOptions CreateFixedWindowOptions(int permitLimit, int windowSeconds)
+{
+    return new FixedWindowRateLimiterOptions
+    {
+        PermitLimit = permitLimit,
+        Window = TimeSpan.FromSeconds(windowSeconds),
+        QueueLimit = 0,
+        QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+        AutoReplenishment = true
+    };
+}
+
+static string GetRemoteIpAddress(HttpContext httpContext)
+{
+    return httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+}
+
+static string GetUserOrIpPartitionKey(HttpContext httpContext)
+{
+    var userId = httpContext.User.FindFirst("UserId")?.Value;
+    return string.IsNullOrWhiteSpace(userId)
+        ? $"ip:{GetRemoteIpAddress(httpContext)}"
+        : $"user:{userId}";
+}
+
+static int? TryParseClaim(System.Security.Claims.ClaimsPrincipal user, string claimType)
+{
+    var claimValue = user.FindFirst(claimType)?.Value;
+    return int.TryParse(claimValue, out var parsedValue) ? parsedValue : null;
+}
