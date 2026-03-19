@@ -1,3 +1,4 @@
+using AccountingSystem.API.Configuration;
 using AccountingSystem.API.Data;
 using AccountingSystem.API.Middleware;
 using AccountingSystem.API.Services;
@@ -15,12 +16,15 @@ var builder = WebApplication.CreateBuilder(args);
 // --- 1. License Setup ---
 QuestPDF.Settings.License = LicenseType.Community;
 
+StartupConfigurationValidator.ValidateRequiredSettings(builder.Configuration, builder.Environment);
+
 builder.Services.AddHttpContextAccessor(); // REQUIRED for TenantService
 builder.Services.AddScoped<ITenantService, TenantService>();
 
 // --- 2. Database Context Setup ---
+var defaultConnection = builder.Configuration.GetConnectionString("DefaultConnection")!;
 builder.Services.AddDbContext<AccountingDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlServer(defaultConnection));
 
 // --- 3. Dependency Injection (Register Services) ---
 builder.Services.AddScoped<IAuthService, AuthService>();
@@ -36,7 +40,7 @@ builder.Services.AddScoped<ICaptchaService, CaptchaService>();
 
 // --- 4. Authentication Setup (JWT) ---
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
-var secret = jwtSettings["Secret"] ?? throw new InvalidOperationException("JWT Secret is not configured in appsettings.json");
+var secret = jwtSettings["Secret"]!;
 var key = Encoding.ASCII.GetBytes(secret);
 
 builder.Services.AddAuthentication(options =>
