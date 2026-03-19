@@ -1,7 +1,10 @@
-﻿using AccountingSystem.API.Services.Interfaces;
+using AccountingSystem.API.Configuration;
+using AccountingSystem.API.Security;
+using AccountingSystem.API.Services.Interfaces;
 using AccountingSystem.Shared.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using System.Security.Claims;
 
 namespace AccountingSystem.API.Controllers
@@ -18,6 +21,7 @@ namespace AccountingSystem.API.Controllers
         }
 
         [HttpPost("login")]
+        [EnableRateLimiting(AuthRateLimitPolicyNames.Login)]
         public async Task<IActionResult> Login([FromBody] LoginDTO loginDto)
         {
             try
@@ -25,13 +29,18 @@ namespace AccountingSystem.API.Controllers
                 var response = await _authService.LoginAsync(loginDto);
                 return Ok(response);
             }
-            catch (Exception ex)
+            catch (AuthFailureException ex)
             {
-                return Unauthorized(new { error = ex.Message });
+                return Unauthorized(new { error = ex.PublicMessage });
+            }
+            catch (Exception)
+            {
+                return Unauthorized(new { error = AuthFailureException.DefaultPublicMessage });
             }
         }
 
         [HttpPost("register-company")]
+        [EnableRateLimiting(AuthRateLimitPolicyNames.RegisterCompany)]
         public async Task<IActionResult> RegisterCompany([FromBody] CompanyRegisterDTO dto)
         {
             try
@@ -44,8 +53,6 @@ namespace AccountingSystem.API.Controllers
                 return BadRequest(new { error = ex.Message });
             }
         }
-
-        // Profile & Password Endpoints ---
 
         [HttpPut("profile")]
         [Authorize]
@@ -65,6 +72,7 @@ namespace AccountingSystem.API.Controllers
 
         [HttpPut("password")]
         [Authorize]
+        [EnableRateLimiting(AuthRateLimitPolicyNames.ChangePassword)]
         public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDTO dto)
         {
             try
@@ -79,14 +87,14 @@ namespace AccountingSystem.API.Controllers
             }
         }
 
-        // Helper to extract UserId safely
         private int GetCurrentUserId()
         {
             var userIdClaim = User.FindFirst("UserId");
-            if (userIdClaim != null && int.TryParse(userIdClaim.Value, out int userId))
+            if (userIdClaim != null && int.TryParse(userIdClaim.Value, out var userId))
             {
                 return userId;
             }
+
             throw new UnauthorizedAccessException("User ID not found in token.");
         }
     }

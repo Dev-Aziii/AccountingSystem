@@ -32,6 +32,10 @@ namespace AccountingSystem.API.Models
 
         [MaxLength(20)]
         public string Status { get; set; } = "Active"; // Active, Restricted, Blocked
+
+        public int AccessFailedCount { get; set; }
+
+        public DateTime? LockoutEndUtc { get; set; }
     }
 
     // Super Admin Audit Log - separate from tenant audit logs

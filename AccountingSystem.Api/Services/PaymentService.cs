@@ -18,9 +18,10 @@ namespace AccountingSystem.API.Services
             _httpClient.BaseAddress = new Uri("https://api.paymongo.com/v1/");
 
             var secretKey = _configuration["PayMongo:SecretKey"];
-            if (string.IsNullOrEmpty(secretKey))
+            if (AccountingSystem.API.Configuration.StartupConfigurationValidator.IsMissingOrPlaceholder(secretKey))
             {
-                throw new InvalidOperationException("PayMongo:SecretKey configuration is required but not found.");
+                throw new InvalidOperationException(
+                    AccountingSystem.API.Configuration.StartupConfigurationValidator.BuildMissingValueMessage("PayMongo:SecretKey"));
             }
 
             var authHeader = Convert.ToBase64String(Encoding.UTF8.GetBytes(secretKey + ":"));

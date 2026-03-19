@@ -591,7 +591,9 @@
         }
         catch (Exception ex)
         {
-            errorMessage = "Invalid email or password. Please try again.";
+            errorMessage = string.IsNullOrWhiteSpace(ex.Message)
+                ? "Invalid email or password. Please try again later."
+                : ex.Message;
             Logger.LogError(ex, "Login failed.");
         }
         finally

@@ -38,6 +38,10 @@ namespace AccountingSystem.API.Data
             modelBuilder.Entity<User>().HasQueryFilter(e => !e.IsDeleted && e.CompanyId == _tenantService.GetCurrentTenant());
             modelBuilder.Entity<Account>().HasQueryFilter(e => !e.IsDeleted && e.CompanyId == _tenantService.GetCurrentTenant());
             modelBuilder.Entity<JournalEntry>().HasQueryFilter(e => e.CompanyId == _tenantService.GetCurrentTenant());
+            modelBuilder.Entity<JournalEntryLine>().HasQueryFilter(e =>
+                e.JournalEntry.CompanyId == _tenantService.GetCurrentTenant() &&
+                !e.Account.IsDeleted &&
+                e.Account.CompanyId == _tenantService.GetCurrentTenant());
             modelBuilder.Entity<FiscalYearClose>().HasQueryFilter(e => e.CompanyId == _tenantService.GetCurrentTenant());
             modelBuilder.Entity<Vendor>().HasQueryFilter(e => !e.IsDeleted && e.CompanyId == _tenantService.GetCurrentTenant());
             modelBuilder.Entity<Customer>().HasQueryFilter(e => !e.IsDeleted && e.CompanyId == _tenantService.GetCurrentTenant());

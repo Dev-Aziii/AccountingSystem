@@ -584,6 +584,9 @@ Current gaps/risks:
 # from repository root
 dotnet restore AccountingSystem.sln
 
+# configure required secrets first
+# see SECURITY_CONFIGURATION.md
+
 # API
 cd AccountingSystem.Api
 dotnet run
@@ -606,7 +609,11 @@ API requires configuration values for:
 
 - `AccountingSystem.Api/appsettings.json`
 - `AccountingSystem.Api/appsettings.Development.json`
-- Optional user secrets (API csproj includes `UserSecretsId`).
+- `AccountingSystem.Api/appsettings.Template.json`
+- API user secrets (API csproj includes `UserSecretsId`)
+- Environment variables / deployment secret store
+
+See `SECURITY_CONFIGURATION.md` for the exact Development and production configuration workflow.
 
 ### 9.4 Build commands
 

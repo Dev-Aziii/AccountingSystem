@@ -126,29 +126,25 @@ cd accsys
 
 2. **Setup Database**
 ```bash
-# Update connection string in appsettings.json
-# Run migrations using Package Manager Console
-Update-Database
+# Configure secrets with user-secrets or environment variables
+# See SECURITY_CONFIGURATION.md for the required keys and example commands
+cd AccountingSystem.Api
 ```
 
 3. **Configure API Keys**
-```json
-// Add to appsettings.json
-{
-  "PayMongo": {
-    "ApiKey": "your-paymongo-api-key"
-  }
-}
+```bash
+# Do not store secrets in committed appsettings.json
+# Follow SECURITY_CONFIGURATION.md for local Development and production setup
 ```
 
 4. **Run the Application**
 ```bash
 # Start the API
-cd AccSys.API
+cd AccountingSystem.Api
 dotnet run
 
 # Start the Blazor WASM app
-cd AccSys.Client
+cd ../AccountingSystem.Client
 dotnet run
 ```
 

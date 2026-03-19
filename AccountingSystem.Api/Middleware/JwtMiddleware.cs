@@ -1,7 +1,6 @@
-﻿using AccountingSystem.API.Services.Interfaces;
+using AccountingSystem.API.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
-using System.Text;
 
 namespace AccountingSystem.API.Middleware
 {
@@ -18,9 +17,11 @@ namespace AccountingSystem.API.Middleware
 
         public async Task Invoke(HttpContext context)
         {
-            var token = context.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
-            if (token != null)
+            var token = context.Request.Headers["Authorization"].FirstOrDefault()?.Split(' ').Last();
+            if (!string.IsNullOrWhiteSpace(token))
+            {
                 AttachUserToContext(context, token);
+            }
 
             await _next(context);
         }
@@ -30,31 +31,17 @@ namespace AccountingSystem.API.Middleware
             try
             {
                 var tokenHandler = new JwtSecurityTokenHandler();
+                var validationParameters = JwtSettingsHelper.CreateTokenValidationParameters(_configuration);
 
-                var secret = _configuration["JwtSettings:Secret"];
-                if (string.IsNullOrEmpty(secret))
+                tokenHandler.ValidateToken(token, validationParameters, out var validatedToken);
+
+                if (validatedToken is not JwtSecurityToken jwtToken)
                 {
-                    return; // Exit if secret is not configured
+                    return;
                 }
 
-                var key = Encoding.ASCII.GetBytes(secret);
-
-                tokenHandler.ValidateToken(token, new TokenValidationParameters
-                {
-                    ValidateIssuerSigningKey = true,
-                    IssuerSigningKey = new SymmetricSecurityKey(key),
-                    ValidateIssuer = true,
-                    ValidIssuer = _configuration["JwtSettings:Issuer"],
-                    ValidateAudience = true,
-                    ValidAudience = _configuration["JwtSettings:Audience"],
-                    ClockSkew = TimeSpan.Zero
-                }, out SecurityToken validatedToken);
-
-                var jwtToken = (JwtSecurityToken)validatedToken;
-
-                // Claims
-                context.Items["User"] = jwtToken.Claims.First(x => x.Type == "unique_name").Value;
-                context.Items["Role"] = jwtToken.Claims.First(x => x.Type == "role").Value;
+                context.Items["User"] = jwtToken.Claims.FirstOrDefault(x => x.Type == "unique_name")?.Value;
+                context.Items["Role"] = jwtToken.Claims.FirstOrDefault(x => x.Type == "role")?.Value;
 
                 var userIdClaim = jwtToken.Claims.FirstOrDefault(x => x.Type == "UserId");
                 if (userIdClaim != null)
@@ -62,16 +49,19 @@ namespace AccountingSystem.API.Middleware
                     context.Items["UserId"] = userIdClaim.Value;
                 }
 
-                // Extract CompanyId
                 var companyIdClaim = jwtToken.Claims.FirstOrDefault(x => x.Type == "CompanyId");
                 if (companyIdClaim != null)
                 {
                     context.Items["CompanyId"] = companyIdClaim.Value;
                 }
             }
-            catch
+            catch (SecurityTokenException)
             {
-                // Do nothing if JWT validation fails, user is not attached to context
+                // Invalid token; leave the request unauthenticated.
+            }
+            catch (ArgumentException)
+            {
+                // Malformed token; leave the request unauthenticated.
             }
         }
     }

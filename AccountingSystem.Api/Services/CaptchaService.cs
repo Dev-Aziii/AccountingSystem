@@ -20,6 +20,11 @@ namespace AccountingSystem.API.Services
             try
             {
                 var secretKey = _configuration["Recaptcha:SecretKey"];
+                if (AccountingSystem.API.Configuration.StartupConfigurationValidator.IsMissingOrPlaceholder(secretKey))
+                {
+                    throw new InvalidOperationException(
+                        AccountingSystem.API.Configuration.StartupConfigurationValidator.BuildMissingValueMessage("Recaptcha:SecretKey"));
+                }
 
                 var response = await _httpClient.GetAsync($"https://www.google.com/recaptcha/api/siteverify?secret={secretKey}&response={token}");
                 if (!response.IsSuccessStatusCode) return false;
@@ -36,6 +41,10 @@ namespace AccountingSystem.API.Services
                 }
 
                 return result.Success;
+            }
+            catch (InvalidOperationException)
+            {
+                throw;
             }
             catch (Exception ex)
             {

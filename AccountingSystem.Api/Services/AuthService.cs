@@ -1,81 +1,164 @@
-﻿using AccountingSystem.API.Data;
+using AccountingSystem.API.Configuration;
+using AccountingSystem.API.Data;
+using AccountingSystem.API.Models;
+using AccountingSystem.API.Security;
 using AccountingSystem.API.Services.Interfaces;
 using AccountingSystem.Shared.DTOs;
-using AccountingSystem.API.Models;
+using AccountingSystem.Shared.Validation;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
-using System.Text;
 
 namespace AccountingSystem.API.Services
 {
     public class AuthService : IAuthService
     {
+        private const int DefaultMaxFailedAccessAttempts = 5;
+        private const int DefaultLockoutMinutes = 15;
+
         private readonly AccountingDbContext _context;
         private readonly IConfiguration _configuration;
         private readonly ICaptchaService _captchaService;
         private readonly ILogger<AuthService> _logger;
+        private readonly IAuthSecurityAuditService _auditService;
 
         public AuthService(
             AccountingDbContext context,
             IConfiguration configuration,
             ICaptchaService captchaService,
-            ILogger<AuthService> logger)
+            ILogger<AuthService> logger,
+            IAuthSecurityAuditService auditService)
         {
             _context = context;
             _configuration = configuration;
             _captchaService = captchaService;
             _logger = logger;
+            _auditService = auditService;
         }
 
-        // --- Update Profile ---
         public async Task UpdateProfileAsync(int userId, UpdateProfileDTO dto)
         {
             var user = await _context.Users.FindAsync(userId);
-            if (user == null) throw new Exception("User not found.");
-
-            if (user.Email != dto.Email)
+            if (user == null)
             {
-                bool emailExists = await _context.Users.AnyAsync(u => u.Email == dto.Email && u.Id != userId);
-                if (emailExists) throw new Exception("Email is already in use.");
+                await _auditService.WriteAsync("AUTH-PROFILE-UPDATE-FAILURE", userId: userId, reason: "UserNotFound");
+                throw new Exception("User not found.");
+            }
+
+            var emailChanged = !string.Equals(user.Email, dto.Email, StringComparison.OrdinalIgnoreCase);
+            if (emailChanged)
+            {
+                var emailExists = await _context.Users.AnyAsync(u => u.Email == dto.Email && u.Id != userId);
+                if (emailExists)
+                {
+                    await _auditService.WriteAsync(
+                        "AUTH-PROFILE-UPDATE-FAILURE",
+                        userId: user.Id,
+                        companyId: user.CompanyId,
+                        email: user.Email,
+                        reason: "EmailAlreadyInUse");
+                    throw new Exception("Email is already in use.");
+                }
             }
 
             user.FullName = dto.FullName;
             user.Email = dto.Email;
 
             await _context.SaveChangesAsync();
+            await _auditService.WriteAsync(
+                "AUTH-PROFILE-UPDATE",
+                userId: user.Id,
+                companyId: user.CompanyId,
+                email: user.Email,
+                reason: emailChanged ? "EmailChanged" : "ProfileUpdated");
         }
 
-        // --- Change Password ---
         public async Task ChangePasswordAsync(int userId, ChangePasswordDTO dto)
         {
             var user = await _context.Users.FindAsync(userId);
-            if (user == null) throw new Exception("User not found.");
+            if (user == null)
+            {
+                await _auditService.WriteAsync("AUTH-PASSWORD-CHANGE-FAILURE", userId: userId, reason: "UserNotFound");
+                throw new Exception("User not found.");
+            }
 
             if (string.IsNullOrEmpty(user.PasswordHash) || string.IsNullOrEmpty(user.PasswordSalt))
+            {
+                await _auditService.WriteAsync(
+                    "AUTH-PASSWORD-CHANGE-FAILURE",
+                    userId: user.Id,
+                    companyId: user.CompanyId,
+                    email: user.Email,
+                    reason: "PasswordDataCorrupted");
                 throw new Exception("User password data is corrupted.");
+            }
 
             if (!VerifyPasswordHash(dto.CurrentPassword, Convert.FromBase64String(user.PasswordHash), Convert.FromBase64String(user.PasswordSalt)))
+            {
+                await _auditService.WriteAsync(
+                    "AUTH-PASSWORD-CHANGE-FAILURE",
+                    userId: user.Id,
+                    companyId: user.CompanyId,
+                    email: user.Email,
+                    reason: "InvalidCurrentPassword");
                 throw new Exception("Incorrect current password.");
+            }
 
-            CreatePasswordHash(dto.NewPassword, out byte[] newHash, out byte[] newSalt);
+            if (!PasswordPolicy.TryValidate(dto.NewPassword, out var passwordValidationMessage))
+            {
+                await _auditService.WriteAsync(
+                    "AUTH-PASSWORD-CHANGE-FAILURE",
+                    userId: user.Id,
+                    companyId: user.CompanyId,
+                    email: user.Email,
+                    reason: "WeakPassword");
+                throw new Exception(passwordValidationMessage);
+            }
+
+            CreatePasswordHash(dto.NewPassword, out var newHash, out var newSalt);
 
             user.PasswordHash = Convert.ToBase64String(newHash);
             user.PasswordSalt = Convert.ToBase64String(newSalt);
 
             await _context.SaveChangesAsync();
+            await _auditService.WriteAsync(
+                "AUTH-PASSWORD-CHANGE",
+                userId: user.Id,
+                companyId: user.CompanyId,
+                email: user.Email,
+                reason: "PasswordUpdated");
         }
 
-        // --- Register Company ---
         public async Task<AuthResponseDTO> RegisterCompanyAsync(CompanyRegisterDTO dto)
         {
             if (!await _captchaService.VerifyTokenAsync(dto.RecaptchaToken))
+            {
+                await _auditService.WriteAsync(
+                    "AUTH-REGISTER-COMPANY-FAILURE",
+                    email: dto.AdminEmail,
+                    reason: "CaptchaVerificationFailed");
                 throw new Exception("Security check failed. Automated activity detected.");
+            }
+
+            if (!PasswordPolicy.TryValidate(dto.Password, out var passwordValidationMessage))
+            {
+                await _auditService.WriteAsync(
+                    "AUTH-REGISTER-COMPANY-FAILURE",
+                    email: dto.AdminEmail,
+                    reason: "WeakPassword");
+                throw new Exception(passwordValidationMessage);
+            }
 
             if (await _context.Users.IgnoreQueryFilters().AnyAsync(u => u.Email == dto.AdminEmail))
+            {
+                await _auditService.WriteAsync(
+                    "AUTH-REGISTER-COMPANY-FAILURE",
+                    email: dto.AdminEmail,
+                    reason: "EmailAlreadyExists");
                 throw new Exception("Email already exists.");
+            }
 
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
@@ -92,9 +175,17 @@ namespace AccountingSystem.API.Services
                 await _context.SaveChangesAsync();
 
                 var adminRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == "Admin");
-                if (adminRole == null) throw new Exception("System Role 'Admin' missing.");
+                if (adminRole == null)
+                {
+                    await _auditService.WriteAsync(
+                        "AUTH-REGISTER-COMPANY-FAILURE",
+                        companyId: company.Id,
+                        email: dto.AdminEmail,
+                        reason: "AdminRoleMissing");
+                    throw new Exception("System Role 'Admin' missing.");
+                }
 
-                CreatePasswordHash(dto.Password, out byte[] passwordHash, out byte[] passwordSalt);
+                CreatePasswordHash(dto.Password, out var passwordHash, out var passwordSalt);
 
                 var user = new User
                 {
@@ -112,9 +203,14 @@ namespace AccountingSystem.API.Services
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
 
-                var expiryMinutes = int.Parse(_configuration["JwtSettings:ExpiryMinutes"] ?? "60");
-
                 var token = GenerateJwtToken(user, company);
+                await _auditService.WriteAsync(
+                    "AUTH-REGISTER-COMPANY",
+                    userId: user.Id,
+                    companyId: company.Id,
+                    email: user.Email,
+                    reason: "Success");
+
                 return new AuthResponseDTO
                 {
                     Token = token,
@@ -122,7 +218,7 @@ namespace AccountingSystem.API.Services
                     Role = "Admin",
                     CompanyId = company.Id,
                     CompanyName = company.Name,
-                    ExpiresAt = DateTime.UtcNow.AddMinutes(expiryMinutes)
+                    ExpiresAt = DateTime.UtcNow.AddMinutes(JwtSettingsHelper.GetExpiryMinutes(_configuration))
                 };
             }
             catch (DbUpdateException ex)
@@ -135,6 +231,10 @@ namespace AccountingSystem.API.Services
                     dto.AdminEmail,
                     dto.CompanyName,
                     databaseError);
+                await _auditService.WriteAsync(
+                    "AUTH-REGISTER-COMPANY-FAILURE",
+                    email: dto.AdminEmail,
+                    reason: "DatabaseError");
                 throw new Exception("Registration failed while saving your company account. Please try again.");
             }
             catch
@@ -144,11 +244,17 @@ namespace AccountingSystem.API.Services
             }
         }
 
-        // --- Register User ---
         public async Task<User> RegisterAsync(RegisterDTO registerDto)
         {
+            if (!PasswordPolicy.TryValidate(registerDto.Password, out var passwordValidationMessage))
+            {
+                throw new Exception(passwordValidationMessage);
+            }
+
             if (await _context.Users.AnyAsync(u => u.Email == registerDto.Email))
+            {
                 throw new Exception("Email already exists in this company.");
+            }
 
             var normalizedRoleName = registerDto.RoleName.Trim();
             var role = await _context.Roles
@@ -156,12 +262,16 @@ namespace AccountingSystem.API.Services
                 .FirstOrDefaultAsync(r => r.Name.ToLower() == normalizedRoleName.ToLower());
 
             if (role == null)
+            {
                 throw new Exception($"Role '{registerDto.RoleName}' does not exist.");
+            }
 
             if (role.Name == "SuperAdmin")
+            {
                 throw new Exception("SuperAdmin role cannot be assigned from this endpoint.");
+            }
 
-            CreatePasswordHash(registerDto.Password, out byte[] passwordHash, out byte[] passwordSalt);
+            CreatePasswordHash(registerDto.Password, out var passwordHash, out var passwordSalt);
 
             var user = new User
             {
@@ -178,7 +288,6 @@ namespace AccountingSystem.API.Services
             return user;
         }
 
-        // --- Login ---
         public async Task<AuthResponseDTO> LoginAsync(LoginDTO loginDto)
         {
             var user = await _context.Users
@@ -187,34 +296,166 @@ namespace AccountingSystem.API.Services
                 .FirstOrDefaultAsync(u => u.Email == loginDto.Email);
 
             if (user == null || user.IsDeleted)
-                throw new Exception("Invalid email or password.");
+            {
+                await _auditService.WriteAsync(
+                    "AUTH-LOGIN-FAILURE",
+                    email: loginDto.Email,
+                    reason: "UserNotFoundOrDeleted");
+                throw new AuthFailureException("UserNotFoundOrDeleted");
+            }
+
+            var now = DateTime.UtcNow;
+            if (user.LockoutEndUtc.HasValue)
+            {
+                if (user.LockoutEndUtc.Value > now)
+                {
+                    await _auditService.WriteAsync(
+                        "AUTH-LOCKOUT-BLOCKED",
+                        userId: user.Id,
+                        companyId: user.CompanyId,
+                        email: user.Email,
+                        reason: "LockoutActive",
+                        failedAttempts: user.AccessFailedCount,
+                        lockoutEndUtc: user.LockoutEndUtc);
+                    throw new AuthFailureException("LockoutActive");
+                }
+
+                user.AccessFailedCount = 0;
+                user.LockoutEndUtc = null;
+                await _context.SaveChangesAsync();
+            }
 
             if (user.Status == "Blocked")
-                throw new Exception("Your account has been blocked. Please contact the System Administrator.");
+            {
+                await _auditService.WriteAsync(
+                    "AUTH-LOGIN-FAILURE",
+                    userId: user.Id,
+                    companyId: user.CompanyId,
+                    email: user.Email,
+                    reason: "UserBlocked");
+                throw new AuthFailureException("UserBlocked");
+            }
 
             if (!user.IsActive)
-                throw new Exception("Your account has been deactivated. Please contact your administrator.");
+            {
+                await _auditService.WriteAsync(
+                    "AUTH-LOGIN-FAILURE",
+                    userId: user.Id,
+                    companyId: user.CompanyId,
+                    email: user.Email,
+                    reason: "UserDeactivated");
+                throw new AuthFailureException("UserDeactivated");
+            }
 
             if (string.IsNullOrEmpty(user.PasswordHash) || string.IsNullOrEmpty(user.PasswordSalt))
-                throw new Exception("User password data is corrupted.");
+            {
+                _logger.LogWarning("Password data is corrupted for user {UserId}.", user.Id);
+                await _auditService.WriteAsync(
+                    "AUTH-LOGIN-FAILURE",
+                    userId: user.Id,
+                    companyId: user.CompanyId,
+                    email: user.Email,
+                    reason: "PasswordDataCorrupted");
+                throw new AuthFailureException("PasswordDataCorrupted");
+            }
 
             if (!VerifyPasswordHash(loginDto.Password, Convert.FromBase64String(user.PasswordHash), Convert.FromBase64String(user.PasswordSalt)))
-                throw new Exception("Invalid email or password.");
+            {
+                user.AccessFailedCount++;
+
+                if (user.AccessFailedCount >= GetMaxFailedAccessAttempts())
+                {
+                    user.LockoutEndUtc = now.Add(GetLockoutDuration());
+                }
+
+                await _context.SaveChangesAsync();
+                await _auditService.WriteAsync(
+                    "AUTH-LOGIN-FAILURE",
+                    userId: user.Id,
+                    companyId: user.CompanyId,
+                    email: user.Email,
+                    reason: "InvalidPassword",
+                    failedAttempts: user.AccessFailedCount,
+                    lockoutEndUtc: user.LockoutEndUtc);
+
+                if (user.LockoutEndUtc.HasValue)
+                {
+                    await _auditService.WriteAsync(
+                        "AUTH-LOCKOUT-APPLIED",
+                        userId: user.Id,
+                        companyId: user.CompanyId,
+                        email: user.Email,
+                        reason: "MaxFailedAttemptsExceeded",
+                        failedAttempts: user.AccessFailedCount,
+                        lockoutEndUtc: user.LockoutEndUtc);
+                }
+
+                throw new AuthFailureException("InvalidPassword");
+            }
+
+            if (user.AccessFailedCount > 0 || user.LockoutEndUtc.HasValue)
+            {
+                user.AccessFailedCount = 0;
+                user.LockoutEndUtc = null;
+                await _context.SaveChangesAsync();
+            }
+
+            if (user.Role == null)
+            {
+                await _auditService.WriteAsync(
+                    "AUTH-LOGIN-FAILURE",
+                    userId: user.Id,
+                    companyId: user.CompanyId,
+                    email: user.Email,
+                    reason: "RoleMissing");
+                throw new AuthFailureException("RoleMissing");
+            }
 
             var company = await _context.Companies.IgnoreQueryFilters().FirstOrDefaultAsync(c => c.Id == user.CompanyId);
-            if (company == null) throw new Exception("Company data not found.");
+            if (company == null)
+            {
+                await _auditService.WriteAsync(
+                    "AUTH-LOGIN-FAILURE",
+                    userId: user.Id,
+                    companyId: user.CompanyId,
+                    email: user.Email,
+                    reason: "CompanyNotFound");
+                throw new AuthFailureException("CompanyNotFound");
+            }
 
             if (user.Role.Name != "SuperAdmin")
             {
                 if (company.Status == "Blocked")
-                    throw new Exception("This organization has been permanently blocked. Please contact the System Owner.");
+                {
+                    await _auditService.WriteAsync(
+                        "AUTH-LOGIN-FAILURE",
+                        userId: user.Id,
+                        companyId: company.Id,
+                        email: user.Email,
+                        reason: "CompanyBlocked");
+                    throw new AuthFailureException("CompanyBlocked");
+                }
+
                 if (company.Status == "Suspended" || !company.IsActive)
-                    throw new Exception("This organization's access has been suspended. Please contact the System Owner.");
+                {
+                    await _auditService.WriteAsync(
+                        "AUTH-LOGIN-FAILURE",
+                        userId: user.Id,
+                        companyId: company.Id,
+                        email: user.Email,
+                        reason: "CompanySuspended");
+                    throw new AuthFailureException("CompanySuspended");
+                }
             }
 
-            var expiryMinutes = int.Parse(_configuration["JwtSettings:ExpiryMinutes"] ?? "60");
-
             var token = GenerateJwtToken(user, company);
+            await _auditService.WriteAsync(
+                "AUTH-LOGIN-SUCCESS",
+                userId: user.Id,
+                companyId: company.Id,
+                email: user.Email,
+                reason: user.Role.Name);
+
             return new AuthResponseDTO
             {
                 Token = token,
@@ -222,11 +463,10 @@ namespace AccountingSystem.API.Services
                 Role = user.Role.Name,
                 CompanyId = company.Id,
                 CompanyName = company.Name,
-                ExpiresAt = DateTime.UtcNow.AddMinutes(expiryMinutes)
+                ExpiresAt = DateTime.UtcNow.AddMinutes(JwtSettingsHelper.GetExpiryMinutes(_configuration))
             };
         }
 
-        // --- Helpers ---
         private async Task SeedCompanyDataAsync(int companyId)
         {
             var accounts = new List<Account>
@@ -244,41 +484,64 @@ namespace AccountingSystem.API.Services
             await _context.SaveChangesAsync();
         }
 
+        private int GetMaxFailedAccessAttempts()
+        {
+            var configuredValue = _configuration.GetValue<int?>("AuthSecurity:Lockout:MaxFailedAccessAttempts");
+            return configuredValue is > 0 ? configuredValue.Value : DefaultMaxFailedAccessAttempts;
+        }
+
+        private TimeSpan GetLockoutDuration()
+        {
+            var configuredMinutes = _configuration.GetValue<int?>("AuthSecurity:Lockout:LockoutMinutes");
+            var minutes = configuredMinutes is > 0 ? configuredMinutes.Value : DefaultLockoutMinutes;
+            return TimeSpan.FromMinutes(minutes);
+        }
+
         private static void CreatePasswordHash(string password, out byte[] passwordHash, out byte[] passwordSalt)
         {
             using var hmac = new HMACSHA512();
             passwordSalt = hmac.Key;
-            passwordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(password));
+            passwordHash = hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(password));
         }
 
         private static bool VerifyPasswordHash(string password, byte[] storedHash, byte[] storedSalt)
         {
             using var hmac = new HMACSHA512(storedSalt);
-            var computedHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(password));
-            for (int i = 0; i < computedHash.Length; i++)
+            var computedHash = hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(password));
+
+            if (computedHash.Length != storedHash.Length)
             {
-                if (computedHash[i] != storedHash[i]) return false;
+                return false;
             }
+
+            for (var index = 0; index < computedHash.Length; index++)
+            {
+                if (computedHash[index] != storedHash[index])
+                {
+                    return false;
+                }
+            }
+
             return true;
         }
 
         private string GenerateJwtToken(User user, Company company)
         {
-            var key = Encoding.ASCII.GetBytes(_configuration["JwtSettings:Secret"]!);
+            var key = JwtSettingsHelper.GetSigningKey(_configuration);
             var tokenHandler = new JwtSecurityTokenHandler();
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(new[]
                 {
-                    new Claim(ClaimTypes.Name,  user.Email),
-                    new Claim(ClaimTypes.Role,  user.Role.Name),
-                    new Claim("UserId",         user.Id.ToString()),
-                    new Claim("role",           user.Role.Name),
-                    new Claim("FullName",       user.FullName ?? user.Email),
-                    new Claim("CompanyId",      company.Id.ToString()),
-                    new Claim("CompanyName",    company.Name)
+                    new Claim(ClaimTypes.Name, user.Email),
+                    new Claim(ClaimTypes.Role, user.Role.Name),
+                    new Claim("UserId", user.Id.ToString()),
+                    new Claim("role", user.Role.Name),
+                    new Claim("FullName", user.FullName ?? user.Email),
+                    new Claim("CompanyId", company.Id.ToString()),
+                    new Claim("CompanyName", company.Name)
                 }),
-                Expires = DateTime.UtcNow.AddMinutes(double.Parse(_configuration["JwtSettings:ExpiryMinutes"] ?? "60")),
+                Expires = DateTime.UtcNow.AddMinutes(JwtSettingsHelper.GetExpiryMinutes(_configuration)),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature),
                 Issuer = _configuration["JwtSettings:Issuer"],
                 Audience = _configuration["JwtSettings:Audience"]

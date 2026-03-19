@@ -1,5 +1,6 @@
 ﻿@page "/profile"
 @using AccountingSystem.Shared.DTOs
+@using AccountingSystem.Shared.Validation
 @using AccountingSystem.Client.Services
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.Authorization
@@ -97,7 +98,7 @@
                                               Variant="Variant.Outlined"
                                               Margin="Margin.Dense"
                                               Class="shadcn-input"
-                                              HelperText="Must be at least 6 characters" />
+                                              HelperText="@PasswordPolicy.Description" />
                             </MudItem>
                             <MudItem xs="12" sm="6">
                                 <MudTextField Label="Confirm New Password"
@@ -183,7 +184,11 @@
         catch (Exception ex)
         {
             Logger.LogError(ex, "Failed to change user password.");
-            Snackbar.Add("Unable to change password. Please try again.", Severity.Error);
+            Snackbar.Add(
+                string.IsNullOrWhiteSpace(ex.Message)
+                    ? "Unable to change password. Please try again."
+                    : ex.Message,
+                Severity.Error);
         }
         finally
         {
