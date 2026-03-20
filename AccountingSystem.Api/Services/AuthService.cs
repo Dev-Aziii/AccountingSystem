@@ -1,15 +1,11 @@
 using AccountingSystem.API.Configuration;
 using AccountingSystem.API.Data;
-using AccountingSystem.API.Models;
 using AccountingSystem.API.Security;
+using AccountingSystem.API.Models;
 using AccountingSystem.API.Services.Interfaces;
 using AccountingSystem.Shared.DTOs;
 using AccountingSystem.Shared.Validation;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Security.Cryptography;
 
 namespace AccountingSystem.API.Services
 {
@@ -23,19 +19,25 @@ namespace AccountingSystem.API.Services
         private readonly ICaptchaService _captchaService;
         private readonly ILogger<AuthService> _logger;
         private readonly IAuthSecurityAuditService _auditService;
+        private readonly ILegacyPasswordService _legacyPasswordService;
+        private readonly IAuthTokenFactory _authTokenFactory;
 
         public AuthService(
             AccountingDbContext context,
             IConfiguration configuration,
             ICaptchaService captchaService,
             ILogger<AuthService> logger,
-            IAuthSecurityAuditService auditService)
+            IAuthSecurityAuditService auditService,
+            ILegacyPasswordService legacyPasswordService,
+            IAuthTokenFactory authTokenFactory)
         {
             _context = context;
             _configuration = configuration;
             _captchaService = captchaService;
             _logger = logger;
             _auditService = auditService;
+            _legacyPasswordService = legacyPasswordService;
+            _authTokenFactory = authTokenFactory;
         }
 
         public async Task UpdateProfileAsync(int userId, UpdateProfileDTO dto)
@@ -84,7 +86,7 @@ namespace AccountingSystem.API.Services
                 throw new Exception("User not found.");
             }
 
-            if (string.IsNullOrEmpty(user.PasswordHash) || string.IsNullOrEmpty(user.PasswordSalt))
+            if (!_legacyPasswordService.TryVerify(dto.CurrentPassword, user.PasswordHash, user.PasswordSalt, out var currentPasswordMatches))
             {
                 await _auditService.WriteAsync(
                     "AUTH-PASSWORD-CHANGE-FAILURE",
@@ -95,7 +97,7 @@ namespace AccountingSystem.API.Services
                 throw new Exception("User password data is corrupted.");
             }
 
-            if (!VerifyPasswordHash(dto.CurrentPassword, Convert.FromBase64String(user.PasswordHash), Convert.FromBase64String(user.PasswordSalt)))
+            if (!currentPasswordMatches)
             {
                 await _auditService.WriteAsync(
                     "AUTH-PASSWORD-CHANGE-FAILURE",
@@ -117,10 +119,9 @@ namespace AccountingSystem.API.Services
                 throw new Exception(passwordValidationMessage);
             }
 
-            CreatePasswordHash(dto.NewPassword, out var newHash, out var newSalt);
-
-            user.PasswordHash = Convert.ToBase64String(newHash);
-            user.PasswordSalt = Convert.ToBase64String(newSalt);
+            var newPasswordData = _legacyPasswordService.CreateHash(dto.NewPassword);
+            user.PasswordHash = newPasswordData.PasswordHash;
+            user.PasswordSalt = newPasswordData.PasswordSalt;
 
             await _context.SaveChangesAsync();
             await _auditService.WriteAsync(
@@ -185,7 +186,7 @@ namespace AccountingSystem.API.Services
                     throw new Exception("System Role 'Admin' missing.");
                 }
 
-                CreatePasswordHash(dto.Password, out var passwordHash, out var passwordSalt);
+                var passwordData = _legacyPasswordService.CreateHash(dto.Password);
 
                 var user = new User
                 {
@@ -194,8 +195,8 @@ namespace AccountingSystem.API.Services
                     FullName = dto.AdminFullName,
                     RoleId = adminRole.Id,
                     Role = adminRole,
-                    PasswordHash = Convert.ToBase64String(passwordHash),
-                    PasswordSalt = Convert.ToBase64String(passwordSalt),
+                    PasswordHash = passwordData.PasswordHash,
+                    PasswordSalt = passwordData.PasswordSalt,
                     IsActive = true
                 };
                 _context.Users.Add(user);
@@ -203,7 +204,7 @@ namespace AccountingSystem.API.Services
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
 
-                var token = GenerateJwtToken(user, company);
+                var tokenResult = _authTokenFactory.Create(CreateTokenContext(user, company));
                 await _auditService.WriteAsync(
                     "AUTH-REGISTER-COMPANY",
                     userId: user.Id,
@@ -213,12 +214,12 @@ namespace AccountingSystem.API.Services
 
                 return new AuthResponseDTO
                 {
-                    Token = token,
+                    Token = tokenResult.Token,
                     Email = user.Email,
                     Role = "Admin",
                     CompanyId = company.Id,
                     CompanyName = company.Name,
-                    ExpiresAt = DateTime.UtcNow.AddMinutes(JwtSettingsHelper.GetExpiryMinutes(_configuration))
+                    ExpiresAt = tokenResult.ExpiresAt
                 };
             }
             catch (DbUpdateException ex)
@@ -271,15 +272,15 @@ namespace AccountingSystem.API.Services
                 throw new Exception("SuperAdmin role cannot be assigned from this endpoint.");
             }
 
-            CreatePasswordHash(registerDto.Password, out var passwordHash, out var passwordSalt);
+            var passwordData = _legacyPasswordService.CreateHash(registerDto.Password);
 
             var user = new User
             {
                 Email = registerDto.Email,
                 FullName = registerDto.FullName,
                 RoleId = role.Id,
-                PasswordHash = Convert.ToBase64String(passwordHash),
-                PasswordSalt = Convert.ToBase64String(passwordSalt),
+                PasswordHash = passwordData.PasswordHash,
+                PasswordSalt = passwordData.PasswordSalt,
                 IsActive = true
             };
 
@@ -347,7 +348,7 @@ namespace AccountingSystem.API.Services
                 throw new AuthFailureException("UserDeactivated");
             }
 
-            if (string.IsNullOrEmpty(user.PasswordHash) || string.IsNullOrEmpty(user.PasswordSalt))
+            if (!_legacyPasswordService.TryVerify(loginDto.Password, user.PasswordHash, user.PasswordSalt, out var passwordMatches))
             {
                 _logger.LogWarning("Password data is corrupted for user {UserId}.", user.Id);
                 await _auditService.WriteAsync(
@@ -359,7 +360,7 @@ namespace AccountingSystem.API.Services
                 throw new AuthFailureException("PasswordDataCorrupted");
             }
 
-            if (!VerifyPasswordHash(loginDto.Password, Convert.FromBase64String(user.PasswordHash), Convert.FromBase64String(user.PasswordSalt)))
+            if (!passwordMatches)
             {
                 user.AccessFailedCount++;
 
@@ -448,7 +449,7 @@ namespace AccountingSystem.API.Services
                 }
             }
 
-            var token = GenerateJwtToken(user, company);
+            var tokenResult = _authTokenFactory.Create(CreateTokenContext(user, company));
             await _auditService.WriteAsync(
                 "AUTH-LOGIN-SUCCESS",
                 userId: user.Id,
@@ -458,12 +459,12 @@ namespace AccountingSystem.API.Services
 
             return new AuthResponseDTO
             {
-                Token = token,
+                Token = tokenResult.Token,
                 Email = user.Email,
                 Role = user.Role.Name,
                 CompanyId = company.Id,
                 CompanyName = company.Name,
-                ExpiresAt = DateTime.UtcNow.AddMinutes(JwtSettingsHelper.GetExpiryMinutes(_configuration))
+                ExpiresAt = tokenResult.ExpiresAt
             };
         }
 
@@ -497,58 +498,13 @@ namespace AccountingSystem.API.Services
             return TimeSpan.FromMinutes(minutes);
         }
 
-        private static void CreatePasswordHash(string password, out byte[] passwordHash, out byte[] passwordSalt)
-        {
-            using var hmac = new HMACSHA512();
-            passwordSalt = hmac.Key;
-            passwordHash = hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(password));
-        }
-
-        private static bool VerifyPasswordHash(string password, byte[] storedHash, byte[] storedSalt)
-        {
-            using var hmac = new HMACSHA512(storedSalt);
-            var computedHash = hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(password));
-
-            if (computedHash.Length != storedHash.Length)
-            {
-                return false;
-            }
-
-            for (var index = 0; index < computedHash.Length; index++)
-            {
-                if (computedHash[index] != storedHash[index])
-                {
-                    return false;
-                }
-            }
-
-            return true;
-        }
-
-        private string GenerateJwtToken(User user, Company company)
-        {
-            var key = JwtSettingsHelper.GetSigningKey(_configuration);
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var tokenDescriptor = new SecurityTokenDescriptor
-            {
-                Subject = new ClaimsIdentity(new[]
-                {
-                    new Claim(ClaimTypes.Name, user.Email),
-                    new Claim(ClaimTypes.Role, user.Role.Name),
-                    new Claim("UserId", user.Id.ToString()),
-                    new Claim("role", user.Role.Name),
-                    new Claim("FullName", user.FullName ?? user.Email),
-                    new Claim("CompanyId", company.Id.ToString()),
-                    new Claim("CompanyName", company.Name)
-                }),
-                Expires = DateTime.UtcNow.AddMinutes(JwtSettingsHelper.GetExpiryMinutes(_configuration)),
-                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature),
-                Issuer = _configuration["JwtSettings:Issuer"],
-                Audience = _configuration["JwtSettings:Audience"]
-            };
-
-            var token = tokenHandler.CreateToken(tokenDescriptor);
-            return tokenHandler.WriteToken(token);
-        }
+        private static AuthTokenContext CreateTokenContext(User user, Company company) =>
+            new(
+                user.Email,
+                user.Role.Name,
+                user.Id,
+                user.FullName ?? user.Email,
+                company.Id,
+                company.Name);
     }
 }

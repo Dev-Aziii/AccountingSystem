@@ -7,6 +7,7 @@ using AccountingSystem.API.Controllers;
 using AccountingSystem.API.Data;
 using AccountingSystem.API.Middleware;
 using AccountingSystem.API.Models;
+using AccountingSystem.API.Security;
 using AccountingSystem.API.Services;
 using AccountingSystem.API.Services.Interfaces;
 using AccountingSystem.Shared.DTOs;
@@ -45,6 +46,70 @@ public class PasswordPolicyTests
 
         isValid.Should().BeFalse();
         errorMessage.Should().NotBeNullOrWhiteSpace();
+    }
+}
+
+public class LegacyPasswordServiceTests
+{
+    [Fact]
+    public void CreateHash_AndTryVerify_WhenPasswordMatches_ShouldSucceed()
+    {
+        var service = new LegacyPasswordService();
+        var passwordData = service.CreateHash("LongPassword123!");
+
+        var isUsable = service.TryVerify(
+            "LongPassword123!",
+            passwordData.PasswordHash,
+            passwordData.PasswordSalt,
+            out var passwordMatches);
+
+        isUsable.Should().BeTrue();
+        passwordMatches.Should().BeTrue();
+    }
+
+    [Fact]
+    public void TryVerify_WhenStoredPasswordDataIsMalformed_ShouldReturnFalse()
+    {
+        var service = new LegacyPasswordService();
+
+        var isUsable = service.TryVerify("LongPassword123!", "not-base64", "still-not-base64", out var passwordMatches);
+
+        isUsable.Should().BeFalse();
+        passwordMatches.Should().BeFalse();
+    }
+}
+
+public class JwtAuthTokenFactoryTests
+{
+    [Fact]
+    public void Create_WhenCalled_ShouldPreserveExistingJwtClaimContract()
+    {
+        var configuration = TestHelpers.CreateConfiguration();
+        var factory = new JwtAuthTokenFactory(configuration);
+
+        var result = factory.Create(new AuthTokenContext(
+            "user@example.com",
+            "Admin",
+            123,
+            "Test User",
+            456,
+            "Contoso"));
+
+        var token = new JwtSecurityTokenHandler().ReadJwtToken(result.Token);
+
+        GetClaimValue(token, ClaimTypes.Name, JwtRegisteredClaimNames.UniqueName).Should().Be("user@example.com");
+        GetClaimValue(token, ClaimTypes.Role, "role").Should().Be("Admin");
+        token.Claims.First(c => c.Type == "UserId").Value.Should().Be("123");
+        token.Claims.First(c => c.Type == "role").Value.Should().Be("Admin");
+        token.Claims.First(c => c.Type == "FullName").Value.Should().Be("Test User");
+        token.Claims.First(c => c.Type == "CompanyId").Value.Should().Be("456");
+        token.Claims.First(c => c.Type == "CompanyName").Value.Should().Be("Contoso");
+        result.ExpiresAt.Should().BeAfter(DateTime.UtcNow.AddMinutes(59));
+    }
+
+    private static string GetClaimValue(JwtSecurityToken token, params string[] claimTypes)
+    {
+        return token.Claims.First(c => claimTypes.Contains(c.Type, StringComparer.Ordinal)).Value;
     }
 }
 
@@ -165,7 +230,9 @@ public class AuthServiceTests
             configuration,
             captcha.Object,
             Mock.Of<ILogger<AuthService>>(),
-            auditService.Object);
+            auditService.Object,
+            new LegacyPasswordService(),
+            new JwtAuthTokenFactory(configuration));
     }
 }
 
@@ -424,7 +491,9 @@ internal static class TestHelpers
             configuration,
             captcha.Object,
             Mock.Of<ILogger<AuthService>>(),
-            auditService.Object);
+            auditService.Object,
+            new LegacyPasswordService(),
+            new JwtAuthTokenFactory(configuration));
     }
 
     internal static string CreateJwtToken(IConfiguration configuration, DateTime expiresAtUtc)

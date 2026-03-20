@@ -1,10 +1,12 @@
 using AccountingSystem.API.Configuration;
 using AccountingSystem.API.Data;
+using AccountingSystem.API.Identity;
 using AccountingSystem.API.Middleware;
 using AccountingSystem.API.Services;
 using AccountingSystem.API.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Components.WebAssembly.Server;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
@@ -24,9 +26,16 @@ builder.Services.AddScoped<ITenantService, TenantService>();
 var defaultConnection = builder.Configuration.GetConnectionString("DefaultConnection")!;
 builder.Services.AddDbContext<AccountingDbContext>(options =>
     options.UseSqlServer(defaultConnection));
+builder.Services.AddDbContext<IdentityAuthDbContext>(options =>
+    options.UseSqlServer(defaultConnection));
+builder.Services.AddIdentityCore<ApplicationUser>()
+    .AddRoles<ApplicationRole>()
+    .AddEntityFrameworkStores<IdentityAuthDbContext>();
 
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IAuthSecurityAuditService, AuthSecurityAuditService>();
+builder.Services.AddScoped<ILegacyPasswordService, LegacyPasswordService>();
+builder.Services.AddScoped<IAuthTokenFactory, JwtAuthTokenFactory>();
 builder.Services.AddScoped<IYearEndCloseService, YearEndCloseService>();
 builder.Services.AddScoped<IDocumentSequenceService, DocumentSequenceService>();
 builder.Services.AddScoped<ILedgerService, LedgerService>();
@@ -151,9 +160,13 @@ using (var scope = app.Services.CreateScope())
     var services = scope.ServiceProvider;
     try
     {
-        var context = services.GetRequiredService<AccountingDbContext>();
-        context.Database.Migrate();
-        await DataSeeder.SeedDataAsync(context);
+        var legacyContext = services.GetRequiredService<AccountingDbContext>();
+        legacyContext.Database.Migrate();
+
+        var identityContext = services.GetRequiredService<IdentityAuthDbContext>();
+        identityContext.Database.Migrate();
+
+        await DataSeeder.SeedDataAsync(legacyContext);
     }
     catch (Exception ex)
     {
