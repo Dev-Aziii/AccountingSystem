@@ -1,4 +1,5 @@
-﻿using AccountingSystem.API.Data;
+using AccountingSystem.API.Data;
+using AccountingSystem.API.Identity;
 using AccountingSystem.API.Services.Interfaces;
 using AccountingSystem.Shared.DTOs;
 using Microsoft.AspNetCore.Authorization;
@@ -14,11 +15,16 @@ namespace AccountingSystem.API.Controllers
     {
         private readonly AccountingDbContext _context;
         private readonly IAuthService _authService;
+        private readonly ILegacyIdentityBridgeService _identityBridgeService;
 
-        public UsersController(AccountingDbContext context, IAuthService authService)
+        public UsersController(
+            AccountingDbContext context,
+            IAuthService authService,
+            ILegacyIdentityBridgeService identityBridgeService)
         {
             _context = context;
             _authService = authService;
+            _identityBridgeService = identityBridgeService;
         }
 
         [HttpGet]
@@ -71,11 +77,11 @@ namespace AccountingSystem.API.Controllers
             if (user.Role.Name == "Admin")
                 return BadRequest(new { error = "Cannot archive admin account" });
 
-            // SOFT DELETE
             user.IsDeleted = true;
             user.IsActive = false;
 
             await _context.SaveChangesAsync();
+            await _identityBridgeService.SyncExistingUserStatusAsync(CreateIdentitySnapshot(user));
             return Ok(new { message = "User archived successfully" });
         }
 
@@ -84,6 +90,7 @@ namespace AccountingSystem.API.Controllers
         {
             var user = await _context.Users
                 .IgnoreQueryFilters()
+                .Include(u => u.Role)
                 .FirstOrDefaultAsync(u => u.Id == id);
 
             if (user == null) return NotFound("User not found");
@@ -92,7 +99,19 @@ namespace AccountingSystem.API.Controllers
             user.IsActive = true;
 
             await _context.SaveChangesAsync();
+            await _identityBridgeService.SyncExistingUserStatusAsync(CreateIdentitySnapshot(user));
             return Ok(new { message = "User restored successfully" });
         }
+
+        private static LegacyIdentityUserSnapshot CreateIdentitySnapshot(API.Models.User user) =>
+            new(
+                user.Id,
+                user.CompanyId,
+                user.Email,
+                user.FullName ?? user.Email,
+                user.Status,
+                user.IsActive,
+                user.IsDeleted,
+                user.Role.Name);
     }
 }

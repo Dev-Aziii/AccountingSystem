@@ -1,5 +1,6 @@
 using AccountingSystem.API.Configuration;
 using AccountingSystem.API.Data;
+using AccountingSystem.API.Identity;
 using AccountingSystem.API.Security;
 using AccountingSystem.API.Models;
 using AccountingSystem.API.Services.Interfaces;
@@ -21,6 +22,7 @@ namespace AccountingSystem.API.Services
         private readonly IAuthSecurityAuditService _auditService;
         private readonly ILegacyPasswordService _legacyPasswordService;
         private readonly IAuthTokenFactory _authTokenFactory;
+        private readonly ILegacyIdentityBridgeService _identityBridgeService;
 
         public AuthService(
             AccountingDbContext context,
@@ -29,7 +31,8 @@ namespace AccountingSystem.API.Services
             ILogger<AuthService> logger,
             IAuthSecurityAuditService auditService,
             ILegacyPasswordService legacyPasswordService,
-            IAuthTokenFactory authTokenFactory)
+            IAuthTokenFactory authTokenFactory,
+            ILegacyIdentityBridgeService identityBridgeService)
         {
             _context = context;
             _configuration = configuration;
@@ -38,6 +41,7 @@ namespace AccountingSystem.API.Services
             _auditService = auditService;
             _legacyPasswordService = legacyPasswordService;
             _authTokenFactory = authTokenFactory;
+            _identityBridgeService = identityBridgeService;
         }
 
         public async Task UpdateProfileAsync(int userId, UpdateProfileDTO dto)
@@ -69,6 +73,7 @@ namespace AccountingSystem.API.Services
             user.Email = dto.Email;
 
             await _context.SaveChangesAsync();
+            await _identityBridgeService.SyncExistingUserProfileAsync(await BuildIdentitySnapshotAsync(user));
             await _auditService.WriteAsync(
                 "AUTH-PROFILE-UPDATE",
                 userId: user.Id,
@@ -124,6 +129,7 @@ namespace AccountingSystem.API.Services
             user.PasswordSalt = newPasswordData.PasswordSalt;
 
             await _context.SaveChangesAsync();
+            await _identityBridgeService.SyncPasswordChangeAsync(await BuildIdentitySnapshotAsync(user), dto.NewPassword);
             await _auditService.WriteAsync(
                 "AUTH-PASSWORD-CHANGE",
                 userId: user.Id,
@@ -203,6 +209,10 @@ namespace AccountingSystem.API.Services
                 await SeedCompanyDataAsync(company.Id);
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
+
+                await _identityBridgeService.SyncProvisionedUserAsync(
+                    CreateIdentitySnapshot(user, adminRole.Name),
+                    dto.Password);
 
                 var tokenResult = _authTokenFactory.Create(CreateTokenContext(user, company));
                 await _auditService.WriteAsync(
@@ -286,6 +296,9 @@ namespace AccountingSystem.API.Services
 
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
+            await _identityBridgeService.SyncProvisionedUserAsync(
+                CreateIdentitySnapshot(user, role.Name),
+                registerDto.Password);
             return user;
         }
 
@@ -449,6 +462,10 @@ namespace AccountingSystem.API.Services
                 }
             }
 
+            await _identityBridgeService.SyncAfterSuccessfulLoginAsync(
+                CreateIdentitySnapshot(user, user.Role.Name),
+                loginDto.Password);
+
             var tokenResult = _authTokenFactory.Create(CreateTokenContext(user, company));
             await _auditService.WriteAsync(
                 "AUTH-LOGIN-SUCCESS",
@@ -497,6 +514,29 @@ namespace AccountingSystem.API.Services
             var minutes = configuredMinutes is > 0 ? configuredMinutes.Value : DefaultLockoutMinutes;
             return TimeSpan.FromMinutes(minutes);
         }
+
+        private async Task<LegacyIdentityUserSnapshot> BuildIdentitySnapshotAsync(User user)
+        {
+            var roleName = await _context.Roles
+                .AsNoTracking()
+                .Where(r => r.Id == user.RoleId)
+                .Select(r => r.Name)
+                .FirstOrDefaultAsync()
+                ?? throw new InvalidOperationException($"Role {user.RoleId} was not found for user {user.Id}.");
+
+            return CreateIdentitySnapshot(user, roleName);
+        }
+
+        private static LegacyIdentityUserSnapshot CreateIdentitySnapshot(User user, string roleName) =>
+            new(
+                user.Id,
+                user.CompanyId,
+                user.Email,
+                user.FullName ?? user.Email,
+                user.Status,
+                user.IsActive,
+                user.IsDeleted,
+                roleName);
 
         private static AuthTokenContext CreateTokenContext(User user, Company company) =>
             new(

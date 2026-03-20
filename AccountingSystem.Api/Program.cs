@@ -28,14 +28,39 @@ builder.Services.AddDbContext<AccountingDbContext>(options =>
     options.UseSqlServer(defaultConnection));
 builder.Services.AddDbContext<IdentityAuthDbContext>(options =>
     options.UseSqlServer(defaultConnection));
-builder.Services.AddIdentityCore<ApplicationUser>()
+builder.Services.Configure<DataProtectionTokenProviderOptions>(options =>
+{
+    options.TokenLifespan = TimeSpan.FromHours(2);
+});
+
+var identityBuilder = builder.Services.AddIdentityCore<ApplicationUser>(options =>
+{
+    options.Password.RequiredLength = 12;
+    options.Password.RequireNonAlphanumeric = false;
+    options.Password.RequireLowercase = false;
+    options.Password.RequireUppercase = false;
+    options.Password.RequireDigit = false;
+    options.Password.RequiredUniqueChars = 1;
+
+    options.Lockout.MaxFailedAccessAttempts = GetConfiguredPositiveInt("AuthSecurity:Lockout:MaxFailedAccessAttempts", 5);
+    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(GetConfiguredPositiveInt("AuthSecurity:Lockout:LockoutMinutes", 15));
+    options.Lockout.AllowedForNewUsers = true;
+
+    options.User.RequireUniqueEmail = true;
+    options.User.AllowedUserNameCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+";
+})
     .AddRoles<ApplicationRole>()
-    .AddEntityFrameworkStores<IdentityAuthDbContext>();
+    .AddEntityFrameworkStores<IdentityAuthDbContext>()
+    .AddDefaultTokenProviders();
+
+identityBuilder.AddPasswordValidator<SharedPasswordIdentityValidator>();
 
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IAuthSecurityAuditService, AuthSecurityAuditService>();
 builder.Services.AddScoped<ILegacyPasswordService, LegacyPasswordService>();
 builder.Services.AddScoped<IAuthTokenFactory, JwtAuthTokenFactory>();
+builder.Services.AddScoped<IIdentityAccountService, IdentityAccountService>();
+builder.Services.AddScoped<ILegacyIdentityBridgeService, LegacyIdentityBridgeService>();
 builder.Services.AddScoped<IYearEndCloseService, YearEndCloseService>();
 builder.Services.AddScoped<IDocumentSequenceService, DocumentSequenceService>();
 builder.Services.AddScoped<ILedgerService, LedgerService>();
