@@ -23,6 +23,18 @@ namespace AccountingSystem.API.Configuration
             CheckRequiredValue(configuration["AuthSecurity:RateLimiting:RegisterCompany:WindowSeconds"], "AuthSecurity:RateLimiting:RegisterCompany:WindowSeconds", missingKeys);
             CheckRequiredValue(configuration["AuthSecurity:RateLimiting:ChangePassword:PermitLimit"], "AuthSecurity:RateLimiting:ChangePassword:PermitLimit", missingKeys);
             CheckRequiredValue(configuration["AuthSecurity:RateLimiting:ChangePassword:WindowSeconds"], "AuthSecurity:RateLimiting:ChangePassword:WindowSeconds", missingKeys);
+            CheckRequiredValue(configuration["AuthSecurity:RateLimiting:ForgotPassword:PermitLimit"], "AuthSecurity:RateLimiting:ForgotPassword:PermitLimit", missingKeys);
+            CheckRequiredValue(configuration["AuthSecurity:RateLimiting:ForgotPassword:WindowSeconds"], "AuthSecurity:RateLimiting:ForgotPassword:WindowSeconds", missingKeys);
+            CheckRequiredValue(configuration["AuthSecurity:RateLimiting:ResetPassword:PermitLimit"], "AuthSecurity:RateLimiting:ResetPassword:PermitLimit", missingKeys);
+            CheckRequiredValue(configuration["AuthSecurity:RateLimiting:ResetPassword:WindowSeconds"], "AuthSecurity:RateLimiting:ResetPassword:WindowSeconds", missingKeys);
+            CheckRequiredValue(configuration["Smtp:Host"], "Smtp:Host", missingKeys);
+            CheckRequiredValue(configuration["Smtp:Port"], "Smtp:Port", missingKeys);
+            CheckRequiredValue(configuration["Smtp:Username"], "Smtp:Username", missingKeys);
+            CheckRequiredValue(configuration["Smtp:Password"], "Smtp:Password", missingKeys);
+            CheckRequiredValue(configuration["Smtp:FromAddress"], "Smtp:FromAddress", missingKeys);
+            CheckRequiredValue(configuration["Smtp:FromName"], "Smtp:FromName", missingKeys);
+            CheckRequiredValue(configuration["Smtp:EnableSsl"], "Smtp:EnableSsl", missingKeys);
+            CheckRequiredValue(configuration["AppUrls:ClientBaseUrl"], "AppUrls:ClientBaseUrl", missingKeys);
 
             CheckPositiveInteger(configuration["JwtSettings:ExpiryMinutes"], "JwtSettings:ExpiryMinutes", invalidKeys);
             CheckNonNegativeInteger(configuration["JwtSettings:ClockSkewSeconds"], "JwtSettings:ClockSkewSeconds", invalidKeys);
@@ -34,6 +46,12 @@ namespace AccountingSystem.API.Configuration
             CheckPositiveInteger(configuration["AuthSecurity:RateLimiting:RegisterCompany:WindowSeconds"], "AuthSecurity:RateLimiting:RegisterCompany:WindowSeconds", invalidKeys);
             CheckPositiveInteger(configuration["AuthSecurity:RateLimiting:ChangePassword:PermitLimit"], "AuthSecurity:RateLimiting:ChangePassword:PermitLimit", invalidKeys);
             CheckPositiveInteger(configuration["AuthSecurity:RateLimiting:ChangePassword:WindowSeconds"], "AuthSecurity:RateLimiting:ChangePassword:WindowSeconds", invalidKeys);
+            CheckPositiveInteger(configuration["AuthSecurity:RateLimiting:ForgotPassword:PermitLimit"], "AuthSecurity:RateLimiting:ForgotPassword:PermitLimit", invalidKeys);
+            CheckPositiveInteger(configuration["AuthSecurity:RateLimiting:ForgotPassword:WindowSeconds"], "AuthSecurity:RateLimiting:ForgotPassword:WindowSeconds", invalidKeys);
+            CheckPositiveInteger(configuration["AuthSecurity:RateLimiting:ResetPassword:PermitLimit"], "AuthSecurity:RateLimiting:ResetPassword:PermitLimit", invalidKeys);
+            CheckPositiveInteger(configuration["AuthSecurity:RateLimiting:ResetPassword:WindowSeconds"], "AuthSecurity:RateLimiting:ResetPassword:WindowSeconds", invalidKeys);
+            CheckPositiveInteger(configuration["Smtp:Port"], "Smtp:Port", invalidKeys);
+            CheckBoolean(configuration["Smtp:EnableSsl"], "Smtp:EnableSsl", invalidKeys);
             ValidateSqlServerConnectionString(configuration.GetConnectionString("DefaultConnection"), invalidKeys);
 
             if (!environment.IsDevelopment())
@@ -103,6 +121,14 @@ namespace AccountingSystem.API.Configuration
                 (!int.TryParse(value, out var parsedValue) || parsedValue < 0))
             {
                 invalidKeys.Add($"{configurationKey} (must be zero or a positive integer)");
+            }
+        }
+
+        private static void CheckBoolean(string? value, string configurationKey, ICollection<string> invalidKeys)
+        {
+            if (!IsMissingOrPlaceholder(value) && !bool.TryParse(value, out _))
+            {
+                invalidKeys.Add($"{configurationKey} (must be 'true' or 'false')");
             }
         }
 

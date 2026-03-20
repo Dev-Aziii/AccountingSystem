@@ -14,10 +14,48 @@ namespace AccountingSystem.Shared.DTOs
         public string Email { get; set; } = string.Empty;
     }
 
+    public class CurrentProfileDTO
+    {
+        public string FullName { get; set; } = string.Empty;
+
+        public string Email { get; set; } = string.Empty;
+
+        public string Role { get; set; } = string.Empty;
+
+        public int CompanyId { get; set; }
+
+        public string CompanyName { get; set; } = string.Empty;
+    }
+
     public class ChangePasswordDTO
     {
         [Required]
         public string CurrentPassword { get; set; } = string.Empty;
+
+        [Required]
+        [StrongPassword]
+        public string NewPassword { get; set; } = string.Empty;
+
+        [Required]
+        [Compare(nameof(NewPassword), ErrorMessage = "Passwords do not match.")]
+        public string ConfirmPassword { get; set; } = string.Empty;
+    }
+
+    public class ForgotPasswordDTO
+    {
+        [Required]
+        [EmailAddress]
+        public string Email { get; set; } = string.Empty;
+    }
+
+    public class ResetPasswordDTO
+    {
+        [Required]
+        [EmailAddress]
+        public string Email { get; set; } = string.Empty;
+
+        [Required]
+        public string Token { get; set; } = string.Empty;
 
         [Required]
         [StrongPassword]

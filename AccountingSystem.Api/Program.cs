@@ -28,6 +28,9 @@ builder.Services.AddDbContext<AccountingDbContext>(options =>
     options.UseSqlServer(defaultConnection));
 builder.Services.AddDbContext<IdentityAuthDbContext>(options =>
     options.UseSqlServer(defaultConnection));
+builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("Smtp"));
+builder.Services.Configure<AppUrlSettings>(builder.Configuration.GetSection("AppUrls"));
+builder.Services.Configure<BootstrapAdminSettings>(builder.Configuration.GetSection("BootstrapAdmin"));
 builder.Services.Configure<DataProtectionTokenProviderOptions>(options =>
 {
     options.TokenLifespan = TimeSpan.FromHours(2);
@@ -61,6 +64,7 @@ builder.Services.AddScoped<ILegacyPasswordService, LegacyPasswordService>();
 builder.Services.AddScoped<IAuthTokenFactory, JwtAuthTokenFactory>();
 builder.Services.AddScoped<IIdentityAccountService, IdentityAccountService>();
 builder.Services.AddScoped<ILegacyIdentityBridgeService, LegacyIdentityBridgeService>();
+builder.Services.AddScoped<IAccountEmailService, SmtpAccountEmailService>();
 builder.Services.AddScoped<IYearEndCloseService, YearEndCloseService>();
 builder.Services.AddScoped<IDocumentSequenceService, DocumentSequenceService>();
 builder.Services.AddScoped<ILedgerService, LedgerService>();
@@ -134,6 +138,20 @@ builder.Services.AddRateLimiter(options =>
             factory: _ => CreateFixedWindowOptions(
                 GetConfiguredPositiveInt("AuthSecurity:RateLimiting:ChangePassword:PermitLimit", 5),
                 GetConfiguredPositiveInt("AuthSecurity:RateLimiting:ChangePassword:WindowSeconds", 600))));
+
+    options.AddPolicy(AuthRateLimitPolicyNames.ForgotPassword, httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: $"ip:{GetRemoteIpAddress(httpContext)}",
+            factory: _ => CreateFixedWindowOptions(
+                GetConfiguredPositiveInt("AuthSecurity:RateLimiting:ForgotPassword:PermitLimit", 3),
+                GetConfiguredPositiveInt("AuthSecurity:RateLimiting:ForgotPassword:WindowSeconds", 900))));
+
+    options.AddPolicy(AuthRateLimitPolicyNames.ResetPassword, httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: $"ip:{GetRemoteIpAddress(httpContext)}",
+            factory: _ => CreateFixedWindowOptions(
+                GetConfiguredPositiveInt("AuthSecurity:RateLimiting:ResetPassword:PermitLimit", 5),
+                GetConfiguredPositiveInt("AuthSecurity:RateLimiting:ResetPassword:WindowSeconds", 900))));
 });
 
 builder.Services.AddCors(options =>
@@ -183,19 +201,29 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
+    var logger = services.GetRequiredService<ILogger<Program>>();
     try
     {
         var legacyContext = services.GetRequiredService<AccountingDbContext>();
+        logger.LogInformation("Starting database migration for {DbContext}.", nameof(AccountingDbContext));
         legacyContext.Database.Migrate();
+        logger.LogInformation("Completed database migration for {DbContext}.", nameof(AccountingDbContext));
 
         var identityContext = services.GetRequiredService<IdentityAuthDbContext>();
+        logger.LogInformation("Starting database migration for {DbContext}.", nameof(IdentityAuthDbContext));
         identityContext.Database.Migrate();
+        logger.LogInformation("Completed database migration for {DbContext}.", nameof(IdentityAuthDbContext));
 
-        await DataSeeder.SeedDataAsync(legacyContext);
+        logger.LogInformation("Starting application data seeding.");
+        await DataSeeder.SeedDataAsync(
+            legacyContext,
+            identityContext,
+            services.GetRequiredService<IIdentityAccountService>(),
+            services.GetRequiredService<IConfiguration>());
+        logger.LogInformation("Completed application data seeding.");
     }
     catch (Exception ex)
     {
-        var logger = services.GetRequiredService<ILogger<Program>>();
         logger.LogError(ex, "An error occurred while seeding the database.");
         throw;
     }

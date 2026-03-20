@@ -77,6 +77,19 @@ namespace AccountingSystem.Client.Services
             }
         }
 
+        public async Task<CurrentProfileDTO> GetCurrentProfile()
+        {
+            try
+            {
+                var profile = await _api.GetAsync<CurrentProfileDTO>("api/auth/profile");
+                return profile ?? throw new Exception("Unable to load account details.");
+            }
+            catch (Exception ex) when (ex is not UnauthorizedAccessException)
+            {
+                throw new Exception("Unable to load account details.", ex);
+            }
+        }
+
         public async Task ChangePassword(ChangePasswordDTO dto)
         {
             var response = await _api.PutAsync("api/auth/password", dto);
@@ -84,6 +97,26 @@ namespace AccountingSystem.Client.Services
             {
                 var rawContent = await response.Content.ReadAsStringAsync();
                 throw new Exception(ApiErrorParser.Extract(rawContent, "Unable to change password. Please try again."));
+            }
+        }
+
+        public async Task RequestPasswordReset(ForgotPasswordDTO dto)
+        {
+            var response = await _api.PostAsync("api/auth/forgot-password", dto, requiresAuth: false);
+            if (!response.IsSuccessStatusCode)
+            {
+                var rawContent = await response.Content.ReadAsStringAsync();
+                throw new Exception(ApiErrorParser.Extract(rawContent, "Unable to send password reset email. Please try again."));
+            }
+        }
+
+        public async Task ResetPassword(ResetPasswordDTO dto)
+        {
+            var response = await _api.PostAsync("api/auth/reset-password", dto, requiresAuth: false);
+            if (!response.IsSuccessStatusCode)
+            {
+                var rawContent = await response.Content.ReadAsStringAsync();
+                throw new Exception(ApiErrorParser.Extract(rawContent, "Unable to reset password. Please try again."));
             }
         }
     }

@@ -54,6 +54,22 @@ namespace AccountingSystem.API.Controllers
             }
         }
 
+        [HttpGet("profile")]
+        [Authorize]
+        public async Task<IActionResult> GetProfile()
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+                var response = await _authService.GetCurrentProfileAsync(userId);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
         [HttpPut("profile")]
         [Authorize]
         public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileDTO dto)
@@ -63,6 +79,29 @@ namespace AccountingSystem.API.Controllers
                 var userId = GetCurrentUserId();
                 await _authService.UpdateProfileAsync(userId, dto);
                 return Ok(new { message = "Profile updated successfully." });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
+        [HttpPost("forgot-password")]
+        [EnableRateLimiting(AuthRateLimitPolicyNames.ForgotPassword)]
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDTO dto)
+        {
+            await _authService.SendPasswordResetAsync(dto);
+            return Ok(new { message = "If the account exists, a password reset link has been sent." });
+        }
+
+        [HttpPost("reset-password")]
+        [EnableRateLimiting(AuthRateLimitPolicyNames.ResetPassword)]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDTO dto)
+        {
+            try
+            {
+                await _authService.ResetPasswordAsync(dto);
+                return Ok(new { message = "Password reset successfully." });
             }
             catch (Exception ex)
             {

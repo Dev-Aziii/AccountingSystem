@@ -3,11 +3,9 @@
 @using AccountingSystem.Shared.Validation
 @using AccountingSystem.Client.Services
 @using Microsoft.AspNetCore.Authorization
-@using Microsoft.AspNetCore.Components.Authorization
 @using MudBlazor
 @attribute [Authorize]
 @inject AuthService AuthService
-@inject AuthenticationStateProvider AuthStateProvider
 @inject ISnackbar Snackbar
 @inject ILogger<UserProfile> Logger
 
@@ -136,15 +134,16 @@
 
     protected override async Task OnInitializedAsync()
     {
-        // Pre-fill form with current user data from claims
-        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
-        var user = authState.User;
-
-        if (user.Identity != null && user.Identity.IsAuthenticated)
+        try
         {
-            // Note: In JWT logic, Name usually maps to Email, and we added a custom FullName claim
-            profileModel.Email = user.Identity.Name ?? "";
-            profileModel.FullName = user.FindFirst("FullName")?.Value ?? "";
+            var profile = await AuthService.GetCurrentProfile();
+            profileModel.Email = profile.Email;
+            profileModel.FullName = profile.FullName;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to load current profile.");
+            Snackbar.Add("Unable to load account details. Please refresh and try again.", Severity.Error);
         }
     }
 
@@ -154,15 +153,19 @@
         try
         {
             await AuthService.UpdateProfile(profileModel);
+            var refreshedProfile = await AuthService.GetCurrentProfile();
+            profileModel.Email = refreshedProfile.Email;
+            profileModel.FullName = refreshedProfile.FullName;
             Snackbar.Add("Profile updated successfully.", Severity.Success);
-
-            // Optional: Force logout or refresh token if email changed,
-            // but for now we just notify success.
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Failed to update user profile.");
-            Snackbar.Add("Unable to update profile. Please try again.", Severity.Error);
+            Snackbar.Add(
+                string.IsNullOrWhiteSpace(ex.Message)
+                    ? "Unable to update profile. Please try again."
+                    : ex.Message,
+                Severity.Error);
         }
         finally
         {
@@ -177,8 +180,6 @@
         {
             await AuthService.ChangePassword(passwordModel);
             Snackbar.Add("Password changed successfully.", Severity.Success);
-
-            // Reset form
             passwordModel = new ChangePasswordDTO();
         }
         catch (Exception ex)

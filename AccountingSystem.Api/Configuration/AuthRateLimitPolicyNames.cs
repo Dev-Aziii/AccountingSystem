@@ -5,5 +5,7 @@ namespace AccountingSystem.API.Configuration
         internal const string Login = "AuthLogin";
         internal const string RegisterCompany = "AuthRegisterCompany";
         internal const string ChangePassword = "AuthChangePassword";
+        internal const string ForgotPassword = "AuthForgotPassword";
+        internal const string ResetPassword = "AuthResetPassword";
     }
 }

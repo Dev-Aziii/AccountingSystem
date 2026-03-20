@@ -17,6 +17,7 @@ using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -123,9 +124,8 @@ public class SharedPasswordIdentityValidatorTests
     {
         using var harness = TestHelpers.CreateIdentityHarness();
         var validator = new SharedPasswordIdentityValidator();
-        var userManager = harness.UserManager;
 
-        var result = await validator.ValidateAsync(userManager, new ApplicationUser(), "Solar winds gather softly");
+        var result = await validator.ValidateAsync(harness.UserManager, new ApplicationUser(), "Solar winds gather softly");
 
         result.Succeeded.Should().BeTrue();
     }
@@ -134,22 +134,26 @@ public class SharedPasswordIdentityValidatorTests
 public class AuthServiceTests
 {
     [Fact]
-    public async Task LoginAsync_WhenCredentialsAreValid_ShouldResetFailedAttemptsAndReturnToken()
+    public async Task LoginAsync_WhenIdentityBackedUserExists_ShouldAuthenticateWithoutLegacyPassword()
     {
-        var context = TestHelpers.CreateContext();
-        var service = CreateAuthService(context);
+        var context = TestHelpers.CreateContext(tenantId: 10);
+        using var harness = TestHelpers.CreateIdentityHarness();
+        var service = TestHelpers.CreateAuthService(context, harness);
 
         var role = new Role { Id = 1, Name = "Admin" };
         var company = new Company { Id = 10, Name = "Contoso", IsActive = true, Status = "Active" };
+        var user = TestHelpers.CreateUser(role, company.Id, "admin@contoso.com", "UnusedLegacy123!");
+        user.PasswordHash = "corrupted";
+        user.PasswordSalt = "corrupted";
+
         context.Roles.Add(role);
         context.Companies.Add(company);
-        context.Users.Add(TestHelpers.CreateUser(
-            role,
-            company.Id,
-            "admin@contoso.com",
-            "LongPassword123!",
-            accessFailedCount: 3));
+        context.Users.Add(user);
         await context.SaveChangesAsync();
+
+        await harness.AccountService.EnsureProvisionedAsync(
+            TestHelpers.CreateIdentitySnapshot(user, role.Name),
+            "LongPassword123!");
 
         var response = await service.LoginAsync(new LoginDTO
         {
@@ -161,21 +165,27 @@ public class AuthServiceTests
         response.CompanyId.Should().Be(company.Id);
         response.Role.Should().Be("Admin");
 
-        var reloadedUser = await context.Users.IgnoreQueryFilters().SingleAsync(u => u.Email == "admin@contoso.com");
-        reloadedUser.AccessFailedCount.Should().Be(0);
-        reloadedUser.LockoutEndUtc.Should().BeNull();
+        var token = new JwtSecurityTokenHandler().ReadJwtToken(response.Token);
+        token.Claims.First(c => c.Type == "UserId").Value.Should().Be(user.Id.ToString());
+        token.Claims.First(c => c.Type == "CompanyId").Value.Should().Be(company.Id.ToString());
+        token.Claims.First(c => c.Type == "CompanyName").Value.Should().Be(company.Name);
+
+        var reloadedUser = await context.Users.IgnoreQueryFilters().SingleAsync(u => u.Id == user.Id);
+        reloadedUser.PasswordHash.Should().BeEmpty();
+        reloadedUser.PasswordSalt.Should().BeNull();
     }
 
     [Fact]
-    public async Task LoginAsync_WhenLegacyUserHasNoIdentityRecord_ShouldHydrateIdentityUser()
+    public async Task LoginAsync_WhenLegacyOnlyUserSignsIn_ShouldProvisionIdentityAndClearLegacyPassword()
     {
-        var context = TestHelpers.CreateContext();
+        var context = TestHelpers.CreateContext(tenantId: 11);
         using var harness = TestHelpers.CreateIdentityHarness();
-        var service = CreateAuthService(context, identityBridgeService: harness.BridgeService);
+        var service = TestHelpers.CreateAuthService(context, harness);
 
         var role = new Role { Id = 2, Name = "Accounting" };
         var company = new Company { Id = 11, Name = "Hydrate Co", IsActive = true, Status = "Active" };
         var user = TestHelpers.CreateUser(role, company.Id, "hydrate@test.com", "LongPassword123!");
+
         context.Roles.Add(role);
         context.Companies.Add(company);
         context.Users.Add(user);
@@ -193,73 +203,56 @@ public class AuthServiceTests
         identityUser.Email.Should().Be("hydrate@test.com");
         identityUser.CompanyId.Should().Be(company.Id);
         identityUser.FullName.Should().Be(user.FullName);
-        identityUser.Status.Should().Be(user.Status);
         (await harness.UserManager.CheckPasswordAsync(identityUser, "LongPassword123!")).Should().BeTrue();
         (await harness.UserManager.GetRolesAsync(identityUser)).Should().ContainSingle("Accounting");
+
+        var reloadedLegacyUser = await context.Users.IgnoreQueryFilters().SingleAsync(u => u.Id == user.Id);
+        reloadedLegacyUser.PasswordHash.Should().BeEmpty();
+        reloadedLegacyUser.PasswordSalt.Should().BeNull();
     }
 
     [Fact]
-    public async Task LoginAsync_WhenFailedAttemptsReachThreshold_ShouldApplyTemporaryLockout()
+    public async Task RegisterCompanyAsync_WhenSuccessful_ShouldCreateLegacyAndIdentityAdmin()
     {
         var context = TestHelpers.CreateContext();
-        var service = CreateAuthService(context);
+        using var harness = TestHelpers.CreateIdentityHarness();
+        var captcha = new Mock<ICaptchaService>();
+        captcha.Setup(x => x.VerifyTokenAsync(It.IsAny<string>())).ReturnsAsync(true);
+        var service = TestHelpers.CreateAuthService(context, harness, captcha: captcha);
 
-        var role = new Role { Id = 1, Name = "Admin" };
-        var company = new Company { Id = 20, Name = "Tailspin", IsActive = true, Status = "Active" };
-        context.Roles.Add(role);
-        context.Companies.Add(company);
-        context.Users.Add(TestHelpers.CreateUser(
-            role,
-            company.Id,
-            "locked@tailspin.com",
-            "LongPassword123!",
-            accessFailedCount: 4));
+        context.Roles.Add(new Role { Id = 1, Name = "Admin" });
         await context.SaveChangesAsync();
 
-        var action = () => service.LoginAsync(new LoginDTO
+        var response = await service.RegisterCompanyAsync(new CompanyRegisterDTO
         {
-            Email = "locked@tailspin.com",
-            Password = "WrongPassword123!"
+            CompanyName = "Phase Six Co",
+            AdminEmail = "owner@phasesix.com",
+            AdminFullName = "Owner User",
+            Password = "LongPassword123!",
+            RecaptchaToken = "good-token"
         });
 
-        await action.Should().ThrowAsync<Exception>()
-            .WithMessage("Invalid email or password. Please try again later.");
+        response.Role.Should().Be("Admin");
+        response.CompanyName.Should().Be("Phase Six Co");
 
-        var reloadedUser = await context.Users.IgnoreQueryFilters().SingleAsync(u => u.Email == "locked@tailspin.com");
-        reloadedUser.AccessFailedCount.Should().Be(5);
-        reloadedUser.LockoutEndUtc.Should().NotBeNull();
-        reloadedUser.LockoutEndUtc.Should().BeAfter(DateTime.UtcNow.AddMinutes(14));
+        var company = await context.Companies.IgnoreQueryFilters().SingleAsync(c => c.Name == "Phase Six Co");
+        var legacyUser = await context.Users.IgnoreQueryFilters().Include(u => u.Role).SingleAsync(u => u.Email == "owner@phasesix.com");
+        legacyUser.CompanyId.Should().Be(company.Id);
+        legacyUser.Role.Name.Should().Be("Admin");
+        legacyUser.PasswordHash.Should().BeEmpty();
+        legacyUser.PasswordSalt.Should().BeNull();
+
+        var identityUser = await harness.IdentityContext.Users.SingleAsync(u => u.LegacyUserId == legacyUser.Id);
+        (await harness.UserManager.CheckPasswordAsync(identityUser, "LongPassword123!")).Should().BeTrue();
+        (await harness.UserManager.GetRolesAsync(identityUser)).Should().ContainSingle("Admin");
     }
 
     [Fact]
-    public async Task RegisterCompanyAsync_WhenCaptchaFails_ShouldThrowSecurityException()
-    {
-        var context = TestHelpers.CreateContext();
-        var captcha = new Mock<ICaptchaService>();
-        captcha.Setup(x => x.VerifyTokenAsync(It.IsAny<string>())).ReturnsAsync(false);
-
-        var service = CreateAuthService(context, captcha: captcha);
-        var dto = new CompanyRegisterDTO
-        {
-            CompanyName = "New Co",
-            AdminEmail = "owner@newco.com",
-            AdminFullName = "Owner",
-            Password = "LongPassword123!",
-            RecaptchaToken = "bad-token"
-        };
-
-        var action = () => service.RegisterCompanyAsync(dto);
-
-        await action.Should().ThrowAsync<Exception>()
-            .WithMessage("Security check failed. Automated activity detected.");
-    }
-
-    [Fact]
-    public async Task RegisterAsync_WhenSuccessful_ShouldProvisionIdentityUserInParallel()
+    public async Task RegisterAsync_WhenSuccessful_ShouldCreateIdentityUserAndLeaveLegacyPasswordCleared()
     {
         var context = TestHelpers.CreateContext(tenantId: 77);
         using var harness = TestHelpers.CreateIdentityHarness();
-        var service = CreateAuthService(context, identityBridgeService: harness.BridgeService);
+        var service = TestHelpers.CreateAuthService(context, harness);
 
         context.Roles.Add(new Role { Id = 2, Name = "Accounting" });
         await context.SaveChangesAsync();
@@ -273,27 +266,35 @@ public class AuthServiceTests
         });
 
         user.CompanyId.Should().Be(77);
+        user.PasswordHash.Should().BeEmpty();
+        user.PasswordSalt.Should().BeNull();
 
         var identityUser = await harness.IdentityContext.Users.SingleAsync(u => u.LegacyUserId == user.Id);
         identityUser.CompanyId.Should().Be(77);
         identityUser.Email.Should().Be("new.accountant@test.com");
         (await harness.UserManager.GetRolesAsync(identityUser)).Should().ContainSingle("Accounting");
+        (await harness.UserManager.CheckPasswordAsync(identityUser, "LongPassword123!")).Should().BeTrue();
     }
 
     [Fact]
-    public async Task ChangePasswordAsync_WhenIdentityUserIsMissing_ShouldCreateAndSyncIdentityPassword()
+    public async Task ChangePasswordAsync_WhenIdentityUserExists_ShouldUpdateIdentityPasswordAndClearLegacyPassword()
     {
-        var context = TestHelpers.CreateContext();
+        var context = TestHelpers.CreateContext(tenantId: 12);
         using var harness = TestHelpers.CreateIdentityHarness();
-        var service = CreateAuthService(context, identityBridgeService: harness.BridgeService);
+        var service = TestHelpers.CreateAuthService(context, harness);
 
         var role = new Role { Id = 1, Name = "Admin" };
         var company = new Company { Id = 12, Name = "Password Co", IsActive = true, Status = "Active" };
         var user = TestHelpers.CreateUser(role, company.Id, "password@test.com", "LongPassword123!");
+
         context.Roles.Add(role);
         context.Companies.Add(company);
         context.Users.Add(user);
         await context.SaveChangesAsync();
+
+        await harness.AccountService.EnsureProvisionedAsync(
+            TestHelpers.CreateIdentitySnapshot(user, role.Name),
+            "LongPassword123!");
 
         await service.ChangePasswordAsync(user.Id, new ChangePasswordDTO
         {
@@ -303,27 +304,32 @@ public class AuthServiceTests
         });
 
         var identityUser = await harness.IdentityContext.Users.SingleAsync(u => u.LegacyUserId == user.Id);
+        (await harness.UserManager.CheckPasswordAsync(identityUser, "LongPassword123!")).Should().BeFalse();
         (await harness.UserManager.CheckPasswordAsync(identityUser, "BetterPassword456!")).Should().BeTrue();
-        identityUser.Email.Should().Be("password@test.com");
+
+        var reloadedUser = await context.Users.IgnoreQueryFilters().SingleAsync(u => u.Id == user.Id);
+        reloadedUser.PasswordHash.Should().BeEmpty();
+        reloadedUser.PasswordSalt.Should().BeNull();
     }
 
     [Fact]
-    public async Task UpdateProfileAsync_WhenIdentityUserExists_ShouldSyncEmailAndFullName()
+    public async Task UpdateProfileAsync_AndGetCurrentProfileAsync_ShouldPersistIdentityAndLegacyValues()
     {
-        var context = TestHelpers.CreateContext();
+        var context = TestHelpers.CreateContext(tenantId: 13);
         using var harness = TestHelpers.CreateIdentityHarness();
-        var service = CreateAuthService(context, identityBridgeService: harness.BridgeService);
+        var service = TestHelpers.CreateAuthService(context, harness);
 
         var role = new Role { Id = 1, Name = "Admin" };
         var company = new Company { Id = 13, Name = "Profile Co", IsActive = true, Status = "Active" };
         var user = TestHelpers.CreateUser(role, company.Id, "profile@test.com", "LongPassword123!");
+
         context.Roles.Add(role);
         context.Companies.Add(company);
         context.Users.Add(user);
         await context.SaveChangesAsync();
 
         await harness.AccountService.EnsureProvisionedAsync(
-            new LegacyIdentityUserSnapshot(user.Id, company.Id, user.Email, user.FullName, user.Status, user.IsActive, user.IsDeleted, role.Name),
+            TestHelpers.CreateIdentitySnapshot(user, role.Name),
             "LongPassword123!");
 
         await service.UpdateProfileAsync(user.Id, new UpdateProfileDTO
@@ -332,44 +338,68 @@ public class AuthServiceTests
             FullName = "Updated Profile"
         });
 
+        var profile = await service.GetCurrentProfileAsync(user.Id);
+        profile.Email.Should().Be("updated.profile@test.com");
+        profile.FullName.Should().Be("Updated Profile");
+        profile.Role.Should().Be("Admin");
+        profile.CompanyName.Should().Be(company.Name);
+
         var identityUser = await harness.IdentityContext.Users.SingleAsync(u => u.LegacyUserId == user.Id);
         identityUser.Email.Should().Be("updated.profile@test.com");
         identityUser.UserName.Should().Be("updated.profile@test.com");
         identityUser.FullName.Should().Be("Updated Profile");
     }
 
-    private static AuthService CreateAuthService(
-        AccountingDbContext context,
-        IConfiguration? configuration = null,
-        Mock<ICaptchaService>? captcha = null,
-        Mock<IAuthSecurityAuditService>? auditService = null,
-        ILegacyIdentityBridgeService? identityBridgeService = null)
+    [Fact]
+    public async Task ForgotAndResetPassword_WhenLegacyOnlyAccountExists_ShouldProvisionIdentitySendEmailAndResetPassword()
     {
-        configuration ??= TestHelpers.CreateConfiguration();
-        captcha ??= new Mock<ICaptchaService>();
-        auditService ??= new Mock<IAuthSecurityAuditService>();
-        identityBridgeService ??= Mock.Of<ILegacyIdentityBridgeService>();
+        var context = TestHelpers.CreateContext(tenantId: 14);
+        using var harness = TestHelpers.CreateIdentityHarness();
+        var service = TestHelpers.CreateAuthService(context, harness);
 
-        auditService.Setup(x => x.WriteAsync(
-                It.IsAny<string>(),
-                It.IsAny<int?>(),
-                It.IsAny<int?>(),
-                It.IsAny<string?>(),
-                It.IsAny<string?>(),
-                It.IsAny<int?>(),
-                It.IsAny<DateTime?>(),
-                It.IsAny<string?>()))
-            .Returns(Task.CompletedTask);
+        var role = new Role { Id = 3, Name = "Management" };
+        var company = new Company { Id = 14, Name = "Reset Co", IsActive = true, Status = "Active" };
+        var user = TestHelpers.CreateUser(role, company.Id, "reset@test.com", "LongPassword123!");
 
-        return new AuthService(
-            context,
-            configuration,
-            captcha.Object,
-            Mock.Of<ILogger<AuthService>>(),
-            auditService.Object,
-            new LegacyPasswordService(),
-            new JwtAuthTokenFactory(configuration),
-            identityBridgeService);
+        context.Roles.Add(role);
+        context.Companies.Add(company);
+        context.Users.Add(user);
+        await context.SaveChangesAsync();
+
+        await service.SendPasswordResetAsync(new ForgotPasswordDTO { Email = user.Email });
+
+        harness.EmailService.SentEmails.Should().ContainSingle();
+        var sentEmail = harness.EmailService.SentEmails.Single();
+        sentEmail.Email.Should().Be("reset@test.com");
+        sentEmail.ResetLink.Should().Contain("/reset-password?");
+
+        var query = QueryHelpers.ParseQuery(new Uri(sentEmail.ResetLink).Query);
+        var encodedToken = query["token"].ToString();
+        var encodedEmail = query["email"].ToString();
+        encodedToken.Should().NotBeNullOrWhiteSpace();
+        encodedEmail.Should().NotBeNullOrWhiteSpace();
+
+        await service.ResetPasswordAsync(new ResetPasswordDTO
+        {
+            Email = encodedEmail,
+            Token = encodedToken,
+            NewPassword = "BetterPassword456!",
+            ConfirmPassword = "BetterPassword456!"
+        });
+
+        var identityUser = await harness.IdentityContext.Users.SingleAsync(u => u.LegacyUserId == user.Id);
+        (await harness.UserManager.CheckPasswordAsync(identityUser, "BetterPassword456!")).Should().BeTrue();
+
+        var reloadedUser = await context.Users.IgnoreQueryFilters().SingleAsync(u => u.Id == user.Id);
+        reloadedUser.PasswordHash.Should().BeEmpty();
+        reloadedUser.PasswordSalt.Should().BeNull();
+
+        var loginResponse = await service.LoginAsync(new LoginDTO
+        {
+            Email = user.Email,
+            Password = "BetterPassword456!"
+        });
+        loginResponse.Token.Should().NotBeNullOrWhiteSpace();
     }
 }
 
@@ -403,14 +433,14 @@ public class AuthControllerTests
 {
     [Theory]
     [InlineData("UnknownUser")]
-    [InlineData("InvalidPassword")]
-    [InlineData("BlockedUser")]
-    [InlineData("DeactivatedUser")]
-    [InlineData("LockoutActive")]
+    [InlineData("CorruptedLegacyPassword")]
+    [InlineData("BadIdentityPassword")]
     public async Task Login_WhenAuthenticationFails_ShouldReturnGenericUnauthorizedPayload(string scenario)
     {
-        var context = TestHelpers.CreateContext();
-        var configuration = TestHelpers.CreateConfiguration();
+        var context = TestHelpers.CreateContext(tenantId: 30);
+        using var harness = TestHelpers.CreateIdentityHarness();
+        var service = TestHelpers.CreateAuthService(context, harness);
+
         var role = new Role { Id = 1, Name = "Admin" };
         var company = new Company { Id = 30, Name = "Northwind", IsActive = true, Status = "Active" };
         context.Roles.Add(role);
@@ -420,38 +450,36 @@ public class AuthControllerTests
         {
             var user = TestHelpers.CreateUser(role, company.Id, "user@northwind.com", "LongPassword123!");
 
-            switch (scenario)
+            if (scenario == "CorruptedLegacyPassword")
             {
-                case "BlockedUser":
-                    user.Status = "Blocked";
-                    break;
-                case "DeactivatedUser":
-                    user.IsActive = false;
-                    break;
-                case "LockoutActive":
-                    user.AccessFailedCount = 5;
-                    user.LockoutEndUtc = DateTime.UtcNow.AddMinutes(15);
-                    break;
+                user.PasswordHash = "bad";
+                user.PasswordSalt = "bad";
             }
 
             context.Users.Add(user);
+            await context.SaveChangesAsync();
+
+            if (scenario == "BadIdentityPassword")
+            {
+                await harness.AccountService.EnsureProvisionedAsync(
+                    TestHelpers.CreateIdentitySnapshot(user, role.Name),
+                    "LongPassword123!");
+                user.PasswordHash = string.Empty;
+                user.PasswordSalt = null;
+                await context.SaveChangesAsync();
+            }
+        }
+        else
+        {
+            await context.SaveChangesAsync();
         }
 
-        await context.SaveChangesAsync();
-
-        var controller = new AuthController(TestHelpers.CreateAuthService(context, configuration));
-        var loginDto = new LoginDTO
+        var controller = new AuthController(service);
+        var response = await controller.Login(new LoginDTO
         {
-            Email = "user@northwind.com",
-            Password = scenario == "InvalidPassword" ? "WrongPassword123!" : "LongPassword123!"
-        };
-
-        if (scenario == "UnknownUser")
-        {
-            loginDto.Email = "missing@northwind.com";
-        }
-
-        var response = await controller.Login(loginDto);
+            Email = scenario == "UnknownUser" ? "missing@northwind.com" : "user@northwind.com",
+            Password = "WrongPassword123!"
+        });
 
         var unauthorized = response.Should().BeOfType<UnauthorizedObjectResult>().Subject;
         TestHelpers.GetAnonymousStringValue(unauthorized.Value, "error")
@@ -522,182 +550,6 @@ public class CaptchaServiceTests
     }
 }
 
-public class LegacyIdentityBridgeServiceTests
-{
-    [Fact]
-    public async Task SyncAfterSuccessfulLoginAsync_WhenIdentitySyncFails_ShouldAuditAndNotThrow()
-    {
-        var accountService = new Mock<IIdentityAccountService>();
-        accountService.Setup(x => x.EnsureProvisionedAsync(
-                It.IsAny<LegacyIdentityUserSnapshot>(),
-                It.IsAny<string>(),
-                It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new InvalidOperationException("sync failed"));
-
-        var auditService = new Mock<IAuthSecurityAuditService>();
-        auditService.Setup(x => x.WriteAsync(
-                It.IsAny<string>(),
-                It.IsAny<int?>(),
-                It.IsAny<int?>(),
-                It.IsAny<string?>(),
-                It.IsAny<string?>(),
-                It.IsAny<int?>(),
-                It.IsAny<DateTime?>(),
-                It.IsAny<string?>()))
-            .Returns(Task.CompletedTask);
-
-        var bridge = new LegacyIdentityBridgeService(
-            accountService.Object,
-            auditService.Object,
-            Mock.Of<ILogger<LegacyIdentityBridgeService>>());
-
-        var action = () => bridge.SyncAfterSuccessfulLoginAsync(
-            new LegacyIdentityUserSnapshot(10, 20, "bridge@test.com", "Bridge User", "Active", true, false, "Admin"),
-            "LongPassword123!");
-
-        await action.Should().NotThrowAsync();
-        auditService.Verify(x => x.WriteAsync(
-            "IDENTITY-SYNC-FAILURE",
-            10,
-            20,
-            "bridge@test.com",
-            "SuccessfulLogin",
-            It.IsAny<int?>(),
-            It.IsAny<DateTime?>(),
-            "InvalidOperationException"),
-            Times.Once);
-    }
-}
-
-public class SuperAdminControllerTests
-{
-    [Fact]
-    public async Task UpdateCompanyStatus_WhenCompanyDoesNotExist_ShouldReturnNotFound()
-    {
-        var controller = new SuperAdminController(
-            TestHelpers.CreateContext(),
-            Mock.Of<ILogger<SuperAdminController>>(),
-            Mock.Of<ILegacyIdentityBridgeService>());
-
-        var response = await controller.UpdateCompanyStatus(404, new UpdateCompanyStatusDTO { Status = "Active" });
-
-        response.Should().BeOfType<NotFoundObjectResult>();
-    }
-
-    [Fact]
-    public async Task UpdateCompanyStatus_WhenStatusIsInvalid_ShouldReturnBadRequest()
-    {
-        var context = TestHelpers.CreateContext();
-        context.Companies.Add(new Company { Id = 7, Name = "Tenant 7", Status = "Active", IsActive = true });
-        await context.SaveChangesAsync();
-        var controller = new SuperAdminController(
-            context,
-            Mock.Of<ILogger<SuperAdminController>>(),
-            Mock.Of<ILegacyIdentityBridgeService>());
-
-        var response = await controller.UpdateCompanyStatus(7, new UpdateCompanyStatusDTO { Status = "Invalid" });
-
-        response.Should().BeOfType<BadRequestObjectResult>();
-    }
-
-    [Fact]
-    public async Task UpdateUserStatus_WhenSuccessful_ShouldSyncLinkedIdentityUser()
-    {
-        var context = TestHelpers.CreateContext();
-        using var harness = TestHelpers.CreateIdentityHarness();
-
-        var role = new Role { Id = 2, Name = "Accounting" };
-        var user = TestHelpers.CreateUser(role, 50, "status@test.com", "LongPassword123!");
-        context.Roles.Add(role);
-        context.Users.Add(user);
-        await context.SaveChangesAsync();
-
-        await harness.AccountService.EnsureProvisionedAsync(
-            new LegacyIdentityUserSnapshot(user.Id, user.CompanyId, user.Email, user.FullName, user.Status, user.IsActive, user.IsDeleted, role.Name),
-            "LongPassword123!");
-
-        var controller = new SuperAdminController(
-            context,
-            Mock.Of<ILogger<SuperAdminController>>(),
-            harness.BridgeService)
-        {
-            ControllerContext = new ControllerContext
-            {
-                HttpContext = TestHelpers.CreateHttpContextWithUser(999, "super@test.com", "SuperAdmin", 1)
-            }
-        };
-
-        var response = await controller.UpdateUserStatus(user.Id, new UpdateUserStatusDTO { Status = "Blocked" });
-
-        response.Should().BeOfType<OkObjectResult>();
-        var identityUser = await harness.IdentityContext.Users.SingleAsync(u => u.LegacyUserId == user.Id);
-        identityUser.Status.Should().Be("Blocked");
-        identityUser.IsActive.Should().BeFalse();
-    }
-}
-
-public class UsersControllerTests
-{
-    [Fact]
-    public async Task DeleteUser_WhenSuccessful_ShouldSyncLinkedIdentityUser()
-    {
-        var context = TestHelpers.CreateContext(tenantId: 88);
-        using var harness = TestHelpers.CreateIdentityHarness();
-
-        var role = new Role { Id = 2, Name = "Accounting" };
-        var user = TestHelpers.CreateUser(role, 88, "archive@test.com", "LongPassword123!");
-        context.Roles.Add(role);
-        context.Users.Add(user);
-        await context.SaveChangesAsync();
-
-        await harness.AccountService.EnsureProvisionedAsync(
-            new LegacyIdentityUserSnapshot(user.Id, user.CompanyId, user.Email, user.FullName, user.Status, user.IsActive, user.IsDeleted, role.Name),
-            "LongPassword123!");
-
-        var controller = new UsersController(
-            context,
-            Mock.Of<IAuthService>(),
-            harness.BridgeService);
-
-        var response = await controller.DeleteUser(user.Id);
-
-        response.Should().BeOfType<OkObjectResult>();
-        var identityUser = await harness.IdentityContext.Users.SingleAsync(u => u.LegacyUserId == user.Id);
-        identityUser.IsDeleted.Should().BeTrue();
-        identityUser.IsActive.Should().BeFalse();
-    }
-
-    [Fact]
-    public async Task RestoreUser_WhenSuccessful_ShouldSyncLinkedIdentityUser()
-    {
-        var context = TestHelpers.CreateContext();
-        using var harness = TestHelpers.CreateIdentityHarness();
-
-        var role = new Role { Id = 2, Name = "Accounting" };
-        var user = TestHelpers.CreateUser(role, 89, "restore@test.com", "LongPassword123!", isActive: false);
-        user.IsDeleted = true;
-        context.Roles.Add(role);
-        context.Users.Add(user);
-        await context.SaveChangesAsync();
-
-        await harness.AccountService.EnsureProvisionedAsync(
-            new LegacyIdentityUserSnapshot(user.Id, user.CompanyId, user.Email, user.FullName, user.Status, user.IsActive, user.IsDeleted, role.Name),
-            "LongPassword123!");
-
-        var controller = new UsersController(
-            context,
-            Mock.Of<IAuthService>(),
-            harness.BridgeService);
-
-        var response = await controller.RestoreUser(user.Id);
-
-        response.Should().BeOfType<OkObjectResult>();
-        var identityUser = await harness.IdentityContext.Users.SingleAsync(u => u.LegacyUserId == user.Id);
-        identityUser.IsDeleted.Should().BeFalse();
-        identityUser.IsActive.Should().BeTrue();
-    }
-}
-
 internal static class TestHelpers
 {
     internal static AccountingDbContext CreateContext(int tenantId = 0)
@@ -716,15 +568,16 @@ internal static class TestHelpers
     {
         return new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
-        {
-            ["JwtSettings:Secret"] = "super-secret-key-for-tests-only-1234567890",
-            ["JwtSettings:Issuer"] = "issuer",
-            ["JwtSettings:Audience"] = "audience",
-            ["JwtSettings:ExpiryMinutes"] = "60",
-            ["JwtSettings:ClockSkewSeconds"] = clockSkewSeconds.ToString(),
-            ["AuthSecurity:Lockout:MaxFailedAccessAttempts"] = "5",
-            ["AuthSecurity:Lockout:LockoutMinutes"] = "15"
-        })
+            {
+                ["JwtSettings:Secret"] = "super-secret-key-for-tests-only-1234567890",
+                ["JwtSettings:Issuer"] = "issuer",
+                ["JwtSettings:Audience"] = "audience",
+                ["JwtSettings:ExpiryMinutes"] = "60",
+                ["JwtSettings:ClockSkewSeconds"] = clockSkewSeconds.ToString(),
+                ["AuthSecurity:Lockout:MaxFailedAccessAttempts"] = "5",
+                ["AuthSecurity:Lockout:LockoutMinutes"] = "15",
+                ["AppUrls:ClientBaseUrl"] = "https://client.example.test"
+            })
             .Build();
     }
 
@@ -734,9 +587,7 @@ internal static class TestHelpers
         string email,
         string password,
         bool isActive = true,
-        string status = "Active",
-        int accessFailedCount = 0,
-        DateTime? lockoutEndUtc = null)
+        string status = "Active")
     {
         using var hmac = new HMACSHA512();
         var salt = hmac.Key;
@@ -752,40 +603,56 @@ internal static class TestHelpers
             PasswordHash = Convert.ToBase64String(hash),
             PasswordSalt = Convert.ToBase64String(salt),
             IsActive = isActive,
-            Status = status,
-            AccessFailedCount = accessFailedCount,
-            LockoutEndUtc = lockoutEndUtc
+            Status = status
         };
     }
 
+    internal static LegacyIdentityUserSnapshot CreateIdentitySnapshot(User user, string roleName) =>
+        new(
+            user.Id,
+            user.CompanyId,
+            user.Email,
+            user.FullName ?? user.Email,
+            user.Status,
+            user.IsActive,
+            user.IsDeleted,
+            roleName);
+
     internal static AuthService CreateAuthService(
         AccountingDbContext context,
-        IConfiguration configuration,
-        ILegacyIdentityBridgeService? identityBridgeService = null)
+        IdentityTestHarness harness,
+        IConfiguration? configuration = null,
+        Mock<ICaptchaService>? captcha = null,
+        Mock<IAuthSecurityAuditService>? auditService = null)
     {
-        var captcha = new Mock<ICaptchaService>();
-        var auditService = new Mock<IAuthSecurityAuditService>();
+        configuration ??= CreateConfiguration();
+        captcha ??= new Mock<ICaptchaService>();
+        captcha.Setup(x => x.VerifyTokenAsync(It.IsAny<string>())).ReturnsAsync(true);
+
+        auditService ??= new Mock<IAuthSecurityAuditService>();
         auditService.Setup(x => x.WriteAsync(
-            It.IsAny<string>(),
-            It.IsAny<int?>(),
-            It.IsAny<int?>(),
-            It.IsAny<string?>(),
-            It.IsAny<string?>(),
-            It.IsAny<int?>(),
-            It.IsAny<DateTime?>(),
-            It.IsAny<string?>()))
+                It.IsAny<string>(),
+                It.IsAny<int?>(),
+                It.IsAny<int?>(),
+                It.IsAny<string?>(),
+                It.IsAny<string?>(),
+                It.IsAny<int?>(),
+                It.IsAny<DateTime?>(),
+                It.IsAny<string?>()))
             .Returns(Task.CompletedTask);
-        identityBridgeService ??= Mock.Of<ILegacyIdentityBridgeService>();
 
         return new AuthService(
             context,
+            harness.IdentityContext,
             configuration,
             captcha.Object,
             Mock.Of<ILogger<AuthService>>(),
             auditService.Object,
             new LegacyPasswordService(),
             new JwtAuthTokenFactory(configuration),
-            identityBridgeService);
+            harness.AccountService,
+            harness.EmailService,
+            harness.UserManager);
     }
 
     internal static string CreateJwtToken(IConfiguration configuration, DateTime expiresAtUtc)
@@ -817,22 +684,6 @@ internal static class TestHelpers
         return source?.GetType().GetProperty(propertyName)?.GetValue(source)?.ToString();
     }
 
-    internal static DefaultHttpContext CreateHttpContextWithUser(int userId, string email, string role, int companyId)
-    {
-        var context = new DefaultHttpContext();
-        context.User = new ClaimsPrincipal(new ClaimsIdentity(new[]
-        {
-            new Claim("UserId", userId.ToString()),
-            new Claim(ClaimTypes.Name, email),
-            new Claim("unique_name", email),
-            new Claim(ClaimTypes.Role, role),
-            new Claim("role", role),
-            new Claim("CompanyId", companyId.ToString())
-        }, "TestAuth"));
-
-        return context;
-    }
-
     internal static IdentityTestHarness CreateIdentityHarness()
     {
         return new IdentityTestHarness();
@@ -850,19 +701,6 @@ internal sealed class IdentityTestHarness : IDisposable
         services.AddLogging();
         services.AddDataProtection();
 
-        var auditService = new Mock<IAuthSecurityAuditService>();
-        auditService.Setup(x => x.WriteAsync(
-                It.IsAny<string>(),
-                It.IsAny<int?>(),
-                It.IsAny<int?>(),
-                It.IsAny<string?>(),
-                It.IsAny<string?>(),
-                It.IsAny<int?>(),
-                It.IsAny<DateTime?>(),
-                It.IsAny<string?>()))
-            .Returns(Task.CompletedTask);
-
-        services.AddSingleton(auditService.Object);
         services.AddDbContext<IdentityAuthDbContext>(options =>
             options.UseInMemoryDatabase(Guid.NewGuid().ToString()));
         services.Configure<DataProtectionTokenProviderOptions>(options =>
@@ -892,7 +730,10 @@ internal sealed class IdentityTestHarness : IDisposable
 
         identityBuilder.AddPasswordValidator<SharedPasswordIdentityValidator>();
         services.AddScoped<IIdentityAccountService, IdentityAccountService>();
-        services.AddScoped<ILegacyIdentityBridgeService, LegacyIdentityBridgeService>();
+
+        var emailService = new TestAccountEmailService();
+        services.AddSingleton(emailService);
+        services.AddSingleton<IAccountEmailService>(emailService);
 
         _serviceProvider = services.BuildServiceProvider();
         _scope = _serviceProvider.CreateScope();
@@ -900,20 +741,17 @@ internal sealed class IdentityTestHarness : IDisposable
         IdentityContext = _scope.ServiceProvider.GetRequiredService<IdentityAuthDbContext>();
         IdentityContext.Database.EnsureCreated();
         UserManager = _scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-        RoleManager = _scope.ServiceProvider.GetRequiredService<RoleManager<ApplicationRole>>();
         AccountService = _scope.ServiceProvider.GetRequiredService<IIdentityAccountService>();
-        BridgeService = _scope.ServiceProvider.GetRequiredService<ILegacyIdentityBridgeService>();
+        EmailService = emailService;
     }
 
     public IdentityAuthDbContext IdentityContext { get; }
 
     public UserManager<ApplicationUser> UserManager { get; }
 
-    public RoleManager<ApplicationRole> RoleManager { get; }
-
     public IIdentityAccountService AccountService { get; }
 
-    public ILegacyIdentityBridgeService BridgeService { get; }
+    public TestAccountEmailService EmailService { get; }
 
     public void Dispose()
     {
@@ -921,3 +759,16 @@ internal sealed class IdentityTestHarness : IDisposable
         _serviceProvider.Dispose();
     }
 }
+
+internal sealed class TestAccountEmailService : IAccountEmailService
+{
+    public List<SentResetEmail> SentEmails { get; } = new();
+
+    public Task SendPasswordResetAsync(string email, string fullName, string resetLink, CancellationToken cancellationToken = default)
+    {
+        SentEmails.Add(new SentResetEmail(email, fullName, resetLink));
+        return Task.CompletedTask;
+    }
+}
+
+internal sealed record SentResetEmail(string Email, string FullName, string ResetLink);

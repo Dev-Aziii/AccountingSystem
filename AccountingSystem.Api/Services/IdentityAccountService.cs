@@ -41,6 +41,28 @@ namespace AccountingSystem.API.Services
             await SyncRolesAsync(user, snapshot.RoleName);
         }
 
+        public async Task EnsureProvisionedWithoutPasswordAsync(
+            LegacyIdentityUserSnapshot snapshot,
+            CancellationToken cancellationToken = default)
+        {
+            var user = await FindLinkedOrEmailMatchAsync(snapshot);
+            if (user == null)
+            {
+                await EnsureRoleExistsAsync(snapshot.RoleName);
+
+                user = CreateApplicationUser(snapshot);
+                var createResult = await _userManager.CreateAsync(user);
+                EnsureSucceeded(createResult, snapshot, "CreateAsyncWithoutPassword");
+
+                await SyncRolesAsync(user, snapshot.RoleName);
+                return;
+            }
+
+            ApplySnapshot(user, snapshot);
+            await PersistUserAsync(user, snapshot, "SyncExistingWithoutPassword");
+            await SyncRolesAsync(user, snapshot.RoleName);
+        }
+
         public async Task SyncExistingAsync(
             LegacyIdentityUserSnapshot snapshot,
             CancellationToken cancellationToken = default)
@@ -77,6 +99,22 @@ namespace AccountingSystem.API.Services
             ApplySnapshot(user, snapshot);
             await SyncPasswordHashAsync(user, plainTextPassword);
             await SyncRolesAsync(user, snapshot.RoleName);
+        }
+
+        public async Task<ApplicationUser?> FindByEmailAsync(string email, CancellationToken cancellationToken = default)
+        {
+            var normalizedEmail = _userManager.NormalizeEmail(email);
+            if (string.IsNullOrWhiteSpace(normalizedEmail))
+            {
+                return null;
+            }
+
+            return await _userManager.Users.FirstOrDefaultAsync(u => u.NormalizedEmail == normalizedEmail, cancellationToken);
+        }
+
+        public async Task<ApplicationUser?> FindByLegacyUserIdAsync(int legacyUserId, CancellationToken cancellationToken = default)
+        {
+            return await _userManager.Users.FirstOrDefaultAsync(u => u.LegacyUserId == legacyUserId, cancellationToken);
         }
 
         private async Task<ApplicationUser?> FindLinkedOrEmailMatchAsync(LegacyIdentityUserSnapshot snapshot)
