@@ -111,33 +111,34 @@ namespace AccountingSystem.API.Services
                 throw new Exception("Email is already in use.");
             }
 
-            using var transaction = CreateTransactionScope();
-
             var identityUser = await ResolveIdentityUserAsync(user);
-            if (identityUser != null)
+            using (var transaction = CreateTransactionScope())
             {
-                identityUser.Email = dto.Email;
-                identityUser.UserName = dto.Email;
-                identityUser.NormalizedEmail = _userManager.NormalizeEmail(dto.Email);
-                identityUser.NormalizedUserName = _userManager.NormalizeName(dto.Email);
-                identityUser.FullName = dto.FullName;
-                if (emailChanged)
+                if (identityUser != null)
                 {
-                    identityUser.RequireEmailConfirmation = true;
-                    identityUser.EmailConfirmed = false;
+                    identityUser.Email = dto.Email;
+                    identityUser.UserName = dto.Email;
+                    identityUser.NormalizedEmail = _userManager.NormalizeEmail(dto.Email);
+                    identityUser.NormalizedUserName = _userManager.NormalizeName(dto.Email);
+                    identityUser.FullName = dto.FullName;
+                    if (emailChanged)
+                    {
+                        identityUser.RequireEmailConfirmation = true;
+                        identityUser.EmailConfirmed = false;
+                    }
+
+                    identityUser.UpdatedAt = DateTime.UtcNow;
+
+                    var identityResult = await _userManager.UpdateAsync(identityUser);
+                    EnsureIdentitySucceeded(identityResult, "UpdateProfile");
                 }
 
-                identityUser.UpdatedAt = DateTime.UtcNow;
+                user.FullName = dto.FullName;
+                user.Email = dto.Email;
 
-                var identityResult = await _userManager.UpdateAsync(identityUser);
-                EnsureIdentitySucceeded(identityResult, "UpdateProfile");
+                await _context.SaveChangesAsync();
+                transaction.Complete();
             }
-
-            user.FullName = dto.FullName;
-            user.Email = dto.Email;
-
-            await _context.SaveChangesAsync();
-            transaction.Complete();
 
             if (emailChanged && identityUser != null)
             {
@@ -176,71 +177,72 @@ namespace AccountingSystem.API.Services
                 throw new Exception(passwordValidationMessage);
             }
 
-            using var transaction = CreateTransactionScope();
-
             var identityUser = await ResolveIdentityUserAsync(user);
-            if (identityUser == null)
+            using (var transaction = CreateTransactionScope())
             {
-                await _identityAccountService.EnsureProvisionedAsync(CreateIdentitySnapshot(user, user.Role.Name), dto.CurrentPassword);
-                identityUser = await RequireIdentityUserAsync(user);
-            }
-            else if (!HasUsableIdentityPassword(identityUser))
-            {
-                if (!TryVerifyLegacyPassword(dto.CurrentPassword, user, out var legacyPasswordMatches))
+                if (identityUser == null)
+                {
+                    await _identityAccountService.EnsureProvisionedAsync(CreateProvisioningSnapshot(user, user.Role.Name), dto.CurrentPassword);
+                    identityUser = await RequireIdentityUserAsync(user);
+                }
+                else if (!HasUsableIdentityPassword(identityUser))
+                {
+                    if (!TryVerifyLegacyPassword(dto.CurrentPassword, user, out var legacyPasswordMatches))
+                    {
+                        await _auditService.WriteAsync(
+                            "AUTH-PASSWORD-CHANGE-FAILURE",
+                            userId: user.Id,
+                            companyId: user.CompanyId,
+                            email: user.Email,
+                            reason: "PasswordDataCorrupted");
+                        throw new Exception("Password reset is required before this account can change its password.");
+                    }
+
+                    if (!legacyPasswordMatches)
+                    {
+                        await _auditService.WriteAsync(
+                            "AUTH-PASSWORD-CHANGE-FAILURE",
+                            userId: user.Id,
+                            companyId: user.CompanyId,
+                            email: user.Email,
+                            reason: "InvalidCurrentPassword");
+                        throw new Exception("Incorrect current password.");
+                    }
+
+                    identityUser.PasswordHash = _userManager.PasswordHasher.HashPassword(identityUser, dto.CurrentPassword);
+                    identityUser.SecurityStamp = Guid.NewGuid().ToString("N");
+                    identityUser.UpdatedAt = DateTime.UtcNow;
+
+                    var bootstrapResult = await _userManager.UpdateAsync(identityUser);
+                    EnsureIdentitySucceeded(bootstrapResult, "BootstrapIdentityPasswordForChange");
+                }
+
+                var changePasswordResult = await _userManager.ChangePasswordAsync(identityUser, dto.CurrentPassword, dto.NewPassword);
+                if (!changePasswordResult.Succeeded)
                 {
                     await _auditService.WriteAsync(
                         "AUTH-PASSWORD-CHANGE-FAILURE",
                         userId: user.Id,
                         companyId: user.CompanyId,
                         email: user.Email,
-                        reason: "PasswordDataCorrupted");
-                    throw new Exception("Password reset is required before this account can change its password.");
+                        reason: changePasswordResult.Errors.FirstOrDefault()?.Code ?? "IdentityPasswordChangeFailed");
+
+                    if (changePasswordResult.Errors.Any(e => string.Equals(e.Code, "PasswordMismatch", StringComparison.OrdinalIgnoreCase)))
+                    {
+                        throw new Exception("Incorrect current password.");
+                    }
+
+                    throw new Exception(GetIdentityErrorMessage(changePasswordResult, "Unable to change password. Please try again."));
                 }
 
-                if (!legacyPasswordMatches)
-                {
-                    await _auditService.WriteAsync(
-                        "AUTH-PASSWORD-CHANGE-FAILURE",
-                        userId: user.Id,
-                        companyId: user.CompanyId,
-                        email: user.Email,
-                        reason: "InvalidCurrentPassword");
-                    throw new Exception("Incorrect current password.");
-                }
+                await ResetIdentityLockoutAsync(identityUser);
+                var refreshedIdentityUser = await RequireIdentityUserAsync(user);
+                ApplyIdentitySecurityMirror(user, refreshedIdentityUser);
+                ClearLegacyPassword(user);
+                await _context.SaveChangesAsync();
 
-                identityUser.PasswordHash = _userManager.PasswordHasher.HashPassword(identityUser, dto.CurrentPassword);
-                identityUser.SecurityStamp = Guid.NewGuid().ToString("N");
-                identityUser.UpdatedAt = DateTime.UtcNow;
-
-                var bootstrapResult = await _userManager.UpdateAsync(identityUser);
-                EnsureIdentitySucceeded(bootstrapResult, "BootstrapIdentityPasswordForChange");
+                transaction.Complete();
             }
-
-            var changePasswordResult = await _userManager.ChangePasswordAsync(identityUser, dto.CurrentPassword, dto.NewPassword);
-            if (!changePasswordResult.Succeeded)
-            {
-                await _auditService.WriteAsync(
-                    "AUTH-PASSWORD-CHANGE-FAILURE",
-                    userId: user.Id,
-                    companyId: user.CompanyId,
-                    email: user.Email,
-                    reason: changePasswordResult.Errors.FirstOrDefault()?.Code ?? "IdentityPasswordChangeFailed");
-
-                if (changePasswordResult.Errors.Any(e => string.Equals(e.Code, "PasswordMismatch", StringComparison.OrdinalIgnoreCase)))
-                {
-                    throw new Exception("Incorrect current password.");
-                }
-
-                throw new Exception(GetIdentityErrorMessage(changePasswordResult, "Unable to change password. Please try again."));
-            }
-
-            await ResetIdentityLockoutAsync(identityUser);
-            var refreshedIdentityUser = await RequireIdentityUserAsync(user);
-            ApplyIdentitySecurityMirror(user, refreshedIdentityUser);
-            ClearLegacyPassword(user);
-            await _context.SaveChangesAsync();
-
-            transaction.Complete();
 
             await _auditService.WriteAsync(
                 "AUTH-PASSWORD-CHANGE",
@@ -281,56 +283,59 @@ namespace AccountingSystem.API.Services
 
             Company? company = null;
             User? user = null;
-
-            using var transaction = CreateTransactionScope();
+            ApplicationUser? identityUser = null;
 
             try
             {
-                company = new Company
+                using (var transaction = CreateTransactionScope())
                 {
-                    Name = dto.CompanyName,
-                    CreatedAt = DateTime.UtcNow,
-                    IsActive = true,
-                    Status = "Active",
-                    Currency = "PHP",
-                    FiscalYearStartMonth = 1
-                };
-                _context.Companies.Add(company);
-                await _context.SaveChangesAsync();
+                    company = new Company
+                    {
+                        Name = dto.CompanyName,
+                        CreatedAt = DateTime.UtcNow,
+                        IsActive = true,
+                        Status = "Active",
+                        Currency = "PHP",
+                        FiscalYearStartMonth = 1
+                    };
+                    _context.Companies.Add(company);
+                    await _context.SaveChangesAsync();
 
-                var adminRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == "Admin");
-                if (adminRole == null)
-                {
-                    await _auditService.WriteAsync(
-                        "AUTH-REGISTER-COMPANY-FAILURE",
-                        companyId: company.Id,
-                        email: dto.AdminEmail,
-                        reason: "AdminRoleMissing");
-                    throw new Exception("System role 'Admin' is missing.");
+                    var adminRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == "Admin");
+                    if (adminRole == null)
+                    {
+                        await _auditService.WriteAsync(
+                            "AUTH-REGISTER-COMPANY-FAILURE",
+                            companyId: company.Id,
+                            email: dto.AdminEmail,
+                            reason: "AdminRoleMissing");
+                        throw new Exception("System role 'Admin' is missing.");
+                    }
+
+                    user = new User
+                    {
+                        CompanyId = company.Id,
+                        Email = dto.AdminEmail,
+                        FullName = dto.AdminFullName,
+                        RoleId = adminRole.Id,
+                        Role = adminRole,
+                        PasswordHash = string.Empty,
+                        PasswordSalt = null,
+                        IsActive = true,
+                        Status = "Active"
+                    };
+
+                    _context.Users.Add(user);
+                    await _context.SaveChangesAsync();
+
+                    await _identityAccountService.EnsureProvisionedAsync(
+                        CreateIdentitySnapshot(user, adminRole.Name, requireEmailConfirmation: true, emailConfirmed: false),
+                        dto.Password);
+
+                    await SeedCompanyDataAsync(company.Id);
+                    identityUser = await RequireIdentityUserAsync(user);
+                    transaction.Complete();
                 }
-
-                user = new User
-                {
-                    CompanyId = company.Id,
-                    Email = dto.AdminEmail,
-                    FullName = dto.AdminFullName,
-                    RoleId = adminRole.Id,
-                    Role = adminRole,
-                    PasswordHash = string.Empty,
-                    PasswordSalt = null,
-                    IsActive = true,
-                    Status = "Active"
-                };
-
-                _context.Users.Add(user);
-                await _context.SaveChangesAsync();
-
-                await _identityAccountService.EnsureProvisionedAsync(
-                    CreateIdentitySnapshot(user, adminRole.Name, requireEmailConfirmation: true, emailConfirmed: false),
-                    dto.Password);
-
-                await SeedCompanyDataAsync(company.Id);
-                transaction.Complete();
             }
             catch (DbUpdateException ex)
             {
@@ -348,8 +353,7 @@ namespace AccountingSystem.API.Services
                 throw new Exception("Registration failed while saving your company account. Please try again.");
             }
 
-            var identityUser = await RequireIdentityUserAsync(user!);
-            await TrySendEmailConfirmationAsync(identityUser, "AUTH-EMAIL-CONFIRMATION-SENT", "RegisterCompany");
+            await TrySendEmailConfirmationAsync(identityUser!, "AUTH-EMAIL-CONFIRMATION-SENT", "RegisterCompany");
 
             await _auditService.WriteAsync(
                 "AUTH-REGISTER-COMPANY",
@@ -398,8 +402,6 @@ namespace AccountingSystem.API.Services
                 throw new Exception("SuperAdmin role cannot be assigned from this endpoint.");
             }
 
-            using var transaction = CreateTransactionScope();
-
             var user = new User
             {
                 Email = registerDto.Email,
@@ -411,15 +413,20 @@ namespace AccountingSystem.API.Services
                 Status = "Active"
             };
 
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
+            ApplicationUser? identityUser;
+            using (var transaction = CreateTransactionScope())
+            {
+                _context.Users.Add(user);
+                await _context.SaveChangesAsync();
 
-            await _identityAccountService.EnsureProvisionedAsync(
-                CreateIdentitySnapshot(user, role.Name, requireEmailConfirmation: true, emailConfirmed: false),
-                registerDto.Password);
+                await _identityAccountService.EnsureProvisionedAsync(
+                    CreateIdentitySnapshot(user, role.Name, requireEmailConfirmation: true, emailConfirmed: false),
+                    registerDto.Password);
 
-            transaction.Complete();
-            var identityUser = await RequireIdentityUserAsync(user);
+                identityUser = await RequireIdentityUserAsync(user);
+                transaction.Complete();
+            }
+
             await TrySendEmailConfirmationAsync(identityUser, "AUTH-EMAIL-CONFIRMATION-SENT", "AdminUserCreated");
             return user;
         }
@@ -521,20 +528,28 @@ namespace AccountingSystem.API.Services
                 }
             }
 
-            if (identityUser != null &&
-                identityUser.RequireEmailConfirmation &&
-                !identityUser.EmailConfirmed)
+            var isSuperAdmin = IsSuperAdminRole(user.Role.Name);
+            if (!isSuperAdmin)
+            {
+                if (identityUser == null || !await _userManager.IsEmailConfirmedAsync(identityUser))
+                {
+                    await _auditService.WriteAsync(
+                        "AUTH-LOGIN-FAILURE",
+                        userId: user.Id,
+                        companyId: company.Id,
+                        email: user.Email,
+                        reason: "EmailConfirmationRequired");
+                    throw new AuthFailureException("EmailConfirmationRequired");
+                }
+            }
+            else if (identityUser != null && !await _userManager.IsEmailConfirmedAsync(identityUser))
             {
                 await _auditService.WriteAsync(
-                    "AUTH-LOGIN-FAILURE",
+                    "AUTH-EMAIL-CONFIRMATION-BYPASS",
                     userId: user.Id,
                     companyId: company.Id,
                     email: user.Email,
-                    reason: "EmailConfirmationRequired");
-                throw new AuthFailureException(
-                    "EmailConfirmationRequired",
-                    "Please confirm your email before signing in.",
-                    StatusCodes.Status403Forbidden);
+                    reason: "SuperAdminRole");
             }
 
             var tokenResult = _authTokenFactory.Create(CreateTokenContext(user, company));
@@ -571,11 +586,12 @@ namespace AccountingSystem.API.Services
 
                 if (identityUser == null && legacyUser != null && legacyUser.Role != null)
                 {
-                    using var transaction = CreateTransactionScope();
-                    await _identityAccountService.EnsureProvisionedWithoutPasswordAsync(CreateIdentitySnapshot(legacyUser, legacyUser.Role.Name));
-                    transaction.Complete();
-
-                    identityUser = await RequireIdentityUserAsync(legacyUser);
+                    using (var transaction = CreateTransactionScope())
+                    {
+                        await _identityAccountService.EnsureProvisionedWithoutPasswordAsync(CreateProvisioningSnapshot(legacyUser, legacyUser.Role.Name));
+                        identityUser = await RequireIdentityUserAsync(legacyUser);
+                        transaction.Complete();
+                    }
                 }
 
                 if (identityUser == null)
@@ -658,11 +674,30 @@ namespace AccountingSystem.API.Services
         public async Task ResendConfirmationAsync(ResendConfirmationDTO dto)
         {
             ApplicationUser? identityUser = null;
+            User? legacyUser = null;
 
             try
             {
                 identityUser = await _identityAccountService.FindByEmailAsync(dto.Email);
-                if (identityUser == null || identityUser.EmailConfirmed || !identityUser.RequireEmailConfirmation)
+                if (identityUser == null)
+                {
+                    legacyUser = await _context.Users
+                        .IgnoreQueryFilters()
+                        .Include(u => u.Role)
+                        .FirstOrDefaultAsync(u => u.Email == dto.Email && !u.IsDeleted);
+
+                    if (legacyUser?.Role != null)
+                    {
+                        using (var transaction = CreateTransactionScope())
+                        {
+                            await _identityAccountService.EnsureProvisionedWithoutPasswordAsync(CreateProvisioningSnapshot(legacyUser, legacyUser.Role.Name));
+                            identityUser = await RequireIdentityUserAsync(legacyUser);
+                            transaction.Complete();
+                        }
+                    }
+                }
+
+                if (identityUser == null || identityUser.EmailConfirmed)
                 {
                     await _auditService.WriteAsync(
                         "AUTH-EMAIL-CONFIRMATION-RESENT",
@@ -701,31 +736,32 @@ namespace AccountingSystem.API.Services
             }
 
             var decodedToken = DecodeResetToken(dto.Token);
-            using var transaction = CreateTransactionScope();
-
-            var resetResult = await _userManager.ResetPasswordAsync(identityUser, decodedToken, dto.NewPassword);
-            if (!resetResult.Succeeded)
+            using (var transaction = CreateTransactionScope())
             {
-                await _auditService.WriteAsync(
-                    "AUTH-RESET-PASSWORD-FAILURE",
-                    userId: identityUser.LegacyUserId,
-                    companyId: identityUser.CompanyId,
-                    email: identityUser.Email,
-                    reason: resetResult.Errors.FirstOrDefault()?.Code ?? "ResetPasswordFailed");
-                throw new Exception("The password reset request is invalid or has expired.");
+                var resetResult = await _userManager.ResetPasswordAsync(identityUser, decodedToken, dto.NewPassword);
+                if (!resetResult.Succeeded)
+                {
+                    await _auditService.WriteAsync(
+                        "AUTH-RESET-PASSWORD-FAILURE",
+                        userId: identityUser.LegacyUserId,
+                        companyId: identityUser.CompanyId,
+                        email: identityUser.Email,
+                        reason: resetResult.Errors.FirstOrDefault()?.Code ?? "ResetPasswordFailed");
+                    throw new Exception("The password reset request is invalid or has expired.");
+                }
+
+                await ResetIdentityLockoutAsync(identityUser);
+
+                var legacyUser = await ResolveLegacyUserAsync(dto.Email, identityUser);
+                if (legacyUser != null)
+                {
+                    ApplyIdentitySecurityMirror(legacyUser, await RequireIdentityUserByIdAsync(identityUser.Id));
+                    ClearLegacyPassword(legacyUser);
+                    await _context.SaveChangesAsync();
+                }
+
+                transaction.Complete();
             }
-
-            await ResetIdentityLockoutAsync(identityUser);
-
-            var legacyUser = await ResolveLegacyUserAsync(dto.Email, identityUser);
-            if (legacyUser != null)
-            {
-                ApplyIdentitySecurityMirror(legacyUser, await RequireIdentityUserByIdAsync(identityUser.Id));
-                ClearLegacyPassword(legacyUser);
-                await _context.SaveChangesAsync();
-            }
-
-            transaction.Complete();
 
             await _auditService.WriteAsync(
                 "AUTH-RESET-PASSWORD",
@@ -864,7 +900,7 @@ namespace AccountingSystem.API.Services
 
             using var transaction = CreateTransactionScope();
 
-            await _identityAccountService.EnsureProvisionedAsync(CreateIdentitySnapshot(user, user.Role.Name), password);
+            await _identityAccountService.EnsureProvisionedAsync(CreateProvisioningSnapshot(user, user.Role.Name), password);
             var identityUser = await RequireIdentityUserAsync(user);
             await ResetIdentityLockoutAsync(identityUser);
 
@@ -1109,6 +1145,19 @@ namespace AccountingSystem.API.Services
                 roleName,
                 requireEmailConfirmation,
                 emailConfirmed);
+
+        private static LegacyIdentityUserSnapshot CreateProvisioningSnapshot(User user, string roleName)
+        {
+            var requiresEmailConfirmation = !IsSuperAdminRole(roleName);
+            return CreateIdentitySnapshot(
+                user,
+                roleName,
+                requireEmailConfirmation: requiresEmailConfirmation,
+                emailConfirmed: false);
+        }
+
+        private static bool IsSuperAdminRole(string roleName) =>
+            string.Equals(roleName, "SuperAdmin", StringComparison.Ordinal);
 
         private static AuthTokenContext CreateTokenContext(User user, Company company) =>
             new(

@@ -152,7 +152,7 @@ public class AuthServiceTests
         await context.SaveChangesAsync();
 
         await harness.AccountService.EnsureProvisionedAsync(
-            TestHelpers.CreateIdentitySnapshot(user, role.Name),
+            TestHelpers.CreateIdentitySnapshot(user, role.Name, requireEmailConfirmation: true, emailConfirmed: true),
             "LongPassword123!");
 
         var response = await service.LoginAsync(new LoginDTO
@@ -176,7 +176,7 @@ public class AuthServiceTests
     }
 
     [Fact]
-    public async Task LoginAsync_WhenLegacyOnlyUserSignsIn_ShouldProvisionIdentityAndClearLegacyPassword()
+    public async Task LoginAsync_WhenLegacyOnlyNonSuperAdminSignsIn_ShouldProvisionIdentityClearLegacyPasswordAndDenyUntilConfirmed()
     {
         var context = TestHelpers.CreateContext(tenantId: 11);
         using var harness = TestHelpers.CreateIdentityHarness();
@@ -191,18 +191,22 @@ public class AuthServiceTests
         context.Users.Add(user);
         await context.SaveChangesAsync();
 
-        var response = await service.LoginAsync(new LoginDTO
+        var act = async () => await service.LoginAsync(new LoginDTO
         {
             Email = "hydrate@test.com",
             Password = "LongPassword123!"
         });
 
-        response.Email.Should().Be("hydrate@test.com");
+        var exception = await Record.ExceptionAsync(act);
+        exception.Should().NotBeNull();
+        exception!.Message.Should().Be("Invalid email or password. Please try again later.");
 
         var identityUser = await harness.IdentityContext.Users.SingleAsync(u => u.LegacyUserId == user.Id);
         identityUser.Email.Should().Be("hydrate@test.com");
         identityUser.CompanyId.Should().Be(company.Id);
         identityUser.FullName.Should().Be(user.FullName);
+        identityUser.RequireEmailConfirmation.Should().BeTrue();
+        identityUser.EmailConfirmed.Should().BeFalse();
         (await harness.UserManager.CheckPasswordAsync(identityUser, "LongPassword123!")).Should().BeTrue();
         (await harness.UserManager.GetRolesAsync(identityUser)).Should().ContainSingle("Accounting");
 
@@ -303,7 +307,7 @@ public class AuthServiceTests
         await context.SaveChangesAsync();
 
         await harness.AccountService.EnsureProvisionedAsync(
-            TestHelpers.CreateIdentitySnapshot(user, role.Name),
+            TestHelpers.CreateIdentitySnapshot(user, role.Name, requireEmailConfirmation: true, emailConfirmed: true),
             "LongPassword123!");
 
         await service.ChangePasswordAsync(user.Id, new ChangePasswordDTO
@@ -339,7 +343,7 @@ public class AuthServiceTests
         await context.SaveChangesAsync();
 
         await harness.AccountService.EnsureProvisionedAsync(
-            TestHelpers.CreateIdentitySnapshot(user, role.Name),
+            TestHelpers.CreateIdentitySnapshot(user, role.Name, requireEmailConfirmation: true, emailConfirmed: true),
             "LongPassword123!");
 
         await service.UpdateProfileAsync(user.Id, new UpdateProfileDTO
@@ -364,7 +368,7 @@ public class AuthServiceTests
     }
 
     [Fact]
-    public async Task Login_WhenUserRequiresEmailConfirmation_ShouldReturnForbiddenUntilConfirmed()
+    public async Task Login_WhenUserRequiresEmailConfirmation_ShouldReturnGenericUnauthorizedUntilConfirmed()
     {
         var context = TestHelpers.CreateContext(tenantId: 15);
         using var harness = TestHelpers.CreateIdentityHarness();
@@ -391,9 +395,70 @@ public class AuthServiceTests
             Password = "LongPassword123!"
         });
 
-        var forbidden = response.Should().BeOfType<ObjectResult>().Subject;
-        forbidden.StatusCode.Should().Be(StatusCodes.Status403Forbidden);
-        TestHelpers.GetAnonymousStringValue(forbidden.Value, "error").Should().Be("Please confirm your email before signing in.");
+        var unauthorized = response.Should().BeOfType<UnauthorizedObjectResult>().Subject;
+        TestHelpers.GetAnonymousStringValue(unauthorized.Value, "error").Should().Be("Invalid email or password. Please try again later.");
+    }
+
+    [Fact]
+    public async Task Login_WhenUserIsUnconfirmedWithoutRequireFlag_ShouldStillReturnGenericUnauthorized()
+    {
+        var context = TestHelpers.CreateContext(tenantId: 115);
+        using var harness = TestHelpers.CreateIdentityHarness();
+        var service = TestHelpers.CreateAuthService(context, harness);
+
+        var role = new Role { Id = 1, Name = "Admin" };
+        var company = new Company { Id = 115, Name = "Blanket Confirm Co", IsActive = true, Status = "Active" };
+        var user = TestHelpers.CreateUser(role, company.Id, "blanket@test.com", "LongPassword123!");
+
+        context.Roles.Add(role);
+        context.Companies.Add(company);
+        context.Users.Add(user);
+        await context.SaveChangesAsync();
+
+        await harness.AccountService.EnsureProvisionedAsync(
+            TestHelpers.CreateIdentitySnapshot(user, role.Name, requireEmailConfirmation: false, emailConfirmed: false),
+            "LongPassword123!");
+
+        var controller = new AuthController(service);
+
+        var response = await controller.Login(new LoginDTO
+        {
+            Email = "blanket@test.com",
+            Password = "LongPassword123!"
+        });
+
+        var unauthorized = response.Should().BeOfType<UnauthorizedObjectResult>().Subject;
+        TestHelpers.GetAnonymousStringValue(unauthorized.Value, "error").Should().Be("Invalid email or password. Please try again later.");
+    }
+
+    [Fact]
+    public async Task Login_WhenSuperAdminEmailIsUnconfirmed_ShouldAllowLogin()
+    {
+        var context = TestHelpers.CreateContext(tenantId: 116);
+        using var harness = TestHelpers.CreateIdentityHarness();
+        var service = TestHelpers.CreateAuthService(context, harness);
+
+        var role = new Role { Id = 9, Name = "SuperAdmin" };
+        var company = new Company { Id = 116, Name = "Ops HQ", IsActive = true, Status = "Active" };
+        var user = TestHelpers.CreateUser(role, company.Id, "superadmin@test.com", "LongPassword123!");
+
+        context.Roles.Add(role);
+        context.Companies.Add(company);
+        context.Users.Add(user);
+        await context.SaveChangesAsync();
+
+        await harness.AccountService.EnsureProvisionedAsync(
+            TestHelpers.CreateIdentitySnapshot(user, role.Name, requireEmailConfirmation: false, emailConfirmed: false),
+            "LongPassword123!");
+
+        var loginResponse = await service.LoginAsync(new LoginDTO
+        {
+            Email = "superadmin@test.com",
+            Password = "LongPassword123!"
+        });
+
+        loginResponse.Token.Should().NotBeNullOrWhiteSpace();
+        loginResponse.Role.Should().Be("SuperAdmin");
     }
 
     [Fact]
@@ -465,7 +530,31 @@ public class AuthServiceTests
     }
 
     [Fact]
-    public async Task ForgotAndResetPassword_WhenLegacyOnlyAccountExists_ShouldProvisionIdentitySendEmailAndResetPassword()
+    public async Task ResendConfirmationAsync_WhenLegacyOnlyAccountExists_ShouldProvisionUnconfirmedIdentityAndSendFreshConfirmationEmail()
+    {
+        var context = TestHelpers.CreateContext(tenantId: 117);
+        using var harness = TestHelpers.CreateIdentityHarness();
+        var service = TestHelpers.CreateAuthService(context, harness);
+
+        var role = new Role { Id = 4, Name = "Management" };
+        var company = new Company { Id = 117, Name = "Legacy Resend Co", IsActive = true, Status = "Active" };
+        var user = TestHelpers.CreateUser(role, company.Id, "legacy-resend@test.com", "LongPassword123!");
+
+        context.Roles.Add(role);
+        context.Companies.Add(company);
+        context.Users.Add(user);
+        await context.SaveChangesAsync();
+
+        await service.ResendConfirmationAsync(new ResendConfirmationDTO { Email = user.Email });
+
+        var identityUser = await harness.IdentityContext.Users.SingleAsync(u => u.LegacyUserId == user.Id);
+        identityUser.RequireEmailConfirmation.Should().BeTrue();
+        identityUser.EmailConfirmed.Should().BeFalse();
+        harness.EmailService.SentConfirmationEmails.Should().ContainSingle();
+    }
+
+    [Fact]
+    public async Task ForgotAndResetPassword_WhenLegacyOnlyAccountExists_ShouldProvisionIdentityWithoutAutoConfirmingEmail()
     {
         var context = TestHelpers.CreateContext(tenantId: 14);
         using var harness = TestHelpers.CreateIdentityHarness();
@@ -493,6 +582,10 @@ public class AuthServiceTests
         encodedToken.Should().NotBeNullOrWhiteSpace();
         encodedEmail.Should().NotBeNullOrWhiteSpace();
 
+        var provisionedIdentityUser = await harness.IdentityContext.Users.SingleAsync(u => u.LegacyUserId == user.Id);
+        provisionedIdentityUser.RequireEmailConfirmation.Should().BeTrue();
+        provisionedIdentityUser.EmailConfirmed.Should().BeFalse();
+
         await service.ResetPasswordAsync(new ResetPasswordDTO
         {
             Email = encodedEmail,
@@ -503,17 +596,21 @@ public class AuthServiceTests
 
         var identityUser = await harness.IdentityContext.Users.SingleAsync(u => u.LegacyUserId == user.Id);
         (await harness.UserManager.CheckPasswordAsync(identityUser, "BetterPassword456!")).Should().BeTrue();
+        identityUser.EmailConfirmed.Should().BeFalse();
 
         var reloadedUser = await context.Users.IgnoreQueryFilters().SingleAsync(u => u.Id == user.Id);
         reloadedUser.PasswordHash.Should().BeEmpty();
         reloadedUser.PasswordSalt.Should().BeNull();
 
-        var loginResponse = await service.LoginAsync(new LoginDTO
+        var act = async () => await service.LoginAsync(new LoginDTO
         {
             Email = user.Email,
             Password = "BetterPassword456!"
         });
-        loginResponse.Token.Should().NotBeNullOrWhiteSpace();
+
+        var exception = await Record.ExceptionAsync(act);
+        exception.Should().NotBeNull();
+        exception!.Message.Should().Be("Invalid email or password. Please try again later.");
     }
 }
 
@@ -576,7 +673,7 @@ public class AuthControllerTests
             if (scenario == "BadIdentityPassword")
             {
                 await harness.AccountService.EnsureProvisionedAsync(
-                    TestHelpers.CreateIdentitySnapshot(user, role.Name),
+                    TestHelpers.CreateIdentitySnapshot(user, role.Name, requireEmailConfirmation: true, emailConfirmed: true),
                     "LongPassword123!");
                 user.PasswordHash = string.Empty;
                 user.PasswordSalt = null;
