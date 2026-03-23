@@ -52,7 +52,7 @@ namespace AccountingSystem.API.Data
                 if (linkedIdentityUser == null && !StartupConfigurationValidator.IsMissingOrPlaceholder(configuration["BootstrapAdmin:InitialPassword"]))
                 {
                     await identityAccountService.EnsureProvisionedAsync(
-                        CreateIdentitySnapshot(legacySuperAdmin, superAdminRole.Name),
+                        CreateIdentitySnapshot(legacySuperAdmin, superAdminRole.Name, requireEmailConfirmation: false, emailConfirmed: true),
                         configuration["BootstrapAdmin:InitialPassword"]!);
                 }
 
@@ -95,11 +95,15 @@ namespace AccountingSystem.API.Data
             await context.SaveChangesAsync();
 
             await identityAccountService.EnsureProvisionedAsync(
-                CreateIdentitySnapshot(legacySuperAdmin, superAdminRole.Name),
+                CreateIdentitySnapshot(legacySuperAdmin, superAdminRole.Name, requireEmailConfirmation: false, emailConfirmed: true),
                 bootstrapPassword!);
         }
 
-        private static LegacyIdentityUserSnapshot CreateIdentitySnapshot(User user, string roleName) =>
+        private static LegacyIdentityUserSnapshot CreateIdentitySnapshot(
+            User user,
+            string roleName,
+            bool? requireEmailConfirmation = null,
+            bool? emailConfirmed = null) =>
             new(
                 user.Id,
                 user.CompanyId,
@@ -108,6 +112,8 @@ namespace AccountingSystem.API.Data
                 user.Status,
                 user.IsActive,
                 user.IsDeleted,
-                roleName);
+                roleName,
+                requireEmailConfirmation,
+                emailConfirmed);
     }
 }

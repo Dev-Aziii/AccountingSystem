@@ -121,6 +121,12 @@ namespace AccountingSystem.API.Services
                 identityUser.NormalizedEmail = _userManager.NormalizeEmail(dto.Email);
                 identityUser.NormalizedUserName = _userManager.NormalizeName(dto.Email);
                 identityUser.FullName = dto.FullName;
+                if (emailChanged)
+                {
+                    identityUser.RequireEmailConfirmation = true;
+                    identityUser.EmailConfirmed = false;
+                }
+
                 identityUser.UpdatedAt = DateTime.UtcNow;
 
                 var identityResult = await _userManager.UpdateAsync(identityUser);
@@ -132,6 +138,11 @@ namespace AccountingSystem.API.Services
 
             await _context.SaveChangesAsync();
             transaction.Complete();
+
+            if (emailChanged && identityUser != null)
+            {
+                await TrySendEmailConfirmationAsync(identityUser, "AUTH-EMAIL-CONFIRMATION-RESENT", "ProfileEmailChanged");
+            }
 
             await _auditService.WriteAsync(
                 "AUTH-PROFILE-UPDATE",
@@ -315,7 +326,7 @@ namespace AccountingSystem.API.Services
                 await _context.SaveChangesAsync();
 
                 await _identityAccountService.EnsureProvisionedAsync(
-                    CreateIdentitySnapshot(user, adminRole.Name),
+                    CreateIdentitySnapshot(user, adminRole.Name, requireEmailConfirmation: true, emailConfirmed: false),
                     dto.Password);
 
                 await SeedCompanyDataAsync(company.Id);
@@ -337,7 +348,9 @@ namespace AccountingSystem.API.Services
                 throw new Exception("Registration failed while saving your company account. Please try again.");
             }
 
-            var tokenResult = _authTokenFactory.Create(CreateTokenContext(user!, company!));
+            var identityUser = await RequireIdentityUserAsync(user!);
+            await TrySendEmailConfirmationAsync(identityUser, "AUTH-EMAIL-CONFIRMATION-SENT", "RegisterCompany");
+
             await _auditService.WriteAsync(
                 "AUTH-REGISTER-COMPANY",
                 userId: user!.Id,
@@ -347,12 +360,14 @@ namespace AccountingSystem.API.Services
 
             return new AuthResponseDTO
             {
-                Token = tokenResult.Token,
+                Token = string.Empty,
                 Email = user.Email,
                 Role = "Admin",
                 CompanyId = company.Id,
                 CompanyName = company.Name,
-                ExpiresAt = tokenResult.ExpiresAt
+                ExpiresAt = DateTime.MinValue,
+                RequiresEmailConfirmation = true,
+                Message = "Registration successful. Please confirm your email before signing in."
             };
         }
 
@@ -400,10 +415,12 @@ namespace AccountingSystem.API.Services
             await _context.SaveChangesAsync();
 
             await _identityAccountService.EnsureProvisionedAsync(
-                CreateIdentitySnapshot(user, role.Name),
+                CreateIdentitySnapshot(user, role.Name, requireEmailConfirmation: true, emailConfirmed: false),
                 registerDto.Password);
 
             transaction.Complete();
+            var identityUser = await RequireIdentityUserAsync(user);
+            await TrySendEmailConfirmationAsync(identityUser, "AUTH-EMAIL-CONFIRMATION-SENT", "AdminUserCreated");
             return user;
         }
 
@@ -464,6 +481,7 @@ namespace AccountingSystem.API.Services
             else
             {
                 await ValidateLegacyPasswordFallbackAsync(user, loginDto.Password);
+                identityUser = await RequireIdentityUserAsync(user);
             }
 
             var company = await _context.Companies.IgnoreQueryFilters().FirstOrDefaultAsync(c => c.Id == user.CompanyId);
@@ -501,6 +519,22 @@ namespace AccountingSystem.API.Services
                         reason: "CompanySuspended");
                     throw new AuthFailureException("CompanySuspended");
                 }
+            }
+
+            if (identityUser != null &&
+                identityUser.RequireEmailConfirmation &&
+                !identityUser.EmailConfirmed)
+            {
+                await _auditService.WriteAsync(
+                    "AUTH-LOGIN-FAILURE",
+                    userId: user.Id,
+                    companyId: company.Id,
+                    email: user.Email,
+                    reason: "EmailConfirmationRequired");
+                throw new AuthFailureException(
+                    "EmailConfirmationRequired",
+                    "Please confirm your email before signing in.",
+                    StatusCodes.Status403Forbidden);
             }
 
             var tokenResult = _authTokenFactory.Create(CreateTokenContext(user, company));
@@ -572,6 +606,82 @@ namespace AccountingSystem.API.Services
                     "AUTH-FORGOT-PASSWORD-FAILURE",
                     userId: identityUser?.LegacyUserId,
                     companyId: identityUser?.CompanyId ?? legacyUser?.CompanyId,
+                    email: dto.Email,
+                    reason: ex.GetType().Name);
+            }
+        }
+
+        public async Task ConfirmEmailAsync(ConfirmEmailDTO dto)
+        {
+            var identityUser = await _identityAccountService.FindByEmailAsync(dto.Email);
+            if (identityUser == null)
+            {
+                throw new Exception("The email confirmation link is invalid or has expired.");
+            }
+
+            if (identityUser.EmailConfirmed)
+            {
+                await _auditService.WriteAsync(
+                    "AUTH-EMAIL-CONFIRMATION",
+                    userId: identityUser.LegacyUserId,
+                    companyId: identityUser.CompanyId,
+                    email: identityUser.Email,
+                    reason: "AlreadyConfirmed");
+                return;
+            }
+
+            var decodedToken = DecodeConfirmationToken(dto.Token);
+            var result = await _userManager.ConfirmEmailAsync(identityUser, decodedToken);
+            if (!result.Succeeded)
+            {
+                await _auditService.WriteAsync(
+                    "AUTH-EMAIL-CONFIRMATION-FAILURE",
+                    userId: identityUser.LegacyUserId,
+                    companyId: identityUser.CompanyId,
+                    email: identityUser.Email,
+                    reason: result.Errors.FirstOrDefault()?.Code ?? "ConfirmEmailFailed");
+                throw new Exception("The email confirmation link is invalid or has expired.");
+            }
+
+            identityUser.UpdatedAt = DateTime.UtcNow;
+            var updateResult = await _userManager.UpdateAsync(identityUser);
+            EnsureIdentitySucceeded(updateResult, "ConfirmEmail");
+
+            await _auditService.WriteAsync(
+                "AUTH-EMAIL-CONFIRMATION",
+                userId: identityUser.LegacyUserId,
+                companyId: identityUser.CompanyId,
+                email: identityUser.Email,
+                reason: "Confirmed");
+        }
+
+        public async Task ResendConfirmationAsync(ResendConfirmationDTO dto)
+        {
+            ApplicationUser? identityUser = null;
+
+            try
+            {
+                identityUser = await _identityAccountService.FindByEmailAsync(dto.Email);
+                if (identityUser == null || identityUser.EmailConfirmed || !identityUser.RequireEmailConfirmation)
+                {
+                    await _auditService.WriteAsync(
+                        "AUTH-EMAIL-CONFIRMATION-RESENT",
+                        userId: identityUser?.LegacyUserId,
+                        companyId: identityUser?.CompanyId,
+                        email: dto.Email,
+                        reason: identityUser == null ? "NoMatchingAccount" : "NoPendingConfirmation");
+                    return;
+                }
+
+                await TrySendEmailConfirmationAsync(identityUser, "AUTH-EMAIL-CONFIRMATION-RESENT", "ResendConfirmation");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to resend email confirmation for {Email}.", dto.Email);
+                await _auditService.WriteAsync(
+                    "AUTH-EMAIL-CONFIRMATION-FAILURE",
+                    userId: identityUser?.LegacyUserId,
+                    companyId: identityUser?.CompanyId,
                     email: dto.Email,
                     reason: ex.GetType().Name);
             }
@@ -876,12 +986,67 @@ namespace AccountingSystem.API.Services
             return $"{clientBaseUrl}/reset-password?email={Uri.EscapeDataString(email)}&token={Uri.EscapeDataString(encodedToken)}";
         }
 
-        private static string EncodeResetToken(string token)
+        private string BuildEmailConfirmationLink(string email, string encodedToken)
+        {
+            var clientBaseUrl = _configuration["AppUrls:ClientBaseUrl"]!.TrimEnd('/');
+            return $"{clientBaseUrl}/confirm-email?email={Uri.EscapeDataString(email)}&token={Uri.EscapeDataString(encodedToken)}";
+        }
+
+        private async Task<bool> TrySendEmailConfirmationAsync(ApplicationUser identityUser, string auditEventName, string reason)
+        {
+            try
+            {
+                var token = await _userManager.GenerateEmailConfirmationTokenAsync(identityUser);
+                var encodedToken = EncodeToken(token);
+                var confirmationLink = BuildEmailConfirmationLink(identityUser.Email!, encodedToken);
+
+                await _accountEmailService.SendEmailConfirmationAsync(
+                    identityUser.Email!,
+                    identityUser.FullName,
+                    confirmationLink);
+
+                await _auditService.WriteAsync(
+                    auditEventName,
+                    userId: identityUser.LegacyUserId,
+                    companyId: identityUser.CompanyId,
+                    email: identityUser.Email,
+                    reason: reason);
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "Failed to send email confirmation for identity user {IdentityUserId} ({Email}).",
+                    identityUser.Id,
+                    identityUser.Email);
+
+                await _auditService.WriteAsync(
+                    "AUTH-EMAIL-CONFIRMATION-FAILURE",
+                    userId: identityUser.LegacyUserId,
+                    companyId: identityUser.CompanyId,
+                    email: identityUser.Email,
+                    reason: reason);
+
+                return false;
+            }
+        }
+
+        private static string EncodeToken(string token)
         {
             return WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
         }
 
-        private static string DecodeResetToken(string encodedToken)
+        private static string EncodeResetToken(string token) => EncodeToken(token);
+
+        private static string DecodeResetToken(string encodedToken) =>
+            DecodeToken(encodedToken, "The password reset request is invalid or has expired.");
+
+        private static string DecodeConfirmationToken(string encodedToken) =>
+            DecodeToken(encodedToken, "The email confirmation link is invalid or has expired.");
+
+        private static string DecodeToken(string encodedToken, string invalidMessage)
         {
             try
             {
@@ -889,7 +1054,7 @@ namespace AccountingSystem.API.Services
             }
             catch (FormatException)
             {
-                throw new Exception("The password reset request is invalid or has expired.");
+                throw new Exception(invalidMessage);
             }
         }
 
@@ -928,7 +1093,11 @@ namespace AccountingSystem.API.Services
             await _context.SaveChangesAsync();
         }
 
-        private static LegacyIdentityUserSnapshot CreateIdentitySnapshot(User user, string roleName) =>
+        private static LegacyIdentityUserSnapshot CreateIdentitySnapshot(
+            User user,
+            string roleName,
+            bool? requireEmailConfirmation = null,
+            bool? emailConfirmed = null) =>
             new(
                 user.Id,
                 user.CompanyId,
@@ -937,7 +1106,9 @@ namespace AccountingSystem.API.Services
                 user.Status,
                 user.IsActive,
                 user.IsDeleted,
-                roleName);
+                roleName,
+                requireEmailConfirmation,
+                emailConfirmed);
 
         private static AuthTokenContext CreateTokenContext(User user, Company company) =>
             new(

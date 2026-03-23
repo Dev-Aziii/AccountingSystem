@@ -88,9 +88,14 @@
 
                     <div class="d-flex align-center justify-space-between mb-5">
                         <MudCheckBox @bind-Value="rememberMe" Color="Color.Primary" Label="Remember me" Class="ml-n2" Style="font-size: 0.875rem; color: var(--text-main);" />
-                        <MudLink Href="/forgot-password" Class="register-link" Style="font-size: 0.875rem;">
-                            Forgot password?
-                        </MudLink>
+                        <div class="d-flex flex-column align-end">
+                            <MudLink Href="/forgot-password" Class="register-link" Style="font-size: 0.875rem;">
+                                Forgot password?
+                            </MudLink>
+                            <MudLink Href="/resend-confirmation" Class="register-link mt-1" Style="font-size: 0.8rem;">
+                                Resend confirmation
+                            </MudLink>
+                        </div>
                     </div>
 
                     @if (!string.IsNullOrEmpty(errorMessage))

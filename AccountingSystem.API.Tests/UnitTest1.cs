@@ -234,6 +234,9 @@ public class AuthServiceTests
 
         response.Role.Should().Be("Admin");
         response.CompanyName.Should().Be("Phase Six Co");
+        response.Token.Should().BeEmpty();
+        response.RequiresEmailConfirmation.Should().BeTrue();
+        response.Message.Should().Contain("confirm your email");
 
         var company = await context.Companies.IgnoreQueryFilters().SingleAsync(c => c.Name == "Phase Six Co");
         var legacyUser = await context.Users.IgnoreQueryFilters().Include(u => u.Role).SingleAsync(u => u.Email == "owner@phasesix.com");
@@ -245,6 +248,10 @@ public class AuthServiceTests
         var identityUser = await harness.IdentityContext.Users.SingleAsync(u => u.LegacyUserId == legacyUser.Id);
         (await harness.UserManager.CheckPasswordAsync(identityUser, "LongPassword123!")).Should().BeTrue();
         (await harness.UserManager.GetRolesAsync(identityUser)).Should().ContainSingle("Admin");
+        identityUser.RequireEmailConfirmation.Should().BeTrue();
+        identityUser.EmailConfirmed.Should().BeFalse();
+        harness.EmailService.SentConfirmationEmails.Should().ContainSingle();
+        harness.EmailService.SentConfirmationEmails.Single().ConfirmationLink.Should().Contain("/confirm-email?");
     }
 
     [Fact]
@@ -274,6 +281,9 @@ public class AuthServiceTests
         identityUser.Email.Should().Be("new.accountant@test.com");
         (await harness.UserManager.GetRolesAsync(identityUser)).Should().ContainSingle("Accounting");
         (await harness.UserManager.CheckPasswordAsync(identityUser, "LongPassword123!")).Should().BeTrue();
+        identityUser.RequireEmailConfirmation.Should().BeTrue();
+        identityUser.EmailConfirmed.Should().BeFalse();
+        harness.EmailService.SentConfirmationEmails.Should().ContainSingle();
     }
 
     [Fact]
@@ -348,6 +358,110 @@ public class AuthServiceTests
         identityUser.Email.Should().Be("updated.profile@test.com");
         identityUser.UserName.Should().Be("updated.profile@test.com");
         identityUser.FullName.Should().Be("Updated Profile");
+        identityUser.RequireEmailConfirmation.Should().BeTrue();
+        identityUser.EmailConfirmed.Should().BeFalse();
+        harness.EmailService.SentConfirmationEmails.Should().ContainSingle();
+    }
+
+    [Fact]
+    public async Task Login_WhenUserRequiresEmailConfirmation_ShouldReturnForbiddenUntilConfirmed()
+    {
+        var context = TestHelpers.CreateContext(tenantId: 15);
+        using var harness = TestHelpers.CreateIdentityHarness();
+        var service = TestHelpers.CreateAuthService(context, harness);
+
+        var role = new Role { Id = 1, Name = "Admin" };
+        var company = new Company { Id = 15, Name = "Confirm Co", IsActive = true, Status = "Active" };
+        var user = TestHelpers.CreateUser(role, company.Id, "confirm@test.com", "LongPassword123!");
+
+        context.Roles.Add(role);
+        context.Companies.Add(company);
+        context.Users.Add(user);
+        await context.SaveChangesAsync();
+
+        await harness.AccountService.EnsureProvisionedAsync(
+            TestHelpers.CreateIdentitySnapshot(user, role.Name, requireEmailConfirmation: true, emailConfirmed: false),
+            "LongPassword123!");
+
+        var controller = new AuthController(service);
+
+        var response = await controller.Login(new LoginDTO
+        {
+            Email = "confirm@test.com",
+            Password = "LongPassword123!"
+        });
+
+        var forbidden = response.Should().BeOfType<ObjectResult>().Subject;
+        forbidden.StatusCode.Should().Be(StatusCodes.Status403Forbidden);
+        TestHelpers.GetAnonymousStringValue(forbidden.Value, "error").Should().Be("Please confirm your email before signing in.");
+    }
+
+    [Fact]
+    public async Task ConfirmEmailAsync_WhenTokenIsValid_ShouldConfirmUserAndAllowLogin()
+    {
+        var context = TestHelpers.CreateContext(tenantId: 16);
+        using var harness = TestHelpers.CreateIdentityHarness();
+        var service = TestHelpers.CreateAuthService(context, harness);
+
+        var role = new Role { Id = 1, Name = "Admin" };
+        var company = new Company { Id = 16, Name = "Confirm Flow Co", IsActive = true, Status = "Active" };
+        var user = TestHelpers.CreateUser(role, company.Id, "confirm-flow@test.com", "LongPassword123!");
+
+        context.Roles.Add(role);
+        context.Companies.Add(company);
+        context.Users.Add(user);
+        await context.SaveChangesAsync();
+
+        await harness.AccountService.EnsureProvisionedAsync(
+            TestHelpers.CreateIdentitySnapshot(user, role.Name, requireEmailConfirmation: true, emailConfirmed: false),
+            "LongPassword123!");
+
+        var identityUser = await harness.IdentityContext.Users.SingleAsync(u => u.LegacyUserId == user.Id);
+        var rawToken = await harness.UserManager.GenerateEmailConfirmationTokenAsync(identityUser);
+        var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(rawToken));
+
+        await service.ConfirmEmailAsync(new ConfirmEmailDTO
+        {
+            Email = identityUser.Email!,
+            Token = encodedToken
+        });
+
+        var refreshedUser = await harness.IdentityContext.Users.SingleAsync(u => u.LegacyUserId == user.Id);
+        refreshedUser.EmailConfirmed.Should().BeTrue();
+
+        var loginResponse = await service.LoginAsync(new LoginDTO
+        {
+            Email = identityUser.Email!,
+            Password = "LongPassword123!"
+        });
+
+        loginResponse.Token.Should().NotBeNullOrWhiteSpace();
+    }
+
+    [Fact]
+    public async Task ResendConfirmationAsync_WhenAccountRequiresConfirmation_ShouldSendFreshConfirmationEmail()
+    {
+        var context = TestHelpers.CreateContext(tenantId: 17);
+        using var harness = TestHelpers.CreateIdentityHarness();
+        var service = TestHelpers.CreateAuthService(context, harness);
+
+        var role = new Role { Id = 2, Name = "Accounting" };
+        var company = new Company { Id = 17, Name = "Resend Co", IsActive = true, Status = "Active" };
+        var user = TestHelpers.CreateUser(role, company.Id, "resend@test.com", "LongPassword123!");
+
+        context.Roles.Add(role);
+        context.Companies.Add(company);
+        context.Users.Add(user);
+        await context.SaveChangesAsync();
+
+        await harness.AccountService.EnsureProvisionedAsync(
+            TestHelpers.CreateIdentitySnapshot(user, role.Name, requireEmailConfirmation: true, emailConfirmed: false),
+            "LongPassword123!");
+
+        await service.ResendConfirmationAsync(new ResendConfirmationDTO { Email = user.Email });
+
+        harness.EmailService.SentConfirmationEmails.Should().ContainSingle();
+        harness.EmailService.SentConfirmationEmails.Single().ConfirmationLink.Should().Contain("/confirm-email?");
     }
 
     [Fact]
@@ -368,8 +482,8 @@ public class AuthServiceTests
 
         await service.SendPasswordResetAsync(new ForgotPasswordDTO { Email = user.Email });
 
-        harness.EmailService.SentEmails.Should().ContainSingle();
-        var sentEmail = harness.EmailService.SentEmails.Single();
+        harness.EmailService.SentResetEmails.Should().ContainSingle();
+        var sentEmail = harness.EmailService.SentResetEmails.Single();
         sentEmail.Email.Should().Be("reset@test.com");
         sentEmail.ResetLink.Should().Contain("/reset-password?");
 
@@ -576,6 +690,8 @@ internal static class TestHelpers
                 ["JwtSettings:ClockSkewSeconds"] = clockSkewSeconds.ToString(),
                 ["AuthSecurity:Lockout:MaxFailedAccessAttempts"] = "5",
                 ["AuthSecurity:Lockout:LockoutMinutes"] = "15",
+                ["IdentityTokens:PasswordResetTokenLifespanMinutes"] = "120",
+                ["IdentityTokens:EmailConfirmationTokenLifespanMinutes"] = "1440",
                 ["AppUrls:ClientBaseUrl"] = "https://client.example.test"
             })
             .Build();
@@ -607,7 +723,11 @@ internal static class TestHelpers
         };
     }
 
-    internal static LegacyIdentityUserSnapshot CreateIdentitySnapshot(User user, string roleName) =>
+    internal static LegacyIdentityUserSnapshot CreateIdentitySnapshot(
+        User user,
+        string roleName,
+        bool? requireEmailConfirmation = null,
+        bool? emailConfirmed = null) =>
         new(
             user.Id,
             user.CompanyId,
@@ -616,7 +736,9 @@ internal static class TestHelpers
             user.Status,
             user.IsActive,
             user.IsDeleted,
-            roleName);
+            roleName,
+            requireEmailConfirmation,
+            emailConfirmed);
 
     internal static AuthService CreateAuthService(
         AccountingDbContext context,
@@ -703,9 +825,13 @@ internal sealed class IdentityTestHarness : IDisposable
 
         services.AddDbContext<IdentityAuthDbContext>(options =>
             options.UseInMemoryDatabase(Guid.NewGuid().ToString()));
-        services.Configure<DataProtectionTokenProviderOptions>(options =>
+        services.Configure<PasswordResetTokenProviderOptions>(options =>
         {
             options.TokenLifespan = TimeSpan.FromHours(2);
+        });
+        services.Configure<EmailConfirmationTokenProviderOptions>(options =>
+        {
+            options.TokenLifespan = TimeSpan.FromHours(24);
         });
 
         var identityBuilder = services.AddIdentityCore<ApplicationUser>(options =>
@@ -723,9 +849,13 @@ internal sealed class IdentityTestHarness : IDisposable
 
                 options.User.RequireUniqueEmail = true;
                 options.User.AllowedUserNameCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+";
+                options.Tokens.PasswordResetTokenProvider = "AccSysPasswordReset";
+                options.Tokens.EmailConfirmationTokenProvider = "AccSysEmailConfirmation";
             })
             .AddRoles<ApplicationRole>()
             .AddEntityFrameworkStores<IdentityAuthDbContext>()
+            .AddTokenProvider<PasswordResetTokenProvider<ApplicationUser>>("AccSysPasswordReset")
+            .AddTokenProvider<EmailConfirmationTokenProvider<ApplicationUser>>("AccSysEmailConfirmation")
             .AddDefaultTokenProviders();
 
         identityBuilder.AddPasswordValidator<SharedPasswordIdentityValidator>();
@@ -762,13 +892,21 @@ internal sealed class IdentityTestHarness : IDisposable
 
 internal sealed class TestAccountEmailService : IAccountEmailService
 {
-    public List<SentResetEmail> SentEmails { get; } = new();
+    public List<SentResetEmail> SentResetEmails { get; } = new();
+    public List<SentConfirmationEmail> SentConfirmationEmails { get; } = new();
 
     public Task SendPasswordResetAsync(string email, string fullName, string resetLink, CancellationToken cancellationToken = default)
     {
-        SentEmails.Add(new SentResetEmail(email, fullName, resetLink));
+        SentResetEmails.Add(new SentResetEmail(email, fullName, resetLink));
+        return Task.CompletedTask;
+    }
+
+    public Task SendEmailConfirmationAsync(string email, string fullName, string confirmationLink, CancellationToken cancellationToken = default)
+    {
+        SentConfirmationEmails.Add(new SentConfirmationEmail(email, fullName, confirmationLink));
         return Task.CompletedTask;
     }
 }
 
 internal sealed record SentResetEmail(string Email, string FullName, string ResetLink);
+internal sealed record SentConfirmationEmail(string Email, string FullName, string ConfirmationLink);

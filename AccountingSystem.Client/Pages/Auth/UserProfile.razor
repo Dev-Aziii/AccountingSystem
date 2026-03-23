@@ -131,6 +131,7 @@
     private ChangePasswordDTO passwordModel = new ChangePasswordDTO();
     private bool isProfileSubmitting = false;
     private bool isPasswordSubmitting = false;
+    private string currentEmail = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
@@ -139,6 +140,7 @@
             var profile = await AuthService.GetCurrentProfile();
             profileModel.Email = profile.Email;
             profileModel.FullName = profile.FullName;
+            currentEmail = profile.Email;
         }
         catch (Exception ex)
         {
@@ -150,13 +152,18 @@
     private async Task HandleUpdateProfile()
     {
         isProfileSubmitting = true;
+        var emailChanged = !string.Equals(currentEmail, profileModel.Email, StringComparison.OrdinalIgnoreCase);
         try
         {
             await AuthService.UpdateProfile(profileModel);
             var refreshedProfile = await AuthService.GetCurrentProfile();
             profileModel.Email = refreshedProfile.Email;
             profileModel.FullName = refreshedProfile.FullName;
-            Snackbar.Add("Profile updated successfully.", Severity.Success);
+            currentEmail = refreshedProfile.Email;
+            var successMessage = emailChanged
+                ? "Profile updated successfully. Please confirm your new email address before your next sign in."
+                : "Profile updated successfully.";
+            Snackbar.Add(successMessage, Severity.Success);
         }
         catch (Exception ex)
         {

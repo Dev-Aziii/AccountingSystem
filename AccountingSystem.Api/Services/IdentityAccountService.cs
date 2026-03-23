@@ -158,6 +158,8 @@ namespace AccountingSystem.API.Services
                 Status = snapshot.Status,
                 IsActive = snapshot.IsActive,
                 IsDeleted = snapshot.IsDeleted,
+                RequireEmailConfirmation = snapshot.RequireEmailConfirmation ?? false,
+                EmailConfirmed = snapshot.EmailConfirmed ?? !snapshot.RequireEmailConfirmation.GetValueOrDefault(),
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow,
                 LockoutEnabled = true
@@ -176,6 +178,16 @@ namespace AccountingSystem.API.Services
             user.Status = snapshot.Status;
             user.IsActive = snapshot.IsActive;
             user.IsDeleted = snapshot.IsDeleted;
+            if (snapshot.RequireEmailConfirmation.HasValue)
+            {
+                user.RequireEmailConfirmation = snapshot.RequireEmailConfirmation.Value;
+            }
+
+            if (snapshot.EmailConfirmed.HasValue)
+            {
+                user.EmailConfirmed = snapshot.EmailConfirmed.Value;
+            }
+
             user.UpdatedAt = DateTime.UtcNow;
             user.LockoutEnabled = true;
         }

@@ -31,10 +31,16 @@ builder.Services.AddDbContext<IdentityAuthDbContext>(options =>
 builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("Smtp"));
 builder.Services.Configure<AppUrlSettings>(builder.Configuration.GetSection("AppUrls"));
 builder.Services.Configure<BootstrapAdminSettings>(builder.Configuration.GetSection("BootstrapAdmin"));
-builder.Services.Configure<DataProtectionTokenProviderOptions>(options =>
+builder.Services.Configure<PasswordResetTokenProviderOptions>(options =>
 {
-    options.TokenLifespan = TimeSpan.FromHours(2);
+    options.TokenLifespan = TimeSpan.FromMinutes(GetConfiguredPositiveInt("IdentityTokens:PasswordResetTokenLifespanMinutes", 120));
 });
+builder.Services.Configure<EmailConfirmationTokenProviderOptions>(options =>
+{
+    options.TokenLifespan = TimeSpan.FromMinutes(GetConfiguredPositiveInt("IdentityTokens:EmailConfirmationTokenLifespanMinutes", 1440));
+});
+
+var useLoggingAccountEmailSender = builder.Environment.IsDevelopment() && !HasCompleteSmtpConfiguration(builder.Configuration);
 
 var identityBuilder = builder.Services.AddIdentityCore<ApplicationUser>(options =>
 {
@@ -51,9 +57,13 @@ var identityBuilder = builder.Services.AddIdentityCore<ApplicationUser>(options 
 
     options.User.RequireUniqueEmail = true;
     options.User.AllowedUserNameCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+";
+    options.Tokens.PasswordResetTokenProvider = IdentityTokenProviderNames.PasswordReset;
+    options.Tokens.EmailConfirmationTokenProvider = IdentityTokenProviderNames.EmailConfirmation;
 })
     .AddRoles<ApplicationRole>()
     .AddEntityFrameworkStores<IdentityAuthDbContext>()
+    .AddTokenProvider<PasswordResetTokenProvider<ApplicationUser>>(IdentityTokenProviderNames.PasswordReset)
+    .AddTokenProvider<EmailConfirmationTokenProvider<ApplicationUser>>(IdentityTokenProviderNames.EmailConfirmation)
     .AddDefaultTokenProviders();
 
 identityBuilder.AddPasswordValidator<SharedPasswordIdentityValidator>();
@@ -64,7 +74,14 @@ builder.Services.AddScoped<ILegacyPasswordService, LegacyPasswordService>();
 builder.Services.AddScoped<IAuthTokenFactory, JwtAuthTokenFactory>();
 builder.Services.AddScoped<IIdentityAccountService, IdentityAccountService>();
 builder.Services.AddScoped<ILegacyIdentityBridgeService, LegacyIdentityBridgeService>();
-builder.Services.AddScoped<IAccountEmailService, SmtpAccountEmailService>();
+if (useLoggingAccountEmailSender)
+{
+    builder.Services.AddScoped<IAccountEmailService, LoggingAccountEmailService>();
+}
+else
+{
+    builder.Services.AddScoped<IAccountEmailService, SmtpAccountEmailService>();
+}
 builder.Services.AddScoped<IYearEndCloseService, YearEndCloseService>();
 builder.Services.AddScoped<IDocumentSequenceService, DocumentSequenceService>();
 builder.Services.AddScoped<ILedgerService, LedgerService>();
@@ -152,6 +169,20 @@ builder.Services.AddRateLimiter(options =>
             factory: _ => CreateFixedWindowOptions(
                 GetConfiguredPositiveInt("AuthSecurity:RateLimiting:ResetPassword:PermitLimit", 5),
                 GetConfiguredPositiveInt("AuthSecurity:RateLimiting:ResetPassword:WindowSeconds", 900))));
+
+    options.AddPolicy(AuthRateLimitPolicyNames.ConfirmEmail, httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: $"ip:{GetRemoteIpAddress(httpContext)}",
+            factory: _ => CreateFixedWindowOptions(
+                GetConfiguredPositiveInt("AuthSecurity:RateLimiting:ConfirmEmail:PermitLimit", 5),
+                GetConfiguredPositiveInt("AuthSecurity:RateLimiting:ConfirmEmail:WindowSeconds", 900))));
+
+    options.AddPolicy(AuthRateLimitPolicyNames.ResendConfirmation, httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: $"ip:{GetRemoteIpAddress(httpContext)}",
+            factory: _ => CreateFixedWindowOptions(
+                GetConfiguredPositiveInt("AuthSecurity:RateLimiting:ResendConfirmation:PermitLimit", 3),
+                GetConfiguredPositiveInt("AuthSecurity:RateLimiting:ResendConfirmation:WindowSeconds", 900))));
 });
 
 builder.Services.AddCors(options =>
@@ -197,6 +228,15 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 var app = builder.Build();
+
+if (useLoggingAccountEmailSender)
+{
+    app.Logger.LogWarning("Using development logging account email sender because SMTP is not fully configured.");
+}
+else
+{
+    app.Logger.LogInformation("Using SMTP account email sender.");
+}
 
 using (var scope = app.Services.CreateScope())
 {
@@ -289,4 +329,20 @@ static int? TryParseClaim(System.Security.Claims.ClaimsPrincipal user, string cl
 {
     var claimValue = user.FindFirst(claimType)?.Value;
     return int.TryParse(claimValue, out var parsedValue) ? parsedValue : null;
+}
+
+static bool HasCompleteSmtpConfiguration(IConfiguration configuration)
+{
+    return HasConfiguredValue(configuration["Smtp:Host"])
+        && HasConfiguredValue(configuration["Smtp:Port"])
+        && HasConfiguredValue(configuration["Smtp:Username"])
+        && HasConfiguredValue(configuration["Smtp:Password"])
+        && HasConfiguredValue(configuration["Smtp:FromAddress"])
+        && HasConfiguredValue(configuration["Smtp:FromName"])
+        && HasConfiguredValue(configuration["Smtp:EnableSsl"]);
+}
+
+static bool HasConfiguredValue(string? value)
+{
+    return !StartupConfigurationValidator.IsMissingOrPlaceholder(value);
 }

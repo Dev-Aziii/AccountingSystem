@@ -19,6 +19,8 @@ namespace AccountingSystem.API.Identity
 
         public bool IsDeleted { get; set; }
 
+        public bool RequireEmailConfirmation { get; set; }
+
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public DateTime? UpdatedAt { get; set; }

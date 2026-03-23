@@ -66,6 +66,23 @@ namespace AccountingSystem.Shared.DTOs
         public string ConfirmPassword { get; set; } = string.Empty;
     }
 
+    public class ConfirmEmailDTO
+    {
+        [Required]
+        [EmailAddress]
+        public string Email { get; set; } = string.Empty;
+
+        [Required]
+        public string Token { get; set; } = string.Empty;
+    }
+
+    public class ResendConfirmationDTO
+    {
+        [Required]
+        [EmailAddress]
+        public string Email { get; set; } = string.Empty;
+    }
+
     // --- Existing DTOs ---
     public class CompanyRegisterDTO
     {
@@ -121,5 +138,7 @@ namespace AccountingSystem.Shared.DTOs
         public int CompanyId { get; set; }
         public string CompanyName { get; set; } = string.Empty;
         public DateTime ExpiresAt { get; set; }
+        public bool RequiresEmailConfirmation { get; set; }
+        public string Message { get; set; } = string.Empty;
     }
 }

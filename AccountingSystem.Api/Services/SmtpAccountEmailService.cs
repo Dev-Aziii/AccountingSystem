@@ -38,6 +38,29 @@ namespace AccountingSystem.API.Services
             await client.SendMailAsync(message);
         }
 
+        public async Task SendEmailConfirmationAsync(string email, string fullName, string confirmationLink, CancellationToken cancellationToken = default)
+        {
+            using var message = new MailMessage
+            {
+                From = new MailAddress(_smtpSettings.FromAddress, _smtpSettings.FromName),
+                Subject = "Confirm your AccSys email",
+                IsBodyHtml = true,
+                Body = BuildEmailConfirmationBody(fullName, confirmationLink)
+            };
+
+            message.To.Add(new MailAddress(email, fullName));
+
+            using var client = new SmtpClient(_smtpSettings.Host, _smtpSettings.Port)
+            {
+                EnableSsl = _smtpSettings.EnableSsl,
+                UseDefaultCredentials = false,
+                Credentials = new NetworkCredential(_smtpSettings.Username, _smtpSettings.Password)
+            };
+
+            cancellationToken.ThrowIfCancellationRequested();
+            await client.SendMailAsync(message);
+        }
+
         private static string BuildPasswordResetBody(string fullName, string resetLink)
         {
             var safeName = WebUtility.HtmlEncode(string.IsNullOrWhiteSpace(fullName) ? "there" : fullName);
@@ -54,6 +77,28 @@ namespace AccountingSystem.API.Services
                         </a>
                     </p>
                     <p>If you did not request this change, you can ignore this email.</p>
+                    <p>This link expires based on the server token policy.</p>
+                </body>
+                </html>
+                """;
+        }
+
+        private static string BuildEmailConfirmationBody(string fullName, string confirmationLink)
+        {
+            var safeName = WebUtility.HtmlEncode(string.IsNullOrWhiteSpace(fullName) ? "there" : fullName);
+            var safeLink = WebUtility.HtmlEncode(confirmationLink);
+
+            return $"""
+                <html>
+                <body style="font-family:Segoe UI,Arial,sans-serif;color:#0f172a;">
+                    <p>Hello {safeName},</p>
+                    <p>Welcome to AccSys. Please confirm your email address to activate sign-in for this account.</p>
+                    <p>
+                        <a href="{safeLink}" style="display:inline-block;padding:10px 16px;background:#134658;color:#ffffff;text-decoration:none;border-radius:6px;">
+                            Confirm Email
+                        </a>
+                    </p>
+                    <p>If you did not create this account, you can ignore this email.</p>
                     <p>This link expires based on the server token policy.</p>
                 </body>
                 </html>

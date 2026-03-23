@@ -11,6 +11,8 @@ namespace AccountingSystem.API.Services.Interfaces
         Task<CurrentProfileDTO> GetCurrentProfileAsync(int userId);
         Task UpdateProfileAsync(int userId, UpdateProfileDTO dto);
         Task ChangePasswordAsync(int userId, ChangePasswordDTO dto);
+        Task ConfirmEmailAsync(ConfirmEmailDTO dto);
+        Task ResendConfirmationAsync(ResendConfirmationDTO dto);
         Task SendPasswordResetAsync(ForgotPasswordDTO dto);
         Task ResetPasswordAsync(ResetPasswordDTO dto);
     }

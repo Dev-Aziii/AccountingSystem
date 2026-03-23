@@ -1,0 +1,95 @@
+@page "/resend-confirmation"
+@layout LoginLayout
+@using AccountingSystem.Client.Services
+@using AccountingSystem.Shared.DTOs
+@using Microsoft.AspNetCore.Components
+@using MudBlazor
+@inject AuthService AuthService
+@inject ISnackbar Snackbar
+@inject ILogger<ResendConfirmation> Logger
+
+<PageTitle>Resend Confirmation - AccSys</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Small" Class="mt-12 mb-10">
+    <MudPaper Elevation="0" Outlined="true" Class="pa-6">
+        <div class="mb-4">
+            <MudText Typo="Typo.h5">Resend confirmation email</MudText>
+            <MudText Typo="Typo.body2" Class="mt-1" Style="color: var(--text-muted);">
+                Enter your email address and we will resend the confirmation link if the account still needs it.
+            </MudText>
+        </div>
+
+        <EditForm Model="@model" OnValidSubmit="HandleSubmit">
+            <DataAnnotationsValidator />
+
+            <MudTextField Label="Email Address"
+                          @bind-Value="model.Email"
+                          For="@(() => model.Email)"
+                          Variant="Variant.Outlined"
+                          Margin="Margin.Dense"
+                          Class="mb-4" />
+
+            @if (!string.IsNullOrWhiteSpace(statusMessage))
+            {
+                <MudAlert Severity="@statusSeverity" Dense="true" Class="mb-4">
+                    @statusMessage
+                </MudAlert>
+            }
+
+            <MudButton ButtonType="ButtonType.Submit"
+                       Variant="Variant.Filled"
+                       FullWidth="true"
+                       Disabled="@isSubmitting">
+                @(isSubmitting ? "Sending..." : "Resend Confirmation")
+            </MudButton>
+        </EditForm>
+
+        <div class="mt-4 text-center">
+            <MudLink Href="/">Back to sign in</MudLink>
+        </div>
+    </MudPaper>
+</MudContainer>
+
+@code {
+    [SupplyParameterFromQuery(Name = "email")]
+    public string? Email { get; set; }
+
+    private ResendConfirmationDTO model = new();
+    private bool isSubmitting;
+    private string? statusMessage;
+    private Severity statusSeverity = Severity.Info;
+
+    protected override void OnParametersSet()
+    {
+        if (!string.IsNullOrWhiteSpace(Email))
+        {
+            model.Email = Email;
+        }
+    }
+
+    private async Task HandleSubmit()
+    {
+        isSubmitting = true;
+        statusMessage = null;
+
+        try
+        {
+            await AuthService.ResendConfirmation(model);
+            statusMessage = "If the account exists and still needs confirmation, a new confirmation link has been sent.";
+            statusSeverity = Severity.Success;
+            Snackbar.Add(statusMessage, Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to resend confirmation email for {Email}.", model.Email);
+            statusMessage = string.IsNullOrWhiteSpace(ex.Message)
+                ? "Unable to resend confirmation email. Please try again."
+                : ex.Message;
+            statusSeverity = Severity.Error;
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+}

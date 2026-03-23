@@ -8,5 +8,7 @@ namespace AccountingSystem.API.Identity
         string Status,
         bool IsActive,
         bool IsDeleted,
-        string RoleName);
+        string RoleName,
+        bool? RequireEmailConfirmation = null,
+        bool? EmailConfirmed = null);
 }

@@ -54,8 +54,11 @@ namespace AccountingSystem.Client.Services
                 throw new Exception("Failed to deserialize registration response");
             }
 
-            await _tokenService.SetTokenAsync(result.Token);
-            ((CustomAuthStateProvider)_authStateProvider).NotifyUserAuthentication(result.Token);
+            if (!string.IsNullOrWhiteSpace(result.Token))
+            {
+                await _tokenService.SetTokenAsync(result.Token);
+                ((CustomAuthStateProvider)_authStateProvider).NotifyUserAuthentication(result.Token);
+            }
 
             return result;
         }
@@ -107,6 +110,26 @@ namespace AccountingSystem.Client.Services
             {
                 var rawContent = await response.Content.ReadAsStringAsync();
                 throw new Exception(ApiErrorParser.Extract(rawContent, "Unable to send password reset email. Please try again."));
+            }
+        }
+
+        public async Task ConfirmEmail(ConfirmEmailDTO dto)
+        {
+            var response = await _api.PostAsync("api/auth/confirm-email", dto, requiresAuth: false);
+            if (!response.IsSuccessStatusCode)
+            {
+                var rawContent = await response.Content.ReadAsStringAsync();
+                throw new Exception(ApiErrorParser.Extract(rawContent, "Unable to confirm email. Please try again."));
+            }
+        }
+
+        public async Task ResendConfirmation(ResendConfirmationDTO dto)
+        {
+            var response = await _api.PostAsync("api/auth/resend-confirmation", dto, requiresAuth: false);
+            if (!response.IsSuccessStatusCode)
+            {
+                var rawContent = await response.Content.ReadAsStringAsync();
+                throw new Exception(ApiErrorParser.Extract(rawContent, "Unable to resend confirmation email. Please try again."));
             }
         }
 

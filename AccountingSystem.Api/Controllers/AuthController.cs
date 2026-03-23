@@ -31,7 +31,12 @@ namespace AccountingSystem.API.Controllers
             }
             catch (AuthFailureException ex)
             {
-                return Unauthorized(new { error = ex.PublicMessage });
+                if (ex.StatusCode == StatusCodes.Status401Unauthorized)
+                {
+                    return Unauthorized(new { error = ex.PublicMessage });
+                }
+
+                return StatusCode(ex.StatusCode, new { error = ex.PublicMessage });
             }
             catch (Exception)
             {
@@ -92,6 +97,29 @@ namespace AccountingSystem.API.Controllers
         {
             await _authService.SendPasswordResetAsync(dto);
             return Ok(new { message = "If the account exists, a password reset link has been sent." });
+        }
+
+        [HttpPost("confirm-email")]
+        [EnableRateLimiting(AuthRateLimitPolicyNames.ConfirmEmail)]
+        public async Task<IActionResult> ConfirmEmail([FromBody] ConfirmEmailDTO dto)
+        {
+            try
+            {
+                await _authService.ConfirmEmailAsync(dto);
+                return Ok(new { message = "Email confirmed successfully. You can sign in now." });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
+        [HttpPost("resend-confirmation")]
+        [EnableRateLimiting(AuthRateLimitPolicyNames.ResendConfirmation)]
+        public async Task<IActionResult> ResendConfirmation([FromBody] ResendConfirmationDTO dto)
+        {
+            await _authService.ResendConfirmationAsync(dto);
+            return Ok(new { message = "If the account exists and still needs confirmation, a new confirmation link has been sent." });
         }
 
         [HttpPost("reset-password")]

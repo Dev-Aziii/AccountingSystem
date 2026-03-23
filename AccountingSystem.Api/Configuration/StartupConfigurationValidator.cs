@@ -8,6 +8,17 @@ namespace AccountingSystem.API.Configuration
         {
             var missingKeys = new List<string>();
             var invalidKeys = new List<string>();
+            var smtpKeys = new[]
+            {
+                "Smtp:Host",
+                "Smtp:Port",
+                "Smtp:Username",
+                "Smtp:Password",
+                "Smtp:FromAddress",
+                "Smtp:FromName",
+                "Smtp:EnableSsl"
+            };
+            var validateSmtpConfiguration = !environment.IsDevelopment() || HasAnyConfiguredValue(configuration, smtpKeys);
 
             CheckRequiredValue(configuration.GetConnectionString("DefaultConnection"), "ConnectionStrings:DefaultConnection", missingKeys);
             CheckRequiredValue(configuration["JwtSettings:Secret"], "JwtSettings:Secret", missingKeys);
@@ -27,14 +38,24 @@ namespace AccountingSystem.API.Configuration
             CheckRequiredValue(configuration["AuthSecurity:RateLimiting:ForgotPassword:WindowSeconds"], "AuthSecurity:RateLimiting:ForgotPassword:WindowSeconds", missingKeys);
             CheckRequiredValue(configuration["AuthSecurity:RateLimiting:ResetPassword:PermitLimit"], "AuthSecurity:RateLimiting:ResetPassword:PermitLimit", missingKeys);
             CheckRequiredValue(configuration["AuthSecurity:RateLimiting:ResetPassword:WindowSeconds"], "AuthSecurity:RateLimiting:ResetPassword:WindowSeconds", missingKeys);
-            CheckRequiredValue(configuration["Smtp:Host"], "Smtp:Host", missingKeys);
-            CheckRequiredValue(configuration["Smtp:Port"], "Smtp:Port", missingKeys);
-            CheckRequiredValue(configuration["Smtp:Username"], "Smtp:Username", missingKeys);
-            CheckRequiredValue(configuration["Smtp:Password"], "Smtp:Password", missingKeys);
-            CheckRequiredValue(configuration["Smtp:FromAddress"], "Smtp:FromAddress", missingKeys);
-            CheckRequiredValue(configuration["Smtp:FromName"], "Smtp:FromName", missingKeys);
-            CheckRequiredValue(configuration["Smtp:EnableSsl"], "Smtp:EnableSsl", missingKeys);
+            CheckRequiredValue(configuration["AuthSecurity:RateLimiting:ConfirmEmail:PermitLimit"], "AuthSecurity:RateLimiting:ConfirmEmail:PermitLimit", missingKeys);
+            CheckRequiredValue(configuration["AuthSecurity:RateLimiting:ConfirmEmail:WindowSeconds"], "AuthSecurity:RateLimiting:ConfirmEmail:WindowSeconds", missingKeys);
+            CheckRequiredValue(configuration["AuthSecurity:RateLimiting:ResendConfirmation:PermitLimit"], "AuthSecurity:RateLimiting:ResendConfirmation:PermitLimit", missingKeys);
+            CheckRequiredValue(configuration["AuthSecurity:RateLimiting:ResendConfirmation:WindowSeconds"], "AuthSecurity:RateLimiting:ResendConfirmation:WindowSeconds", missingKeys);
+            CheckRequiredValue(configuration["IdentityTokens:PasswordResetTokenLifespanMinutes"], "IdentityTokens:PasswordResetTokenLifespanMinutes", missingKeys);
+            CheckRequiredValue(configuration["IdentityTokens:EmailConfirmationTokenLifespanMinutes"], "IdentityTokens:EmailConfirmationTokenLifespanMinutes", missingKeys);
             CheckRequiredValue(configuration["AppUrls:ClientBaseUrl"], "AppUrls:ClientBaseUrl", missingKeys);
+
+            if (validateSmtpConfiguration)
+            {
+                CheckRequiredValue(configuration["Smtp:Host"], "Smtp:Host", missingKeys);
+                CheckRequiredValue(configuration["Smtp:Port"], "Smtp:Port", missingKeys);
+                CheckRequiredValue(configuration["Smtp:Username"], "Smtp:Username", missingKeys);
+                CheckRequiredValue(configuration["Smtp:Password"], "Smtp:Password", missingKeys);
+                CheckRequiredValue(configuration["Smtp:FromAddress"], "Smtp:FromAddress", missingKeys);
+                CheckRequiredValue(configuration["Smtp:FromName"], "Smtp:FromName", missingKeys);
+                CheckRequiredValue(configuration["Smtp:EnableSsl"], "Smtp:EnableSsl", missingKeys);
+            }
 
             CheckPositiveInteger(configuration["JwtSettings:ExpiryMinutes"], "JwtSettings:ExpiryMinutes", invalidKeys);
             CheckNonNegativeInteger(configuration["JwtSettings:ClockSkewSeconds"], "JwtSettings:ClockSkewSeconds", invalidKeys);
@@ -50,8 +71,19 @@ namespace AccountingSystem.API.Configuration
             CheckPositiveInteger(configuration["AuthSecurity:RateLimiting:ForgotPassword:WindowSeconds"], "AuthSecurity:RateLimiting:ForgotPassword:WindowSeconds", invalidKeys);
             CheckPositiveInteger(configuration["AuthSecurity:RateLimiting:ResetPassword:PermitLimit"], "AuthSecurity:RateLimiting:ResetPassword:PermitLimit", invalidKeys);
             CheckPositiveInteger(configuration["AuthSecurity:RateLimiting:ResetPassword:WindowSeconds"], "AuthSecurity:RateLimiting:ResetPassword:WindowSeconds", invalidKeys);
-            CheckPositiveInteger(configuration["Smtp:Port"], "Smtp:Port", invalidKeys);
-            CheckBoolean(configuration["Smtp:EnableSsl"], "Smtp:EnableSsl", invalidKeys);
+            CheckPositiveInteger(configuration["AuthSecurity:RateLimiting:ConfirmEmail:PermitLimit"], "AuthSecurity:RateLimiting:ConfirmEmail:PermitLimit", invalidKeys);
+            CheckPositiveInteger(configuration["AuthSecurity:RateLimiting:ConfirmEmail:WindowSeconds"], "AuthSecurity:RateLimiting:ConfirmEmail:WindowSeconds", invalidKeys);
+            CheckPositiveInteger(configuration["AuthSecurity:RateLimiting:ResendConfirmation:PermitLimit"], "AuthSecurity:RateLimiting:ResendConfirmation:PermitLimit", invalidKeys);
+            CheckPositiveInteger(configuration["AuthSecurity:RateLimiting:ResendConfirmation:WindowSeconds"], "AuthSecurity:RateLimiting:ResendConfirmation:WindowSeconds", invalidKeys);
+            CheckPositiveInteger(configuration["IdentityTokens:PasswordResetTokenLifespanMinutes"], "IdentityTokens:PasswordResetTokenLifespanMinutes", invalidKeys);
+            CheckPositiveInteger(configuration["IdentityTokens:EmailConfirmationTokenLifespanMinutes"], "IdentityTokens:EmailConfirmationTokenLifespanMinutes", invalidKeys);
+
+            if (validateSmtpConfiguration)
+            {
+                CheckPositiveInteger(configuration["Smtp:Port"], "Smtp:Port", invalidKeys);
+                CheckBoolean(configuration["Smtp:EnableSsl"], "Smtp:EnableSsl", invalidKeys);
+            }
+
             ValidateSqlServerConnectionString(configuration.GetConnectionString("DefaultConnection"), invalidKeys);
 
             if (!environment.IsDevelopment())
@@ -130,6 +162,11 @@ namespace AccountingSystem.API.Configuration
             {
                 invalidKeys.Add($"{configurationKey} (must be 'true' or 'false')");
             }
+        }
+
+        private static bool HasAnyConfiguredValue(IConfiguration configuration, IEnumerable<string> configurationKeys)
+        {
+            return configurationKeys.Any(key => !IsMissingOrPlaceholder(configuration[key]));
         }
 
         private static void ValidateSqlServerConnectionString(string? connectionString, ICollection<string> invalidKeys)

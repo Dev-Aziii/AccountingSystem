@@ -1,0 +1,93 @@
+@page "/confirm-email"
+@layout LoginLayout
+@using AccountingSystem.Client.Services
+@using AccountingSystem.Shared.DTOs
+@using Microsoft.AspNetCore.Components
+@using MudBlazor
+@inject AuthService AuthService
+@inject NavigationManager NavManager
+@inject ILogger<ConfirmEmail> Logger
+
+<PageTitle>Confirm Email - AccSys</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Small" Class="mt-12 mb-10">
+    <MudPaper Elevation="0" Outlined="true" Class="pa-6">
+        <div class="mb-4">
+            <MudText Typo="Typo.h5">Confirm your email</MudText>
+            <MudText Typo="Typo.body2" Class="mt-1" Style="color: var(--text-muted);">
+                We are validating your confirmation link now.
+            </MudText>
+        </div>
+
+        <MudAlert Severity="@statusSeverity" Dense="true" Class="mb-4">
+            @statusMessage
+        </MudAlert>
+
+        @if (!confirmationAttempted)
+        {
+            <MudProgressLinear Indeterminate="true" Color="Color.Primary" Class="mb-4" />
+        }
+
+        <div class="d-flex flex-column gap-2">
+            <MudButton Variant="Variant.Filled" Href="/">Back to sign in</MudButton>
+            <MudButton Variant="Variant.Outlined" Href="@ResendHref">Resend confirmation</MudButton>
+        </div>
+    </MudPaper>
+</MudContainer>
+
+@code {
+    [SupplyParameterFromQuery(Name = "email")]
+    public string? Email { get; set; }
+
+    [SupplyParameterFromQuery(Name = "token")]
+    public string? Token { get; set; }
+
+    private bool confirmationAttempted;
+    private string statusMessage = "Checking your confirmation link...";
+    private Severity statusSeverity = Severity.Info;
+
+    private string ResendHref =>
+        string.IsNullOrWhiteSpace(Email)
+            ? "/resend-confirmation"
+            : $"/resend-confirmation?email={Uri.EscapeDataString(Email)}";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (confirmationAttempted)
+        {
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(Email) || string.IsNullOrWhiteSpace(Token))
+        {
+            confirmationAttempted = true;
+            statusMessage = "The email confirmation link is invalid or incomplete.";
+            statusSeverity = Severity.Error;
+            return;
+        }
+
+        try
+        {
+            await AuthService.ConfirmEmail(new ConfirmEmailDTO
+            {
+                Email = Email,
+                Token = Token
+            });
+
+            statusMessage = "Email confirmed successfully. You can sign in now.";
+            statusSeverity = Severity.Success;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to confirm email for {Email}.", Email);
+            statusMessage = string.IsNullOrWhiteSpace(ex.Message)
+                ? "The email confirmation link is invalid or has expired."
+                : ex.Message;
+            statusSeverity = Severity.Error;
+        }
+        finally
+        {
+            confirmationAttempted = true;
+        }
+    }
+}

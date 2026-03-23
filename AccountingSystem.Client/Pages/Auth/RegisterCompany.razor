@@ -1006,7 +1006,19 @@
             }
 
             registerModel.RecaptchaToken = token;
-            await AuthService.RegisterCompany(registerModel);
+            var result = await AuthService.RegisterCompany(registerModel);
+
+            if (result.RequiresEmailConfirmation || string.IsNullOrWhiteSpace(result.Token))
+            {
+                Snackbar.Add(
+                    string.IsNullOrWhiteSpace(result.Message)
+                        ? "Registration successful. Please confirm your email before signing in."
+                        : result.Message,
+                    Severity.Success);
+                await Task.Delay(1200);
+                NavManager.NavigateTo($"/resend-confirmation?email={Uri.EscapeDataString(registerModel.AdminEmail)}");
+                return;
+            }
 
             Snackbar.Add("Company registered successfully! Welcome.", Severity.Success);
             await Task.Delay(1500);
