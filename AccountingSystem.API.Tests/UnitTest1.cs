@@ -14,6 +14,7 @@ using AccountingSystem.API.Services.Interfaces;
 using AccountingSystem.Shared.DTOs;
 using AccountingSystem.Shared.Validation;
 using FluentAssertions;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -21,6 +22,7 @@ using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Moq;
@@ -256,6 +258,59 @@ public class AuthServiceTests
         identityUser.EmailConfirmed.Should().BeFalse();
         harness.EmailService.SentConfirmationEmails.Should().ContainSingle();
         harness.EmailService.SentConfirmationEmails.Single().ConfirmationLink.Should().Contain("/confirm-email?");
+    }
+
+    [Fact]
+    public async Task RegisterCompanyAsync_WhenDevelopmentOriginDiffersFromConfiguredClientBaseUrl_ShouldUseRequestOriginForConfirmationLink()
+    {
+        var context = TestHelpers.CreateContext();
+        using var harness = TestHelpers.CreateIdentityHarness();
+        var captcha = new Mock<ICaptchaService>();
+        captcha.Setup(x => x.VerifyTokenAsync(It.IsAny<string>())).ReturnsAsync(true);
+
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["JwtSettings:Secret"] = "super-secret-key-for-tests-only-1234567890",
+                ["JwtSettings:Issuer"] = "issuer",
+                ["JwtSettings:Audience"] = "audience",
+                ["JwtSettings:ExpiryMinutes"] = "60",
+                ["JwtSettings:ClockSkewSeconds"] = "60",
+                ["AuthSecurity:Lockout:MaxFailedAccessAttempts"] = "5",
+                ["AuthSecurity:Lockout:LockoutMinutes"] = "15",
+                ["IdentityTokens:PasswordResetTokenLifespanMinutes"] = "120",
+                ["IdentityTokens:EmailConfirmationTokenLifespanMinutes"] = "1440",
+                ["AppUrls:ClientBaseUrl"] = "https://localhost:5173"
+            })
+            .Build();
+
+        var httpContextAccessor = TestHelpers.CreateHttpContextAccessor(
+            scheme: "https",
+            host: "localhost:7273",
+            origin: "https://localhost:7273");
+
+        var service = TestHelpers.CreateAuthService(
+            context,
+            harness,
+            configuration: configuration,
+            captcha: captcha,
+            httpContextAccessor: httpContextAccessor);
+
+        context.Roles.Add(new Role { Id = 1, Name = "Admin" });
+        await context.SaveChangesAsync();
+
+        await service.RegisterCompanyAsync(new CompanyRegisterDTO
+        {
+            CompanyName = "Origin Co",
+            AdminEmail = "owner@originco.com",
+            AdminFullName = "Owner User",
+            Password = "LongPassword123!",
+            RecaptchaToken = "good-token"
+        });
+
+        harness.EmailService.SentConfirmationEmails.Should().ContainSingle();
+        harness.EmailService.SentConfirmationEmails.Single().ConfirmationLink
+            .Should().StartWith("https://localhost:7273/confirm-email?");
     }
 
     [Fact]
@@ -612,6 +667,55 @@ public class AuthServiceTests
         exception.Should().NotBeNull();
         exception!.Message.Should().Be("Invalid email or password. Please try again later.");
     }
+
+    [Fact]
+    public async Task SendPasswordResetAsync_WhenDevelopmentOriginDiffersFromConfiguredClientBaseUrl_ShouldUseRequestOriginForResetLink()
+    {
+        var context = TestHelpers.CreateContext(tenantId: 140);
+        using var harness = TestHelpers.CreateIdentityHarness();
+
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["JwtSettings:Secret"] = "super-secret-key-for-tests-only-1234567890",
+                ["JwtSettings:Issuer"] = "issuer",
+                ["JwtSettings:Audience"] = "audience",
+                ["JwtSettings:ExpiryMinutes"] = "60",
+                ["JwtSettings:ClockSkewSeconds"] = "60",
+                ["AuthSecurity:Lockout:MaxFailedAccessAttempts"] = "5",
+                ["AuthSecurity:Lockout:LockoutMinutes"] = "15",
+                ["IdentityTokens:PasswordResetTokenLifespanMinutes"] = "120",
+                ["IdentityTokens:EmailConfirmationTokenLifespanMinutes"] = "1440",
+                ["AppUrls:ClientBaseUrl"] = "https://localhost:5173"
+            })
+            .Build();
+
+        var httpContextAccessor = TestHelpers.CreateHttpContextAccessor(
+            scheme: "https",
+            host: "localhost:7273",
+            origin: "https://localhost:7273");
+
+        var service = TestHelpers.CreateAuthService(
+            context,
+            harness,
+            configuration: configuration,
+            httpContextAccessor: httpContextAccessor);
+
+        var role = new Role { Id = 3, Name = "Management" };
+        var company = new Company { Id = 140, Name = "Reset Origin Co", IsActive = true, Status = "Active" };
+        var user = TestHelpers.CreateUser(role, company.Id, "reset-origin@test.com", "LongPassword123!");
+
+        context.Roles.Add(role);
+        context.Companies.Add(company);
+        context.Users.Add(user);
+        await context.SaveChangesAsync();
+
+        await service.SendPasswordResetAsync(new ForgotPasswordDTO { Email = user.Email });
+
+        harness.EmailService.SentResetEmails.Should().ContainSingle();
+        harness.EmailService.SentResetEmails.Single().ResetLink
+            .Should().StartWith("https://localhost:7273/reset-password?");
+    }
 }
 
 public class JwtMiddlewareTests
@@ -842,11 +946,15 @@ internal static class TestHelpers
         IdentityTestHarness harness,
         IConfiguration? configuration = null,
         Mock<ICaptchaService>? captcha = null,
-        Mock<IAuthSecurityAuditService>? auditService = null)
+        Mock<IAuthSecurityAuditService>? auditService = null,
+        IHttpContextAccessor? httpContextAccessor = null,
+        IWebHostEnvironment? environment = null)
     {
         configuration ??= CreateConfiguration();
         captcha ??= new Mock<ICaptchaService>();
         captcha.Setup(x => x.VerifyTokenAsync(It.IsAny<string>())).ReturnsAsync(true);
+        httpContextAccessor ??= new HttpContextAccessor();
+        environment ??= Mock.Of<IWebHostEnvironment>(x => x.EnvironmentName == Environments.Development);
 
         auditService ??= new Mock<IAuthSecurityAuditService>();
         auditService.Setup(x => x.WriteAsync(
@@ -864,6 +972,8 @@ internal static class TestHelpers
             context,
             harness.IdentityContext,
             configuration,
+            httpContextAccessor,
+            environment,
             captcha.Object,
             Mock.Of<ILogger<AuthService>>(),
             auditService.Object,
@@ -872,6 +982,28 @@ internal static class TestHelpers
             harness.AccountService,
             harness.EmailService,
             harness.UserManager);
+    }
+
+    internal static IHttpContextAccessor CreateHttpContextAccessor(string scheme, string host, string? origin = null, string? referer = null)
+    {
+        var httpContext = new DefaultHttpContext();
+        httpContext.Request.Scheme = scheme;
+        httpContext.Request.Host = new HostString(host);
+
+        if (!string.IsNullOrWhiteSpace(origin))
+        {
+            httpContext.Request.Headers.Origin = origin;
+        }
+
+        if (!string.IsNullOrWhiteSpace(referer))
+        {
+            httpContext.Request.Headers.Referer = referer;
+        }
+
+        return new HttpContextAccessor
+        {
+            HttpContext = httpContext
+        };
     }
 
     internal static string CreateJwtToken(IConfiguration configuration, DateTime expiresAtUtc)

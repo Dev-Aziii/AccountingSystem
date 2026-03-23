@@ -30,11 +30,15 @@ namespace AccountingSystem.API.Services
         private readonly IIdentityAccountService _identityAccountService;
         private readonly IAccountEmailService _accountEmailService;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IWebHostEnvironment _environment;
 
         public AuthService(
             AccountingDbContext context,
             IdentityAuthDbContext identityContext,
             IConfiguration configuration,
+            IHttpContextAccessor httpContextAccessor,
+            IWebHostEnvironment environment,
             ICaptchaService captchaService,
             ILogger<AuthService> logger,
             IAuthSecurityAuditService auditService,
@@ -47,6 +51,8 @@ namespace AccountingSystem.API.Services
             _context = context;
             _identityContext = identityContext;
             _configuration = configuration;
+            _httpContextAccessor = httpContextAccessor;
+            _environment = environment;
             _captchaService = captchaService;
             _logger = logger;
             _auditService = auditService;
@@ -1018,15 +1024,86 @@ namespace AccountingSystem.API.Services
 
         private string BuildPasswordResetLink(string email, string encodedToken)
         {
-            var clientBaseUrl = _configuration["AppUrls:ClientBaseUrl"]!.TrimEnd('/');
+            var clientBaseUrl = ResolveClientBaseUrl();
             return $"{clientBaseUrl}/reset-password?email={Uri.EscapeDataString(email)}&token={Uri.EscapeDataString(encodedToken)}";
         }
 
         private string BuildEmailConfirmationLink(string email, string encodedToken)
         {
-            var clientBaseUrl = _configuration["AppUrls:ClientBaseUrl"]!.TrimEnd('/');
+            var clientBaseUrl = ResolveClientBaseUrl();
             return $"{clientBaseUrl}/confirm-email?email={Uri.EscapeDataString(email)}&token={Uri.EscapeDataString(encodedToken)}";
         }
+
+        private string ResolveClientBaseUrl()
+        {
+            var configuredBaseUrl = NormalizeBaseUrl(_configuration["AppUrls:ClientBaseUrl"]);
+            var requestBaseUrl = _environment.IsDevelopment()
+                ? TryResolveClientBaseUrlFromRequest()
+                : null;
+
+            if (!string.IsNullOrWhiteSpace(requestBaseUrl))
+            {
+                if (!string.IsNullOrWhiteSpace(configuredBaseUrl) &&
+                    !string.Equals(configuredBaseUrl, requestBaseUrl, StringComparison.OrdinalIgnoreCase))
+                {
+                    _logger.LogWarning(
+                        "Using development request client base URL {RequestBaseUrl} instead of configured AppUrls:ClientBaseUrl {ConfiguredBaseUrl} for account email links.",
+                        requestBaseUrl,
+                        configuredBaseUrl);
+                }
+
+                return requestBaseUrl;
+            }
+
+            if (!string.IsNullOrWhiteSpace(configuredBaseUrl))
+            {
+                return configuredBaseUrl;
+            }
+
+            throw new InvalidOperationException(StartupConfigurationValidator.BuildMissingValueMessage("AppUrls:ClientBaseUrl"));
+        }
+
+        private string? TryResolveClientBaseUrlFromRequest()
+        {
+            var httpContext = _httpContextAccessor.HttpContext;
+            if (httpContext == null)
+            {
+                return null;
+            }
+
+            if (TryNormalizeAbsoluteBaseUrl(httpContext.Request.Headers.Origin.ToString(), out var originBaseUrl))
+            {
+                return originBaseUrl;
+            }
+
+            if (TryNormalizeAbsoluteBaseUrl(httpContext.Request.Headers.Referer.ToString(), out var refererBaseUrl))
+            {
+                return refererBaseUrl;
+            }
+
+            return httpContext.Request.Host.HasValue
+                ? NormalizeBaseUrl($"{httpContext.Request.Scheme}://{httpContext.Request.Host.Value}")
+                : null;
+        }
+
+        private static bool TryNormalizeAbsoluteBaseUrl(string? value, out string? normalizedBaseUrl)
+        {
+            normalizedBaseUrl = null;
+            if (string.IsNullOrWhiteSpace(value) ||
+                !Uri.TryCreate(value, UriKind.Absolute, out var absoluteUri) ||
+                (absoluteUri.Scheme != Uri.UriSchemeHttp && absoluteUri.Scheme != Uri.UriSchemeHttps))
+            {
+                return false;
+            }
+
+            normalizedBaseUrl = NormalizeBaseUrl(absoluteUri.GetLeftPart(UriPartial.Authority));
+            return true;
+        }
+
+        private static string NormalizeBaseUrl(string? baseUrl) =>
+            string.IsNullOrWhiteSpace(baseUrl)
+                ? string.Empty
+                : baseUrl.Trim().TrimEnd('/');
 
         private async Task<bool> TrySendEmailConfirmationAsync(ApplicationUser identityUser, string auditEventName, string reason)
         {
