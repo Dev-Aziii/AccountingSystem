@@ -10,10 +10,10 @@ namespace AccountingSystem.Shared.Validation
         public const int MaximumLength = 128;
 
         public const string Description =
-            "Use 12-128 characters with at least 3 of uppercase, lowercase, number, and symbol, or 16-128 characters with at least 3 words.";
+            " ";
 
         public const string DefaultErrorMessage =
-            "Password must be 12-128 characters with at least 3 of uppercase, lowercase, number, and symbol, or 16-128 characters with at least 3 words.";
+            "Password must be at least 12 characters and include at least 1 uppercase, 1 lowercase, 1 number, and 1 symbol.";
 
         public static bool TryValidate(string? password, out string errorMessage)
         {

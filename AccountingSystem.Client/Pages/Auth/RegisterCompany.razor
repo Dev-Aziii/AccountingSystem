@@ -4,6 +4,7 @@
 @using AccountingSystem.Shared.Validation
 @using AccountingSystem.Client.Services
 @using MudBlazor
+
 @inject AuthService AuthService
 @inject NavigationManager NavManager
 @inject ISnackbar Snackbar
@@ -12,156 +13,134 @@
 
 <PageTitle>Register - AccSys</PageTitle>
 
-<div class="split-register-container">
-
-    <!-- LEFT FORM PANEL -->
-    <div class="form-panel">
-        <div class="form-inner">
-            <div class="form-header">
-                <div class="logo-wrap">
-                    <!-- Logo skeleton + fade-in on load -->
-                    <div class="logo-skeleton @(logoLoaded ? "logo-skeleton--hidden" : "")"></div>
-                    <img src="AccsysLogo.png"
-                         alt="AccSys Logo"
-                         class="form-logo @(logoLoaded ? "form-logo--visible" : "")"
-                         @onload="OnLogoLoaded" />
-                </div>
-                <h2 class="form-title">Create Your Account</h2>
-                <p class="form-subtitle">Start your accounting journey with us!</p>
+<div class="auth-page-wrapper">
+    <div class="auth-card shadcn-card">
+        
+        <div class="auth-header">
+            <div class="logo-wrap">
+                <div class="logo-skeleton @(logoLoaded ? "logo-skeleton--hidden" : "")"></div>
+                <img src="AccsysLogo.png"
+                     alt="AccSys Logo"
+                     class="form-logo @(logoLoaded ? "form-logo--visible" : "")"
+                     @onload="OnLogoLoaded" />
             </div>
+            <h1 class="auth-title">Create Your Account</h1>
+            <p class="auth-subtitle">Start your accounting journey with us.</p>
+        </div>
 
-            <EditForm Model="@registerModel" OnValidSubmit="HandleRegistration">
-                <DataAnnotationsValidator />
-                <div class="fields-group">
-                    <MudTextField Label="Company Name"
-                                  @bind-Value="registerModel.CompanyName"
+        <EditForm Model="@registerModel" OnValidSubmit="HandleRegistration">
+            <DataAnnotationsValidator />
+            
+            <div class="fields-group">
+                <div class="form-group">
+                    <label class="form-label">Company Name</label>
+                    <MudTextField @bind-Value="registerModel.CompanyName"
                                   For="@(() => registerModel.CompanyName)"
+                                  Placeholder="Acme Corp"
                                   Variant="Variant.Outlined"
-                                  Class="accsys-field mb-2"
+                                  Margin="Margin.Dense"
+                                  DisableUnderLine="true"
+                                  Class="shadcn-input-auth"
                                   FullWidth="true" />
+                </div>
 
-                    <MudTextField Label="Administrator Full Name"
-                                  @bind-Value="registerModel.AdminFullName"
+                <div class="form-group">
+                    <label class="form-label">Administrator Full Name</label>
+                    <MudTextField @bind-Value="registerModel.AdminFullName"
                                   For="@(() => registerModel.AdminFullName)"
+                                  Placeholder="John Doe"
                                   Variant="Variant.Outlined"
-                                  Class="accsys-field mb-2"
+                                  Margin="Margin.Dense"
+                                  DisableUnderLine="true"
+                                  Class="shadcn-input-auth"
                                   FullWidth="true" />
+                </div>
 
-                    <MudTextField Label="Email Address"
-                                  @bind-Value="registerModel.AdminEmail"
+                <div class="form-group">
+                    <label class="form-label">Email Address</label>
+                    <MudTextField @bind-Value="registerModel.AdminEmail"
                                   For="@(() => registerModel.AdminEmail)"
+                                  Placeholder="admin@acme.com"
                                   Variant="Variant.Outlined"
-                                  Class="accsys-field mb-2"
+                                  Margin="Margin.Dense"
+                                  DisableUnderLine="true"
+                                  Class="shadcn-input-auth"
                                   FullWidth="true" />
+                </div>
 
-                    <MudTextField Label="Password"
-                                  @bind-Value="registerModel.Password"
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <MudTextField @bind-Value="registerModel.Password"
                                   For="@(() => registerModel.Password)"
+                                  Placeholder="Create a strong password"
                                   Variant="Variant.Outlined"
-                                  InputType="InputType.Password"
-                                  Class="accsys-field mb-3"
-                                  HelperText="@PasswordPolicy.Description"
+                                  Margin="Margin.Dense"
+                                  InputType="@passwordInputType"
+                                  Adornment="Adornment.End"
+                                  AdornmentIcon="@passwordInputIcon"
+                                  OnAdornmentClick="TogglePasswordVisibility"
+                                  AdornmentAriaLabel="Toggle password visibility"
+                                  DisableUnderLine="true"
+                                  Class="shadcn-input-auth"
                                   FullWidth="true" />
+                    <div class="form-helper mt-1">@PasswordPolicy.Description</div>
+                </div>
 
-                    <div class="recaptcha-wrap mb-3">
-                        <div id="recaptcha_container"></div>
+                <div class="recaptcha-wrap mt-4 mb-4">
+                    <div id="recaptcha_container"></div>
+                </div>
+
+                @if (!string.IsNullOrEmpty(errorMessage))
+                {
+                    <div class="auth-alert alert-error mb-4">
+                        <MudIcon Icon="@Icons.Material.Outlined.ErrorOutline" Size="Size.Small" />
+                        <span>@errorMessage</span>
                     </div>
+                }
 
-                    @if (!string.IsNullOrEmpty(errorMessage))
+                <MudButton ButtonType="ButtonType.Submit"
+                           Variant="Variant.Filled"
+                           Class="shadcn-btn-primary"
+                           FullWidth="true"
+                           Disabled="@isLoading"
+                           Size="Size.Large">
+                    @if (isLoading)
                     {
-                        <div class="error-alert mb-3">
-                            <MudIcon Icon="@Icons.Material.Outlined.ErrorOutline" Size="Size.Small" Class="mr-2" />
-                            <span>@errorMessage</span>
+                        <div class="d-flex align-center gap-2">
+                            <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="ms-n1" />
+                            <span>Creating Company...</span>
                         </div>
                     }
-
-                    <MudButton ButtonType="ButtonType.Submit"
-                               Variant="Variant.Filled"
-                               Class="accsys-btn"
-                               FullWidth="true"
-                               Disabled="@isLoading"
-                               Size="Size.Large"
-                               StartIcon="@(!isLoading ? Icons.Material.Filled.AppRegistration : "")">
-                        @if (isLoading)
-                        {
-                            <div class="d-flex align-center gap-2">
-                                <MudProgressCircular Size="Size.Small" Indeterminate="true" />
-                                <span>Creating Company...</span>
-                            </div>
-                        }
-                        else
-                        {
-                            <span>Create Company Account</span>
-                        }
-                    </MudButton>
-                </div>
-            </EditForm>
-
-            <div class="form-footer">
-                <MudDivider Class="mb-2" />
-                <MudText Typo="Typo.body2" Class="mb-2">
-                    Already have an account?
-                    <MudLink Href="/" Class="signin-link">Sign In Here</MudLink>
-                </MudText>
-                <MudText Typo="Typo.caption" Class="help-text">
-                    By signing up, you agree to our
-                    <span class="tos-link" @onclick="OpenTermsModal">Terms of Service</span>
-                </MudText>
+                    else
+                    {
+                        <span>Create Company Account</span>
+                    }
+                </MudButton>
             </div>
+        </EditForm>
+
+        <div class="auth-footer">
+            <MudDivider Class="mb-4" />
+            <p style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.5rem;">
+                Already have an account?
+                <MudLink Href="/" Class="shadcn-link ml-1">Sign In Here</MudLink>
+            </p>
+            <p style="font-size: 0.75rem; color: var(--text-muted); font-style: italic;">
+                By signing up, you agree to our 
+                <span class="tos-link" @onclick="OpenTermsModal">Terms of Service</span>
+            </p>
         </div>
     </div>
-
-    <!-- RIGHT BRANDING PANEL -->
-    <div class="branding-panel">
-        <div class="branding-inner">
-            <div class="deco-circle deco-circle--lg"></div>
-            <div class="deco-circle deco-circle--sm"></div>
-            <div class="deco-circle deco-circle--xs"></div>
-
-            <div class="branding-illustration">
-                <div class="img-skeleton @(illustrationLoaded ? "img-skeleton--hidden" : "")"></div>
-                <img src="graphics2.png"
-                     alt="AccSys Dashboard Illustration"
-                     class="branding-img @(illustrationLoaded ? "branding-img--visible" : "")"
-                     @onload="OnIllustrationLoaded" />
-            </div>
-
-            <div class="branding-text">
-                <h1 class="branding-title">AccSys Solutions</h1>
-                <p class="branding-subtitle">
-                    The all-in-one professional accounting system designed to streamline
-                    your business finances with modern precision.
-                </p>
-            </div>
-
-            <div class="branding-features">
-                <div class="feature-item">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="feature-icon"><path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm13.36-1.814a.75.75 0 1 0-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 0 0-1.06 1.06l2.25 2.25a.75.75 0 0 0 1.14-.094l3.75-5.25Z" clip-rule="evenodd" /></svg>
-                    <span>Multi-company management</span>
-                </div>
-                <div class="feature-item">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="feature-icon"><path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm13.36-1.814a.75.75 0 1 0-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 0 0-1.06 1.06l2.25 2.25a.75.75 0 0 0 1.14-.094l3.75-5.25Z" clip-rule="evenodd" /></svg>
-                    <span>Real-time financial reports</span>
-                </div>
-                <div class="feature-item">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="feature-icon"><path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm13.36-1.814a.75.75 0 1 0-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 0 0-1.06 1.06l2.25 2.25a.75.75 0 0 0 1.14-.094l3.75-5.25Z" clip-rule="evenodd" /></svg>
-                    <span>Secure cloud-based storage</span>
-                </div>
-            </div>
-        </div>
-    </div>
-
 </div>
 
-<!-- Terms Modal -->
 @if (showTermsModal)
 {
     <div class="tos-backdrop" @onclick="CloseTermsModal">
-        <div class="tos-modal" @onclick:stopPropagation="true">
+        <div class="tos-modal shadcn-card" @onclick:stopPropagation="true">
             <div class="tos-header">
                 <div class="tos-header-left">
                     <div class="tos-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M5.625 1.5c-1.036 0-1.875.84-1.875 1.875v17.25c0 1.035.84 1.875 1.875 1.875h12.75c1.035 0 1.875-.84 1.875-1.875V12.75A3.75 3.75 0 0 0 16.5 9h-1.875a1.875 1.875 0 0 1-1.875-1.875V5.25A3.75 3.75 0 0 0 9 1.5H5.625ZM7.5 15a.75.75 0 0 1 .75-.75h7.5a.75.75 0 0 1 0 1.5h-7.5A.75.75 0 0 1 7.5 15Zm.75-6.75a.75.75 0 0 0 0 1.5H12a.75.75 0 0 0 0-1.5H8.25Z" clip-rule="evenodd" /><path d="M12.971 1.816A5.23 5.23 0 0 1 14.25 5.25v1.875c0 .207.168.375.375.375H16.5a5.23 5.23 0 0 1 3.434 1.279 9.768 9.768 0 0 0-6.963-6.963Z" /></svg>
+                        <MudIcon Icon="@Icons.Material.Outlined.Gavel" Size="Size.Small" Style="color: var(--text-main);" />
                     </div>
                     <div>
                         <h2 class="tos-title">Terms of Service</h2>
@@ -169,12 +148,12 @@
                     </div>
                 </div>
                 <button class="tos-close" @onclick="CloseTermsModal">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M5.47 5.47a.75.75 0 0 1 1.06 0L12 10.94l5.47-5.47a.75.75 0 1 1 1.06 1.06L13.06 12l5.47 5.47a.75.75 0 1 1-1.06 1.06L12 13.06l-5.47 5.47a.75.75 0 0 1-1.06-1.06L10.94 12 5.47 6.53a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd" /></svg>
+                    <MudIcon Icon="@Icons.Material.Outlined.Close" Size="Size.Small" />
                 </button>
             </div>
 
             <div class="tos-notice">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="tos-notice-icon"><path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm8.706-1.442c1.146-.573 2.437.463 2.126 1.706l-.709 2.836.042-.02a.75.75 0 0 1 .67 1.34l-.04.022c-1.147.573-2.438-.463-2.127-1.706l.71-2.836-.042.02a.75.75 0 1 1-.671-1.34l.041-.022ZM12 9a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Z" clip-rule="evenodd" /></svg>
+                <MudIcon Icon="@Icons.Material.Outlined.Info" Size="Size.Small" Class="tos-notice-icon" />
                 <p><strong>Academic Project Notice:</strong> AccSys is a student-developed system created as a requirement for <strong>IT15</strong> at the <strong>University of Mindanao</strong>. It is intended solely for academic demonstration purposes and does not constitute a commercial product or service.</p>
             </div>
 
@@ -214,484 +193,242 @@
                     <h3 class="tos-section-title"><span class="tos-section-num">7</span>Disclaimer of Warranties</h3>
                     <p>AccSys is provided <strong>"as is"</strong> for academic evaluation purposes. The development team makes no warranties, express or implied, regarding the system's accuracy, completeness, reliability, or fitness for any particular purpose. The team shall not be liable for any damages arising from the use or inability to use the system.</p>
                 </div>
-                <div class="tos-section">
-                    <h3 class="tos-section-title"><span class="tos-section-num">8</span>Modifications &amp; Termination</h3>
-                    <p>The development team reserves the right to modify, suspend, or discontinue the System at any time without prior notice, as this is an academic demonstration. Access may be terminated at the end of the academic term or evaluation period.</p>
-                </div>
-                <div class="tos-section">
-                    <h3 class="tos-section-title"><span class="tos-section-num">9</span>Governing Terms</h3>
-                    <p>These Terms of Service are governed by the academic policies of the <strong>University of Mindanao</strong> and applicable Philippine laws. Any disputes arising from the use of this system shall be resolved in accordance with the university's academic integrity and conduct policies.</p>
-                </div>
             </div>
 
             <div class="tos-footer">
                 <p class="tos-footer-note">Last updated for IT15 Academic Submission &mdash; University of Mindanao</p>
-                <button class="tos-accept-btn" @onclick="CloseTermsModal">
+                <MudButton Variant="Variant.Filled" Class="shadcn-btn-primary" OnClick="CloseTermsModal">
                     I Understand &amp; Accept
-                </button>
+                </MudButton>
             </div>
         </div>
     </div>
 }
 
 <style>
-    @@keyframes slideInLeft {
-        from {
-            opacity: 0;
-            transform: translateX(-56px);
-        }
-
-        to {
-            opacity: 1;
-            transform: translateX(0);
-        }
-    }
-
-    @@keyframes slideInRight {
-        from {
-            opacity: 0;
-            transform: translateX(56px);
-        }
-
-        to {
-            opacity: 1;
-            transform: translateX(0);
-        }
-    }
-
+    /* ── Animations ───────────────────────────────────────────────── */
     @@keyframes fadeUp {
-        from {
-            opacity: 0;
-            transform: translateY(18px);
-        }
-
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
+        from { opacity: 0; transform: translateY(18px); }
+        to { opacity: 1; transform: translateY(0); }
     }
 
     @@keyframes shimmer {
-        0% {
-            background-position: -600px 0;
-        }
-
-        100% {
-            background-position: 600px 0;
-        }
+        0% { background-position: -600px 0; }
+        100% { background-position: 600px 0; }
     }
 
     @@keyframes fadeIn {
-        from {
-            opacity: 0;
-        }
-
-        to {
-            opacity: 1;
-        }
+        from { opacity: 0; }
+        to { opacity: 1; }
     }
 
     @@keyframes slideUp {
-        from {
-            opacity: 0;
-            transform: translateY(24px) scale(0.98);
-        }
-
-        to {
-            opacity: 1;
-            transform: translateY(0) scale(1);
-        }
+        from { opacity: 0; transform: translateY(24px) scale(0.98); }
+        to { opacity: 1; transform: translateY(0) scale(1); }
     }
 
     /* ── Layout ──────────────────────────────────────────────────── */
-    .split-register-container {
-        display: flex;
+    .auth-page-wrapper {
         min-height: 100vh;
-        width: 100%;
-    }
-
-    /* ── Left panel ─────────────────────────────────────────────── */
-    .form-panel {
-        width: 100%;
         display: flex;
         align-items: center;
         justify-content: center;
-        background: #ffffff;
-        padding: 1rem 1.25rem;
-        overflow: hidden;
-        animation: slideInLeft 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+        background-color: var(--bg-background);
+        padding: 2rem 1rem; /* Extra vertical padding for scrolling on small screens */
     }
 
-    @@media (min-width: 768px) {
-        .form-panel {
-            width: 50%;
-            padding: 1rem 2rem;
-        }
-    }
-
-    @@media (min-width: 1024px) {
-        .form-panel {
-            padding: 1rem 2.5rem;
-        }
-    }
-
-    .form-inner {
+    .auth-card {
         width: 100%;
-        max-width: 400px;
+        max-width: 440px; /* Slightly wider than login for the register fields */
+        padding: 2.5rem 2.5rem;
+        background-color: var(--bg-surface);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-lg);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+        animation: fadeUp 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
     }
 
-    .form-header {
+    @@media (max-width: 640px) {
+        .auth-card {
+            padding: 2rem 1.5rem;
+        }
+    }
+
+    /* ── Header ─────────────────────────────────────────────── */
+    .auth-header {
         text-align: center;
-        margin-bottom: 0.65rem;
-        padding-bottom: 0.65rem;
-        border-bottom: 1px solid #e8edf2;
-        animation: fadeUp 0.5s 0.1s cubic-bezier(0.22, 1, 0.36, 1) both;
+        margin-bottom: 2rem;
     }
 
-    /* ── Logo skeleton ───────────────────────────────────────────── */
+    /* Logo */
     .logo-wrap {
         display: flex;
         justify-content: center;
         align-items: center;
-        margin-bottom: 0.4rem;
+        margin-bottom: 1rem;
         position: relative;
-        height: 46px;
+        height: 50px;
     }
 
-    /* Shimmer placeholder shown before the image loads */
     .logo-skeleton {
         position: absolute;
         width: 120px;
-        height: 46px;
-        border-radius: 8px;
-        background: linear-gradient( 90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75% );
+        height: 50px;
+        border-radius: var(--radius-md);
+        background: linear-gradient(90deg, var(--bg-muted) 25%, var(--border-color) 50%, var(--bg-muted) 75%);
         background-size: 600px 100%;
         animation: shimmer 1.4s infinite linear;
         transition: opacity 0.35s ease;
         z-index: 1;
     }
 
-    .logo-skeleton--hidden {
-        opacity: 0;
-        pointer-events: none;
-    }
+    .logo-skeleton--hidden { opacity: 0; pointer-events: none; }
 
-    /* Logo image starts invisible, fades in once loaded */
     .form-logo {
-        height: 46px;
+        height: 50px;
         width: auto;
-        filter: drop-shadow(0 4px 12px rgba(19, 70, 88, 0.18));
         transition: transform 0.3s ease, opacity 0.45s ease;
         position: relative;
         z-index: 2;
         opacity: 0;
     }
 
-    .form-logo--visible {
-        opacity: 1;
+    .form-logo--visible { opacity: 1; }
+    .form-logo:hover { transform: scale(1.05); }
+
+    /* Typography */
+    .auth-title {
+        font-size: 1.75rem;
+        font-weight: 700;
+        margin: 0 0 0.25rem 0;
+        letter-spacing: -0.025em;
+        color: var(--text-main);
     }
 
-    .form-logo:hover {
-        transform: scale(1.06);
-    }
-
-    /* ── Form typography ─────────────────────────────────────────── */
-    .form-title {
-        font-size: 1.4rem;
-        font-weight: 800;
-        margin: 0 0 0.2rem 0;
-        letter-spacing: -0.5px;
-        background: linear-gradient(135deg, #1a5d73 0%, #0d9488 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-    }
-
-    .form-subtitle {
-        font-size: 0.78rem;
-        color: #64748b;
-        font-style: italic;
+    .auth-subtitle {
+        font-size: 0.875rem;
+        color: var(--text-muted);
         margin: 0;
     }
 
-    .fields-group {
-        margin: 0.6rem 0;
-        animation: fadeUp 0.5s 0.2s cubic-bezier(0.22, 1, 0.36, 1) both;
+    /* ── Form Fields & Inputs ─────────────────────────────────────────────── */
+    .form-group {
+        margin-bottom: 1.25rem;
     }
 
-    .accsys-field {
-        margin-bottom: 0.5rem !important;
+    .form-label {
+        display: block;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: var(--text-main);
+        margin-bottom: 0.5rem;
     }
 
-        .accsys-field .mud-input-outlined {
-            border-radius: 8px !important;
-            background: #f0f5fb !important;
-        }
+    .form-helper {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        line-height: 1.4;
+    }
 
-        .accsys-field .mud-input-outlined-border {
-            border-radius: 8px !important;
-        }
+    .shadcn-input-auth {
+        background-color: var(--bg-surface);
+    }
+    
+    .shadcn-input-auth .mud-input-outlined-border {
+        border-color: var(--border-color) !important;
+        border-radius: var(--radius-md) !important;
+    }
 
-        .accsys-field.mud-input-control:hover .mud-input-outlined {
-            background: #e8f0f8 !important;
-        }
+    .shadcn-input-auth.mud-input-outlined:focus-within .mud-input-outlined-border {
+        border-color: var(--text-main) !important;
+        border-width: 1px !important;
+        box-shadow: 0 0 0 2px var(--bg-background), 0 0 0 4px var(--text-main) !important;
+    }
 
-        .accsys-field .mud-input-label-inputcontrol {
-            color: #4a6274 !important;
-            font-size: 0.8rem !important;
-        }
-
-        .accsys-field .mud-input-slot {
-            padding-top: 16px !important;
-            padding-bottom: 2px !important;
-            min-height: 40px !important;
-        }
-
+    /* ReCAPTCHA */
     .recaptcha-wrap {
         display: flex;
         justify-content: center;
-        margin-bottom: 0.5rem;
-        transform: scale(0.88);
+        transform: scale(0.95);
         transform-origin: center;
     }
 
-    .error-alert {
+    /* Alerts */
+    .auth-alert {
         display: flex;
-        align-items: center;
-        background-color: #fef2f2;
-        border: 1px solid #fecaca;
-        color: #b91c1c;
+        align-items: flex-start;
+        gap: 0.5rem;
         padding: 0.75rem 1rem;
-        border-radius: 8px;
+        border-radius: var(--radius-md);
         font-size: 0.875rem;
         font-weight: 500;
-        animation: fadeUp 0.3s ease;
+        line-height: 1.4;
     }
 
-    .accsys-btn {
-        background: linear-gradient(to right, #1a5370, #429497) !important;
-        border-radius: 8px !important;
-        font-weight: 600 !important;
-        font-size: 0.875rem !important;
+    .alert-error {
+        background-color: rgba(220, 38, 38, 0.1);
+        color: #dc2626;
+        border: 1px solid rgba(220, 38, 38, 0.2);
+    }
+
+    /* Buttons & Links */
+    .shadcn-btn-primary {
+        border-radius: var(--radius-md) !important;
         text-transform: none !important;
-        min-height: 40px !important;
-        color: #ffffff !important;
-        box-shadow: 0 4px 14px rgba(26, 83, 112, 0.35) !important;
-        transition: all 0.25s ease !important;
-        border: none !important;
+        font-weight: 500 !important;
+        background-color: var(--theme-primary) !important;
+        color: var(--bg-surface) !important;
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+        transition: opacity 0.2s ease, transform 0.1s ease !important;
     }
 
-        .accsys-btn:hover:not(:disabled) {
-            transform: translateY(-1px) !important;
-            box-shadow: 0 8px 22px rgba(26, 83, 112, 0.45) !important;
-            opacity: 0.95 !important;
-        }
-
-        .accsys-btn:disabled {
-            opacity: 0.65 !important;
-            transform: none !important;
-        }
-
-    .form-footer {
-        text-align: center;
-        padding-top: 0.25rem;
-        animation: fadeUp 0.5s 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+    .shadcn-btn-primary:hover:not(:disabled) {
+        opacity: 0.9;
+        transform: translateY(-1px);
     }
 
-        .form-footer .mud-divider {
-            margin-bottom: 0.5rem !important;
-        }
+    .shadcn-btn-primary:disabled {
+        opacity: 0.65 !important;
+    }
 
-    .signin-link {
-        color: #0d9488 !important;
-        font-weight: 700 !important;
+    .shadcn-link {
+        color: var(--text-main) !important;
+        font-weight: 600 !important;
         text-decoration: none !important;
         transition: color 0.2s ease;
     }
 
-        .signin-link:hover {
-            color: #0a7a70 !important;
-            text-decoration: underline !important;
-        }
-
-    .help-text {
-        color: #94a3b8 !important;
-        font-style: italic;
+    .shadcn-link:hover {
+        color: var(--text-muted) !important;
+        text-decoration: underline !important;
     }
 
-    /* ── Right branding panel ────────────────────────────────────── */
-    .branding-panel {
-        display: none;
-        width: 50%;
-        background: linear-gradient(135deg, #134658 0%, #0d9488 100%);
-        position: relative;
-        overflow: hidden;
-        animation: slideInRight 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
-    }
-
-    @@media (min-width: 768px) {
-        .branding-panel {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-    }
-
-    .branding-inner {
-        position: relative;
-        z-index: 2;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
+    .auth-footer {
         text-align: center;
-        padding: 1.5rem 2rem;
-        max-width: 440px;
-        width: 100%;
+        margin-top: 2rem;
     }
 
-    .deco-circle {
-        position: absolute;
-        border-radius: 50%;
-        background: rgba(255,255,255,0.06);
-        pointer-events: none;
-    }
-
-    .deco-circle--lg {
-        width: 300px;
-        height: 300px;
-        bottom: -100px;
-        left: -80px;
-    }
-
-    .deco-circle--sm {
-        width: 180px;
-        height: 180px;
-        top: 20px;
-        right: -55px;
-        background: rgba(255,255,255,0.05);
-    }
-
-    .deco-circle--xs {
-        width: 90px;
-        height: 90px;
-        top: 45%;
-        right: 18%;
-        background: rgba(255,255,255,0.04);
-    }
-
-    .branding-illustration {
-        width: 100%;
-        max-width: 300px;
-        margin-bottom: 1.25rem;
-        border-radius: 1rem;
-        overflow: hidden;
-        box-shadow: 0 20px 50px rgba(0,0,0,0.25), 0 6px 16px rgba(0,0,0,0.15);
-        transition: transform 0.5s ease;
-        position: relative;
-        min-height: 200px;
-    }
-
-        .branding-illustration:hover {
-            transform: scale(1.03) translateY(-3px);
-        }
-
-    .img-skeleton {
-        position: absolute;
-        inset: 0;
-        border-radius: 1rem;
-        background: linear-gradient(90deg, rgba(255,255,255,0.08) 25%, rgba(255,255,255,0.18) 50%, rgba(255,255,255,0.08) 75%);
-        background-size: 600px 100%;
-        animation: shimmer 1.6s infinite linear;
-        transition: opacity 0.35s ease;
-        z-index: 1;
-    }
-
-    .img-skeleton--hidden {
-        opacity: 0;
-        pointer-events: none;
-    }
-
-    .branding-img {
-        width: 100%;
-        display: block;
-        object-fit: cover;
-        opacity: 0;
-        transition: opacity 0.45s ease;
-        position: relative;
-        z-index: 2;
-    }
-
-    .branding-img--visible {
-        opacity: 1;
-    }
-
-    .branding-title {
-        font-size: 1.65rem;
-        font-weight: 800;
-        color: #ffffff;
-        margin: 0 0 0.4rem 0;
-        letter-spacing: -0.5px;
-        text-shadow: 0 2px 12px rgba(0,0,0,0.2);
-    }
-
-    .branding-subtitle {
-        font-size: 0.875rem;
-        color: rgba(255,255,255,0.85);
-        line-height: 1.6;
-        margin: 0 0 1rem 0;
-    }
-
-    .branding-features {
-        display: flex;
-        flex-direction: column;
-        gap: 0.45rem;
-        width: 100%;
-        max-width: 280px;
-    }
-
-    .feature-item {
-        display: flex;
-        align-items: center;
-        gap: 0.6rem;
-        color: rgba(255,255,255,0.92);
-        font-size: 0.8rem;
-        font-weight: 500;
-        text-align: left;
-        background: rgba(255,255,255,0.08);
-        border-radius: 8px;
-        padding: 0.45rem 0.75rem;
-        border: 1px solid rgba(255,255,255,0.1);
-    }
-
-    .feature-icon {
-        width: 16px;
-        height: 16px;
-        color: #a7f3d0;
-        flex-shrink: 0;
-    }
-
-    /* ── ToS link ────────────────────────────────────────────────── */
     .tos-link {
-        color: #6e6e6e;
-        font-weight: 700;
+        color: var(--text-main);
+        font-weight: 600;
         cursor: pointer;
         text-decoration: underline;
         text-underline-offset: 2px;
         transition: color 0.2s ease;
     }
 
-        .tos-link:hover {
-            color: #0a7a70;
-        }
+    .tos-link:hover {
+        color: var(--text-muted);
+    }
 
-    /*  Modal backdrop  */
+    /* ── Modal (Terms of Service) ────────────────────────────────── */
     .tos-backdrop {
         position: fixed;
         inset: 0;
-        background: rgba(13, 38, 50, 0.65);
+        background: rgba(15, 23, 42, 0.8); /* Dark slate with opacity */
         backdrop-filter: blur(4px);
         -webkit-backdrop-filter: blur(4px);
-        z-index: 99999; /* well above everything */
+        z-index: 99999; 
         display: flex;
         align-items: center;
         justify-content: center;
@@ -699,19 +436,14 @@
         animation: fadeIn 0.2s ease both;
     }
 
-    /* ── Modal container ─────────────────────────────────────────── */
     .tos-modal {
-        background: #ffffff;
-        border-radius: 1.25rem;
         width: 100%;
         max-width: 620px;
         max-height: 88vh;
         display: flex;
         flex-direction: column;
-        box-shadow: 0 32px 80px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.12);
         animation: slideUp 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
         overflow: hidden;
-        /* Ensure the modal itself never gets pushed off-screen */
         margin: auto;
     }
 
@@ -720,8 +452,8 @@
         align-items: center;
         justify-content: space-between;
         padding: 1.25rem 1.5rem;
-        border-bottom: 1px solid #e8edf2;
-        background: linear-gradient(135deg, #134658 0%, #1a7a6e 100%);
+        border-bottom: 1px solid var(--border-color);
+        background: var(--bg-surface);
         flex-shrink: 0;
     }
 
@@ -734,136 +466,116 @@
     .tos-icon {
         width: 40px;
         height: 40px;
-        background: rgba(255,255,255,0.15);
-        border-radius: 10px;
+        background: var(--bg-muted);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
         display: flex;
         align-items: center;
         justify-content: center;
         flex-shrink: 0;
     }
 
-        .tos-icon svg {
-            width: 22px;
-            height: 22px;
-            color: #ffffff;
-        }
-
     .tos-title {
         font-size: 1.1rem;
-        font-weight: 800;
-        color: #ffffff;
+        font-weight: 700;
+        color: var(--text-main);
         margin: 0;
-        letter-spacing: -0.3px;
+        letter-spacing: -0.025em;
     }
 
     .tos-meta {
-        font-size: 0.72rem;
-        color: rgba(255,255,255,0.7);
+        font-size: 0.75rem;
+        color: var(--text-muted);
         margin: 0;
     }
 
     .tos-close {
-        background: rgba(255,255,255,0.12);
-        border: none;
-        border-radius: 8px;
+        background: var(--bg-muted);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        color: var(--text-muted);
         width: 34px;
         height: 34px;
         display: flex;
         align-items: center;
         justify-content: center;
         cursor: pointer;
-        transition: background 0.2s ease;
+        transition: all 0.2s ease;
         flex-shrink: 0;
     }
 
-        .tos-close:hover {
-            background: rgba(255,255,255,0.22);
-        }
-
-        .tos-close svg {
-            width: 18px;
-            height: 18px;
-            color: #ffffff;
-        }
+    .tos-close:hover {
+        background: var(--border-color);
+        color: var(--text-main);
+    }
 
     .tos-notice {
         display: flex;
         align-items: flex-start;
         gap: 0.65rem;
         background: #fffbeb;
-        border-left: 4px solid #f59e0b;
-        padding: 0.85rem 1.25rem;
+        border-bottom: 1px solid #fde68a;
+        padding: 1rem 1.5rem;
         flex-shrink: 0;
     }
 
     .tos-notice-icon {
-        width: 18px;
-        height: 18px;
         color: #d97706;
         flex-shrink: 0;
-        margin-top: 1px;
+        margin-top: 2px;
     }
 
     .tos-notice p {
-        font-size: 0.78rem;
-        color: #78350f;
+        font-size: 0.875rem;
+        color: #92400e;
         margin: 0;
-        line-height: 1.55;
+        line-height: 1.5;
     }
 
     .tos-body {
-        padding: 1.25rem 1.5rem;
+        padding: 1.5rem;
         overflow-y: auto;
         flex: 1;
         scrollbar-width: thin;
-        scrollbar-color: #cbd5e1 transparent;
+        scrollbar-color: var(--border-color) transparent;
+        background: var(--bg-surface);
     }
 
-        .tos-body::-webkit-scrollbar {
-            width: 5px;
-        }
+    .tos-body::-webkit-scrollbar { width: 6px; }
+    .tos-body::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 99px; }
 
-        .tos-body::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 99px;
-        }
-
-    .tos-section {
-        margin-bottom: 1.25rem;
-    }
-
-        .tos-section:last-child {
-            margin-bottom: 0;
-        }
+    .tos-section { margin-bottom: 1.5rem; }
+    .tos-section:last-child { margin-bottom: 0; }
 
     .tos-section-title {
         display: flex;
         align-items: center;
-        gap: 0.55rem;
-        font-size: 0.88rem;
-        font-weight: 700;
-        color: #134658;
-        margin: 0 0 0.4rem 0;
+        gap: 0.5rem;
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: var(--text-main);
+        margin: 0 0 0.5rem 0;
     }
 
     .tos-section-num {
-        width: 22px;
-        height: 22px;
-        background: linear-gradient(135deg, #134658, #0d9488);
-        color: #ffffff;
+        width: 24px;
+        height: 24px;
+        background: var(--bg-muted);
+        color: var(--text-main);
+        border: 1px solid var(--border-color);
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 0.68rem;
-        font-weight: 800;
+        font-size: 0.75rem;
+        font-weight: 600;
         flex-shrink: 0;
     }
 
     .tos-section p {
-        font-size: 0.8rem;
-        color: #475569;
-        line-height: 1.65;
+        font-size: 0.875rem;
+        color: var(--text-muted);
+        line-height: 1.6;
         margin: 0;
     }
 
@@ -873,91 +585,53 @@
         list-style: none;
     }
 
-        .tos-list li {
-            font-size: 0.8rem;
-            color: #475569;
-            line-height: 1.65;
-            padding: 0.2rem 0 0.2rem 1rem;
-            position: relative;
-        }
+    .tos-list li {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+        line-height: 1.6;
+        padding: 0.2rem 0 0.2rem 1rem;
+        position: relative;
+    }
 
-            .tos-list li::before {
-                content: "•";
-                position: absolute;
-                left: 0;
-                color: #0d9488;
-                font-weight: 700;
-            }
+    .tos-list li::before {
+        content: "•";
+        position: absolute;
+        left: 0;
+        color: var(--text-main);
+        font-weight: 700;
+    }
 
     .tos-footer {
         padding: 1rem 1.5rem;
-        border-top: 1px solid #e8edf2;
+        border-top: 1px solid var(--border-color);
         display: flex;
         align-items: center;
         justify-content: space-between;
         gap: 1rem;
-        background: #f8fafc;
+        background: var(--bg-muted);
         flex-shrink: 0;
         flex-wrap: wrap;
     }
 
     .tos-footer-note {
-        font-size: 0.7rem;
-        color: #94a3b8;
+        font-size: 0.75rem;
+        color: var(--text-muted);
         font-style: italic;
         margin: 0;
-    }
-
-    .tos-accept-btn {
-        background: linear-gradient(to right, #1a5370, #429497);
-        color: #ffffff;
-        border: none;
-        border-radius: 8px;
-        padding: 0.55rem 1.4rem;
-        font-size: 0.82rem;
-        font-weight: 600;
-        cursor: pointer;
-        box-shadow: 0 4px 12px rgba(26, 83, 112, 0.3);
-        transition: all 0.2s ease;
-        white-space: nowrap;
-    }
-
-        .tos-accept-btn:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 6px 18px rgba(26, 83, 112, 0.4);
-            opacity: 0.95;
-        }
-
-    /* ── Mobile ──────────────────────────────────────────────────── */
-    @@media (max-width: 767px) {
-        .split-register-container {
-            background: linear-gradient(160deg, #134658 0%, #1a7a7a 35%, #f0f5fb 35%);
-            min-height: 100vh;
-            overflow-y: auto;
-        }
-
-        .form-panel {
-            background: transparent;
-            padding-top: 2.5rem;
-            align-items: flex-start;
-        }
-
-        .form-inner {
-            background: #ffffff;
-            border-radius: 1.25rem;
-            padding: 1.5rem;
-            box-shadow: 0 12px 40px rgba(19, 70, 88, 0.2);
-        }
     }
 </style>
 
 @code {
     private CompanyRegisterDTO registerModel = new CompanyRegisterDTO();
     private bool isLoading = false;
-    private bool illustrationLoaded = false;
     private bool logoLoaded = false;
     private bool showTermsModal = false;
     private string errorMessage = "";
+
+    // Password visibility state
+    private bool isShowPassword = false;
+    private InputType passwordInputType = InputType.Password;
+    private string passwordInputIcon = Icons.Material.Outlined.VisibilityOff;
 
     private const string SiteKey = "6LcUNGEsAAAAAJKM0sgFbG3mKWAiYq-cXaz2Wv_8";
 
@@ -981,14 +655,15 @@
         StateHasChanged();
     }
 
-    private void OnIllustrationLoaded()
-    {
-        illustrationLoaded = true;
-        StateHasChanged();
-    }
-
     private void OpenTermsModal() => showTermsModal = true;
     private void CloseTermsModal() => showTermsModal = false;
+
+    private void TogglePasswordVisibility()
+    {
+        isShowPassword = !isShowPassword;
+        passwordInputType = isShowPassword ? InputType.Text : InputType.Password;
+        passwordInputIcon = isShowPassword ? Icons.Material.Outlined.Visibility : Icons.Material.Outlined.VisibilityOff;
+    }
 
     private async Task HandleRegistration()
     {

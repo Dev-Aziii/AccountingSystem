@@ -4,13 +4,14 @@
 @using AccountingSystem.Client.Services
 @using Microsoft.AspNetCore.Components.Authorization
 @using MudBlazor
+
 @inject AuthService AuthService
 @inject NavigationManager NavManager
 @inject AuthenticationStateProvider AuthStateProvider
 @inject ISnackbar Snackbar
 @inject ILogger<Login> Logger
 
-<PageTitle>AccSys</PageTitle>
+<PageTitle>AccSys - Sign In</PageTitle>
 
 <div class="split-login-container">
 
@@ -64,7 +65,7 @@
                          @onload="OnLogoLoaded" />
                 </div>
                 <h2 class="form-title">Welcome to AccSys</h2>
-                <p class="form-subtitle">Sign in to access your accounting system</p>
+                <p class="form-subtitle">Sign in to access your accounting dashboard</p>
             </div>
 
             <EditForm Model="@loginModel" OnValidSubmit="HandleLogin">
@@ -75,51 +76,56 @@
                                   @bind-Value="loginModel.Email"
                                   For="@(() => loginModel.Email)"
                                   Variant="Variant.Outlined"
-                                  Class="accsys-field mb-5"
+                                  Margin="Margin.Dense"
+                                  Class="shadcn-input-auth mb-5"
+                                  DisableUnderLine="true"
                                   FullWidth="true" />
 
                     <MudTextField Label="Password"
                                   @bind-Value="loginModel.Password"
                                   For="@(() => loginModel.Password)"
                                   Variant="Variant.Outlined"
-                                  InputType="InputType.Password"
-                                  Class="accsys-field mb-3"
+                                  Margin="Margin.Dense"
+                                  InputType="@passwordInputType"
+                                  Adornment="Adornment.End"
+                                  AdornmentIcon="@passwordInputIcon"
+                                  OnAdornmentClick="TogglePasswordVisibility"
+                                  AdornmentAriaLabel="Toggle password visibility"
+                                  DisableUnderLine="true"
+                                  Class="shadcn-input-auth mb-3"
                                   FullWidth="true" />
 
-                    <div class="d-flex align-center justify-space-between mb-5">
+                    <div class="d-flex align-center justify-space-between mb-6 mt-1">
                         <MudCheckBox @bind-Value="rememberMe" Color="Color.Primary" Label="Remember me" Class="ml-n2" Style="font-size: 0.875rem; color: var(--text-main);" />
-                        <div class="d-flex flex-column align-end">
-                            <MudLink Href="/forgot-password" Class="register-link" Style="font-size: 0.875rem;">
-                                Forgot password?
-                            </MudLink>
-                        </div>
+                        <MudLink Href="/forgot-password" Class="shadcn-link" Style="font-size: 0.875rem;">
+                            Forgot password?
+                        </MudLink>
                     </div>
 
                     @if (!string.IsNullOrEmpty(errorMessage))
                     {
-                        <div class="error-alert mb-5">
-                            <MudIcon Icon="@Icons.Material.Outlined.ErrorOutline" Size="Size.Small" Class="mr-2" />
+                        <div class="auth-alert alert-error mb-5">
+                            <MudIcon Icon="@Icons.Material.Outlined.ErrorOutline" Size="Size.Small" />
                             <span>@errorMessage</span>
                         </div>
                     }
 
                     <MudButton ButtonType="ButtonType.Submit"
                                Variant="Variant.Filled"
-                               Class="accsys-btn"
+                               Class="shadcn-btn-primary"
                                FullWidth="true"
                                Disabled="@isLoading"
-                               Size="Size.Large"
-                               StartIcon="@(!isLoading ? Icons.Material.Filled.Login : "")">
+                               Size="Size.Large">
                         @if (isLoading)
                         {
                             <div class="d-flex align-center gap-2">
-                                <MudProgressCircular Size="Size.Small" Indeterminate="true" />
+                                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="ms-n1" />
                                 <span>Signing In...</span>
                             </div>
                         }
                         else
                         {
-                            <span>Sign In to Dashboard</span>
+                            <span>Sign In</span>
                         }
                     </MudButton>
                 </div>
@@ -127,13 +133,13 @@
 
             <div class="form-footer">
                 <MudDivider Class="mb-5" />
-                <MudText Typo="Typo.body2" Class="mb-2">
+                <p style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.5rem;">
                     Don't have an account?
-                    <MudLink Href="register" Class="register-link">Sign up</MudLink>
-                </MudText>
-                <MudText Typo="Typo.caption" Class="help-text">
+                    <MudLink Href="register" Class="shadcn-link ml-1">Sign up</MudLink>
+                </p>
+                <p style="font-size: 0.75rem; color: var(--text-muted); font-style: italic;">
                     Need help? Contact your system administrator
-                </MudText>
+                </p>
             </div>
 
         </div>
@@ -144,49 +150,23 @@
 <style>
     /* ── Animations ───────────────────────────────────────────────── */
     @@keyframes slideInLeft {
-        from {
-            opacity: 0;
-            transform: translateX(-56px);
-        }
-
-        to {
-            opacity: 1;
-            transform: translateX(0);
-        }
+        from { opacity: 0; transform: translateX(-56px); }
+        to { opacity: 1; transform: translateX(0); }
     }
 
     @@keyframes slideInRight {
-        from {
-            opacity: 0;
-            transform: translateX(56px);
-        }
-
-        to {
-            opacity: 1;
-            transform: translateX(0);
-        }
+        from { opacity: 0; transform: translateX(56px); }
+        to { opacity: 1; transform: translateX(0); }
     }
 
     @@keyframes fadeUp {
-        from {
-            opacity: 0;
-            transform: translateY(18px);
-        }
-
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
+        from { opacity: 0; transform: translateY(18px); }
+        to { opacity: 1; transform: translateY(0); }
     }
 
     @@keyframes shimmer {
-        0% {
-            background-position: -600px 0;
-        }
-
-        100% {
-            background-position: 600px 0;
-        }
+        0% { background-position: -600px 0; }
+        100% { background-position: 600px 0; }
     }
 
     /* ── Base ─────────────────────────────────────────────────────── */
@@ -194,13 +174,14 @@
         display: flex;
         min-height: 100vh;
         width: 100%;
+        background-color: var(--bg-background);
     }
 
     /* ── Left branding panel ──────────────────────────────────────── */
     .branding-panel {
         display: none;
         width: 50%;
-        background: linear-gradient(135deg, #134658 0%, #0d9488 100%);
+        background-color: var(--theme-primary); /* Adopts the dark slate global primary */
         position: relative;
         overflow: hidden;
         animation: slideInLeft 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
@@ -230,65 +211,43 @@
     .deco-circle {
         position: absolute;
         border-radius: 50%;
-        background: rgba(255,255,255,0.06);
+        background: rgba(255,255,255,0.03);
         pointer-events: none;
     }
 
-    .deco-circle--lg {
-        width: 380px;
-        height: 380px;
-        top: -100px;
-        right: -120px;
-    }
-
-    .deco-circle--sm {
-        width: 220px;
-        height: 220px;
-        bottom: 40px;
-        left: -80px;
-        background: rgba(255,255,255,0.05);
-    }
-
-    .deco-circle--xs {
-        width: 110px;
-        height: 110px;
-        top: 50%;
-        left: 15%;
-        background: rgba(255,255,255,0.04);
-    }
+    .deco-circle--lg { width: 380px; height: 380px; top: -100px; right: -120px; }
+    .deco-circle--sm { width: 220px; height: 220px; bottom: 40px; left: -80px; background: rgba(255,255,255,0.02); }
+    .deco-circle--xs { width: 110px; height: 110px; top: 50%; left: 15%; background: rgba(255,255,255,0.015); }
 
     /* Illustration */
     .branding-illustration {
         width: 100%;
         max-width: 300px;
-        margin-bottom: 1.25rem;
-        border-radius: 1.25rem;
+        margin-bottom: 2rem;
+        border-radius: var(--radius-lg);
         overflow: hidden;
-        box-shadow: 0 24px 60px rgba(0,0,0,0.25), 0 8px 20px rgba(0,0,0,0.15);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
         transition: transform 0.5s ease;
         position: relative;
         min-height: 200px;
     }
 
-        .branding-illustration:hover {
-            transform: scale(1.03) translateY(-4px);
-        }
+    .branding-illustration:hover {
+        transform: scale(1.02) translateY(-4px);
+    }
 
     .img-skeleton {
         position: absolute;
         inset: 0;
-        border-radius: 1.25rem;
-        background: linear-gradient( 90deg, rgba(255,255,255,0.08) 25%, rgba(255,255,255,0.18) 50%, rgba(255,255,255,0.08) 75% );
+        border-radius: var(--radius-lg);
+        background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
         background-size: 600px 100%;
         animation: shimmer 1.6s infinite linear;
         transition: opacity 0.35s ease;
         z-index: 1;
     }
 
-    .img-skeleton--hidden {
-        opacity: 0;
-        pointer-events: none;
-    }
+    .img-skeleton--hidden { opacity: 0; pointer-events: none; }
 
     .branding-img {
         width: 100%;
@@ -300,47 +259,44 @@
         z-index: 2;
     }
 
-    .branding-img--visible {
-        opacity: 1;
-    }
+    .branding-img--visible { opacity: 1; }
 
     .branding-title {
         font-size: 2.25rem;
-        font-weight: 800;
+        font-weight: 700;
         color: #ffffff;
         margin: 0 0 0.75rem 0;
-        letter-spacing: -0.5px;
-        text-shadow: 0 2px 12px rgba(0,0,0,0.2);
+        letter-spacing: -0.025em;
     }
 
     .branding-subtitle {
         font-size: 1rem;
-        color: rgba(255,255,255,0.85);
-        line-height: 1.7;
-        margin: 0 0 1.25rem 0;
+        color: rgba(255,255,255,0.7);
+        line-height: 1.6;
+        margin: 0 0 2rem 0;
     }
 
     .branding-badges {
         display: flex;
-        gap: 1.25rem;
+        gap: 2rem;
     }
 
     .badge-item {
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 0.35rem;
-        color: rgba(255,255,255,0.9);
-        font-size: 0.72rem;
-        font-weight: 600;
-        letter-spacing: 0.5px;
+        gap: 0.5rem;
+        color: rgba(255,255,255,0.8);
+        font-size: 0.75rem;
+        font-weight: 500;
         text-transform: uppercase;
+        letter-spacing: 0.05em;
     }
 
     .badge-icon {
-        width: 22px;
-        height: 22px;
-        color: rgba(255,255,255,0.85);
+        width: 24px;
+        height: 24px;
+        color: rgba(255,255,255,0.9);
     }
 
     /* ── Right form panel ─────────────────────────────────────────── */
@@ -349,9 +305,8 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        background: #ffffff;
+        background-color: var(--bg-surface);
         padding: 2rem 1.25rem;
-        overflow: hidden;
         animation: slideInRight 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
     }
 
@@ -370,78 +325,63 @@
 
     .form-inner {
         width: 100%;
-        max-width: 420px;
+        max-width: 400px;
     }
 
     /* Header */
     .form-header {
         text-align: center;
-        margin-bottom: 1.5rem;
+        margin-bottom: 2rem;
         padding-bottom: 1.5rem;
-        border-bottom: 1px solid #e8edf2;
         animation: fadeUp 0.5s 0.1s cubic-bezier(0.22, 1, 0.36, 1) both;
     }
 
-    /* ── Logo skeleton ───────────────────────────────────────────── */
     .logo-wrap {
         display: flex;
         justify-content: center;
         align-items: center;
-        margin-bottom: 0.75rem;
+        margin-bottom: 1.25rem;
         position: relative;
-        height: 62px;
+        height: 54px;
     }
 
     .logo-skeleton {
         position: absolute;
-        width: 130px;
-        height: 62px;
-        border-radius: 8px;
-        background: linear-gradient( 90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75% );
+        width: 120px;
+        height: 54px;
+        border-radius: var(--radius-md);
+        background: linear-gradient(90deg, var(--bg-muted) 25%, var(--border-color) 50%, var(--bg-muted) 75%);
         background-size: 600px 100%;
         animation: shimmer 1.4s infinite linear;
         transition: opacity 0.35s ease;
         z-index: 1;
     }
 
-    .logo-skeleton--hidden {
-        opacity: 0;
-        pointer-events: none;
-    }
+    .logo-skeleton--hidden { opacity: 0; pointer-events: none; }
 
     .form-logo {
-        height: 62px;
+        height: 54px;
         width: auto;
-        filter: drop-shadow(0 4px 12px rgba(19, 70, 88, 0.18));
         transition: transform 0.3s ease, opacity 0.45s ease;
         position: relative;
         z-index: 2;
         opacity: 0;
     }
 
-    .form-logo--visible {
-        opacity: 1;
-    }
-
-    .form-logo:hover {
-        transform: scale(1.06);
-    }
+    .form-logo--visible { opacity: 1; }
+    .form-logo:hover { transform: scale(1.05); }
 
     .form-title {
-        font-size: 1.9rem;
-        font-weight: 800;
-        margin: 0 0 0.4rem 0;
-        letter-spacing: -0.6px;
-        background: linear-gradient(135deg, #1a5d73 0%, #0d9488 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
+        font-size: 1.75rem;
+        font-weight: 700;
+        margin: 0 0 0.5rem 0;
+        letter-spacing: -0.025em;
+        color: var(--text-main);
     }
 
     .form-subtitle {
-        font-size: 0.9rem;
-        color: #64748b;
-        font-style: italic;
+        font-size: 0.875rem;
+        color: var(--text-muted);
         margin: 0;
     }
 
@@ -451,84 +391,78 @@
         animation: fadeUp 0.5s 0.2s cubic-bezier(0.22, 1, 0.36, 1) both;
     }
 
-    .accsys-field .mud-input-outlined {
-        border-radius: 10px !important;
-        background: #f0f5fb !important;
+    /* Shadcn Input Standardization */
+    .shadcn-input-auth {
+        background-color: var(--bg-surface);
+    }
+    
+    .shadcn-input-auth .mud-input-outlined-border {
+        border-color: var(--border-color) !important;
+        border-radius: var(--radius-md) !important;
     }
 
-    .accsys-field .mud-input-outlined-border {
-        border-radius: 10px !important;
+    .shadcn-input-auth.mud-input-outlined:focus-within .mud-input-outlined-border {
+        border-color: var(--text-main) !important;
+        border-width: 1px !important;
+        box-shadow: 0 0 0 2px var(--bg-background), 0 0 0 4px var(--text-main) !important;
     }
 
-    .accsys-field.mud-input-control:hover .mud-input-outlined {
-        background: #e8f0f8 !important;
-    }
-
-    .accsys-field .mud-input-label-inputcontrol {
-        color: #4a6274 !important;
-    }
-
-    /* Error Alert */
-    .error-alert {
-        display: flex;
-        align-items: center;
-        background-color: #fef2f2;
-        border: 1px solid #fecaca;
-        color: #b91c1c;
-        padding: 0.75rem 1rem;
-        border-radius: 8px;
-        font-size: 0.875rem;
-        font-weight: 500;
-        animation: fadeUp 0.3s ease;
-    }
-
-    /* Button */
-    .accsys-btn {
-        background: linear-gradient(to right, #1a5370, #429497) !important;
-        border-radius: 10px !important;
+    .shadcn-link {
+        color: var(--text-main) !important;
         font-weight: 600 !important;
-        font-size: 0.95rem !important;
-        text-transform: none !important;
-        min-height: 52px !important;
-        color: #ffffff !important;
-        box-shadow: 0 6px 20px rgba(26, 83, 112, 0.35) !important;
-        transition: all 0.25s ease !important;
-        border: none !important;
-    }
-
-        .accsys-btn:hover:not(:disabled) {
-            transform: translateY(-2px) !important;
-            box-shadow: 0 10px 28px rgba(26, 83, 112, 0.45) !important;
-            opacity: 0.95 !important;
-        }
-
-        .accsys-btn:disabled {
-            opacity: 0.65 !important;
-            transform: none !important;
-        }
-
-    /* Footer */
-    .form-footer {
-        text-align: center;
-        padding-top: 0.5rem;
-        animation: fadeUp 0.5s 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
-    }
-
-    .register-link {
-        color: #0d9488 !important;
-        font-weight: 700 !important;
         text-decoration: none !important;
         transition: color 0.2s ease;
     }
 
-        .register-link:hover {
-            color: #0a7a70 !important;
-            text-decoration: underline !important;
-        }
+    .shadcn-link:hover {
+        color: var(--text-muted) !important;
+        text-decoration: underline !important;
+    }
 
-    .help-text {
-        color: #94a3b8 !important;
-        font-style: italic;
+    /* Error Alert */
+    .auth-alert {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.5rem;
+        padding: 0.75rem 1rem;
+        border-radius: var(--radius-md);
+        font-size: 0.875rem;
+        font-weight: 500;
+        line-height: 1.4;
+        animation: fadeUp 0.3s ease;
+    }
+
+    .alert-error {
+        background-color: rgba(220, 38, 38, 0.1);
+        color: #dc2626;
+        border: 1px solid rgba(220, 38, 38, 0.2);
+    }
+
+    /* Button */
+    .shadcn-btn-primary {
+        border-radius: var(--radius-md) !important;
+        text-transform: none !important;
+        font-weight: 500 !important;
+        background-color: var(--theme-primary) !important;
+        color: var(--bg-surface) !important;
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+        transition: opacity 0.2s ease, transform 0.1s ease !important;
+    }
+
+    .shadcn-btn-primary:hover:not(:disabled) {
+        opacity: 0.9;
+        transform: translateY(-1px);
+    }
+
+    .shadcn-btn-primary:disabled {
+        opacity: 0.65 !important;
+    }
+
+    /* Footer */
+    .form-footer {
+        text-align: center;
+        padding-top: 1rem;
+        animation: fadeUp 0.5s 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
     }
 
     /* ── Mobile ──────────────────────────────────────────────────── */
@@ -537,19 +471,25 @@
             height: auto;
             min-height: 100vh;
             overflow-y: auto;
-            background: linear-gradient(160deg, #134658 0%, #1a7a7a 40%, #f0f5fb 40%);
+            background-color: var(--bg-muted);
         }
 
         .form-panel {
             background: transparent;
-            padding-top: 3.5rem;
+            padding: 1.5rem;
         }
 
         .form-inner {
-            background: #ffffff;
-            border-radius: 1.5rem;
+            background-color: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
             padding: 2rem 1.5rem;
-            box-shadow: 0 16px 48px rgba(19, 70, 88, 0.2);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+        }
+        
+        .form-header {
+            border-bottom: none;
+            margin-bottom: 1rem;
         }
     }
 </style>
@@ -561,6 +501,11 @@
     private bool logoLoaded = false;
     private string errorMessage = "";
     private bool rememberMe = false;
+
+    // Password visibility state
+    private bool isShowPassword = false;
+    private InputType passwordInputType = InputType.Password;
+    private string passwordInputIcon = Icons.Material.Outlined.VisibilityOff;
 
     protected override async Task OnInitializedAsync()
     {
@@ -584,6 +529,13 @@
         StateHasChanged();
     }
 
+    private void TogglePasswordVisibility()
+    {
+        isShowPassword = !isShowPassword;
+        passwordInputType = isShowPassword ? InputType.Text : InputType.Password;
+        passwordInputIcon = isShowPassword ? Icons.Material.Outlined.Visibility : Icons.Material.Outlined.VisibilityOff;
+    }
+
     private async Task HandleLogin()
     {
         isLoading = true;
@@ -592,12 +544,15 @@
         {
             var result = await AuthService.Login(loginModel);
             Snackbar.Add("Welcome back! Login successful.", Severity.Success);
+            
+            // Short delay for smoother UI transition
+            await Task.Delay(500);
             NavManager.NavigateTo(result.Role == "SuperAdmin" ? "/superadmin/dashboard" : "/dashboard");
         }
         catch (Exception ex)
         {
             errorMessage = string.IsNullOrWhiteSpace(ex.Message)
-                ? "Invalid email or password. Please try again later."
+                ? "Invalid email or password. Please try again."
                 : ex.Message;
             Logger.LogError(ex, "Login failed.");
         }
