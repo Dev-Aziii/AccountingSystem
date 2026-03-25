@@ -2,7 +2,7 @@ namespace AccountingSystem.API.Configuration
 {
     internal static class StartupConfigurationValidator
     {
-        internal const string PlaceholderValue = "__SET_VIA_USER_SECRETS_OR_ENV__";
+        internal const string PlaceholderValue = "__SET_VIA_ENV__";
 
         internal static void ValidateRequiredSettings(IConfiguration configuration, IWebHostEnvironment environment)
         {
@@ -126,19 +126,24 @@ namespace AccountingSystem.API.Configuration
             throw new InvalidOperationException(
                 $"Required configuration is missing or invalid while starting the API in {environmentDescription}. " +
                 $"{string.Join(" ", details)} " +
-                "Use 'dotnet user-secrets' while developing or set environment variables locally. " +
-                "In deployed environments, inject values via environment variables or a secret store.");
+                "Set values in the .env file (local development) or via environment variables / secret store (deployed environments).");
         }
 
         internal static bool IsMissingOrPlaceholder(string? value)
         {
-            return string.IsNullOrWhiteSpace(value) ||
-                   string.Equals(value.Trim(), PlaceholderValue, StringComparison.Ordinal);
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return true;
+            }
+
+            var trimmed = value.Trim();
+            return string.Equals(trimmed, PlaceholderValue, StringComparison.Ordinal) ||
+                   string.Equals(trimmed, "__SET_VIA_USER_SECRETS_OR_ENV__", StringComparison.Ordinal);
         }
 
         internal static string BuildMissingValueMessage(string configurationKey)
         {
-            return $"{configurationKey} is not configured. Configure it via 'dotnet user-secrets' in Development or via environment variables / secret store in deployed environments.";
+            return $"{configurationKey} is not configured. Set it in the .env file (Development) or via environment variables / secret store (deployed environments).";
         }
 
         private static void CheckRequiredValue(string? value, string configurationKey, ICollection<string> missingKeys)
@@ -203,7 +208,8 @@ namespace AccountingSystem.API.Configuration
                     !dataSource.StartsWith("np:", StringComparison.OrdinalIgnoreCase))
                 {
                     invalidKeys.Add(
-                        "ConnectionStrings:DefaultConnection (SQL Server instance name contains a doubled backslash at runtime; use 'Server=HOST\\INSTANCE' in user-secrets or environment variables)");
+                        "ConnectionStrings:DefaultConnection (SQL Server instance name contains a doubled backslash at runtime. " +
+                        "In .env files, use a SINGLE backslash: ConnectionStrings__DefaultConnection=Server=HOST\\INSTANCE;...)");
                 }
             }
             catch (ArgumentException)

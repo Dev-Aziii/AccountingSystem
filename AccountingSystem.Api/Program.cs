@@ -20,6 +20,15 @@ Env.Load();
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Log configuration sources in Development (without exposing secrets)
+if (builder.Environment.IsDevelopment())
+{
+    var envFileExists = File.Exists(Path.Combine(Directory.GetCurrentDirectory(), ".env"));
+    Console.WriteLine($"[Config] Environment: {builder.Environment.EnvironmentName}");
+    Console.WriteLine($"[Config] .env file loaded: {envFileExists}");
+    Console.WriteLine($"[Config] ConnectionStrings:DefaultConnection resolved: {!string.IsNullOrWhiteSpace(builder.Configuration.GetConnectionString("DefaultConnection"))}");
+}
+
 QuestPDF.Settings.License = LicenseType.Community;
 
 StartupConfigurationValidator.ValidateRequiredSettings(builder.Configuration, builder.Environment);
