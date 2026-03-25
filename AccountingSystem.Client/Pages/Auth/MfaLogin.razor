@@ -1,5 +1,6 @@
 @page "/mfa-login"
 @layout LoginLayout
+@using System.Linq
 @using AccountingSystem.Shared.DTOs
 @using AccountingSystem.Client.Services
 @using Microsoft.AspNetCore.Components.Authorization
@@ -52,19 +53,28 @@
         {
             <MudTabs Rounded="true" Elevation="0" Class="shadcn-tabs" PanelClass="pt-6">
                 <MudTabPanel Text="Authenticator App">
-                    <EditForm Model="@mfaLoginModel" OnValidSubmit="HandleAuthenticatorLogin">
+                    <EditForm Model="@mfaLoginModel" OnSubmit="HandleAuthenticatorLogin">
                         <DataAnnotationsValidator />
 
                         <div class="form-group">
                             <label class="form-label">6-Digit Code</label>
-                            <MudTextField @bind-Value="mfaLoginModel.TwoFactorCode"
-                                          Placeholder="000000"
-                                          Variant="Variant.Outlined"
-                                          Margin="Margin.Dense"
-                                          DisableUnderLine="true"
-                                          Class="shadcn-input-auth text-center-input"
-                                          Immediate="true"
-                                          MaxLength="6" />
+                            <div class="otp-input-container">
+                                @for (int i = 0; i < 6; i++)
+                                {
+                                    var index = i;
+                                    <input type="text"
+                                           inputmode="numeric"
+                                           maxlength="1"
+                                           class="otp-digit-box"
+                                           value="@otpDigits[index]"
+                                           @ref="otpInputRefs[index]"
+                                           @oninput="(e) => HandleOtpInput(index, e)"
+                                           @onkeydown="(e) => HandleOtpKeyDown(index, e)"
+                                           @onfocus="() => HandleOtpFocus(index)"
+                                           @onpaste="HandleOtpPaste"
+                                           disabled="@isSubmitting" />
+                                }
+                            </div>
                         </div>
 
                         @if (!string.IsNullOrWhiteSpace(errorMessage))
@@ -102,17 +112,18 @@
                 </MudTabPanel>
 
                 <MudTabPanel Text="Recovery Code">
-                    <EditForm Model="@mfaLoginModel" OnValidSubmit="HandleRecoveryCodeLogin">
+                    <EditForm Model="@mfaLoginModel" OnSubmit="HandleRecoveryCodeLogin">
                         <DataAnnotationsValidator />
 
                         <div class="form-group">
                             <label class="form-label">Recovery Code</label>
-                            <MudTextField @bind-Value="mfaLoginModel.RecoveryCode"
-                                          Placeholder="e.g. 1a2b3c4d5e"
-                                          Variant="Variant.Outlined"
-                                          Margin="Margin.Dense"
-                                          DisableUnderLine="true"
-                                          Class="shadcn-input-auth" />
+                            <input type="text"
+                                   class="recovery-code-input"
+                                   placeholder="XXXXX-XXXXX"
+                                   value="@recoveryCodeDisplay"
+                                   @oninput="HandleRecoveryCodeInput"
+                                   maxlength="11"
+                                   disabled="@isSubmitting" />
                             <div class="form-helper mt-1">Recovery codes are single-use only.</div>
                         </div>
 
@@ -248,6 +259,75 @@
         box-shadow: 0 0 0 2px var(--bg-background), 0 0 0 4px var(--text-main) !important;
     }
 
+    /* OTP Digit Boxes */
+    .otp-input-container {
+        display: flex;
+        gap: 0.5rem;
+        justify-content: center;
+    }
+
+    .otp-digit-box {
+        width: 48px;
+        height: 56px;
+        text-align: center;
+        font-size: 1.5rem;
+        font-weight: 600;
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        background-color: var(--bg-surface);
+        color: var(--text-main);
+        outline: none;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .otp-digit-box:focus {
+        border-color: var(--text-main);
+        box-shadow: 0 0 0 2px var(--bg-background), 0 0 0 4px var(--text-main);
+    }
+
+    .otp-digit-box:disabled {
+        opacity: 0.65;
+        cursor: not-allowed;
+    }
+
+    .otp-digit-box::placeholder {
+        color: var(--text-muted);
+        opacity: 0.5;
+    }
+
+    /* Recovery Code Input */
+    .recovery-code-input {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        font-size: 1.125rem;
+        font-weight: 500;
+        letter-spacing: 0.1rem;
+        text-align: center;
+        text-transform: uppercase;
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        background-color: var(--bg-surface);
+        color: var(--text-main);
+        outline: none;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .recovery-code-input:focus {
+        border-color: var(--text-main);
+        box-shadow: 0 0 0 2px var(--bg-background), 0 0 0 4px var(--text-main);
+    }
+
+    .recovery-code-input:disabled {
+        opacity: 0.65;
+        cursor: not-allowed;
+    }
+
+    .recovery-code-input::placeholder {
+        color: var(--text-muted);
+        opacity: 0.5;
+        text-transform: uppercase;
+    }
+
     /* Center text for the 6-digit code input */
     .text-center-input input {
         text-align: center !important;
@@ -343,6 +423,13 @@
     private bool isSubmitting;
     private string errorMessage = string.Empty;
 
+    // OTP digit boxes
+    private readonly string[] otpDigits = new string[6];
+    private readonly ElementReference[] otpInputRefs = new ElementReference[6];
+
+    // Recovery code display (with hyphen)
+    private string recoveryCodeDisplay = string.Empty;
+
     protected override async Task OnInitializedAsync()
     {
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
@@ -353,13 +440,118 @@
         }
     }
 
+    // OTP input handlers
+    private async Task HandleOtpInput(int index, ChangeEventArgs e)
+    {
+        var value = e.Value?.ToString() ?? string.Empty;
+        
+        // Only accept digits
+        if (!string.IsNullOrEmpty(value) && !char.IsDigit(value[0]))
+        {
+            otpDigits[index] = string.Empty;
+            StateHasChanged();
+            return;
+        }
+
+        otpDigits[index] = value.Length > 0 ? value[0].ToString() : string.Empty;
+        SyncOtpToModel();
+
+        // Auto-advance to next input
+        if (!string.IsNullOrEmpty(otpDigits[index]) && index < 5)
+        {
+            await otpInputRefs[index + 1].FocusAsync();
+        }
+
+        // Auto-submit when all 6 digits are entered
+        if (otpDigits.All(d => !string.IsNullOrEmpty(d)))
+        {
+            await HandleAuthenticatorLogin();
+        }
+    }
+
+    private async Task HandleOtpKeyDown(int index, KeyboardEventArgs e)
+    {
+        if (e.Key == "Backspace" && string.IsNullOrEmpty(otpDigits[index]) && index > 0)
+        {
+            // Move to previous input on backspace when current is empty
+            await otpInputRefs[index - 1].FocusAsync();
+        }
+        else if (e.Key == "ArrowLeft" && index > 0)
+        {
+            await otpInputRefs[index - 1].FocusAsync();
+        }
+        else if (e.Key == "ArrowRight" && index < 5)
+        {
+            await otpInputRefs[index + 1].FocusAsync();
+        }
+    }
+
+    private async Task HandleOtpFocus(int index)
+    {
+        // Select content when focusing (helps with replacement)
+        await Task.CompletedTask;
+    }
+
+    private async Task HandleOtpPaste(ClipboardEventArgs e)
+    {
+        // Handle paste - this will be processed via JS interop if needed
+        // For now, the browser's native paste will work with oninput
+        await Task.CompletedTask;
+    }
+
+    private void SyncOtpToModel()
+    {
+        mfaLoginModel.TwoFactorCode = string.Concat(otpDigits);
+    }
+
+    // Recovery code input handler
+    private void HandleRecoveryCodeInput(ChangeEventArgs e)
+    {
+        var input = e.Value?.ToString() ?? string.Empty;
+        
+        // Remove all non-alphanumeric characters except hyphen for display
+        var cleaned = new string(input.Where(c => char.IsLetterOrDigit(c)).ToArray());
+        
+        // Limit to 10 characters (XXXXX + XXXXX)
+        if (cleaned.Length > 10)
+        {
+            cleaned = cleaned.Substring(0, 10);
+        }
+
+        // Format with hyphen after 5 characters for display
+        if (cleaned.Length > 5)
+        {
+            recoveryCodeDisplay = cleaned.Substring(0, 5) + "-" + cleaned.Substring(5);
+        }
+        else
+        {
+            recoveryCodeDisplay = cleaned;
+        }
+
+        // Store the display value (with hyphen if present) for API - API handles normalization
+        mfaLoginModel.RecoveryCode = recoveryCodeDisplay;
+    }
+
     private async Task HandleAuthenticatorLogin()
     {
+        SyncOtpToModel();
+        if (string.IsNullOrWhiteSpace(mfaLoginModel.TwoFactorCode) || mfaLoginModel.TwoFactorCode.Length < 6)
+        {
+            errorMessage = "Please enter all 6 digits.";
+            return;
+        }
         await CompleteLoginAsync(useRecoveryCode: false);
     }
 
     private async Task HandleRecoveryCodeLogin()
     {
+        // Check that we have a full recovery code (10 alphanumeric + 1 hyphen = 11 chars displayed)
+        var cleanedLength = mfaLoginModel.RecoveryCode?.Count(char.IsLetterOrDigit) ?? 0;
+        if (cleanedLength < 10)
+        {
+            errorMessage = "Please enter your full recovery code.";
+            return;
+        }
         await CompleteLoginAsync(useRecoveryCode: true);
     }
 
@@ -391,6 +583,10 @@
             mfaLoginModel.ChallengeToken = string.Empty;
             mfaLoginModel.TwoFactorCode = string.Empty;
             mfaLoginModel.RecoveryCode = string.Empty;
+
+            // Clear the UI state
+            Array.Clear(otpDigits, 0, otpDigits.Length);
+            recoveryCodeDisplay = string.Empty;
 
             Snackbar.Add("Welcome back! Verification successful.", Severity.Success);
             
