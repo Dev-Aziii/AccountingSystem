@@ -4,6 +4,7 @@ using AccountingSystem.API.Identity;
 using AccountingSystem.API.Middleware;
 using AccountingSystem.API.Services;
 using AccountingSystem.API.Services.Interfaces;
+using DotNetEnv;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Components.WebAssembly.Server;
 using Microsoft.AspNetCore.Identity;
@@ -13,6 +14,9 @@ using Microsoft.OpenApi.Models;
 using QuestPDF.Infrastructure;
 using System.Globalization;
 using System.Threading.RateLimiting;
+
+// Load .env file if it exists (for local development)
+Env.Load();
 
 var builder = WebApplication.CreateBuilder(args);
 
