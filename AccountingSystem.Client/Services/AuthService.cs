@@ -33,8 +33,35 @@ namespace AccountingSystem.Client.Services
                 throw new Exception("Failed to deserialize authentication response");
             }
 
-            await _tokenService.SetTokenAsync(result.Token);
-            ((CustomAuthStateProvider)_authStateProvider).NotifyUserAuthentication(result.Token);
+            if (!result.RequiresTwoFactor && !string.IsNullOrWhiteSpace(result.Token))
+            {
+                await _tokenService.SetTokenAsync(result.Token);
+                ((CustomAuthStateProvider)_authStateProvider).NotifyUserAuthentication(result.Token);
+            }
+
+            return result;
+        }
+
+        public async Task<AuthResponseDTO> CompleteMfaLogin(LoginMfaDTO dto)
+        {
+            var response = await _api.PostAsync("api/auth/login/mfa", dto, requiresAuth: false);
+            if (!response.IsSuccessStatusCode)
+            {
+                var rawContent = await response.Content.ReadAsStringAsync();
+                throw new Exception(ApiErrorParser.Extract(rawContent, "Unable to verify the authenticator code. Please try again."));
+            }
+
+            var result = await response.Content.ReadFromJsonAsync<AuthResponseDTO>();
+            if (result == null)
+            {
+                throw new Exception("Failed to deserialize MFA authentication response");
+            }
+
+            if (!string.IsNullOrWhiteSpace(result.Token))
+            {
+                await _tokenService.SetTokenAsync(result.Token);
+                ((CustomAuthStateProvider)_authStateProvider).NotifyUserAuthentication(result.Token);
+            }
 
             return result;
         }
@@ -140,6 +167,81 @@ namespace AccountingSystem.Client.Services
             {
                 var rawContent = await response.Content.ReadAsStringAsync();
                 throw new Exception(ApiErrorParser.Extract(rawContent, "Unable to reset password. Please try again."));
+            }
+        }
+
+        public async Task<MfaStatusDTO> GetMfaStatus()
+        {
+            try
+            {
+                var status = await _api.GetAsync<MfaStatusDTO>("api/auth/mfa");
+                return status ?? throw new Exception("Unable to load MFA status.");
+            }
+            catch (Exception ex) when (ex is not UnauthorizedAccessException)
+            {
+                throw new Exception("Unable to load MFA status.", ex);
+            }
+        }
+
+        public async Task<MfaSetupDTO> BeginAuthenticatorSetup()
+        {
+            var response = await _api.PostAsync("api/auth/mfa/authenticator/setup", new { });
+            if (!response.IsSuccessStatusCode)
+            {
+                var rawContent = await response.Content.ReadAsStringAsync();
+                throw new Exception(ApiErrorParser.Extract(rawContent, "Unable to start MFA setup. Please try again."));
+            }
+
+            var result = await response.Content.ReadFromJsonAsync<MfaSetupDTO>();
+            return result ?? throw new Exception("Failed to deserialize MFA setup response.");
+        }
+
+        public async Task<MfaSetupDTO> ResetAuthenticator(MfaReauthenticationDTO dto)
+        {
+            var response = await _api.PostAsync("api/auth/mfa/authenticator/reset", dto);
+            if (!response.IsSuccessStatusCode)
+            {
+                var rawContent = await response.Content.ReadAsStringAsync();
+                throw new Exception(ApiErrorParser.Extract(rawContent, "Unable to reset the authenticator app. Please try again."));
+            }
+
+            var result = await response.Content.ReadFromJsonAsync<MfaSetupDTO>();
+            return result ?? throw new Exception("Failed to deserialize authenticator reset response.");
+        }
+
+        public async Task<RecoveryCodesDTO> VerifyAuthenticatorSetup(VerifyAuthenticatorSetupDTO dto)
+        {
+            var response = await _api.PostAsync("api/auth/mfa/authenticator/verify", dto);
+            if (!response.IsSuccessStatusCode)
+            {
+                var rawContent = await response.Content.ReadAsStringAsync();
+                throw new Exception(ApiErrorParser.Extract(rawContent, "Unable to enable MFA. Please try again."));
+            }
+
+            var result = await response.Content.ReadFromJsonAsync<RecoveryCodesDTO>();
+            return result ?? throw new Exception("Failed to deserialize recovery code response.");
+        }
+
+        public async Task<RecoveryCodesDTO> RegenerateRecoveryCodes(MfaReauthenticationDTO dto)
+        {
+            var response = await _api.PostAsync("api/auth/mfa/recovery-codes/regenerate", dto);
+            if (!response.IsSuccessStatusCode)
+            {
+                var rawContent = await response.Content.ReadAsStringAsync();
+                throw new Exception(ApiErrorParser.Extract(rawContent, "Unable to regenerate recovery codes. Please try again."));
+            }
+
+            var result = await response.Content.ReadFromJsonAsync<RecoveryCodesDTO>();
+            return result ?? throw new Exception("Failed to deserialize recovery code response.");
+        }
+
+        public async Task DisableMfa(MfaReauthenticationDTO dto)
+        {
+            var response = await _api.PostAsync("api/auth/mfa/disable", dto);
+            if (!response.IsSuccessStatusCode)
+            {
+                var rawContent = await response.Content.ReadAsStringAsync();
+                throw new Exception(ApiErrorParser.Extract(rawContent, "Unable to disable MFA. Please try again."));
             }
         }
     }

@@ -6,6 +6,7 @@
 @using MudBlazor
 
 @inject AuthService AuthService
+@inject PendingMfaLoginStateService PendingMfaLoginState
 @inject NavigationManager NavManager
 @inject AuthenticationStateProvider AuthStateProvider
 @inject ISnackbar Snackbar
@@ -543,9 +544,20 @@
         try
         {
             var result = await AuthService.Login(loginModel);
+            if (result.RequiresTwoFactor)
+            {
+                PendingMfaLoginState.Set(result.TwoFactorChallengeToken, result.Email);
+                Snackbar.Add(
+                    string.IsNullOrWhiteSpace(result.Message)
+                        ? "Enter your Google Authenticator code to continue."
+                        : result.Message,
+                    Severity.Info);
+                NavManager.NavigateTo("/mfa-login");
+                return;
+            }
+
             Snackbar.Add("Welcome back! Login successful.", Severity.Success);
-            
-            // Short delay for smoother UI transition
+
             await Task.Delay(500);
             NavManager.NavigateTo(result.Role == "SuperAdmin" ? "/superadmin/dashboard" : "/dashboard");
         }

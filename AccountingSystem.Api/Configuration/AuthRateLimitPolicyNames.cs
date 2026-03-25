@@ -9,5 +9,7 @@ namespace AccountingSystem.API.Configuration
         internal const string ResetPassword = "AuthResetPassword";
         internal const string ConfirmEmail = "AuthConfirmEmail";
         internal const string ResendConfirmation = "AuthResendConfirmation";
+        internal const string LoginMfa = "AuthLoginMfa";
+        internal const string MfaManage = "AuthMfaManage";
     }
 }

@@ -1,0 +1,413 @@
+@page "/mfa-login"
+@layout LoginLayout
+@using AccountingSystem.Shared.DTOs
+@using AccountingSystem.Client.Services
+@using Microsoft.AspNetCore.Components.Authorization
+@using MudBlazor
+
+@inject AuthService AuthService
+@inject PendingMfaLoginStateService PendingMfaLoginState
+@inject NavigationManager NavManager
+@inject AuthenticationStateProvider AuthStateProvider
+@inject ISnackbar Snackbar
+@inject ILogger<MfaLogin> Logger
+
+<PageTitle>Two-Factor Verification - AccSys</PageTitle>
+
+<div class="auth-page-wrapper">
+    <div class="auth-card shadcn-card">
+        
+        <div class="auth-header">
+            <div class="auth-icon-wrapper">
+                <MudIcon Icon="@Icons.Material.Outlined.Security" Size="Size.Medium" Class="auth-icon" />
+            </div>
+            <h1 class="auth-title">Two-Factor Verification</h1>
+            <p class="auth-subtitle">
+                @if (PendingMfaLoginState.HasPendingChallenge)
+                {
+                    <span>Enter the 6-digit code from your authenticator app for <strong>@PendingMfaLoginState.Email</strong>.</span>
+                }
+                else
+                {
+                    <span>Your verification session has expired.</span>
+                }
+            </p>
+        </div>
+
+        @if (!PendingMfaLoginState.HasPendingChallenge)
+        {
+            <div class="auth-alert alert-error mb-6">
+                <MudIcon Icon="@Icons.Material.Outlined.TimerOff" Size="Size.Small" />
+                <span>Sign in again to request a new verification challenge.</span>
+            </div>
+
+            <MudButton Variant="Variant.Filled"
+                       Class="shadcn-btn-primary"
+                       FullWidth="true"
+                       Href="/">
+                Back to Sign In
+            </MudButton>
+        }
+        else
+        {
+            <MudTabs Rounded="true" Elevation="0" Class="shadcn-tabs" PanelClass="pt-6">
+                <MudTabPanel Text="Authenticator App">
+                    <EditForm Model="@mfaLoginModel" OnValidSubmit="HandleAuthenticatorLogin">
+                        <DataAnnotationsValidator />
+
+                        <div class="form-group">
+                            <label class="form-label">6-Digit Code</label>
+                            <MudTextField @bind-Value="mfaLoginModel.TwoFactorCode"
+                                          Placeholder="000000"
+                                          Variant="Variant.Outlined"
+                                          Margin="Margin.Dense"
+                                          DisableUnderLine="true"
+                                          Class="shadcn-input-auth text-center-input"
+                                          Immediate="true"
+                                          MaxLength="6" />
+                        </div>
+
+                        @if (!string.IsNullOrWhiteSpace(errorMessage))
+                        {
+                            <div class="auth-alert alert-error mb-4">
+                                <MudIcon Icon="@Icons.Material.Outlined.ErrorOutline" Size="Size.Small" />
+                                <span>@errorMessage</span>
+                            </div>
+                        }
+
+                        <div class="d-flex gap-3 mt-6">
+                            <MudButton Variant="Variant.Outlined"
+                                       Class="shadcn-btn-outline"
+                                       Href="/"
+                                       Style="flex: 1;">
+                                Cancel
+                            </MudButton>
+                            <MudButton ButtonType="ButtonType.Submit"
+                                       Variant="Variant.Filled"
+                                       Class="shadcn-btn-primary"
+                                       Disabled="@isSubmitting"
+                                       Style="flex: 2;">
+                                @if (isSubmitting)
+                                {
+                                    <MudProgressCircular Class="ms-n1 me-2" Size="Size.Small" Indeterminate="true" />
+                                    <span>Verifying...</span>
+                                }
+                                else
+                                {
+                                    <span>Verify</span>
+                                }
+                            </MudButton>
+                        </div>
+                    </EditForm>
+                </MudTabPanel>
+
+                <MudTabPanel Text="Recovery Code">
+                    <EditForm Model="@mfaLoginModel" OnValidSubmit="HandleRecoveryCodeLogin">
+                        <DataAnnotationsValidator />
+
+                        <div class="form-group">
+                            <label class="form-label">Recovery Code</label>
+                            <MudTextField @bind-Value="mfaLoginModel.RecoveryCode"
+                                          Placeholder="e.g. 1a2b3c4d5e"
+                                          Variant="Variant.Outlined"
+                                          Margin="Margin.Dense"
+                                          DisableUnderLine="true"
+                                          Class="shadcn-input-auth" />
+                            <div class="form-helper mt-1">Recovery codes are single-use only.</div>
+                        </div>
+
+                        @if (!string.IsNullOrWhiteSpace(errorMessage))
+                        {
+                            <div class="auth-alert alert-error mb-4">
+                                <MudIcon Icon="@Icons.Material.Outlined.ErrorOutline" Size="Size.Small" />
+                                <span>@errorMessage</span>
+                            </div>
+                        }
+
+                        <div class="d-flex gap-3 mt-6">
+                            <MudButton Variant="Variant.Outlined"
+                                       Class="shadcn-btn-outline"
+                                       Href="/"
+                                       Style="flex: 1;">
+                                Cancel
+                            </MudButton>
+                            <MudButton ButtonType="ButtonType.Submit"
+                                       Variant="Variant.Filled"
+                                       Class="shadcn-btn-primary"
+                                       Disabled="@isSubmitting"
+                                       Style="flex: 2;">
+                                @if (isSubmitting)
+                                {
+                                    <MudProgressCircular Class="ms-n1 me-2" Size="Size.Small" Indeterminate="true" />
+                                    <span>Verifying...</span>
+                                }
+                                else
+                                {
+                                    <span>Use Code</span>
+                                }
+                            </MudButton>
+                        </div>
+                    </EditForm>
+                </MudTabPanel>
+            </MudTabs>
+        }
+
+    </div>
+</div>
+
+<style>
+    /* Auth Page Layout */
+    .auth-page-wrapper {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: var(--bg-background);
+        padding: 1rem;
+    }
+
+    .auth-card {
+        width: 100%;
+        max-width: 420px;
+        padding: 2.5rem 2rem;
+        background-color: var(--bg-surface);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-lg);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+    }
+
+    /* Header Styles */
+    .auth-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    .auth-icon-wrapper {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background-color: var(--bg-muted);
+        margin-bottom: 1rem;
+        border: 1px solid var(--border-color);
+    }
+
+    .auth-icon {
+        color: var(--text-main);
+    }
+
+    .auth-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        letter-spacing: -0.025em;
+        color: var(--text-main);
+        margin: 0 0 0.5rem 0;
+    }
+
+    .auth-subtitle {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+        margin: 0;
+        line-height: 1.5;
+    }
+
+    /* Form Styles */
+    .form-group {
+        margin-bottom: 1.25rem;
+    }
+
+    .form-label {
+        display: block;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: var(--text-main);
+        margin-bottom: 0.5rem;
+    }
+
+    .form-helper {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        line-height: 1.4;
+    }
+
+    /* Customizing MudBlazor input to look like Shadcn */
+    .shadcn-input-auth {
+        background-color: var(--bg-surface);
+    }
+    
+    .shadcn-input-auth .mud-input-outlined-border {
+        border-color: var(--border-color) !important;
+        border-radius: var(--radius-md) !important;
+    }
+
+    .shadcn-input-auth.mud-input-outlined:focus-within .mud-input-outlined-border {
+        border-color: var(--text-main) !important;
+        border-width: 1px !important;
+        box-shadow: 0 0 0 2px var(--bg-background), 0 0 0 4px var(--text-main) !important;
+    }
+
+    /* Center text for the 6-digit code input */
+    .text-center-input input {
+        text-align: center !important;
+        font-size: 1.25rem !important;
+        letter-spacing: 0.25rem !important;
+        font-weight: 600 !important;
+    }
+
+    /* Alert Box */
+    .auth-alert {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.5rem;
+        padding: 0.75rem 1rem;
+        border-radius: var(--radius-md);
+        font-size: 0.875rem;
+        font-weight: 500;
+        line-height: 1.4;
+    }
+
+    .alert-error {
+        background-color: rgba(220, 38, 38, 0.1);
+        color: #dc2626;
+        border: 1px solid rgba(220, 38, 38, 0.2);
+    }
+
+    /* Buttons */
+    .shadcn-btn-primary {
+        border-radius: var(--radius-md) !important;
+        text-transform: none !important;
+        font-weight: 500 !important;
+        background-color: var(--text-main) !important;
+        color: var(--bg-surface) !important;
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+        transition: opacity 0.2s ease, transform 0.1s ease !important;
+    }
+
+    .shadcn-btn-primary:hover:not(:disabled) {
+        opacity: 0.9;
+        transform: translateY(-1px);
+    }
+
+    .shadcn-btn-primary:disabled {
+        opacity: 0.65 !important;
+    }
+
+    .shadcn-btn-outline {
+        border: 1px solid var(--border-color) !important;
+        background: var(--bg-surface) !important;
+        color: var(--text-main) !important;
+        border-radius: var(--radius-md) !important;
+        text-transform: none !important;
+        font-weight: 500 !important;
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+    }
+
+    .shadcn-btn-outline:hover {
+        background: var(--bg-muted) !important;
+    }
+
+    /* Shadcn Pill Tabs Overrides */
+    .shadcn-tabs .mud-tabs-toolbar {
+        background-color: var(--bg-muted) !important;
+        border-radius: var(--radius-md) !important;
+        padding: 4px !important;
+        min-height: 40px !important;
+    }
+
+    .shadcn-tabs .mud-tabs-toolbar .mud-tab-slider {
+        display: none !important; /* Hide the default blue underline */
+    }
+
+    .shadcn-tabs .mud-tab {
+        text-transform: none !important;
+        font-weight: 500 !important;
+        color: var(--text-muted) !important;
+        min-width: 50% !important; /* Make tabs split the container 50/50 */
+        padding: 4px 12px !important;
+        border-radius: 4px !important;
+        transition: all 0.2s ease !important;
+    }
+
+    .shadcn-tabs .mud-tab.mud-tab-active {
+        background-color: var(--bg-surface) !important;
+        color: var(--text-main) !important;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06) !important;
+        font-weight: 600 !important;
+    }
+</style>
+
+@code {
+    private readonly LoginMfaDTO mfaLoginModel = new();
+    private bool isSubmitting;
+    private string errorMessage = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        if (authState.User.Identity?.IsAuthenticated == true)
+        {
+            var role = authState.User.FindFirst("role")?.Value;
+            NavManager.NavigateTo(role == "SuperAdmin" ? "/superadmin/dashboard" : "/dashboard");
+        }
+    }
+
+    private async Task HandleAuthenticatorLogin()
+    {
+        await CompleteLoginAsync(useRecoveryCode: false);
+    }
+
+    private async Task HandleRecoveryCodeLogin()
+    {
+        await CompleteLoginAsync(useRecoveryCode: true);
+    }
+
+    private async Task CompleteLoginAsync(bool useRecoveryCode)
+    {
+        if (!PendingMfaLoginState.HasPendingChallenge)
+        {
+            NavManager.NavigateTo("/");
+            return;
+        }
+
+        isSubmitting = true;
+        errorMessage = string.Empty;
+
+        try
+        {
+            mfaLoginModel.ChallengeToken = PendingMfaLoginState.ChallengeToken;
+            if (useRecoveryCode)
+            {
+                mfaLoginModel.TwoFactorCode = string.Empty;
+            }
+            else
+            {
+                mfaLoginModel.RecoveryCode = string.Empty;
+            }
+
+            var result = await AuthService.CompleteMfaLogin(mfaLoginModel);
+            PendingMfaLoginState.Clear();
+            mfaLoginModel.ChallengeToken = string.Empty;
+            mfaLoginModel.TwoFactorCode = string.Empty;
+            mfaLoginModel.RecoveryCode = string.Empty;
+
+            Snackbar.Add("Welcome back! Verification successful.", Severity.Success);
+            
+            // Add a brief delay so the user registers the successful submission state before navigation
+            await Task.Delay(500);
+            NavManager.NavigateTo(result.Role == "SuperAdmin" ? "/superadmin/dashboard" : "/dashboard");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = string.IsNullOrWhiteSpace(ex.Message)
+                ? "Unable to verify the code. Please try again."
+                : ex.Message;
+            Logger.LogError(ex, "MFA login verification failed.");
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+}

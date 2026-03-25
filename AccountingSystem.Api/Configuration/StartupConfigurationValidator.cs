@@ -42,9 +42,15 @@ namespace AccountingSystem.API.Configuration
             CheckRequiredValue(configuration["AuthSecurity:RateLimiting:ConfirmEmail:WindowSeconds"], "AuthSecurity:RateLimiting:ConfirmEmail:WindowSeconds", missingKeys);
             CheckRequiredValue(configuration["AuthSecurity:RateLimiting:ResendConfirmation:PermitLimit"], "AuthSecurity:RateLimiting:ResendConfirmation:PermitLimit", missingKeys);
             CheckRequiredValue(configuration["AuthSecurity:RateLimiting:ResendConfirmation:WindowSeconds"], "AuthSecurity:RateLimiting:ResendConfirmation:WindowSeconds", missingKeys);
+            CheckRequiredValue(configuration["AuthSecurity:RateLimiting:LoginMfa:PermitLimit"], "AuthSecurity:RateLimiting:LoginMfa:PermitLimit", missingKeys);
+            CheckRequiredValue(configuration["AuthSecurity:RateLimiting:LoginMfa:WindowSeconds"], "AuthSecurity:RateLimiting:LoginMfa:WindowSeconds", missingKeys);
+            CheckRequiredValue(configuration["AuthSecurity:RateLimiting:MfaManage:PermitLimit"], "AuthSecurity:RateLimiting:MfaManage:PermitLimit", missingKeys);
+            CheckRequiredValue(configuration["AuthSecurity:RateLimiting:MfaManage:WindowSeconds"], "AuthSecurity:RateLimiting:MfaManage:WindowSeconds", missingKeys);
             CheckRequiredValue(configuration["IdentityTokens:PasswordResetTokenLifespanMinutes"], "IdentityTokens:PasswordResetTokenLifespanMinutes", missingKeys);
             CheckRequiredValue(configuration["IdentityTokens:EmailConfirmationTokenLifespanMinutes"], "IdentityTokens:EmailConfirmationTokenLifespanMinutes", missingKeys);
             CheckRequiredValue(configuration["AppUrls:ClientBaseUrl"], "AppUrls:ClientBaseUrl", missingKeys);
+            CheckRequiredValue(configuration["Mfa:AuthenticatorIssuer"], "Mfa:AuthenticatorIssuer", missingKeys);
+            CheckRequiredValue(configuration["Mfa:LoginChallengeLifespanMinutes"], "Mfa:LoginChallengeLifespanMinutes", missingKeys);
 
             if (validateSmtpConfiguration)
             {
@@ -75,8 +81,13 @@ namespace AccountingSystem.API.Configuration
             CheckPositiveInteger(configuration["AuthSecurity:RateLimiting:ConfirmEmail:WindowSeconds"], "AuthSecurity:RateLimiting:ConfirmEmail:WindowSeconds", invalidKeys);
             CheckPositiveInteger(configuration["AuthSecurity:RateLimiting:ResendConfirmation:PermitLimit"], "AuthSecurity:RateLimiting:ResendConfirmation:PermitLimit", invalidKeys);
             CheckPositiveInteger(configuration["AuthSecurity:RateLimiting:ResendConfirmation:WindowSeconds"], "AuthSecurity:RateLimiting:ResendConfirmation:WindowSeconds", invalidKeys);
+            CheckPositiveInteger(configuration["AuthSecurity:RateLimiting:LoginMfa:PermitLimit"], "AuthSecurity:RateLimiting:LoginMfa:PermitLimit", invalidKeys);
+            CheckPositiveInteger(configuration["AuthSecurity:RateLimiting:LoginMfa:WindowSeconds"], "AuthSecurity:RateLimiting:LoginMfa:WindowSeconds", invalidKeys);
+            CheckPositiveInteger(configuration["AuthSecurity:RateLimiting:MfaManage:PermitLimit"], "AuthSecurity:RateLimiting:MfaManage:PermitLimit", invalidKeys);
+            CheckPositiveInteger(configuration["AuthSecurity:RateLimiting:MfaManage:WindowSeconds"], "AuthSecurity:RateLimiting:MfaManage:WindowSeconds", invalidKeys);
             CheckPositiveInteger(configuration["IdentityTokens:PasswordResetTokenLifespanMinutes"], "IdentityTokens:PasswordResetTokenLifespanMinutes", invalidKeys);
             CheckPositiveInteger(configuration["IdentityTokens:EmailConfirmationTokenLifespanMinutes"], "IdentityTokens:EmailConfirmationTokenLifespanMinutes", invalidKeys);
+            CheckPositiveInteger(configuration["Mfa:LoginChallengeLifespanMinutes"], "Mfa:LoginChallengeLifespanMinutes", invalidKeys);
 
             if (validateSmtpConfiguration)
             {

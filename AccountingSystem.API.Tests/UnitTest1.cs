@@ -3,7 +3,9 @@ using System.Net;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+using System.Buffers.Binary;
 using AccountingSystem.API.Controllers;
+using AccountingSystem.API.Configuration;
 using AccountingSystem.API.Data;
 using AccountingSystem.API.Identity;
 using AccountingSystem.API.Middleware;
@@ -716,6 +718,445 @@ public class AuthServiceTests
         harness.EmailService.SentResetEmails.Single().ResetLink
             .Should().StartWith("https://localhost:7273/reset-password?");
     }
+
+    [Fact]
+    public async Task BeginAuthenticatorSetupAsync_WhenCalled_ShouldReturnSharedKeyAndGoogleAuthenticatorUri()
+    {
+        var context = TestHelpers.CreateContext(tenantId: 141);
+        using var harness = TestHelpers.CreateIdentityHarness();
+        var service = TestHelpers.CreateAuthService(context, harness);
+
+        var role = new Role { Id = 1, Name = "Admin" };
+        var company = new Company { Id = 141, Name = "Mfa Setup Co", IsActive = true, Status = "Active" };
+        var user = TestHelpers.CreateUser(role, company.Id, "mfa-setup@test.com", "LongPassword123!");
+
+        context.Roles.Add(role);
+        context.Companies.Add(company);
+        context.Users.Add(user);
+        await context.SaveChangesAsync();
+
+        await harness.AccountService.EnsureProvisionedAsync(
+            TestHelpers.CreateIdentitySnapshot(user, role.Name, requireEmailConfirmation: true, emailConfirmed: true),
+            "LongPassword123!");
+
+        var setup = await service.BeginAuthenticatorSetupAsync(user.Id);
+
+        setup.SharedKey.Should().NotBeNullOrWhiteSpace();
+        setup.AuthenticatorUri.Should().StartWith("otpauth://totp/");
+        setup.AuthenticatorUri.Should().Contain("issuer=AccountingSystem");
+        setup.AuthenticatorUri.Should().Contain(Uri.EscapeDataString(user.Email));
+        setup.IsTwoFactorEnabled.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task LoginAsync_WhenMfaIsEnabled_ShouldReturnChallengeInsteadOfJwt()
+    {
+        var context = TestHelpers.CreateContext(tenantId: 142);
+        using var harness = TestHelpers.CreateIdentityHarness();
+        var service = TestHelpers.CreateAuthService(context, harness);
+
+        var role = new Role { Id = 1, Name = "Admin" };
+        var company = new Company { Id = 142, Name = "Mfa Login Co", IsActive = true, Status = "Active" };
+        var user = TestHelpers.CreateUser(role, company.Id, "mfa-login@test.com", "LongPassword123!");
+
+        context.Roles.Add(role);
+        context.Companies.Add(company);
+        context.Users.Add(user);
+        await context.SaveChangesAsync();
+
+        await harness.AccountService.EnsureProvisionedAsync(
+            TestHelpers.CreateIdentitySnapshot(user, role.Name, requireEmailConfirmation: true, emailConfirmed: true),
+            "LongPassword123!");
+
+        var setup = await service.BeginAuthenticatorSetupAsync(user.Id);
+        var setupCode = TestHelpers.GenerateAuthenticatorCode(setup.SharedKey);
+        var recoveryCodes = await service.VerifyAuthenticatorSetupAsync(user.Id, new VerifyAuthenticatorSetupDTO { Code = setupCode });
+        recoveryCodes.RecoveryCodes.Should().HaveCount(10);
+
+        var response = await service.LoginAsync(new LoginDTO
+        {
+            Email = user.Email,
+            Password = "LongPassword123!"
+        });
+
+        response.RequiresTwoFactor.Should().BeTrue();
+        response.TwoFactorChallengeToken.Should().NotBeNullOrWhiteSpace();
+        response.Token.Should().BeEmpty();
+        response.Message.Should().Contain("Google Authenticator");
+    }
+
+    [Fact]
+    public async Task CompleteMfaLoginAsync_WhenAuthenticatorCodeIsValid_ShouldReturnJwt()
+    {
+        var context = TestHelpers.CreateContext(tenantId: 143);
+        using var harness = TestHelpers.CreateIdentityHarness();
+        var service = TestHelpers.CreateAuthService(context, harness);
+
+        var role = new Role { Id = 1, Name = "Admin" };
+        var company = new Company { Id = 143, Name = "Mfa Verify Co", IsActive = true, Status = "Active" };
+        var user = TestHelpers.CreateUser(role, company.Id, "mfa-verify@test.com", "LongPassword123!");
+
+        context.Roles.Add(role);
+        context.Companies.Add(company);
+        context.Users.Add(user);
+        await context.SaveChangesAsync();
+
+        await harness.AccountService.EnsureProvisionedAsync(
+            TestHelpers.CreateIdentitySnapshot(user, role.Name, requireEmailConfirmation: true, emailConfirmed: true),
+            "LongPassword123!");
+
+        var setup = await service.BeginAuthenticatorSetupAsync(user.Id);
+        await service.VerifyAuthenticatorSetupAsync(user.Id, new VerifyAuthenticatorSetupDTO
+        {
+            Code = TestHelpers.GenerateAuthenticatorCode(setup.SharedKey)
+        });
+
+        var loginResponse = await service.LoginAsync(new LoginDTO
+        {
+            Email = user.Email,
+            Password = "LongPassword123!"
+        });
+
+        var mfaResponse = await service.CompleteMfaLoginAsync(new LoginMfaDTO
+        {
+            ChallengeToken = loginResponse.TwoFactorChallengeToken,
+            TwoFactorCode = TestHelpers.GenerateAuthenticatorCode(setup.SharedKey)
+        });
+
+        mfaResponse.RequiresTwoFactor.Should().BeFalse();
+        mfaResponse.Token.Should().NotBeNullOrWhiteSpace();
+        mfaResponse.CompanyId.Should().Be(company.Id);
+        mfaResponse.Role.Should().Be("Admin");
+    }
+
+    [Fact]
+    public async Task CompleteMfaLoginAsync_WhenSecurityStampChangesAfterChallenge_ShouldStillReturnJwt()
+    {
+        var context = TestHelpers.CreateContext(tenantId: 1431);
+        using var harness = TestHelpers.CreateIdentityHarness();
+        var service = TestHelpers.CreateAuthService(context, harness);
+
+        var role = new Role { Id = 1, Name = "Admin" };
+        var company = new Company { Id = 1431, Name = "Mfa Stamp Co", IsActive = true, Status = "Active" };
+        var user = TestHelpers.CreateUser(role, company.Id, "mfa-stamp@test.com", "LongPassword123!");
+
+        context.Roles.Add(role);
+        context.Companies.Add(company);
+        context.Users.Add(user);
+        await context.SaveChangesAsync();
+
+        await harness.AccountService.EnsureProvisionedAsync(
+            TestHelpers.CreateIdentitySnapshot(user, role.Name, requireEmailConfirmation: true, emailConfirmed: true),
+            "LongPassword123!");
+
+        var setup = await service.BeginAuthenticatorSetupAsync(user.Id);
+        await service.VerifyAuthenticatorSetupAsync(user.Id, new VerifyAuthenticatorSetupDTO
+        {
+            Code = TestHelpers.GenerateAuthenticatorCode(setup.SharedKey)
+        });
+
+        var loginResponse = await service.LoginAsync(new LoginDTO
+        {
+            Email = user.Email,
+            Password = "LongPassword123!"
+        });
+
+        var identityUser = await harness.IdentityContext.Users.SingleAsync(u => u.LegacyUserId == user.Id);
+        identityUser.SecurityStamp = Guid.NewGuid().ToString("N");
+        await harness.IdentityContext.SaveChangesAsync();
+
+        var mfaResponse = await service.CompleteMfaLoginAsync(new LoginMfaDTO
+        {
+            ChallengeToken = loginResponse.TwoFactorChallengeToken,
+            TwoFactorCode = TestHelpers.GenerateAuthenticatorCode(setup.SharedKey)
+        });
+
+        mfaResponse.Token.Should().NotBeNullOrWhiteSpace();
+        mfaResponse.Role.Should().Be("Admin");
+    }
+
+    [Fact]
+    public async Task CompleteMfaLoginAsync_WhenRecoveryCodeIsUsed_ShouldRejectReuse()
+    {
+        var context = TestHelpers.CreateContext(tenantId: 144);
+        using var harness = TestHelpers.CreateIdentityHarness();
+        var service = TestHelpers.CreateAuthService(context, harness);
+
+        var role = new Role { Id = 2, Name = "Accounting" };
+        var company = new Company { Id = 144, Name = "Recovery Co", IsActive = true, Status = "Active" };
+        var user = TestHelpers.CreateUser(role, company.Id, "mfa-recovery@test.com", "LongPassword123!");
+
+        context.Roles.Add(role);
+        context.Companies.Add(company);
+        context.Users.Add(user);
+        await context.SaveChangesAsync();
+
+        await harness.AccountService.EnsureProvisionedAsync(
+            TestHelpers.CreateIdentitySnapshot(user, role.Name, requireEmailConfirmation: true, emailConfirmed: true),
+            "LongPassword123!");
+
+        var setup = await service.BeginAuthenticatorSetupAsync(user.Id);
+        var recoveryCodes = await service.VerifyAuthenticatorSetupAsync(user.Id, new VerifyAuthenticatorSetupDTO
+        {
+            Code = TestHelpers.GenerateAuthenticatorCode(setup.SharedKey)
+        });
+
+        var recoveryCode = recoveryCodes.RecoveryCodes.First();
+        var loginResponse = await service.LoginAsync(new LoginDTO
+        {
+            Email = user.Email,
+            Password = "LongPassword123!"
+        });
+
+        var successResponse = await service.CompleteMfaLoginAsync(new LoginMfaDTO
+        {
+            ChallengeToken = loginResponse.TwoFactorChallengeToken,
+            RecoveryCode = recoveryCode
+        });
+
+        successResponse.Token.Should().NotBeNullOrWhiteSpace();
+
+        var secondChallenge = await service.LoginAsync(new LoginDTO
+        {
+            Email = user.Email,
+            Password = "LongPassword123!"
+        });
+
+        var act = async () => await service.CompleteMfaLoginAsync(new LoginMfaDTO
+        {
+            ChallengeToken = secondChallenge.TwoFactorChallengeToken,
+            RecoveryCode = recoveryCode
+        });
+
+        var exception = await Record.ExceptionAsync(act);
+        exception.Should().NotBeNull();
+        exception!.Message.Should().Be("The recovery code is invalid. Please try again.");
+    }
+
+    [Fact]
+    public async Task CompleteMfaLoginAsync_WhenRecoveryCodeContainsWhitespace_ShouldAcceptIt()
+    {
+        var context = TestHelpers.CreateContext(tenantId: 1441);
+        using var harness = TestHelpers.CreateIdentityHarness();
+        var service = TestHelpers.CreateAuthService(context, harness);
+
+        var role = new Role { Id = 2, Name = "Accounting" };
+        var company = new Company { Id = 1441, Name = "Recovery Format Co", IsActive = true, Status = "Active" };
+        var user = TestHelpers.CreateUser(role, company.Id, "mfa-recovery-format@test.com", "LongPassword123!");
+
+        context.Roles.Add(role);
+        context.Companies.Add(company);
+        context.Users.Add(user);
+        await context.SaveChangesAsync();
+
+        await harness.AccountService.EnsureProvisionedAsync(
+            TestHelpers.CreateIdentitySnapshot(user, role.Name, requireEmailConfirmation: true, emailConfirmed: true),
+            "LongPassword123!");
+
+        var setup = await service.BeginAuthenticatorSetupAsync(user.Id);
+        var recoveryCodes = await service.VerifyAuthenticatorSetupAsync(user.Id, new VerifyAuthenticatorSetupDTO
+        {
+            Code = TestHelpers.GenerateAuthenticatorCode(setup.SharedKey)
+        });
+
+        var recoveryCode = recoveryCodes.RecoveryCodes.First();
+        var formattedRecoveryCode = $"  {recoveryCode}  ";
+        var loginResponse = await service.LoginAsync(new LoginDTO
+        {
+            Email = user.Email,
+            Password = "LongPassword123!"
+        });
+
+        var mfaResponse = await service.CompleteMfaLoginAsync(new LoginMfaDTO
+        {
+            ChallengeToken = loginResponse.TwoFactorChallengeToken,
+            RecoveryCode = formattedRecoveryCode
+        });
+
+        mfaResponse.Token.Should().NotBeNullOrWhiteSpace();
+    }
+
+    [Fact]
+    public async Task CompleteMfaLoginAsync_WhenLegacyLinkChangesAfterChallenge_ShouldFailWithInvalidSession()
+    {
+        var context = TestHelpers.CreateContext(tenantId: 1442);
+        using var harness = TestHelpers.CreateIdentityHarness();
+        var service = TestHelpers.CreateAuthService(context, harness);
+
+        var role = new Role { Id = 1, Name = "Admin" };
+        var company = new Company { Id = 1442, Name = "Mismatch Co", IsActive = true, Status = "Active" };
+        var user = TestHelpers.CreateUser(role, company.Id, "mfa-mismatch@test.com", "LongPassword123!");
+
+        context.Roles.Add(role);
+        context.Companies.Add(company);
+        context.Users.Add(user);
+        await context.SaveChangesAsync();
+
+        await harness.AccountService.EnsureProvisionedAsync(
+            TestHelpers.CreateIdentitySnapshot(user, role.Name, requireEmailConfirmation: true, emailConfirmed: true),
+            "LongPassword123!");
+
+        var setup = await service.BeginAuthenticatorSetupAsync(user.Id);
+        await service.VerifyAuthenticatorSetupAsync(user.Id, new VerifyAuthenticatorSetupDTO
+        {
+            Code = TestHelpers.GenerateAuthenticatorCode(setup.SharedKey)
+        });
+
+        var loginResponse = await service.LoginAsync(new LoginDTO
+        {
+            Email = user.Email,
+            Password = "LongPassword123!"
+        });
+
+        var identityUser = await harness.IdentityContext.Users.SingleAsync(u => u.LegacyUserId == user.Id);
+        identityUser.LegacyUserId = user.Id + 9000;
+        await harness.IdentityContext.SaveChangesAsync();
+
+        var act = async () => await service.CompleteMfaLoginAsync(new LoginMfaDTO
+        {
+            ChallengeToken = loginResponse.TwoFactorChallengeToken,
+            TwoFactorCode = TestHelpers.GenerateAuthenticatorCode(setup.SharedKey)
+        });
+
+        var exception = await Record.ExceptionAsync(act);
+        exception.Should().NotBeNull();
+        exception!.Message.Should().Be("The sign-in verification session is invalid or expired. Please sign in again.");
+    }
+
+    [Fact]
+    public async Task CompleteMfaLoginAsync_WhenMfaIsDisabledAfterChallenge_ShouldFailWithInvalidSession()
+    {
+        var context = TestHelpers.CreateContext(tenantId: 1443);
+        using var harness = TestHelpers.CreateIdentityHarness();
+        var service = TestHelpers.CreateAuthService(context, harness);
+
+        var role = new Role { Id = 1, Name = "Admin" };
+        var company = new Company { Id = 1443, Name = "Disabled Challenge Co", IsActive = true, Status = "Active" };
+        var user = TestHelpers.CreateUser(role, company.Id, "mfa-disabled-after-challenge@test.com", "LongPassword123!");
+
+        context.Roles.Add(role);
+        context.Companies.Add(company);
+        context.Users.Add(user);
+        await context.SaveChangesAsync();
+
+        await harness.AccountService.EnsureProvisionedAsync(
+            TestHelpers.CreateIdentitySnapshot(user, role.Name, requireEmailConfirmation: true, emailConfirmed: true),
+            "LongPassword123!");
+
+        var setup = await service.BeginAuthenticatorSetupAsync(user.Id);
+        await service.VerifyAuthenticatorSetupAsync(user.Id, new VerifyAuthenticatorSetupDTO
+        {
+            Code = TestHelpers.GenerateAuthenticatorCode(setup.SharedKey)
+        });
+
+        var loginResponse = await service.LoginAsync(new LoginDTO
+        {
+            Email = user.Email,
+            Password = "LongPassword123!"
+        });
+
+        await service.DisableMfaAsync(user.Id, new MfaReauthenticationDTO
+        {
+            CurrentPassword = "LongPassword123!"
+        });
+
+        var act = async () => await service.CompleteMfaLoginAsync(new LoginMfaDTO
+        {
+            ChallengeToken = loginResponse.TwoFactorChallengeToken,
+            TwoFactorCode = TestHelpers.GenerateAuthenticatorCode(setup.SharedKey)
+        });
+
+        var exception = await Record.ExceptionAsync(act);
+        exception.Should().NotBeNull();
+        exception!.Message.Should().Be("The sign-in verification session is invalid or expired. Please sign in again.");
+    }
+
+    [Fact]
+    public async Task CompleteMfaLoginAsync_WhenChallengeTokenIsTampered_ShouldFailWithInvalidSession()
+    {
+        var context = TestHelpers.CreateContext(tenantId: 1444);
+        using var harness = TestHelpers.CreateIdentityHarness();
+        var service = TestHelpers.CreateAuthService(context, harness);
+
+        var role = new Role { Id = 1, Name = "Admin" };
+        var company = new Company { Id = 1444, Name = "Tampered Challenge Co", IsActive = true, Status = "Active" };
+        var user = TestHelpers.CreateUser(role, company.Id, "mfa-tampered@test.com", "LongPassword123!");
+
+        context.Roles.Add(role);
+        context.Companies.Add(company);
+        context.Users.Add(user);
+        await context.SaveChangesAsync();
+
+        await harness.AccountService.EnsureProvisionedAsync(
+            TestHelpers.CreateIdentitySnapshot(user, role.Name, requireEmailConfirmation: true, emailConfirmed: true),
+            "LongPassword123!");
+
+        var setup = await service.BeginAuthenticatorSetupAsync(user.Id);
+        await service.VerifyAuthenticatorSetupAsync(user.Id, new VerifyAuthenticatorSetupDTO
+        {
+            Code = TestHelpers.GenerateAuthenticatorCode(setup.SharedKey)
+        });
+
+        var loginResponse = await service.LoginAsync(new LoginDTO
+        {
+            Email = user.Email,
+            Password = "LongPassword123!"
+        });
+
+        var act = async () => await service.CompleteMfaLoginAsync(new LoginMfaDTO
+        {
+            ChallengeToken = $"{loginResponse.TwoFactorChallengeToken}tampered",
+            TwoFactorCode = TestHelpers.GenerateAuthenticatorCode(setup.SharedKey)
+        });
+
+        var exception = await Record.ExceptionAsync(act);
+        exception.Should().NotBeNull();
+        exception!.Message.Should().Be("The sign-in verification session is invalid or expired. Please sign in again.");
+    }
+
+    [Fact]
+    public async Task DisableMfaAsync_WhenCurrentPasswordIsValid_ShouldDisableTwoFactorAndRestorePasswordOnlyLogin()
+    {
+        var context = TestHelpers.CreateContext(tenantId: 145);
+        using var harness = TestHelpers.CreateIdentityHarness();
+        var service = TestHelpers.CreateAuthService(context, harness);
+
+        var role = new Role { Id = 1, Name = "Admin" };
+        var company = new Company { Id = 145, Name = "Disable Mfa Co", IsActive = true, Status = "Active" };
+        var user = TestHelpers.CreateUser(role, company.Id, "disable-mfa@test.com", "LongPassword123!");
+
+        context.Roles.Add(role);
+        context.Companies.Add(company);
+        context.Users.Add(user);
+        await context.SaveChangesAsync();
+
+        await harness.AccountService.EnsureProvisionedAsync(
+            TestHelpers.CreateIdentitySnapshot(user, role.Name, requireEmailConfirmation: true, emailConfirmed: true),
+            "LongPassword123!");
+
+        var setup = await service.BeginAuthenticatorSetupAsync(user.Id);
+        await service.VerifyAuthenticatorSetupAsync(user.Id, new VerifyAuthenticatorSetupDTO
+        {
+            Code = TestHelpers.GenerateAuthenticatorCode(setup.SharedKey)
+        });
+
+        await service.DisableMfaAsync(user.Id, new MfaReauthenticationDTO
+        {
+            CurrentPassword = "LongPassword123!"
+        });
+
+        var status = await service.GetMfaStatusAsync(user.Id);
+        status.IsTwoFactorEnabled.Should().BeFalse();
+
+        var loginResponse = await service.LoginAsync(new LoginDTO
+        {
+            Email = user.Email,
+            Password = "LongPassword123!"
+        });
+
+        loginResponse.RequiresTwoFactor.Should().BeFalse();
+        loginResponse.Token.Should().NotBeNullOrWhiteSpace();
+    }
 }
 
 public class JwtMiddlewareTests
@@ -893,6 +1334,8 @@ internal static class TestHelpers
                 ["AuthSecurity:Lockout:LockoutMinutes"] = "15",
                 ["IdentityTokens:PasswordResetTokenLifespanMinutes"] = "120",
                 ["IdentityTokens:EmailConfirmationTokenLifespanMinutes"] = "1440",
+                ["Mfa:AuthenticatorIssuer"] = "AccountingSystem",
+                ["Mfa:LoginChallengeLifespanMinutes"] = "5",
                 ["AppUrls:ClientBaseUrl"] = "https://client.example.test"
             })
             .Build();
@@ -968,6 +1411,19 @@ internal static class TestHelpers
                 It.IsAny<string?>()))
             .Returns(Task.CompletedTask);
 
+        var mfaSettings = Microsoft.Extensions.Options.Options.Create(new MfaSettings
+        {
+            AuthenticatorIssuer = "AccountingSystem",
+            LoginChallengeLifespanMinutes = 5
+        });
+        var loginChallengeTokenService = new LoginChallengeTokenService(configuration, mfaSettings);
+        var mfaService = new MfaService(
+            harness.UserManager,
+            harness.AccountService,
+            loginChallengeTokenService,
+            auditService.Object,
+            mfaSettings);
+
         return new AuthService(
             context,
             harness.IdentityContext,
@@ -980,6 +1436,8 @@ internal static class TestHelpers
             new LegacyPasswordService(),
             new JwtAuthTokenFactory(configuration),
             harness.AccountService,
+            mfaService,
+            loginChallengeTokenService,
             harness.EmailService,
             harness.UserManager);
     }
@@ -1030,6 +1488,28 @@ internal static class TestHelpers
         return tokenHandler.WriteToken(tokenHandler.CreateToken(descriptor));
     }
 
+    internal static string GenerateAuthenticatorCode(string sharedKey, DateTimeOffset? timestamp = null)
+    {
+        var secretBytes = DecodeBase32(sharedKey);
+        var unixTime = (timestamp ?? DateTimeOffset.UtcNow).ToUnixTimeSeconds();
+        var counter = unixTime / 30;
+
+        Span<byte> counterBytes = stackalloc byte[8];
+        BinaryPrimitives.WriteInt64BigEndian(counterBytes, counter);
+
+        using var hmac = new HMACSHA1(secretBytes);
+        var hash = hmac.ComputeHash(counterBytes.ToArray());
+        var offset = hash[^1] & 0x0F;
+        var binaryCode =
+            ((hash[offset] & 0x7F) << 24) |
+            ((hash[offset + 1] & 0xFF) << 16) |
+            ((hash[offset + 2] & 0xFF) << 8) |
+            (hash[offset + 3] & 0xFF);
+
+        var code = binaryCode % 1_000_000;
+        return code.ToString("D6");
+    }
+
     internal static string? GetAnonymousStringValue(object? source, string propertyName)
     {
         return source?.GetType().GetProperty(propertyName)?.GetValue(source)?.ToString();
@@ -1038,6 +1518,40 @@ internal static class TestHelpers
     internal static IdentityTestHarness CreateIdentityHarness()
     {
         return new IdentityTestHarness();
+    }
+
+    private static byte[] DecodeBase32(string value)
+    {
+        const string alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+        var cleanedValue = value
+            .Trim()
+            .Replace(" ", string.Empty, StringComparison.Ordinal)
+            .TrimEnd('=')
+            .ToUpperInvariant();
+
+        var output = new List<byte>();
+        var bitBuffer = 0;
+        var bitsInBuffer = 0;
+
+        foreach (var character in cleanedValue)
+        {
+            var index = alphabet.IndexOf(character);
+            if (index < 0)
+            {
+                throw new InvalidOperationException("Invalid Base32 character in authenticator key.");
+            }
+
+            bitBuffer = (bitBuffer << 5) | index;
+            bitsInBuffer += 5;
+
+            if (bitsInBuffer >= 8)
+            {
+                bitsInBuffer -= 8;
+                output.Add((byte)((bitBuffer >> bitsInBuffer) & 0xFF));
+            }
+        }
+
+        return output.ToArray();
     }
 }
 
@@ -1051,6 +1565,7 @@ internal sealed class IdentityTestHarness : IDisposable
         var services = new ServiceCollection();
         services.AddLogging();
         services.AddDataProtection();
+        services.AddHttpContextAccessor();
 
         services.AddDbContext<IdentityAuthDbContext>(options =>
             options.UseInMemoryDatabase(Guid.NewGuid().ToString()));
@@ -1085,7 +1600,8 @@ internal sealed class IdentityTestHarness : IDisposable
             .AddEntityFrameworkStores<IdentityAuthDbContext>()
             .AddTokenProvider<PasswordResetTokenProvider<ApplicationUser>>("AccSysPasswordReset")
             .AddTokenProvider<EmailConfirmationTokenProvider<ApplicationUser>>("AccSysEmailConfirmation")
-            .AddDefaultTokenProviders();
+            .AddDefaultTokenProviders()
+            .AddSignInManager();
 
         identityBuilder.AddPasswordValidator<SharedPasswordIdentityValidator>();
         services.AddScoped<IIdentityAccountService, IdentityAccountService>();

@@ -44,6 +44,30 @@ namespace AccountingSystem.API.Controllers
             }
         }
 
+        [HttpPost("login/mfa")]
+        [EnableRateLimiting(AuthRateLimitPolicyNames.LoginMfa)]
+        public async Task<IActionResult> LoginWithMfa([FromBody] LoginMfaDTO dto)
+        {
+            try
+            {
+                var response = await _authService.CompleteMfaLoginAsync(dto);
+                return Ok(response);
+            }
+            catch (AuthFailureException ex)
+            {
+                if (ex.StatusCode == StatusCodes.Status401Unauthorized)
+                {
+                    return Unauthorized(new { error = ex.PublicMessage });
+                }
+
+                return StatusCode(ex.StatusCode, new { error = ex.PublicMessage });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
         [HttpPost("register-company")]
         [EnableRateLimiting(AuthRateLimitPolicyNames.RegisterCompany)]
         public async Task<IActionResult> RegisterCompany([FromBody] CompanyRegisterDTO dto)
@@ -147,6 +171,108 @@ namespace AccountingSystem.API.Controllers
                 var userId = GetCurrentUserId();
                 await _authService.ChangePasswordAsync(userId, dto);
                 return Ok(new { message = "Password changed successfully." });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
+        [HttpGet("mfa")]
+        [Authorize]
+        [EnableRateLimiting(AuthRateLimitPolicyNames.MfaManage)]
+        public async Task<IActionResult> GetMfaStatus()
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+                var response = await _authService.GetMfaStatusAsync(userId);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
+        [HttpPost("mfa/authenticator/setup")]
+        [Authorize]
+        [EnableRateLimiting(AuthRateLimitPolicyNames.MfaManage)]
+        public async Task<IActionResult> BeginAuthenticatorSetup()
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+                var response = await _authService.BeginAuthenticatorSetupAsync(userId);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
+        [HttpPost("mfa/authenticator/reset")]
+        [Authorize]
+        [EnableRateLimiting(AuthRateLimitPolicyNames.MfaManage)]
+        public async Task<IActionResult> ResetAuthenticator([FromBody] MfaReauthenticationDTO dto)
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+                var response = await _authService.ResetAuthenticatorAsync(userId, dto);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
+        [HttpPost("mfa/authenticator/verify")]
+        [Authorize]
+        [EnableRateLimiting(AuthRateLimitPolicyNames.MfaManage)]
+        public async Task<IActionResult> VerifyAuthenticatorSetup([FromBody] VerifyAuthenticatorSetupDTO dto)
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+                var response = await _authService.VerifyAuthenticatorSetupAsync(userId, dto);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
+        [HttpPost("mfa/recovery-codes/regenerate")]
+        [Authorize]
+        [EnableRateLimiting(AuthRateLimitPolicyNames.MfaManage)]
+        public async Task<IActionResult> RegenerateRecoveryCodes([FromBody] MfaReauthenticationDTO dto)
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+                var response = await _authService.RegenerateRecoveryCodesAsync(userId, dto);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
+        [HttpPost("mfa/disable")]
+        [Authorize]
+        [EnableRateLimiting(AuthRateLimitPolicyNames.MfaManage)]
+        public async Task<IActionResult> DisableMfa([FromBody] MfaReauthenticationDTO dto)
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+                await _authService.DisableMfaAsync(userId, dto);
+                return Ok(new { message = "Two-factor authentication has been disabled." });
             }
             catch (Exception ex)
             {

@@ -28,6 +28,8 @@ namespace AccountingSystem.API.Services
         private readonly ILegacyPasswordService _legacyPasswordService;
         private readonly IAuthTokenFactory _authTokenFactory;
         private readonly IIdentityAccountService _identityAccountService;
+        private readonly IMfaService _mfaService;
+        private readonly ILoginChallengeTokenService _loginChallengeTokenService;
         private readonly IAccountEmailService _accountEmailService;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IHttpContextAccessor _httpContextAccessor;
@@ -45,6 +47,8 @@ namespace AccountingSystem.API.Services
             ILegacyPasswordService legacyPasswordService,
             IAuthTokenFactory authTokenFactory,
             IIdentityAccountService identityAccountService,
+            IMfaService mfaService,
+            ILoginChallengeTokenService loginChallengeTokenService,
             IAccountEmailService accountEmailService,
             UserManager<ApplicationUser> userManager)
         {
@@ -59,6 +63,8 @@ namespace AccountingSystem.API.Services
             _legacyPasswordService = legacyPasswordService;
             _authTokenFactory = authTokenFactory;
             _identityAccountService = identityAccountService;
+            _mfaService = mfaService;
+            _loginChallengeTokenService = loginChallengeTokenService;
             _accountEmailService = accountEmailService;
             _userManager = userManager;
         }
@@ -256,6 +262,36 @@ namespace AccountingSystem.API.Services
                 companyId: user.CompanyId,
                 email: user.Email,
                 reason: "PasswordUpdated");
+        }
+
+        public Task<MfaStatusDTO> GetMfaStatusAsync(int userId)
+        {
+            return _mfaService.GetStatusAsync(userId);
+        }
+
+        public Task<MfaSetupDTO> BeginAuthenticatorSetupAsync(int userId)
+        {
+            return _mfaService.BeginAuthenticatorSetupAsync(userId);
+        }
+
+        public Task<MfaSetupDTO> ResetAuthenticatorAsync(int userId, MfaReauthenticationDTO dto)
+        {
+            return _mfaService.ResetAuthenticatorAsync(userId, dto);
+        }
+
+        public Task<RecoveryCodesDTO> VerifyAuthenticatorSetupAsync(int userId, VerifyAuthenticatorSetupDTO dto)
+        {
+            return _mfaService.VerifyAuthenticatorSetupAsync(userId, dto);
+        }
+
+        public Task<RecoveryCodesDTO> RegenerateRecoveryCodesAsync(int userId, MfaReauthenticationDTO dto)
+        {
+            return _mfaService.RegenerateRecoveryCodesAsync(userId, dto);
+        }
+
+        public Task DisableMfaAsync(int userId, MfaReauthenticationDTO dto)
+        {
+            return _mfaService.DisableAsync(userId, dto);
         }
 
         public async Task<AuthResponseDTO> RegisterCompanyAsync(CompanyRegisterDTO dto)
@@ -497,84 +533,82 @@ namespace AccountingSystem.API.Services
                 identityUser = await RequireIdentityUserAsync(user);
             }
 
-            var company = await _context.Companies.IgnoreQueryFilters().FirstOrDefaultAsync(c => c.Id == user.CompanyId);
-            if (company == null)
+            var company = await RequireCompanyAsync(user);
+            await ValidateLoginEligibilityAsync(user, company, identityUser);
+
+            if (identityUser != null && await _userManager.GetTwoFactorEnabledAsync(identityUser))
             {
+                var challengeToken = _loginChallengeTokenService.Create(new LoginChallengeTokenContext(
+                    identityUser.Id,
+                    user.Id));
+
                 await _auditService.WriteAsync(
-                    "AUTH-LOGIN-FAILURE",
-                    userId: user.Id,
-                    companyId: user.CompanyId,
-                    email: user.Email,
-                    reason: "CompanyNotFound");
-                throw new AuthFailureException("CompanyNotFound");
-            }
-
-            if (user.Role.Name != "SuperAdmin")
-            {
-                if (company.Status == "Blocked")
-                {
-                    await _auditService.WriteAsync(
-                        "AUTH-LOGIN-FAILURE",
-                        userId: user.Id,
-                        companyId: company.Id,
-                        email: user.Email,
-                        reason: "CompanyBlocked");
-                    throw new AuthFailureException("CompanyBlocked");
-                }
-
-                if (company.Status == "Suspended" || !company.IsActive)
-                {
-                    await _auditService.WriteAsync(
-                        "AUTH-LOGIN-FAILURE",
-                        userId: user.Id,
-                        companyId: company.Id,
-                        email: user.Email,
-                        reason: "CompanySuspended");
-                    throw new AuthFailureException("CompanySuspended");
-                }
-            }
-
-            var isSuperAdmin = IsSuperAdminRole(user.Role.Name);
-            if (!isSuperAdmin)
-            {
-                if (identityUser == null || !await _userManager.IsEmailConfirmedAsync(identityUser))
-                {
-                    await _auditService.WriteAsync(
-                        "AUTH-LOGIN-FAILURE",
-                        userId: user.Id,
-                        companyId: company.Id,
-                        email: user.Email,
-                        reason: "EmailConfirmationRequired");
-                    throw new AuthFailureException("EmailConfirmationRequired");
-                }
-            }
-            else if (identityUser != null && !await _userManager.IsEmailConfirmedAsync(identityUser))
-            {
-                await _auditService.WriteAsync(
-                    "AUTH-EMAIL-CONFIRMATION-BYPASS",
+                    "AUTH-MFA-LOGIN-CHALLENGE",
                     userId: user.Id,
                     companyId: company.Id,
                     email: user.Email,
-                    reason: "SuperAdminRole");
+                    reason: user.Role.Name);
+
+                return new AuthResponseDTO
+                {
+                    Token = string.Empty,
+                    Email = user.Email,
+                    Role = user.Role.Name,
+                    CompanyId = company.Id,
+                    CompanyName = company.Name,
+                    ExpiresAt = DateTime.MinValue,
+                    RequiresTwoFactor = true,
+                    TwoFactorChallengeToken = challengeToken,
+                    Message = "Enter the 6-digit code from Google Authenticator or a recovery code."
+                };
             }
 
-            var tokenResult = _authTokenFactory.Create(CreateTokenContext(user, company));
-            await _auditService.WriteAsync(
-                "AUTH-LOGIN-SUCCESS",
-                userId: user.Id,
-                companyId: company.Id,
-                email: user.Email,
-                reason: user.Role.Name);
+            return await CreateAuthenticatedResponseAsync(user, company, "AUTH-LOGIN-SUCCESS", user.Role.Name);
+        }
 
-            return new AuthResponseDTO
+        public async Task<AuthResponseDTO> CompleteMfaLoginAsync(LoginMfaDTO dto)
+        {
+            var verificationResult = await _mfaService.VerifyLoginChallengeAsync(dto);
+            var identityUser = verificationResult.IdentityUser;
+
+            var user = await ResolveLegacyUserAsync(identityUser.Email!, identityUser);
+            if (user == null || user.IsDeleted)
             {
-                Token = tokenResult.Token,
-                Email = user.Email,
-                Role = user.Role.Name,
-                CompanyId = company.Id,
-                CompanyName = company.Name,
-                ExpiresAt = tokenResult.ExpiresAt
-            };
+                await _auditService.WriteAsync(
+                    "AUTH-MFA-LOGIN-FAILURE",
+                    userId: identityUser.LegacyUserId,
+                    companyId: identityUser.CompanyId,
+                    email: identityUser.Email,
+                    reason: "LegacyUserNotFound");
+                throw new AuthFailureException(
+                    "MfaChallengeInvalid",
+                    "The sign-in verification session is invalid or expired. Please sign in again.");
+            }
+
+            if (user.Role == null)
+            {
+                user.Role = await _context.Roles.FirstOrDefaultAsync(r => r.Id == user.RoleId)
+                    ?? throw new AuthFailureException("RoleMissing");
+            }
+
+            var company = await RequireCompanyAsync(user);
+            await ValidateLoginEligibilityAsync(user, company, identityUser);
+
+            if (verificationResult.UsedRecoveryCode)
+            {
+                await _auditService.WriteAsync(
+                    "AUTH-MFA-RECOVERY-CODE-SUCCESS",
+                    userId: user.Id,
+                    companyId: company.Id,
+                    email: user.Email,
+                    reason: "RecoveryCodeAccepted");
+            }
+
+            return await CreateAuthenticatedResponseAsync(
+                user,
+                company,
+                "AUTH-MFA-LOGIN-SUCCESS",
+                verificationResult.UsedRecoveryCode ? "RecoveryCode" : "AuthenticatorCode");
         }
 
         public async Task SendPasswordResetAsync(ForgotPasswordDTO dto)
@@ -775,6 +809,99 @@ namespace AccountingSystem.API.Services
                 companyId: identityUser.CompanyId,
                 email: identityUser.Email,
                 reason: "PasswordReset");
+        }
+
+        private async Task<Company> RequireCompanyAsync(User user)
+        {
+            var company = await _context.Companies
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(c => c.Id == user.CompanyId);
+
+            if (company != null)
+            {
+                return company;
+            }
+
+            await _auditService.WriteAsync(
+                "AUTH-LOGIN-FAILURE",
+                userId: user.Id,
+                companyId: user.CompanyId,
+                email: user.Email,
+                reason: "CompanyNotFound");
+            throw new AuthFailureException("CompanyNotFound");
+        }
+
+        private async Task ValidateLoginEligibilityAsync(User user, Company company, ApplicationUser? identityUser)
+        {
+            if (!IsSuperAdminRole(user.Role.Name))
+            {
+                if (company.Status == "Blocked")
+                {
+                    await _auditService.WriteAsync(
+                        "AUTH-LOGIN-FAILURE",
+                        userId: user.Id,
+                        companyId: company.Id,
+                        email: user.Email,
+                        reason: "CompanyBlocked");
+                    throw new AuthFailureException("CompanyBlocked");
+                }
+
+                if (company.Status == "Suspended" || !company.IsActive)
+                {
+                    await _auditService.WriteAsync(
+                        "AUTH-LOGIN-FAILURE",
+                        userId: user.Id,
+                        companyId: company.Id,
+                        email: user.Email,
+                        reason: "CompanySuspended");
+                    throw new AuthFailureException("CompanySuspended");
+                }
+
+                if (identityUser == null || !await _userManager.IsEmailConfirmedAsync(identityUser))
+                {
+                    await _auditService.WriteAsync(
+                        "AUTH-LOGIN-FAILURE",
+                        userId: user.Id,
+                        companyId: company.Id,
+                        email: user.Email,
+                        reason: "EmailConfirmationRequired");
+                    throw new AuthFailureException("EmailConfirmationRequired");
+                }
+
+                return;
+            }
+
+            if (identityUser != null && !await _userManager.IsEmailConfirmedAsync(identityUser))
+            {
+                await _auditService.WriteAsync(
+                    "AUTH-EMAIL-CONFIRMATION-BYPASS",
+                    userId: user.Id,
+                    companyId: company.Id,
+                    email: user.Email,
+                    reason: "SuperAdminRole");
+            }
+        }
+
+        private async Task<AuthResponseDTO> CreateAuthenticatedResponseAsync(User user, Company company, string auditEventName, string reason)
+        {
+            var tokenResult = _authTokenFactory.Create(CreateTokenContext(user, company));
+
+            await _auditService.WriteAsync(
+                auditEventName,
+                userId: user.Id,
+                companyId: company.Id,
+                email: user.Email,
+                reason: reason);
+
+            return new AuthResponseDTO
+            {
+                Token = tokenResult.Token,
+                Email = user.Email,
+                Role = user.Role.Name,
+                CompanyId = company.Id,
+                CompanyName = company.Name,
+                ExpiresAt = tokenResult.ExpiresAt
+            };
         }
 
         private async Task ValidateIdentityPasswordAsync(ApplicationUser identityUser, User legacyUser, string password)

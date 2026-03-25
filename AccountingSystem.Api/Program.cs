@@ -31,6 +31,7 @@ builder.Services.AddDbContext<IdentityAuthDbContext>(options =>
 builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("Smtp"));
 builder.Services.Configure<AppUrlSettings>(builder.Configuration.GetSection("AppUrls"));
 builder.Services.Configure<BootstrapAdminSettings>(builder.Configuration.GetSection("BootstrapAdmin"));
+builder.Services.Configure<MfaSettings>(builder.Configuration.GetSection("Mfa"));
 builder.Services.Configure<PasswordResetTokenProviderOptions>(options =>
 {
     options.TokenLifespan = TimeSpan.FromMinutes(GetConfiguredPositiveInt("IdentityTokens:PasswordResetTokenLifespanMinutes", 120));
@@ -64,7 +65,8 @@ var identityBuilder = builder.Services.AddIdentityCore<ApplicationUser>(options 
     .AddEntityFrameworkStores<IdentityAuthDbContext>()
     .AddTokenProvider<PasswordResetTokenProvider<ApplicationUser>>(IdentityTokenProviderNames.PasswordReset)
     .AddTokenProvider<EmailConfirmationTokenProvider<ApplicationUser>>(IdentityTokenProviderNames.EmailConfirmation)
-    .AddDefaultTokenProviders();
+    .AddDefaultTokenProviders()
+    .AddSignInManager();
 
 identityBuilder.AddPasswordValidator<SharedPasswordIdentityValidator>();
 
@@ -74,6 +76,8 @@ builder.Services.AddScoped<ILegacyPasswordService, LegacyPasswordService>();
 builder.Services.AddScoped<IAuthTokenFactory, JwtAuthTokenFactory>();
 builder.Services.AddScoped<IIdentityAccountService, IdentityAccountService>();
 builder.Services.AddScoped<ILegacyIdentityBridgeService, LegacyIdentityBridgeService>();
+builder.Services.AddScoped<IMfaService, MfaService>();
+builder.Services.AddScoped<ILoginChallengeTokenService, LoginChallengeTokenService>();
 if (useLoggingAccountEmailSender)
 {
     builder.Services.AddScoped<IAccountEmailService, LoggingAccountEmailService>();
@@ -183,6 +187,20 @@ builder.Services.AddRateLimiter(options =>
             factory: _ => CreateFixedWindowOptions(
                 GetConfiguredPositiveInt("AuthSecurity:RateLimiting:ResendConfirmation:PermitLimit", 3),
                 GetConfiguredPositiveInt("AuthSecurity:RateLimiting:ResendConfirmation:WindowSeconds", 900))));
+
+    options.AddPolicy(AuthRateLimitPolicyNames.LoginMfa, httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: $"ip:{GetRemoteIpAddress(httpContext)}",
+            factory: _ => CreateFixedWindowOptions(
+                GetConfiguredPositiveInt("AuthSecurity:RateLimiting:LoginMfa:PermitLimit", 5),
+                GetConfiguredPositiveInt("AuthSecurity:RateLimiting:LoginMfa:WindowSeconds", 300))));
+
+    options.AddPolicy(AuthRateLimitPolicyNames.MfaManage, httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: GetUserOrIpPartitionKey(httpContext),
+            factory: _ => CreateFixedWindowOptions(
+                GetConfiguredPositiveInt("AuthSecurity:RateLimiting:MfaManage:PermitLimit", 10),
+                GetConfiguredPositiveInt("AuthSecurity:RateLimiting:MfaManage:WindowSeconds", 600))));
 });
 
 builder.Services.AddCors(options =>
