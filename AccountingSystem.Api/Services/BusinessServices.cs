@@ -31,8 +31,10 @@ namespace AccountingSystem.API.Services
 
         public async Task<List<VendorDTO>> GetVendorsAsync(bool includeArchived = false)
         {
-            var query = _context.Vendors.AsQueryable();
-            if (includeArchived) query = query.IgnoreQueryFilters();
+            var tenantId = _tenantService.GetCurrentTenant();
+            var query = includeArchived
+                ? _context.Vendors.IgnoreQueryFilters().Where(v => v.CompanyId == tenantId)
+                : _context.Vendors.Where(v => v.CompanyId == tenantId);
 
             return await query.Select(v => new VendorDTO
             {
@@ -73,7 +75,10 @@ namespace AccountingSystem.API.Services
 
         public async Task RestoreVendorAsync(int id)
         {
-            var vendor = await _context.Vendors.IgnoreQueryFilters().FirstOrDefaultAsync(v => v.Id == id) ?? throw new Exception("Vendor not found");
+            var tenantId = _tenantService.GetCurrentTenant();
+            var vendor = await _context.Vendors
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(v => v.Id == id && v.CompanyId == tenantId) ?? throw new Exception("Vendor not found");
             vendor.IsDeleted = false;
             vendor.IsActive = true;
             await _context.SaveChangesAsync();
@@ -210,8 +215,10 @@ namespace AccountingSystem.API.Services
 
         public async Task<List<CustomerDTO>> GetCustomersAsync(bool includeArchived = false)
         {
-            var query = _context.Customers.AsQueryable();
-            if (includeArchived) query = query.IgnoreQueryFilters();
+            var tenantId = _tenantService.GetCurrentTenant();
+            var query = includeArchived
+                ? _context.Customers.IgnoreQueryFilters().Where(c => c.CompanyId == tenantId)
+                : _context.Customers.Where(c => c.CompanyId == tenantId);
 
             return await query.Select(c => new CustomerDTO
             {
@@ -252,7 +259,10 @@ namespace AccountingSystem.API.Services
 
         public async Task RestoreCustomerAsync(int id)
         {
-            var customer = await _context.Customers.IgnoreQueryFilters().FirstOrDefaultAsync(c => c.Id == id) ?? throw new Exception("Customer not found");
+            var tenantId = _tenantService.GetCurrentTenant();
+            var customer = await _context.Customers
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(c => c.Id == id && c.CompanyId == tenantId) ?? throw new Exception("Customer not found");
             customer.IsDeleted = false;
             customer.IsActive = true;
             await _context.SaveChangesAsync();

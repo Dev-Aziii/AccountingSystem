@@ -11,7 +11,7 @@ namespace AccountingSystem.API.Controllers
 {
     [ApiController]
     [Route("api/superadmin")]
-    [Authorize(Roles = ApplicationRoles.SuperAdmin)] // STRICTLY RESTRICTED
+    [Authorize(Policy = ApplicationAuthorizationPolicies.RequireSuperAdmin)] // STRICTLY RESTRICTED
     public class SuperAdminController : ControllerBase
     {
         private readonly AccountingDbContext _context;

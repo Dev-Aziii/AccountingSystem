@@ -4,7 +4,7 @@
 @using Microsoft.AspNetCore.Authorization
 @using MudBlazor
 @using System.Globalization
-@attribute [Authorize(Roles = ApplicationRoles.TenantOwnerAndAccounting)]
+@attribute [Authorize(Policy = ApplicationAuthorizationPolicies.RequireTenantAccountingAccess)]
 @inject PayableService PayableService
 @inject NavigationManager NavManager
 @inject ISnackbar Snackbar

@@ -3,7 +3,7 @@
 @using AccountingSystem.Client.Services
 @using AccountingSystem.Client.Shared.Dialogs
 @using MudBlazor
-@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "SuperAdmin")]
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Policy = ApplicationAuthorizationPolicies.RequireSuperAdmin)]
 @inject SuperAdminService SuperAdminService
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService

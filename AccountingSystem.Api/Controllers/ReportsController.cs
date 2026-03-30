@@ -9,7 +9,7 @@ namespace AccountingSystem.API.Controllers
 {
     [ApiController]
     [Route("api/reports")]
-    [Authorize]
+    [Authorize(Policy = ApplicationAuthorizationPolicies.RequireTenantOperationalAccess)]
     public class ReportsController : ControllerBase
     {
         private readonly AccountingDbContext _context;

@@ -2,7 +2,9 @@ using AccountingSystem.Client;
 using AccountingSystem.Client.Auth;
 using AccountingSystem.Client.Services;
 using AccountingSystem.Client.Services.Interfaces;
+using AccountingSystem.Shared.Security;
 using Blazored.LocalStorage;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
@@ -32,7 +34,28 @@ builder.Services.AddScoped<ApiService>();
 builder.Services.AddScoped<PendingMfaLoginStateService>();
 
 // 2. Authentication Services
-builder.Services.AddAuthorizationCore();
+builder.Services.AddAuthorizationCore(options =>
+{
+    options.AddPolicy(ApplicationAuthorizationPolicies.RequireSuperAdmin, policy =>
+        policy.RequireAuthenticatedUser()
+            .RequireAssertion(context => ApplicationAuthorizationScopeEvaluator.IsSuperAdmin(context.User)));
+
+    options.AddPolicy(ApplicationAuthorizationPolicies.RequireTenantAccess, policy =>
+        policy.RequireAuthenticatedUser()
+            .RequireAssertion(context => ApplicationAuthorizationScopeEvaluator.HasTenantAccess(context.User)));
+
+    options.AddPolicy(ApplicationAuthorizationPolicies.RequireTenantOwner, policy =>
+        policy.RequireAuthenticatedUser()
+            .RequireAssertion(context => ApplicationAuthorizationScopeEvaluator.IsTenantOwner(context.User)));
+
+    options.AddPolicy(ApplicationAuthorizationPolicies.RequireTenantAccountingAccess, policy =>
+        policy.RequireAuthenticatedUser()
+            .RequireAssertion(context => ApplicationAuthorizationScopeEvaluator.HasTenantAccountingAccess(context.User)));
+
+    options.AddPolicy(ApplicationAuthorizationPolicies.RequireTenantOperationalAccess, policy =>
+        policy.RequireAuthenticatedUser()
+            .RequireAssertion(context => ApplicationAuthorizationScopeEvaluator.HasTenantOperationalAccess(context.User)));
+});
 builder.Services.AddScoped<AuthenticationStateProvider, CustomAuthStateProvider>();
 builder.Services.AddScoped<AuthService>();
 

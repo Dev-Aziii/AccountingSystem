@@ -3,7 +3,7 @@
 @using AccountingSystem.Client.Services
 @using MudBlazor
 @using System.Globalization
-@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Policy = ApplicationAuthorizationPolicies.RequireTenantOperationalAccess)]
 @inject ReportService ReportService
 @inject LedgerService LedgerService
 @inject CompanyService CompanyService

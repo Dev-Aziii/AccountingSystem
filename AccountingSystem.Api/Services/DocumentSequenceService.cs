@@ -18,6 +18,8 @@ namespace AccountingSystem.API.Services
 
         public async Task<string> GetNextSequenceAsync(int companyId, DocumentType documentType)
         {
+            companyId = ValidateCompanyId(companyId);
+
             for (var attempt = 0; attempt < 5; attempt++)
             {
                 var sequence = await _context.DocumentSequences
@@ -53,6 +55,8 @@ namespace AccountingSystem.API.Services
 
         public async Task<List<DocumentSequenceDTO>> GetSequencesAsync(int companyId)
         {
+            companyId = ValidateCompanyId(companyId);
+
             var existing = await _context.DocumentSequences
                 .IgnoreQueryFilters()
                 .Where(x => x.CompanyId == companyId)
@@ -70,6 +74,8 @@ namespace AccountingSystem.API.Services
 
         public async Task<DocumentSequenceDTO> UpsertSequenceAsync(int companyId, UpdateDocumentSequenceDTO dto)
         {
+            companyId = ValidateCompanyId(companyId);
+
             var sequence = await _context.DocumentSequences
                 .IgnoreQueryFilters()
                 .FirstOrDefaultAsync(x => x.CompanyId == companyId && x.DocumentType == dto.DocumentType);
@@ -108,5 +114,15 @@ namespace AccountingSystem.API.Services
                 },
                 NextNumber = 1
             };
+
+        private static int ValidateCompanyId(int companyId)
+        {
+            if (companyId <= 0)
+            {
+                throw new InvalidOperationException("Document numbering requires a valid tenant company context.");
+            }
+
+            return companyId;
+        }
     }
 }

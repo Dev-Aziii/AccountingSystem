@@ -9,7 +9,7 @@ namespace AccountingSystem.API.Controllers
     // --- ACCOUNTS PAYABLE ---
     [ApiController]
     [Route("api/payables")]
-    [Authorize(Roles = ApplicationRoles.TenantOwnerAndAccounting)]
+    [Authorize(Policy = ApplicationAuthorizationPolicies.RequireTenantAccountingAccess)]
     public class AccountsPayableController : ControllerBase
     {
         private readonly IPayableService _payableService;
@@ -81,7 +81,7 @@ namespace AccountingSystem.API.Controllers
     // --- ACCOUNTS RECEIVABLE ---
     [ApiController]
     [Route("api/receivables")]
-    [Authorize(Roles = ApplicationRoles.TenantOwnerAndAccounting)]
+    [Authorize(Policy = ApplicationAuthorizationPolicies.RequireTenantAccountingAccess)]
     public class AccountsReceivableController : ControllerBase
     {
         private readonly IReceivableService _receivableService;

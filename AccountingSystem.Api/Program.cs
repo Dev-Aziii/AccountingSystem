@@ -123,6 +123,8 @@ builder.Services.AddAuthentication(options =>
     options.TokenValidationParameters = tokenValidationParameters;
 });
 
+builder.Services.AddApplicationAuthorization();
+
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
@@ -316,8 +318,8 @@ app.UseCors("AllowBlazorClient");
 app.UseAuthentication();
 app.UseRateLimiter();
 app.UseMiddleware<JwtMiddleware>();
-app.UseMiddleware<TenantAccessMiddleware>();
 app.UseAuthorization();
+app.UseMiddleware<TenantAccessMiddleware>();
 app.UseMiddleware<AuditMiddleware>();
 
 app.MapControllers();

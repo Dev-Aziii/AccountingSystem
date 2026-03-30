@@ -28,8 +28,10 @@ namespace AccountingSystem.API.Services
 
         public async Task<List<Account>> GetChartOfAccountsAsync(bool includeArchived = false)
         {
-            var query = _context.Accounts.AsQueryable();
-            if (includeArchived) query = query.IgnoreQueryFilters();
+            var tenantId = _tenantService.GetCurrentTenant();
+            var query = includeArchived
+                ? _context.Accounts.IgnoreQueryFilters().Where(a => a.CompanyId == tenantId)
+                : _context.Accounts.Where(a => a.CompanyId == tenantId);
             return await query.OrderBy(a => a.Code).ToListAsync();
         }
 
@@ -131,7 +133,10 @@ namespace AccountingSystem.API.Services
 
         public async Task RestoreAccountAsync(int id)
         {
-            var account = await _context.Accounts.IgnoreQueryFilters().FirstOrDefaultAsync(a => a.Id == id) ?? throw new Exception("Account not found");
+            var tenantId = _tenantService.GetCurrentTenant();
+            var account = await _context.Accounts
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(a => a.Id == id && a.CompanyId == tenantId) ?? throw new Exception("Account not found");
             account.IsDeleted = false;
             account.IsActive = true;
             await _context.SaveChangesAsync();

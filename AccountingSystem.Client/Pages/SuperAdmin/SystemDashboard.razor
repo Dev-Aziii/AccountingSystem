@@ -2,7 +2,7 @@
 @using AccountingSystem.Shared.DTOs
 @using AccountingSystem.Client.Services
 @using MudBlazor
-@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "SuperAdmin")]
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Policy = ApplicationAuthorizationPolicies.RequireSuperAdmin)]
 @inject SuperAdminService SuperAdminService
 @inject NavigationManager NavManager
 

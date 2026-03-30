@@ -9,7 +9,7 @@ namespace AccountingSystem.API.Controllers
 {
     [ApiController]
     [Route("api/companies")]
-    [Authorize] // Requires Login (Tenant Context)
+    [Authorize(Policy = ApplicationAuthorizationPolicies.RequireTenantAccess)]
     public class CompaniesController : ControllerBase
     {
         private readonly AccountingDbContext _context;
@@ -43,7 +43,7 @@ namespace AccountingSystem.API.Controllers
 
         // Update Company Profile
         [HttpPut("current")]
-        [Authorize(Roles = ApplicationRoles.TenantOwner)] // Only tenant owners can update company settings
+        [Authorize(Policy = ApplicationAuthorizationPolicies.RequireTenantOwner)] // Only tenant owners can update company settings
         public async Task<IActionResult> UpdateCompany([FromBody] UpdateCompanyDTO dto)
         {
             var tenantId = _tenantService.GetCurrentTenant();

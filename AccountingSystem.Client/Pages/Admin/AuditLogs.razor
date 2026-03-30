@@ -4,7 +4,7 @@
 @using AccountingSystem.Client.Shared.Dialogs
 @using Microsoft.AspNetCore.Authorization
 @using MudBlazor
-@attribute [Authorize(Roles = ApplicationRoles.TenantOwner)]
+@attribute [Authorize(Policy = ApplicationAuthorizationPolicies.RequireTenantOwner)]
 @inject AuditLogService AuditService
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar

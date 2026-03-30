@@ -3,7 +3,7 @@
 @using AccountingSystem.Client.Shared.Components
 @using Microsoft.AspNetCore.Authorization
 @using MudBlazor
-@attribute [Authorize(Roles = ApplicationRoles.TenantOwnerAndAccounting)]
+@attribute [Authorize(Policy = ApplicationAuthorizationPolicies.RequireTenantAccountingAccess)]
 @inject ReceivableService ReceivableService
 @inject NavigationManager NavManager
 @inject ISnackbar Snackbar

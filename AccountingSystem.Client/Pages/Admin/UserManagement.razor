@@ -5,7 +5,7 @@
 @using AccountingSystem.Client.Services
 @using Microsoft.AspNetCore.Authorization
 @using MudBlazor
-@attribute [Authorize(Roles = ApplicationRoles.TenantOwner)]
+@attribute [Authorize(Policy = ApplicationAuthorizationPolicies.RequireTenantOwner)]
 @inject UserService UserService
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService

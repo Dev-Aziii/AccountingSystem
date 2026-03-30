@@ -10,7 +10,7 @@ namespace AccountingSystem.API.Controllers
 {
     [ApiController]
     [Route("api/users")]
-    [Authorize(Roles = ApplicationRoles.TenantOwner)]
+    [Authorize(Policy = ApplicationAuthorizationPolicies.RequireTenantOwner)]
     public class UsersController : ControllerBase
     {
         private readonly AccountingDbContext _context;
@@ -30,12 +30,14 @@ namespace AccountingSystem.API.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAllUsers([FromQuery] bool includeArchived = false)
         {
-            var query = _context.Users.Include(u => u.Role).AsQueryable();
-
-            if (includeArchived)
+            if (!ApplicationAuthorizationScopeEvaluator.TryGetCompanyId(User, out var tenantId))
             {
-                query = query.IgnoreQueryFilters();
+                return Forbid();
             }
+
+            var query = includeArchived
+                ? _context.Users.IgnoreQueryFilters().Include(u => u.Role).Where(u => u.CompanyId == tenantId)
+                : _context.Users.Include(u => u.Role).Where(u => u.CompanyId == tenantId);
 
             var users = await query
                 .Select(u => new UserDTO
@@ -88,10 +90,15 @@ namespace AccountingSystem.API.Controllers
         [HttpPut("{id}/restore")]
         public async Task<IActionResult> RestoreUser(int id)
         {
+            if (!ApplicationAuthorizationScopeEvaluator.TryGetCompanyId(User, out var tenantId))
+            {
+                return Forbid();
+            }
+
             var user = await _context.Users
                 .IgnoreQueryFilters()
                 .Include(u => u.Role)
-                .FirstOrDefaultAsync(u => u.Id == id);
+                .FirstOrDefaultAsync(u => u.Id == id && u.CompanyId == tenantId);
 
             if (user == null) return NotFound("User not found");
 

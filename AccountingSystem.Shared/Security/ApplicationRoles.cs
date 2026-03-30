@@ -17,6 +17,15 @@ public static class ApplicationRoles
 
     public static bool IsTenantOwner(string? roleName) =>
         string.Equals(roleName, TenantOwner, StringComparison.Ordinal);
+
+    public static bool IsAccounting(string? roleName) =>
+        string.Equals(roleName, Accounting, StringComparison.Ordinal);
+
+    public static bool IsManagement(string? roleName) =>
+        string.Equals(roleName, Management, StringComparison.Ordinal);
+
+    public static bool IsTenantScoped(string? roleName) =>
+        IsTenantOwner(roleName) || IsAccounting(roleName) || IsManagement(roleName);
 }
 
 public static class ApplicationRoleDisplayNames

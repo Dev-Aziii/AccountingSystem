@@ -288,9 +288,15 @@ namespace AccountingSystem.API.Services
 
         private async Task<Account> EnsureRetainedEarningsAccountAsync()
         {
+            var tenantId = _tenantService.GetCurrentTenant();
+            if (tenantId <= 0)
+            {
+                throw new InvalidOperationException("Year-end close requires a valid tenant company context.");
+            }
+
             var account = await _context.Accounts
                 .IgnoreQueryFilters()
-                .FirstOrDefaultAsync(a => a.Code == "3100");
+                .FirstOrDefaultAsync(a => a.CompanyId == tenantId && a.Code == "3100");
             if (account != null)
             {
                 if (account.IsDeleted || !account.IsActive)
@@ -305,7 +311,7 @@ namespace AccountingSystem.API.Services
 
             account = new Account
             {
-                CompanyId = _tenantService.GetCurrentTenant(),
+                CompanyId = tenantId,
                 Code = "3100",
                 Name = "Retained Earnings",
                 Type = "Equity",

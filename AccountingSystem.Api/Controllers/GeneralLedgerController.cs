@@ -19,7 +19,7 @@ namespace AccountingSystem.API.Controllers
         }
 
         [HttpGet("accounts")]
-        [Authorize(Roles = ApplicationRoles.TenantOwnerAccountingAndManagement)]
+        [Authorize(Policy = ApplicationAuthorizationPolicies.RequireTenantOperationalAccess)]
         public async Task<IActionResult> GetChartOfAccounts([FromQuery] bool includeArchived = false)
         {
             var accounts = await _ledgerService.GetChartOfAccountsAsync(includeArchived);
@@ -37,7 +37,7 @@ namespace AccountingSystem.API.Controllers
         }
 
         [HttpPost("accounts")]
-        [Authorize(Roles = ApplicationRoles.TenantOwnerAndAccounting)]
+        [Authorize(Policy = ApplicationAuthorizationPolicies.RequireTenantAccountingAccess)]
         public async Task<IActionResult> CreateAccount([FromBody] CreateAccountDTO dto)
         {
             try
@@ -49,7 +49,7 @@ namespace AccountingSystem.API.Controllers
         }
 
         [HttpPut("accounts/{id}")]
-        [Authorize(Roles = ApplicationRoles.TenantOwnerAndAccounting)]
+        [Authorize(Policy = ApplicationAuthorizationPolicies.RequireTenantAccountingAccess)]
         public async Task<IActionResult> UpdateAccount(int id, [FromBody] UpdateAccountDTO dto)
         {
             try
@@ -61,7 +61,7 @@ namespace AccountingSystem.API.Controllers
         }
 
         [HttpDelete("accounts/{id}")]
-        [Authorize(Roles = ApplicationRoles.TenantOwnerAndAccounting)]
+        [Authorize(Policy = ApplicationAuthorizationPolicies.RequireTenantAccountingAccess)]
         public async Task<IActionResult> DeleteAccount(int id)
         {
             try
@@ -73,7 +73,7 @@ namespace AccountingSystem.API.Controllers
         }
 
         [HttpPut("accounts/{id}/restore")]
-        [Authorize(Roles = ApplicationRoles.TenantOwnerAndAccounting)]
+        [Authorize(Policy = ApplicationAuthorizationPolicies.RequireTenantAccountingAccess)]
         public async Task<IActionResult> RestoreAccount(int id)
         {
             try
@@ -85,7 +85,7 @@ namespace AccountingSystem.API.Controllers
         }
 
         [HttpGet("trial-balance")]
-        [Authorize(Roles = ApplicationRoles.TenantOwnerAccountingAndManagement)]
+        [Authorize(Policy = ApplicationAuthorizationPolicies.RequireTenantOperationalAccess)]
         public async Task<IActionResult> GetTrialBalance(
             [FromQuery] DateTime? fromDate = null,
             [FromQuery] DateTime? toDate = null,
@@ -99,7 +99,7 @@ namespace AccountingSystem.API.Controllers
         }
 
         [HttpGet("fiscal-years")]
-        [Authorize(Roles = ApplicationRoles.TenantOwnerAccountingAndManagement)]
+        [Authorize(Policy = ApplicationAuthorizationPolicies.RequireTenantOperationalAccess)]
         public async Task<IActionResult> GetFiscalYears([FromQuery] int lookbackYears = 10)
         {
             var years = await _yearEndCloseService.GetFiscalYearSummariesAsync(lookbackYears);
@@ -107,7 +107,7 @@ namespace AccountingSystem.API.Controllers
         }
 
         [HttpPost("fiscal-years/{fiscalYear:int}/close")]
-        [Authorize(Roles = ApplicationRoles.TenantOwner)]
+        [Authorize(Policy = ApplicationAuthorizationPolicies.RequireTenantOwner)]
         public async Task<IActionResult> CloseFiscalYear(int fiscalYear)
         {
             var userName = User.Identity?.Name ?? "System";
@@ -126,7 +126,7 @@ namespace AccountingSystem.API.Controllers
         }
 
         [HttpPost("journal")]
-        [Authorize(Roles = ApplicationRoles.TenantOwnerAndAccounting)]
+        [Authorize(Policy = ApplicationAuthorizationPolicies.RequireTenantAccountingAccess)]
         public async Task<IActionResult> PostJournalEntry([FromBody] JournalEntryDTO entryDto)
         {
             string userId = User.Identity?.Name ?? "Unknown";

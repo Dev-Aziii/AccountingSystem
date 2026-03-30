@@ -1,5 +1,5 @@
-﻿using AccountingSystem.API.Services.Interfaces;
-using System.Security.Claims;
+using AccountingSystem.API.Services.Interfaces;
+using AccountingSystem.Shared.Security;
 
 namespace AccountingSystem.API.Services
 {
@@ -21,16 +21,12 @@ namespace AccountingSystem.API.Services
             }
 
             var user = _httpContextAccessor.HttpContext?.User;
-            if (user == null) return 0;
-
-            // Retrieve CompanyId from JWT Claims
-            var tenantClaim = user.Claims.FirstOrDefault(c => c.Type == "CompanyId");
-            if (tenantClaim != null && int.TryParse(tenantClaim.Value, out int tenantId))
+            if (ApplicationAuthorizationScopeEvaluator.TryGetCompanyId(user, out var tenantId))
             {
                 return tenantId;
             }
 
-            return 0; // No tenant found (or System Admin context)
+            return 0;
         }
 
         public void SetCurrentTenant(int tenantId)

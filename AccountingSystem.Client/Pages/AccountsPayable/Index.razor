@@ -1,5 +1,5 @@
 @page "/ap"
-@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = ApplicationRoles.TenantOwnerAndAccounting)]
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Policy = ApplicationAuthorizationPolicies.RequireTenantAccountingAccess)]
 
 <MudContainer MaxWidth="MaxWidth.Large" Class=" pb-8">
     <MudTabs Rounded="true" PanelClass="pa-2" KeepPanelsAlive="true">
