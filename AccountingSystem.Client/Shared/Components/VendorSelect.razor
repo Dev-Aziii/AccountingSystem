@@ -7,7 +7,7 @@
 @inject ISnackbar Snackbar
 @inject ILogger<VendorSelect> Logger
 
-<Microsoft.AspNetCore.Components.Authorization.AuthorizeView Roles="Admin,Accounting">
+<Microsoft.AspNetCore.Components.Authorization.AuthorizeView Roles="@ApplicationRoles.TenantOwnerAndAccounting">
     <MudAutocomplete T="VendorDTO"
                      Label="Vendor"
                      Value="_selectedVendor"

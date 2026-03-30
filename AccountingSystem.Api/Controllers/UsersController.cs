@@ -10,7 +10,7 @@ namespace AccountingSystem.API.Controllers
 {
     [ApiController]
     [Route("api/users")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = ApplicationRoles.TenantOwner)]
     public class UsersController : ControllerBase
     {
         private readonly AccountingDbContext _context;
@@ -74,8 +74,8 @@ namespace AccountingSystem.API.Controllers
                 .FirstOrDefaultAsync(u => u.Id == id);
             if (user == null) return NotFound("User not found");
 
-            if (user.Role.Name == "Admin")
-                return BadRequest(new { error = "Cannot archive admin account" });
+            if (ApplicationRoles.IsTenantOwner(user.Role.Name))
+                return BadRequest(new { error = "Cannot archive tenant owner account." });
 
             user.IsDeleted = true;
             user.IsActive = false;

@@ -5,7 +5,7 @@
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.Authorization
 @using MudBlazor
-@attribute [Authorize(Roles = "Admin,Accounting,Management")]
+@attribute [Authorize(Roles = ApplicationRoles.TenantOwnerAccountingAndManagement)]
 @inject ReceivableService ReceivableService
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
@@ -85,7 +85,7 @@
         }
         else
         {
-            <AuthorizeView Roles="Admin,Accounting" Context="authContext">
+            <AuthorizeView Roles="@ApplicationRoles.TenantOwnerAndAccounting" Context="authContext">
                 <MudButton Variant="Variant.Filled"
                            Class="custom-button"
                            StartIcon="@Icons.Material.Outlined.Add"
@@ -182,7 +182,7 @@
                             <MudTh>Name</MudTh>
                             <MudTh>Email</MudTh>
                             <MudTh>Phone</MudTh>
-                            <AuthorizeView Roles="Admin,Accounting" Context="authContext">
+                            <AuthorizeView Roles="@ApplicationRoles.TenantOwnerAndAccounting" Context="authContext">
                                 <MudTh Style="text-align:right">Actions</MudTh>
                             </AuthorizeView>
                         </HeaderContent>
@@ -191,7 +191,7 @@
                             <MudTd DataLabel="Name" Style="font-weight: 500; color: var(--text-main);">@context.Name</MudTd>
                             <MudTd DataLabel="Email" Style="color: var(--text-muted);">@context.Email</MudTd>
                             <MudTd DataLabel="Phone" Style="color: var(--text-muted);">@context.Phone</MudTd>
-                            <AuthorizeView Roles="Admin,Accounting" Context="authContext">
+                            <AuthorizeView Roles="@ApplicationRoles.TenantOwnerAndAccounting" Context="authContext">
                                 <MudTd DataLabel="Actions" Style="text-align:right">
                                     <MudIconButton Icon="@Icons.Material.Outlined.Edit"
                                                    Size="Size.Small"
@@ -209,7 +209,7 @@
                 </MudCard>
             </MudTabPanel>
 
-            <AuthorizeView Roles="Admin,Accounting" Context="authContext">
+            <AuthorizeView Roles="@ApplicationRoles.TenantOwnerAndAccounting" Context="authContext">
                 <MudTabPanel Text="Archived Customers" OnClick="@(() => LoadList(true))">
                     <MudCard Elevation="0" Outlined="true" Class="shadcn-card">
                         <MudTable Items="@customers" Dense="true" Hover="true" Elevation="0" Filter="new Func<CustomerDTO, bool>(FilterFunc)" Loading="@_loading" Class="shadcn-table" Breakpoint="Breakpoint.Sm">

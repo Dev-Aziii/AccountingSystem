@@ -276,7 +276,7 @@
                                        Margin="Margin.Dense"
                                        Class="shadcn-input filter-dropdown">
                                 <MudSelectItem T="string" Value='@("All")'>All Roles</MudSelectItem>
-                                <MudSelectItem T="string" Value='@("Admin")'>Admin</MudSelectItem>
+                                <MudSelectItem T="string" Value='@ApplicationRoles.TenantOwner'>@ApplicationRoleDisplayNames.TenantOwner</MudSelectItem>
                                 <MudSelectItem T="string" Value='@("Accounting")'>Accounting</MudSelectItem>
                                 <MudSelectItem T="string" Value='@("Management")'>Management</MudSelectItem>
                             </MudSelect>
@@ -307,7 +307,7 @@
                     </MudTd>
                     <MudTd DataLabel="Role">
                         <span class="shadcn-badge @GetRoleBadgeClass(context.Role)">
-                            @context.Role
+                            @ApplicationRoleDisplayNames.Get(context.Role)
                         </span>
                     </MudTd>
                     <MudTd DataLabel="Joined" Style="white-space: nowrap;">
@@ -447,7 +447,7 @@
 
     private string GetRoleBadgeClass(string? role) => role switch
     {
-        "Admin"      => "badge-indigo",
+        ApplicationRoles.TenantOwner => "badge-indigo",
         "Accounting" => "badge-blue",
         "Management" => "badge-slate",
         _            => "badge-slate"

@@ -343,15 +343,15 @@ namespace AccountingSystem.API.Services
                     _context.Companies.Add(company);
                     await _context.SaveChangesAsync();
 
-                    var adminRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == "Admin");
-                    if (adminRole == null)
+                    var tenantOwnerRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == ApplicationRoles.TenantOwner);
+                    if (tenantOwnerRole == null)
                     {
                         await _auditService.WriteAsync(
                             "AUTH-REGISTER-COMPANY-FAILURE",
                             companyId: company.Id,
                             email: dto.AdminEmail,
-                            reason: "AdminRoleMissing");
-                        throw new Exception("System role 'Admin' is missing.");
+                            reason: "TenantOwnerRoleMissing");
+                        throw new Exception($"System role '{ApplicationRoles.TenantOwner}' is missing.");
                     }
 
                     user = new User
@@ -359,8 +359,8 @@ namespace AccountingSystem.API.Services
                         CompanyId = company.Id,
                         Email = dto.AdminEmail,
                         FullName = dto.AdminFullName,
-                        RoleId = adminRole.Id,
-                        Role = adminRole,
+                        RoleId = tenantOwnerRole.Id,
+                        Role = tenantOwnerRole,
                         PasswordHash = string.Empty,
                         PasswordSalt = null,
                         IsActive = true,
@@ -371,7 +371,7 @@ namespace AccountingSystem.API.Services
                     await _context.SaveChangesAsync();
 
                     await _identityAccountService.EnsureProvisionedAsync(
-                        CreateIdentitySnapshot(user, adminRole.Name, requireEmailConfirmation: true, emailConfirmed: false),
+                        CreateIdentitySnapshot(user, tenantOwnerRole.Name, requireEmailConfirmation: true, emailConfirmed: false),
                         dto.Password);
 
                     await SeedCompanyDataAsync(company.Id);
@@ -408,7 +408,7 @@ namespace AccountingSystem.API.Services
             {
                 Token = string.Empty,
                 Email = user.Email,
-                Role = "Admin",
+                Role = ApplicationRoles.TenantOwner,
                 CompanyId = company.Id,
                 CompanyName = company.Name,
                 ExpiresAt = DateTime.MinValue,
@@ -439,9 +439,9 @@ namespace AccountingSystem.API.Services
                 throw new Exception($"Role '{registerDto.RoleName}' does not exist.");
             }
 
-            if (role.Name == "SuperAdmin")
+            if (ApplicationRoles.IsSuperAdmin(role.Name))
             {
-                throw new Exception("SuperAdmin role cannot be assigned from this endpoint.");
+                throw new Exception($"{ApplicationRoles.SuperAdmin} role cannot be assigned from this endpoint.");
             }
 
             var user = new User
@@ -469,7 +469,7 @@ namespace AccountingSystem.API.Services
                 transaction.Complete();
             }
 
-            await TrySendEmailConfirmationAsync(identityUser, "AUTH-EMAIL-CONFIRMATION-SENT", "AdminUserCreated");
+            await TrySendEmailConfirmationAsync(identityUser, "AUTH-EMAIL-CONFIRMATION-SENT", "UserCreated");
             return user;
         }
 
@@ -833,7 +833,7 @@ namespace AccountingSystem.API.Services
 
         private async Task ValidateLoginEligibilityAsync(User user, Company company, ApplicationUser? identityUser)
         {
-            if (!IsSuperAdminRole(user.Role.Name))
+            if (!ApplicationRoles.IsSuperAdmin(user.Role.Name))
             {
                 if (company.Status == "Blocked")
                 {
@@ -1352,16 +1352,13 @@ namespace AccountingSystem.API.Services
 
         private static LegacyIdentityUserSnapshot CreateProvisioningSnapshot(User user, string roleName)
         {
-            var requiresEmailConfirmation = !IsSuperAdminRole(roleName);
+            var requiresEmailConfirmation = !ApplicationRoles.IsSuperAdmin(roleName);
             return CreateIdentitySnapshot(
                 user,
                 roleName,
                 requireEmailConfirmation: requiresEmailConfirmation,
                 emailConfirmed: false);
         }
-
-        private static bool IsSuperAdminRole(string roleName) =>
-            string.Equals(roleName, "SuperAdmin", StringComparison.Ordinal);
 
         private static AuthTokenContext CreateTokenContext(User user, Company company) =>
             new(

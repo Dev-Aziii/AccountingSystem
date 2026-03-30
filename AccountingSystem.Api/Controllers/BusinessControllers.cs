@@ -9,7 +9,7 @@ namespace AccountingSystem.API.Controllers
     // --- ACCOUNTS PAYABLE ---
     [ApiController]
     [Route("api/payables")]
-    [Authorize(Roles = "Admin,Accounting")]
+    [Authorize(Roles = ApplicationRoles.TenantOwnerAndAccounting)]
     public class AccountsPayableController : ControllerBase
     {
         private readonly IPayableService _payableService;
@@ -72,7 +72,7 @@ namespace AccountingSystem.API.Controllers
         public async Task<IActionResult> PayBill(int id, [FromBody] RecordPaymentDTO paymentDto)
         {
             if (id != paymentDto.ReferenceId) return BadRequest(new { error = "Mismatched Bill ID." });
-            var userId = User.Identity?.Name ?? "Admin";
+            var userId = User.Identity?.Name ?? ApplicationRoleDisplayNames.TenantOwner;
             var payment = await _payableService.PayBillAsync(paymentDto, userId);
             return Ok(payment);
         }
@@ -81,7 +81,7 @@ namespace AccountingSystem.API.Controllers
     // --- ACCOUNTS RECEIVABLE ---
     [ApiController]
     [Route("api/receivables")]
-    [Authorize(Roles = "Admin,Accounting")]
+    [Authorize(Roles = ApplicationRoles.TenantOwnerAndAccounting)]
     public class AccountsReceivableController : ControllerBase
     {
         private readonly IReceivableService _receivableService;
@@ -144,7 +144,7 @@ namespace AccountingSystem.API.Controllers
         public async Task<IActionResult> ReceivePayment(int id, [FromBody] RecordPaymentDTO paymentDto)
         {
             if (id != paymentDto.ReferenceId) return BadRequest(new { error = "Mismatched Invoice ID." });
-            var userId = User.Identity?.Name ?? "Admin";
+            var userId = User.Identity?.Name ?? ApplicationRoleDisplayNames.TenantOwner;
             var payment = await _receivableService.ReceivePaymentAsync(paymentDto, userId);
             return Ok(payment);
         }

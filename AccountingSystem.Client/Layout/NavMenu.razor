@@ -4,7 +4,7 @@
 <div class="shadcn-nav-wrapper">
     <MudNavMenu Dense="true" Class="shadcn-nav-menu">
 
-        <AuthorizeView Roles="SuperAdmin">
+        <AuthorizeView Roles="@ApplicationRoles.SuperAdmin">
             <div class="nav-section-label">Super Admin</div>
             <MudNavLink Href="superadmin/dashboard" Match="NavLinkMatch.All" Icon="@Icons.Material.Outlined.Security">System Overview</MudNavLink>
             <MudNavLink Href="superadmin/tenants" Match="NavLinkMatch.All" Icon="@Icons.Material.Outlined.Business">Tenant Manager</MudNavLink>
@@ -12,19 +12,19 @@
             <MudNavLink Href="superadmin/audit-logs" Match="NavLinkMatch.All" Icon="@Icons.Material.Outlined.History">Admin Audit Logs</MudNavLink>
         </AuthorizeView>
 
-        <AuthorizeView Roles="Admin,Accounting,Management">
+        <AuthorizeView Roles="@ApplicationRoles.TenantOwnerAccountingAndManagement">
             <div class="nav-section-label">Overview</div>
             <MudNavLink Href="dashboard" Match="NavLinkMatch.All" Icon="@Icons.Material.Outlined.Dashboard">Dashboard</MudNavLink>
         </AuthorizeView>
 
-        <AuthorizeView Roles="Admin">
-            <div class="nav-section-label">Administration</div>
+        <AuthorizeView Roles="@ApplicationRoles.TenantOwner">
+            <div class="nav-section-label">Tenant Administration</div>
             <MudNavLink Href="admin/users" Match="NavLinkMatch.All" Icon="@Icons.Material.Outlined.People">User Management</MudNavLink>
             <MudNavLink Href="admin/audit-logs" Match="NavLinkMatch.All" Icon="@Icons.Material.Outlined.History">Audit Logs</MudNavLink>
             <MudNavLink Href="admin/company-settings" Match="NavLinkMatch.All" Icon="@Icons.Material.Outlined.Settings">Company Settings</MudNavLink>
         </AuthorizeView>
 
-        <AuthorizeView Roles="Admin,Accounting">
+        <AuthorizeView Roles="@ApplicationRoles.TenantOwnerAndAccounting">
             <div class="nav-section-label">General Ledger</div>
             <MudNavLink Href="gl/journal" Match="NavLinkMatch.All" Icon="@Icons.Material.Outlined.EditNote">Journal Entries</MudNavLink>
             <MudNavLink Href="gl/accounts" Match="NavLinkMatch.All" Icon="@Icons.Material.Outlined.AccountTree">Chart of Accounts</MudNavLink>
@@ -36,7 +36,7 @@
             <MudNavLink Href="ar" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.ReceiptLong">Invoices</MudNavLink>
         </AuthorizeView>
 
-        <AuthorizeView Roles="Admin,Accounting,Management">
+        <AuthorizeView Roles="@ApplicationRoles.TenantOwnerAccountingAndManagement">
             <div class="nav-section-label">Reporting</div>
             <MudNavLink Href="reports/financials" Match="NavLinkMatch.All" Icon="@Icons.Material.Outlined.Analytics">Financial Statements</MudNavLink>
         </AuthorizeView>

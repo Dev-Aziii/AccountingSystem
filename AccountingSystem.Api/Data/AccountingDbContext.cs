@@ -85,10 +85,10 @@ namespace AccountingSystem.API.Data
 
             // ---  ROLES ---
             modelBuilder.Entity<Role>().HasData(
-                new Role { Id = 1, Name = "Admin" },
-                new Role { Id = 2, Name = "Accounting" },
-                new Role { Id = 3, Name = "Management" },
-                new Role { Id = 4, Name = "SuperAdmin" } 
+                new Role { Id = 1, Name = ApplicationRoles.TenantOwner },
+                new Role { Id = 2, Name = ApplicationRoles.Accounting },
+                new Role { Id = 3, Name = ApplicationRoles.Management },
+                new Role { Id = 4, Name = ApplicationRoles.SuperAdmin }
             );
         }
 

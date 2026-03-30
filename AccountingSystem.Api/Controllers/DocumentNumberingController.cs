@@ -7,7 +7,7 @@ namespace AccountingSystem.API.Controllers
 {
     [ApiController]
     [Route("api/document-numbering")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = ApplicationRoles.TenantOwner)]
     public class DocumentNumberingController : ControllerBase
     {
         private readonly IDocumentSequenceService _documentSequenceService;

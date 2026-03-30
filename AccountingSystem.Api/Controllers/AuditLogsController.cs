@@ -8,7 +8,7 @@ namespace AccountingSystem.API.Controllers
 {
     [ApiController]
     [Route("api/audit-logs")]
-    [Authorize(Roles = "Admin")] 
+    [Authorize(Roles = ApplicationRoles.TenantOwner)]
     public class AuditLogsController : ControllerBase
     {
         private readonly AccountingDbContext _context;

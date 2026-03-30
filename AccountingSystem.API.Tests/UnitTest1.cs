@@ -97,7 +97,7 @@ public class JwtAuthTokenFactoryTests
 
         var result = factory.Create(new AuthTokenContext(
             "user@example.com",
-            "Admin",
+            ApplicationRoles.TenantOwner,
             123,
             "Test User",
             456,
@@ -106,9 +106,9 @@ public class JwtAuthTokenFactoryTests
         var token = new JwtSecurityTokenHandler().ReadJwtToken(result.Token);
 
         GetClaimValue(token, ClaimTypes.Name, JwtRegisteredClaimNames.UniqueName).Should().Be("user@example.com");
-        GetClaimValue(token, ClaimTypes.Role, "role").Should().Be("Admin");
+        GetClaimValue(token, ClaimTypes.Role, "role").Should().Be(ApplicationRoles.TenantOwner);
         token.Claims.First(c => c.Type == "UserId").Value.Should().Be("123");
-        token.Claims.First(c => c.Type == "role").Value.Should().Be("Admin");
+        token.Claims.First(c => c.Type == "role").Value.Should().Be(ApplicationRoles.TenantOwner);
         token.Claims.First(c => c.Type == "FullName").Value.Should().Be("Test User");
         token.Claims.First(c => c.Type == "CompanyId").Value.Should().Be("456");
         token.Claims.First(c => c.Type == "CompanyName").Value.Should().Be("Contoso");
@@ -144,7 +144,7 @@ public class AuthServiceTests
         using var harness = TestHelpers.CreateIdentityHarness();
         var service = TestHelpers.CreateAuthService(context, harness);
 
-        var role = new Role { Id = 1, Name = "Admin" };
+        var role = new Role { Id = 1, Name = ApplicationRoles.TenantOwner };
         var company = new Company { Id = 10, Name = "Contoso", IsActive = true, Status = "Active" };
         var user = TestHelpers.CreateUser(role, company.Id, "admin@contoso.com", "UnusedLegacy123!");
         user.PasswordHash = "corrupted";
@@ -167,7 +167,7 @@ public class AuthServiceTests
 
         response.Token.Should().NotBeNullOrWhiteSpace();
         response.CompanyId.Should().Be(company.Id);
-        response.Role.Should().Be("Admin");
+        response.Role.Should().Be(ApplicationRoles.TenantOwner);
 
         var token = new JwtSecurityTokenHandler().ReadJwtToken(response.Token);
         token.Claims.First(c => c.Type == "UserId").Value.Should().Be(user.Id.ToString());
@@ -220,7 +220,7 @@ public class AuthServiceTests
     }
 
     [Fact]
-    public async Task RegisterCompanyAsync_WhenSuccessful_ShouldCreateLegacyAndIdentityAdmin()
+    public async Task RegisterCompanyAsync_WhenSuccessful_ShouldCreateLegacyAndIdentityTenantOwner()
     {
         var context = TestHelpers.CreateContext();
         using var harness = TestHelpers.CreateIdentityHarness();
@@ -228,7 +228,7 @@ public class AuthServiceTests
         captcha.Setup(x => x.VerifyTokenAsync(It.IsAny<string>())).ReturnsAsync(true);
         var service = TestHelpers.CreateAuthService(context, harness, captcha: captcha);
 
-        context.Roles.Add(new Role { Id = 1, Name = "Admin" });
+        context.Roles.Add(new Role { Id = 1, Name = ApplicationRoles.TenantOwner });
         await context.SaveChangesAsync();
 
         var response = await service.RegisterCompanyAsync(new CompanyRegisterDTO
@@ -240,7 +240,7 @@ public class AuthServiceTests
             RecaptchaToken = "good-token"
         });
 
-        response.Role.Should().Be("Admin");
+        response.Role.Should().Be(ApplicationRoles.TenantOwner);
         response.CompanyName.Should().Be("Phase Six Co");
         response.Token.Should().BeEmpty();
         response.RequiresEmailConfirmation.Should().BeTrue();
@@ -249,13 +249,13 @@ public class AuthServiceTests
         var company = await context.Companies.IgnoreQueryFilters().SingleAsync(c => c.Name == "Phase Six Co");
         var legacyUser = await context.Users.IgnoreQueryFilters().Include(u => u.Role).SingleAsync(u => u.Email == "owner@phasesix.com");
         legacyUser.CompanyId.Should().Be(company.Id);
-        legacyUser.Role.Name.Should().Be("Admin");
+        legacyUser.Role.Name.Should().Be(ApplicationRoles.TenantOwner);
         legacyUser.PasswordHash.Should().BeEmpty();
         legacyUser.PasswordSalt.Should().BeNull();
 
         var identityUser = await harness.IdentityContext.Users.SingleAsync(u => u.LegacyUserId == legacyUser.Id);
         (await harness.UserManager.CheckPasswordAsync(identityUser, "LongPassword123!")).Should().BeTrue();
-        (await harness.UserManager.GetRolesAsync(identityUser)).Should().ContainSingle("Admin");
+        (await harness.UserManager.GetRolesAsync(identityUser)).Should().ContainSingle(ApplicationRoles.TenantOwner);
         identityUser.RequireEmailConfirmation.Should().BeTrue();
         identityUser.EmailConfirmed.Should().BeFalse();
         harness.EmailService.SentConfirmationEmails.Should().ContainSingle();
@@ -298,7 +298,7 @@ public class AuthServiceTests
             captcha: captcha,
             httpContextAccessor: httpContextAccessor);
 
-        context.Roles.Add(new Role { Id = 1, Name = "Admin" });
+        context.Roles.Add(new Role { Id = 1, Name = ApplicationRoles.TenantOwner });
         await context.SaveChangesAsync();
 
         await service.RegisterCompanyAsync(new CompanyRegisterDTO
@@ -354,7 +354,7 @@ public class AuthServiceTests
         using var harness = TestHelpers.CreateIdentityHarness();
         var service = TestHelpers.CreateAuthService(context, harness);
 
-        var role = new Role { Id = 1, Name = "Admin" };
+        var role = new Role { Id = 1, Name = ApplicationRoles.TenantOwner };
         var company = new Company { Id = 12, Name = "Password Co", IsActive = true, Status = "Active" };
         var user = TestHelpers.CreateUser(role, company.Id, "password@test.com", "LongPassword123!");
 
@@ -390,7 +390,7 @@ public class AuthServiceTests
         using var harness = TestHelpers.CreateIdentityHarness();
         var service = TestHelpers.CreateAuthService(context, harness);
 
-        var role = new Role { Id = 1, Name = "Admin" };
+        var role = new Role { Id = 1, Name = ApplicationRoles.TenantOwner };
         var company = new Company { Id = 13, Name = "Profile Co", IsActive = true, Status = "Active" };
         var user = TestHelpers.CreateUser(role, company.Id, "profile@test.com", "LongPassword123!");
 
@@ -412,7 +412,7 @@ public class AuthServiceTests
         var profile = await service.GetCurrentProfileAsync(user.Id);
         profile.Email.Should().Be("updated.profile@test.com");
         profile.FullName.Should().Be("Updated Profile");
-        profile.Role.Should().Be("Admin");
+        profile.Role.Should().Be(ApplicationRoles.TenantOwner);
         profile.CompanyName.Should().Be(company.Name);
 
         var identityUser = await harness.IdentityContext.Users.SingleAsync(u => u.LegacyUserId == user.Id);
@@ -431,7 +431,7 @@ public class AuthServiceTests
         using var harness = TestHelpers.CreateIdentityHarness();
         var service = TestHelpers.CreateAuthService(context, harness);
 
-        var role = new Role { Id = 1, Name = "Admin" };
+        var role = new Role { Id = 1, Name = ApplicationRoles.TenantOwner };
         var company = new Company { Id = 15, Name = "Confirm Co", IsActive = true, Status = "Active" };
         var user = TestHelpers.CreateUser(role, company.Id, "confirm@test.com", "LongPassword123!");
 
@@ -463,7 +463,7 @@ public class AuthServiceTests
         using var harness = TestHelpers.CreateIdentityHarness();
         var service = TestHelpers.CreateAuthService(context, harness);
 
-        var role = new Role { Id = 1, Name = "Admin" };
+        var role = new Role { Id = 1, Name = ApplicationRoles.TenantOwner };
         var company = new Company { Id = 115, Name = "Blanket Confirm Co", IsActive = true, Status = "Active" };
         var user = TestHelpers.CreateUser(role, company.Id, "blanket@test.com", "LongPassword123!");
 
@@ -495,7 +495,7 @@ public class AuthServiceTests
         using var harness = TestHelpers.CreateIdentityHarness();
         var service = TestHelpers.CreateAuthService(context, harness);
 
-        var role = new Role { Id = 9, Name = "SuperAdmin" };
+        var role = new Role { Id = 9, Name = ApplicationRoles.SuperAdmin };
         var company = new Company { Id = 116, Name = "Ops HQ", IsActive = true, Status = "Active" };
         var user = TestHelpers.CreateUser(role, company.Id, "superadmin@test.com", "LongPassword123!");
 
@@ -515,7 +515,7 @@ public class AuthServiceTests
         });
 
         loginResponse.Token.Should().NotBeNullOrWhiteSpace();
-        loginResponse.Role.Should().Be("SuperAdmin");
+        loginResponse.Role.Should().Be(ApplicationRoles.SuperAdmin);
     }
 
     [Fact]
@@ -525,7 +525,7 @@ public class AuthServiceTests
         using var harness = TestHelpers.CreateIdentityHarness();
         var service = TestHelpers.CreateAuthService(context, harness);
 
-        var role = new Role { Id = 1, Name = "Admin" };
+        var role = new Role { Id = 1, Name = ApplicationRoles.TenantOwner };
         var company = new Company { Id = 16, Name = "Confirm Flow Co", IsActive = true, Status = "Active" };
         var user = TestHelpers.CreateUser(role, company.Id, "confirm-flow@test.com", "LongPassword123!");
 
@@ -726,7 +726,7 @@ public class AuthServiceTests
         using var harness = TestHelpers.CreateIdentityHarness();
         var service = TestHelpers.CreateAuthService(context, harness);
 
-        var role = new Role { Id = 1, Name = "Admin" };
+        var role = new Role { Id = 1, Name = ApplicationRoles.TenantOwner };
         var company = new Company { Id = 141, Name = "Mfa Setup Co", IsActive = true, Status = "Active" };
         var user = TestHelpers.CreateUser(role, company.Id, "mfa-setup@test.com", "LongPassword123!");
 
@@ -755,7 +755,7 @@ public class AuthServiceTests
         using var harness = TestHelpers.CreateIdentityHarness();
         var service = TestHelpers.CreateAuthService(context, harness);
 
-        var role = new Role { Id = 1, Name = "Admin" };
+        var role = new Role { Id = 1, Name = ApplicationRoles.TenantOwner };
         var company = new Company { Id = 142, Name = "Mfa Login Co", IsActive = true, Status = "Active" };
         var user = TestHelpers.CreateUser(role, company.Id, "mfa-login@test.com", "LongPassword123!");
 
@@ -792,7 +792,7 @@ public class AuthServiceTests
         using var harness = TestHelpers.CreateIdentityHarness();
         var service = TestHelpers.CreateAuthService(context, harness);
 
-        var role = new Role { Id = 1, Name = "Admin" };
+        var role = new Role { Id = 1, Name = ApplicationRoles.TenantOwner };
         var company = new Company { Id = 143, Name = "Mfa Verify Co", IsActive = true, Status = "Active" };
         var user = TestHelpers.CreateUser(role, company.Id, "mfa-verify@test.com", "LongPassword123!");
 
@@ -826,7 +826,7 @@ public class AuthServiceTests
         mfaResponse.RequiresTwoFactor.Should().BeFalse();
         mfaResponse.Token.Should().NotBeNullOrWhiteSpace();
         mfaResponse.CompanyId.Should().Be(company.Id);
-        mfaResponse.Role.Should().Be("Admin");
+        mfaResponse.Role.Should().Be(ApplicationRoles.TenantOwner);
     }
 
     [Fact]
@@ -836,7 +836,7 @@ public class AuthServiceTests
         using var harness = TestHelpers.CreateIdentityHarness();
         var service = TestHelpers.CreateAuthService(context, harness);
 
-        var role = new Role { Id = 1, Name = "Admin" };
+        var role = new Role { Id = 1, Name = ApplicationRoles.TenantOwner };
         var company = new Company { Id = 1431, Name = "Mfa Stamp Co", IsActive = true, Status = "Active" };
         var user = TestHelpers.CreateUser(role, company.Id, "mfa-stamp@test.com", "LongPassword123!");
 
@@ -872,7 +872,7 @@ public class AuthServiceTests
         });
 
         mfaResponse.Token.Should().NotBeNullOrWhiteSpace();
-        mfaResponse.Role.Should().Be("Admin");
+        mfaResponse.Role.Should().Be(ApplicationRoles.TenantOwner);
     }
 
     [Fact]
@@ -983,7 +983,7 @@ public class AuthServiceTests
         using var harness = TestHelpers.CreateIdentityHarness();
         var service = TestHelpers.CreateAuthService(context, harness);
 
-        var role = new Role { Id = 1, Name = "Admin" };
+        var role = new Role { Id = 1, Name = ApplicationRoles.TenantOwner };
         var company = new Company { Id = 1442, Name = "Mismatch Co", IsActive = true, Status = "Active" };
         var user = TestHelpers.CreateUser(role, company.Id, "mfa-mismatch@test.com", "LongPassword123!");
 
@@ -1030,7 +1030,7 @@ public class AuthServiceTests
         using var harness = TestHelpers.CreateIdentityHarness();
         var service = TestHelpers.CreateAuthService(context, harness);
 
-        var role = new Role { Id = 1, Name = "Admin" };
+        var role = new Role { Id = 1, Name = ApplicationRoles.TenantOwner };
         var company = new Company { Id = 1443, Name = "Disabled Challenge Co", IsActive = true, Status = "Active" };
         var user = TestHelpers.CreateUser(role, company.Id, "mfa-disabled-after-challenge@test.com", "LongPassword123!");
 
@@ -1078,7 +1078,7 @@ public class AuthServiceTests
         using var harness = TestHelpers.CreateIdentityHarness();
         var service = TestHelpers.CreateAuthService(context, harness);
 
-        var role = new Role { Id = 1, Name = "Admin" };
+        var role = new Role { Id = 1, Name = ApplicationRoles.TenantOwner };
         var company = new Company { Id = 1444, Name = "Tampered Challenge Co", IsActive = true, Status = "Active" };
         var user = TestHelpers.CreateUser(role, company.Id, "mfa-tampered@test.com", "LongPassword123!");
 
@@ -1121,7 +1121,7 @@ public class AuthServiceTests
         using var harness = TestHelpers.CreateIdentityHarness();
         var service = TestHelpers.CreateAuthService(context, harness);
 
-        var role = new Role { Id = 1, Name = "Admin" };
+        var role = new Role { Id = 1, Name = ApplicationRoles.TenantOwner };
         var company = new Company { Id = 145, Name = "Disable Mfa Co", IsActive = true, Status = "Active" };
         var user = TestHelpers.CreateUser(role, company.Id, "disable-mfa@test.com", "LongPassword123!");
 
@@ -1197,7 +1197,7 @@ public class AuthControllerTests
         using var harness = TestHelpers.CreateIdentityHarness();
         var service = TestHelpers.CreateAuthService(context, harness);
 
-        var role = new Role { Id = 1, Name = "Admin" };
+        var role = new Role { Id = 1, Name = ApplicationRoles.TenantOwner };
         var company = new Company { Id = 30, Name = "Northwind", IsActive = true, Status = "Active" };
         context.Roles.Add(role);
         context.Companies.Add(company);
@@ -1473,9 +1473,9 @@ internal static class TestHelpers
             Subject = new ClaimsIdentity(new[]
             {
                 new Claim(ClaimTypes.Name, "user@example.com"),
-                new Claim(ClaimTypes.Role, "Admin"),
+                new Claim(ClaimTypes.Role, ApplicationRoles.TenantOwner),
                 new Claim("UserId", "123"),
-                new Claim("role", "Admin"),
+                new Claim("role", ApplicationRoles.TenantOwner),
                 new Claim("CompanyId", "456")
             }),
             NotBefore = expiresAtUtc.AddHours(-1),

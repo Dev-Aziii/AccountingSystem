@@ -514,7 +514,7 @@
         if (authState.User.Identity != null && authState.User.Identity.IsAuthenticated)
         {
             var role = authState.User.FindFirst("role")?.Value;
-            NavManager.NavigateTo(role == "SuperAdmin" ? "/superadmin/dashboard" : "/dashboard");
+            NavManager.NavigateTo(role == ApplicationRoles.SuperAdmin ? "/superadmin/dashboard" : "/dashboard");
         }
     }
 
@@ -559,7 +559,7 @@
             Snackbar.Add("Welcome back! Login successful.", Severity.Success);
 
             await Task.Delay(500);
-            NavManager.NavigateTo(result.Role == "SuperAdmin" ? "/superadmin/dashboard" : "/dashboard");
+            NavManager.NavigateTo(result.Role == ApplicationRoles.SuperAdmin ? "/superadmin/dashboard" : "/dashboard");
         }
         catch (Exception ex)
         {

@@ -436,7 +436,7 @@
         if (authState.User.Identity?.IsAuthenticated == true)
         {
             var role = authState.User.FindFirst("role")?.Value;
-            NavManager.NavigateTo(role == "SuperAdmin" ? "/superadmin/dashboard" : "/dashboard");
+            NavManager.NavigateTo(role == ApplicationRoles.SuperAdmin ? "/superadmin/dashboard" : "/dashboard");
         }
     }
 
@@ -592,7 +592,7 @@
             
             // Add a brief delay so the user registers the successful submission state before navigation
             await Task.Delay(500);
-            NavManager.NavigateTo(result.Role == "SuperAdmin" ? "/superadmin/dashboard" : "/dashboard");
+            NavManager.NavigateTo(result.Role == ApplicationRoles.SuperAdmin ? "/superadmin/dashboard" : "/dashboard");
         }
         catch (Exception ex)
         {

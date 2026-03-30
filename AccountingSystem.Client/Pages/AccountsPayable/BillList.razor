@@ -5,7 +5,7 @@
 @using AccountingSystem.Shared.Enums
 @using MudBlazor
 @using System.Globalization
-@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin,Accounting")]
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = ApplicationRoles.TenantOwnerAndAccounting)]
 @inject PayableService PayableService
 @inject LedgerService LedgerService
 @inject IDialogService DialogService

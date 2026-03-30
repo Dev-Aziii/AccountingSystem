@@ -21,7 +21,7 @@ namespace AccountingSystem.API.Controllers
         }
 
         [HttpPost("paymongo-source")]
-        [Authorize(Roles = "Admin,Accounting")]
+        [Authorize(Roles = ApplicationRoles.TenantOwnerAndAccounting)]
         public async Task<ActionResult<PaymentSourceResponseDTO>> CreateSource(
             [FromBody] CreateSourceDTO request)
         {

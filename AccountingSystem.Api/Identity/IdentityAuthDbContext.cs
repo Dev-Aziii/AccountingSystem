@@ -35,28 +35,28 @@ namespace AccountingSystem.API.Identity
                 new ApplicationRole
                 {
                     Id = 1,
-                    Name = "Admin",
-                    NormalizedName = "ADMIN",
-                    ConcurrencyStamp = "identity-role-admin"
+                    Name = ApplicationRoles.TenantOwner,
+                    NormalizedName = "TENANTOWNER",
+                    ConcurrencyStamp = "identity-role-tenantowner"
                 },
                 new ApplicationRole
                 {
                     Id = 2,
-                    Name = "Accounting",
+                    Name = ApplicationRoles.Accounting,
                     NormalizedName = "ACCOUNTING",
                     ConcurrencyStamp = "identity-role-accounting"
                 },
                 new ApplicationRole
                 {
                     Id = 3,
-                    Name = "Management",
+                    Name = ApplicationRoles.Management,
                     NormalizedName = "MANAGEMENT",
                     ConcurrencyStamp = "identity-role-management"
                 },
                 new ApplicationRole
                 {
                     Id = 4,
-                    Name = "SuperAdmin",
+                    Name = ApplicationRoles.SuperAdmin,
                     NormalizedName = "SUPERADMIN",
                     ConcurrencyStamp = "identity-role-superadmin"
                 });

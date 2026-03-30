@@ -6,7 +6,7 @@
 @using MudBlazor
 @using System.Globalization
 @using System.Text.RegularExpressions
-@attribute [Authorize(Roles = "Admin,Accounting")]
+@attribute [Authorize(Roles = ApplicationRoles.TenantOwnerAndAccounting)]
 @inject LedgerService LedgerService
 @inject NavigationManager NavManager
 @inject ISnackbar Snackbar

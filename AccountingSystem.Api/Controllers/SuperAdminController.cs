@@ -11,7 +11,7 @@ namespace AccountingSystem.API.Controllers
 {
     [ApiController]
     [Route("api/superadmin")]
-    [Authorize(Roles = "SuperAdmin")] // STRICTLY RESTRICTED
+    [Authorize(Roles = ApplicationRoles.SuperAdmin)] // STRICTLY RESTRICTED
     public class SuperAdminController : ControllerBase
     {
         private readonly AccountingDbContext _context;
@@ -50,7 +50,7 @@ namespace AccountingSystem.API.Controllers
             var users = await _context.Users
                 .IgnoreQueryFilters()
                 .Include(u => u.Role)
-                .Where(u => u.Role.Name != "SuperAdmin" && !u.IsDeleted)
+                .Where(u => u.Role.Name != ApplicationRoles.SuperAdmin && !u.IsDeleted)
                 .ToListAsync();
 
             var now = DateTime.UtcNow;
@@ -151,7 +151,7 @@ namespace AccountingSystem.API.Controllers
                     IsActive = c.IsActive,
                     Status = c.Status,
                     UserCount = _context.Users.IgnoreQueryFilters()
-                        .Count(u => u.CompanyId == c.Id && u.Role.Name != "SuperAdmin" && !u.IsDeleted),
+                        .Count(u => u.CompanyId == c.Id && u.Role.Name != ApplicationRoles.SuperAdmin && !u.IsDeleted),
                     LastActivityDate = _context.AuditLogs.IgnoreQueryFilters()
                         .Where(a => a.CompanyId == c.Id)
                         .OrderByDescending(a => a.Timestamp)
@@ -216,7 +216,7 @@ namespace AccountingSystem.API.Controllers
             var users = await _context.Users
                 .IgnoreQueryFilters()
                 .Include(u => u.Role)
-                .Where(u => u.Role.Name != "SuperAdmin" && !u.IsDeleted)
+                .Where(u => u.Role.Name != ApplicationRoles.SuperAdmin && !u.IsDeleted)
                 .Join(_context.Companies.IgnoreQueryFilters(),
                     user => user.CompanyId,
                     company => company.Id,
@@ -247,8 +247,8 @@ namespace AccountingSystem.API.Controllers
                 .FirstOrDefaultAsync(u => u.Id == id);
             if (user == null) return NotFound("User not found.");
 
-            if (user.Role.Name == "SuperAdmin")
-                return BadRequest("Cannot modify SuperAdmin accounts.");
+            if (ApplicationRoles.IsSuperAdmin(user.Role.Name))
+                return BadRequest($"Cannot modify {ApplicationRoles.SuperAdmin} accounts.");
 
             var currentUserId = GetCurrentUserId();
             if (user.Id == currentUserId)
@@ -279,8 +279,8 @@ namespace AccountingSystem.API.Controllers
                 .FirstOrDefaultAsync(u => u.Id == id);
             if (user == null) return NotFound("User not found.");
 
-            if (user.Role.Name == "SuperAdmin")
-                return BadRequest("Cannot modify SuperAdmin accounts.");
+            if (ApplicationRoles.IsSuperAdmin(user.Role.Name))
+                return BadRequest($"Cannot modify {ApplicationRoles.SuperAdmin} accounts.");
 
             var currentUserId = GetCurrentUserId();
             if (user.Id == currentUserId)

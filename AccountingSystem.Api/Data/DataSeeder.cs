@@ -39,8 +39,8 @@ namespace AccountingSystem.API.Data
 
             var superAdminRole = await context.Roles
                 .IgnoreQueryFilters()
-                .FirstOrDefaultAsync(r => r.Name == "SuperAdmin")
-                ?? throw new InvalidOperationException("Legacy role 'SuperAdmin' is missing.");
+                .FirstOrDefaultAsync(r => r.Name == ApplicationRoles.SuperAdmin)
+                ?? throw new InvalidOperationException($"Legacy role '{ApplicationRoles.SuperAdmin}' is missing.");
 
             var legacySuperAdmin = await context.Users
                 .IgnoreQueryFilters()

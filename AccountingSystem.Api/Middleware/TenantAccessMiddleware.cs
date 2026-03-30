@@ -1,4 +1,5 @@
 using AccountingSystem.API.Data;
+using AccountingSystem.Shared.Security;
 using Microsoft.EntityFrameworkCore;
 
 namespace AccountingSystem.API.Middleware
@@ -27,7 +28,7 @@ namespace AccountingSystem.API.Middleware
             }
 
             // SuperAdmin is always allowed through
-            if (role == "SuperAdmin")
+            if (ApplicationRoles.IsSuperAdmin(role))
             {
                 await _next(context);
                 return;

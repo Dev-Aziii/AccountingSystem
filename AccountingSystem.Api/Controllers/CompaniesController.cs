@@ -43,7 +43,7 @@ namespace AccountingSystem.API.Controllers
 
         // Update Company Profile
         [HttpPut("current")]
-        [Authorize(Roles = "Admin")] // Only Admins can update company settings
+        [Authorize(Roles = ApplicationRoles.TenantOwner)] // Only tenant owners can update company settings
         public async Task<IActionResult> UpdateCompany([FromBody] UpdateCompanyDTO dto)
         {
             var tenantId = _tenantService.GetCurrentTenant();
