@@ -75,6 +75,20 @@ namespace AccountingSystem.Shared.DTOs
         public string OldValue { get; set; } = string.Empty;
         public string NewValue { get; set; } = string.Empty;
         public string Details { get; set; } = string.Empty;
+        public string? IpAddress { get; set; }
+        public DateTime Timestamp { get; set; }
+    }
+
+    public class PlatformSecurityEventDTO
+    {
+        public int Id { get; set; }
+        public int? CompanyId { get; set; }
+        public string CompanyName { get; set; } = string.Empty;
+        public string UserEmail { get; set; } = string.Empty;
+        public string Action { get; set; } = string.Empty;
+        public string Path { get; set; } = string.Empty;
+        public string Details { get; set; } = string.Empty;
+        public string? IpAddress { get; set; }
         public DateTime Timestamp { get; set; }
     }
 }

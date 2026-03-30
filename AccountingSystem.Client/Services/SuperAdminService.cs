@@ -79,5 +79,11 @@ namespace AccountingSystem.Client.Services
             return await _api.GetAsync<List<SuperAdminAuditLogDTO>>("api/superadmin/audit-logs")
                 ?? new List<SuperAdminAuditLogDTO>();
         }
+
+        public async Task<List<PlatformSecurityEventDTO>> GetSecurityEventsAsync()
+        {
+            return await _api.GetAsync<List<PlatformSecurityEventDTO>>("api/superadmin/security-events")
+                ?? new List<PlatformSecurityEventDTO>();
+        }
     }
 }

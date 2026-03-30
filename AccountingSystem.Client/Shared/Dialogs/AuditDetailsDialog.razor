@@ -38,6 +38,13 @@
                             </span>
                         </div>
                     </MudItem>
+                    <MudItem xs="12" sm="12">
+                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.25rem;">IP Address</div>
+                        <div class="d-flex align-center" style="font-size: 0.875rem; font-weight: 500; color: var(--text-main);">
+                            <MudIcon Icon="@Icons.Material.Outlined.Lan" Size="Size.Small" Class="mr-2 text-muted" />
+                            @GetIpAddressDisplay(Log.IpAddress)
+                        </div>
+                    </MudItem>
                 </MudGrid>
             </div>
 
@@ -89,9 +96,10 @@
 
     private string GetActionBadgeClass(string action)
     {
-        if (action == "LOGIN") return "badge-slate";
+        if (action.StartsWith("AUTH-")) return "badge-red";
 
         if (action.StartsWith("USER-")) return "badge-purple";
+        if (action.StartsWith("COMPANY-")) return "badge-slate";
         if (action.StartsWith("CUSTOMER-")) return "badge-blue";
         if (action.StartsWith("VENDOR-")) return "badge-orange";
         if (action.StartsWith("ACCOUNT-")) return "badge-green";
@@ -111,9 +119,10 @@
 
     private string GetActionIcon(string action)
     {
-        if (action == "LOGIN") return Icons.Material.Outlined.Login;
+        if (action.StartsWith("AUTH-")) return Icons.Material.Outlined.VerifiedUser;
 
         if (action.StartsWith("USER-")) return Icons.Material.Outlined.Person;
+        if (action.StartsWith("COMPANY-")) return Icons.Material.Outlined.Business;
         if (action.StartsWith("CUSTOMER-")) return Icons.Material.Outlined.Person;
         if (action.StartsWith("VENDOR-")) return Icons.Material.Outlined.Business;
         if (action.StartsWith("ACCOUNT-")) return Icons.Material.Outlined.AccountBalance;
@@ -150,4 +159,7 @@
             return json;
         }
     }
+
+    private static string GetIpAddressDisplay(string? ipAddress) =>
+        string.IsNullOrWhiteSpace(ipAddress) ? "Unavailable" : ipAddress;
 }

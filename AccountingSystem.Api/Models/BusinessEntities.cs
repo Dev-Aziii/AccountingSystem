@@ -231,6 +231,8 @@ namespace AccountingSystem.API.Models
         public string Action { get; set; } = string.Empty;
         public string EntityName { get; set; } = string.Empty;
         public string EntityId { get; set; } = string.Empty;
+        [MaxLength(64)]
+        public string? IpAddress { get; set; }
         public DateTime Timestamp { get; set; } = DateTime.UtcNow;
         public string Changes { get; set; } = string.Empty;
     }

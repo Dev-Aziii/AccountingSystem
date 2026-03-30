@@ -1,21 +1,23 @@
 @page "/superadmin/audit-logs"
 @using AccountingSystem.Shared.DTOs
 @using AccountingSystem.Client.Services
+@using Microsoft.AspNetCore.Authorization
 @using MudBlazor
-@attribute [Microsoft.AspNetCore.Authorization.Authorize(Policy = ApplicationAuthorizationPolicies.RequireSuperAdmin)]
+@using System.Globalization
+@attribute [Authorize(Policy = ApplicationAuthorizationPolicies.RequireSuperAdmin)]
 @inject SuperAdminService SuperAdminService
 @inject ISnackbar Snackbar
 @inject ILogger<AdminAuditLogs> Logger
 
-<PageTitle>Audit Logs - AccSys</PageTitle>
+<PageTitle>Platform Logs - AccSys</PageTitle>
 
 <style>
-    .shadcn-table .mud-table-toolbar {
+    .platform-log-table .mud-table-toolbar {
         height: auto !important;
         padding: 1rem !important;
     }
 
-    .table-toolbar-wrapper {
+    .platform-log-toolbar {
         display: flex;
         flex-direction: row;
         justify-content: space-between;
@@ -25,7 +27,7 @@
         flex-wrap: nowrap;
     }
 
-    .table-toolbar-title {
+    .platform-log-toolbar-title {
         font-size: 1.125rem;
         font-weight: 600;
         color: var(--text-main);
@@ -34,7 +36,7 @@
         flex-shrink: 0;
     }
 
-    .table-toolbar-actions {
+    .platform-log-toolbar-actions {
         display: flex;
         flex-direction: row;
         align-items: center;
@@ -42,48 +44,63 @@
         flex-wrap: nowrap;
     }
 
-        /* Strip phantom height from MudBlazor form control wrappers */
-        .table-toolbar-actions .mud-input-control,
-        .table-toolbar-actions .mud-input-control > .mud-input-control-input-shrink,
-        .table-toolbar-actions .mud-form-control,
-        .table-toolbar-actions .mud-select,
-        .table-toolbar-actions .mud-text-field {
-            margin: 0 !important;
-            padding: 0 !important;
-        }
+    .platform-log-toolbar-actions .mud-input-control,
+    .platform-log-toolbar-actions .mud-input-control > .mud-input-control-input-shrink,
+    .platform-log-toolbar-actions .mud-form-control,
+    .platform-log-toolbar-actions .mud-select,
+    .platform-log-toolbar-actions .mud-text-field {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
 
-        .table-toolbar-actions .mud-input-helper-text,
-        .table-toolbar-actions .mud-input-label {
-            display: none !important;
-        }
+    .platform-log-toolbar-actions .mud-input-helper-text,
+    .platform-log-toolbar-actions .mud-input-label {
+        display: none !important;
+    }
 
-    .filter-search {
-        width: 240px;
+    .platform-log-search {
+        width: 280px;
         min-width: 0;
     }
 
-    .filter-dropdown {
-        width: 150px;
+    .platform-log-filter {
+        width: 180px;
         min-width: 0;
     }
 
-    /* ─── Mobile ──────────────────────────────────────────────── */
+    .platform-log-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        white-space: nowrap;
+    }
+
+    .badge-slate { background-color: #f1f5f9; color: #475569; }
+    .badge-blue { background-color: #e0f2fe; color: #0369a1; }
+    .badge-indigo { background-color: #e0e7ff; color: #4338ca; }
+    .badge-green { background-color: #dcfce7; color: #15803d; }
+    .badge-orange { background-color: #ffedd5; color: #c2410c; }
+    .badge-red { background-color: #fee2e2; color: #b91c1c; }
+    .badge-purple { background-color: #f3e8ff; color: #7e22ce; }
+
     @@media (max-width: 599px) {
-        .table-toolbar-wrapper {
+        .platform-log-toolbar {
             flex-direction: column;
-            align-items: flex-start;
-            flex-wrap: wrap;
-        }
-
-        .table-toolbar-actions {
-            flex-direction: column;
-            width: 100%;
             align-items: stretch;
             flex-wrap: wrap;
         }
 
-        .filter-search,
-        .filter-dropdown {
+        .platform-log-toolbar-actions {
+            flex-direction: column;
+            align-items: stretch;
+            flex-wrap: wrap;
+        }
+
+        .platform-log-search,
+        .platform-log-filter {
             width: 100%;
         }
     }
@@ -93,10 +110,10 @@
     <div class="d-flex flex-column flex-sm-row justify-space-between align-start align-sm-center mb-8 gap-3">
         <div>
             <h2 style="font-size: 1.75rem; font-weight: 700; letter-spacing: -0.025em; color: var(--text-main); margin: 0;">
-                Super Admin Audit Logs
+                Platform Logs
             </h2>
             <p style="color: var(--text-muted); font-size: 0.875rem; margin: 0.25rem 0 0 0;">
-                Complete history of all administrative actions performed by Super Admins.
+                Platform-wide visibility for super-admin actions and tenant security events.
             </p>
         </div>
         <MudButton Variant="Variant.Outlined"
@@ -104,124 +121,232 @@
                    StartIcon="@Icons.Material.Outlined.Refresh"
                    Size="Size.Small"
                    OnClick="LoadData"
-                   Disabled="isLoading">
+                   Disabled="@isLoading">
             Refresh Data
         </MudButton>
     </div>
 
-    <MudCard Elevation="0" Outlined="true" Class="shadcn-card">
-        <MudTable Items="@logs" Hover="true" Loading="@isLoading"
-                  Filter="new Func<SuperAdminAuditLogDTO, bool>(FilterFunc)"
-                  Dense="false" Elevation="0" Class="shadcn-table" Breakpoint="Breakpoint.Sm">
-            <ToolBarContent>
-                <div class="table-toolbar-wrapper">
-                    <span class="table-toolbar-title">Action History</span>
+    <MudTabs Elevation="0" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pt-4" Class="shadcn-tabs">
+        <MudTabPanel Text="Platform Admin Actions">
+            <MudCard Elevation="0" Outlined="true" Class="shadcn-card">
+                <MudTable Items="@platformAdminLogs"
+                          Hover="true"
+                          Loading="@isLoading"
+                          Filter="new Func<SuperAdminAuditLogDTO, bool>(AdminLogFilter)"
+                          Dense="false"
+                          Elevation="0"
+                          Class="platform-log-table shadcn-table"
+                          Breakpoint="Breakpoint.Sm">
+                    <ToolBarContent>
+                        <div class="platform-log-toolbar">
+                            <span class="platform-log-toolbar-title">Platform Admin Actions</span>
 
-                    <div class="table-toolbar-actions">
-                        <MudTextField @bind-Value="searchString"
-                                      Placeholder="Search logs..."
-                                      Adornment="Adornment.Start"
-                                      AdornmentIcon="@Icons.Material.Outlined.Search"
-                                      IconSize="Size.Small"
-                                      Variant="Variant.Outlined"
-                                      Margin="Margin.Dense"
-                                      Class="shadcn-input filter-search" />
+                            <div class="platform-log-toolbar-actions">
+                                <MudTextField @bind-Value="adminSearchString"
+                                              Placeholder="Search platform actions..."
+                                              Adornment="Adornment.Start"
+                                              AdornmentIcon="@Icons.Material.Outlined.Search"
+                                              IconSize="Size.Small"
+                                              Variant="Variant.Outlined"
+                                              Margin="Margin.Dense"
+                                              Class="shadcn-input platform-log-search" />
 
-                        <MudSelect T="string"
-                                   @bind-Value="actionFilter"
-                                   Variant="Variant.Outlined"
-                                   Margin="Margin.Dense"
-                                   Class="shadcn-input filter-dropdown">
-                            <MudSelectItem T="string" Value='@("All")'>All Actions</MudSelectItem>
-                            <MudSelectItem T="string" Value='@("COMPANY_STATUS_CHANGE")'>Company Status</MudSelectItem>
-                            <MudSelectItem T="string" Value='@("USER_STATUS_CHANGE")'>User Status</MudSelectItem>
-                        </MudSelect>
+                                <MudSelect T="string"
+                                           @bind-Value="adminActionFilter"
+                                           Variant="Variant.Outlined"
+                                           Margin="Margin.Dense"
+                                           Class="shadcn-input platform-log-filter">
+                                    <MudSelectItem T="string" Value="@("All")">All Actions</MudSelectItem>
+                                    <MudSelectItem T="string" Value="@("COMPANY_STATUS_CHANGE")">Company Status</MudSelectItem>
+                                    <MudSelectItem T="string" Value="@("USER_STATUS_CHANGE")">User Status</MudSelectItem>
+                                </MudSelect>
 
-                        <MudSelect T="string"
-                                   @bind-Value="targetFilter"
-                                   Variant="Variant.Outlined"
-                                   Margin="Margin.Dense"
-                                   Class="shadcn-input filter-dropdown">
-                            <MudSelectItem T="string" Value='@("All")'>All Targets</MudSelectItem>
-                            <MudSelectItem T="string" Value='@("Company")'>Companies</MudSelectItem>
-                            <MudSelectItem T="string" Value='@("User")'>Users</MudSelectItem>
-                        </MudSelect>
-                    </div>
-                </div>
-            </ToolBarContent>
-            <HeaderContent>
-                <MudTh>Timestamp</MudTh>
-                <MudTh>Admin</MudTh>
-                <MudTh>Action</MudTh>
-                <MudTh>Target Type</MudTh>
-                <MudTh>Target</MudTh>
-                <MudTh>Change</MudTh>
-                <MudTh Style="text-align: center;">Details</MudTh>
-            </HeaderContent>
-            <RowTemplate Context="context">
-                <MudTd DataLabel="Timestamp" Style="white-space: nowrap;">
-                    <div style="font-weight: 500; color: var(--text-main);">@context.Timestamp.ToString("MMM dd, yyyy")</div>
-                    <div style="color: var(--text-muted); font-size: 0.75rem;">@context.Timestamp.ToString("HH:mm:ss")</div>
-                </MudTd>
-                <MudTd DataLabel="Admin">
-                    <div class="d-flex align-center gap-2" style="color: var(--text-main);">
-                        <MudIcon Icon="@Icons.Material.Outlined.Security" Size="Size.Small" Style="color: var(--text-muted);" />
-                        @context.AdminEmail
-                    </div>
-                </MudTd>
-                <MudTd DataLabel="Action">
-                    <span class="shadcn-badge @GetActionBadgeClass(context.Action)">
-                        @FormatActionName(context.Action)
-                    </span>
-                </MudTd>
-                <MudTd DataLabel="Target Type">
-                    <span class="shadcn-badge badge-slate" style="background: transparent; border-color: var(--border-color);">
-                        <MudIcon Icon="@GetTargetIcon(context.TargetType)" Style="font-size: 14px; margin-right: 4px; color: var(--text-muted);" />
-                        @context.TargetType
-                    </span>
-                </MudTd>
-                <MudTd DataLabel="Target">
-                    <span style="font-weight: 500; color: var(--text-main);">@context.TargetName</span>
-                </MudTd>
-                <MudTd DataLabel="Change">
-                    @if (!string.IsNullOrEmpty(context.OldValue) && !string.IsNullOrEmpty(context.NewValue))
-                    {
-                        <div class="d-flex align-center gap-2">
-                            <span class="shadcn-badge @GetStatusBadgeClass(context.OldValue)">
-                                @context.OldValue
-                            </span>
-                            <MudIcon Icon="@Icons.Material.Outlined.ArrowRightAlt" Size="Size.Small" Style="color: var(--text-muted);" />
-                            <span class="shadcn-badge @GetStatusBadgeClass(context.NewValue)">
-                                @context.NewValue
-                            </span>
+                                <MudSelect T="string"
+                                           @bind-Value="targetFilter"
+                                           Variant="Variant.Outlined"
+                                           Margin="Margin.Dense"
+                                           Class="shadcn-input platform-log-filter">
+                                    <MudSelectItem T="string" Value="@("All")">All Targets</MudSelectItem>
+                                    <MudSelectItem T="string" Value="@("Company")">Companies</MudSelectItem>
+                                    <MudSelectItem T="string" Value="@("User")">Users</MudSelectItem>
+                                </MudSelect>
+                            </div>
                         </div>
-                    }
-                    else
-                    {
-                        <span style="color: var(--text-muted); font-size: 0.875rem;">—</span>
-                    }
-                </MudTd>
-                <MudTd DataLabel="Details" Style="text-align: center;">
-                    <MudTooltip Text="@context.Details" Arrow="true" Placement="Placement.Left">
-                        <MudIconButton Icon="@Icons.Material.Outlined.Info"
-                                       Size="Size.Small"
-                                       Class="shadcn-icon-btn" />
-                    </MudTooltip>
-                </MudTd>
-            </RowTemplate>
-            <PagerContent>
-                <MudTablePager />
-            </PagerContent>
-        </MudTable>
-    </MudCard>
+                    </ToolBarContent>
+                    <HeaderContent>
+                        <MudTh>Timestamp</MudTh>
+                        <MudTh>Admin</MudTh>
+                        <MudTh>Action</MudTh>
+                        <MudTh>Target Type</MudTh>
+                        <MudTh>Target</MudTh>
+                        <MudTh>IP Address</MudTh>
+                        <MudTh>Change</MudTh>
+                        <MudTh Style="text-align: center;">Details</MudTh>
+                    </HeaderContent>
+                    <RowTemplate Context="context">
+                        <MudTd DataLabel="Timestamp" Style="white-space: nowrap;">
+                            <div style="font-weight: 500; color: var(--text-main);">@context.Timestamp.ToString("MMM dd, yyyy")</div>
+                            <div style="color: var(--text-muted); font-size: 0.75rem;">@context.Timestamp.ToString("HH:mm:ss")</div>
+                        </MudTd>
+                        <MudTd DataLabel="Admin">
+                            <div class="d-flex align-center gap-2" style="color: var(--text-main);">
+                                <MudIcon Icon="@Icons.Material.Outlined.Security" Size="Size.Small" Style="color: var(--text-muted);" />
+                                @context.AdminEmail
+                            </div>
+                        </MudTd>
+                        <MudTd DataLabel="Action">
+                            <span class="platform-log-badge @GetAdminActionBadgeClass(context.Action)">
+                                @FormatAdminActionName(context.Action)
+                            </span>
+                        </MudTd>
+                        <MudTd DataLabel="Target Type">
+                            <span class="platform-log-badge badge-slate" style="background: transparent; border: 1px solid var(--border-color);">
+                                @context.TargetType
+                            </span>
+                        </MudTd>
+                        <MudTd DataLabel="Target">
+                            <span style="font-weight: 500; color: var(--text-main);">@context.TargetName</span>
+                        </MudTd>
+                        <MudTd DataLabel="IP Address" Style="color: var(--text-muted); font-size: 0.875rem;">
+                            @GetIpAddressDisplay(context.IpAddress)
+                        </MudTd>
+                        <MudTd DataLabel="Change">
+                            @if (!string.IsNullOrEmpty(context.OldValue) && !string.IsNullOrEmpty(context.NewValue))
+                            {
+                                <div class="d-flex align-center gap-2">
+                                    <span class="platform-log-badge @GetStatusBadgeClass(context.OldValue)">
+                                        @context.OldValue
+                                    </span>
+                                    <MudIcon Icon="@Icons.Material.Outlined.ArrowRightAlt" Size="Size.Small" Style="color: var(--text-muted);" />
+                                    <span class="platform-log-badge @GetStatusBadgeClass(context.NewValue)">
+                                        @context.NewValue
+                                    </span>
+                                </div>
+                            }
+                            else
+                            {
+                                <span style="color: var(--text-muted); font-size: 0.875rem;">-</span>
+                            }
+                        </MudTd>
+                        <MudTd DataLabel="Details" Style="text-align: center;">
+                            <MudTooltip Text="@context.Details" Arrow="true" Placement="Placement.Left">
+                                <MudIconButton Icon="@Icons.Material.Outlined.Info"
+                                               Size="Size.Small"
+                                               Class="shadcn-icon-btn" />
+                            </MudTooltip>
+                        </MudTd>
+                    </RowTemplate>
+                    <PagerContent>
+                        <MudTablePager />
+                    </PagerContent>
+                </MudTable>
+            </MudCard>
+        </MudTabPanel>
+
+        <MudTabPanel Text="Platform Security Events">
+            <MudCard Elevation="0" Outlined="true" Class="shadcn-card">
+                <MudTable Items="@securityEvents"
+                          Hover="true"
+                          Loading="@isLoading"
+                          Filter="new Func<PlatformSecurityEventDTO, bool>(SecurityEventFilter)"
+                          Dense="false"
+                          Elevation="0"
+                          Class="platform-log-table shadcn-table"
+                          Breakpoint="Breakpoint.Sm">
+                    <ToolBarContent>
+                        <div class="platform-log-toolbar">
+                            <span class="platform-log-toolbar-title">Cross-Tenant Security Events</span>
+
+                            <div class="platform-log-toolbar-actions">
+                                <MudTextField @bind-Value="securitySearchString"
+                                              Placeholder="Search security events..."
+                                              Adornment="Adornment.Start"
+                                              AdornmentIcon="@Icons.Material.Outlined.Search"
+                                              IconSize="Size.Small"
+                                              Variant="Variant.Outlined"
+                                              Margin="Margin.Dense"
+                                              Class="shadcn-input platform-log-search" />
+
+                                <MudSelect T="string"
+                                           @bind-Value="securityCategoryFilter"
+                                           Variant="Variant.Outlined"
+                                           Margin="Margin.Dense"
+                                           Class="shadcn-input platform-log-filter">
+                                    <MudSelectItem T="string" Value="@("All")">All Event Types</MudSelectItem>
+                                    <MudSelectItem T="string" Value="@("Access")">Access & Login</MudSelectItem>
+                                    <MudSelectItem T="string" Value="@("Mfa")">MFA</MudSelectItem>
+                                    <MudSelectItem T="string" Value="@("Password")">Password & Lockout</MudSelectItem>
+                                    <MudSelectItem T="string" Value="@("Onboarding")">Invitation & Confirmation</MudSelectItem>
+                                    <MudSelectItem T="string" Value="@("RateLimit")">Rate Limits</MudSelectItem>
+                                    <MudSelectItem T="string" Value="@("Other")">Other</MudSelectItem>
+                                </MudSelect>
+                            </div>
+                        </div>
+                    </ToolBarContent>
+                    <HeaderContent>
+                        <MudTh>Timestamp</MudTh>
+                        <MudTh>Tenant</MudTh>
+                        <MudTh>User</MudTh>
+                        <MudTh>Event</MudTh>
+                        <MudTh>Source</MudTh>
+                        <MudTh>IP Address</MudTh>
+                        <MudTh Style="text-align: center;">Details</MudTh>
+                    </HeaderContent>
+                    <RowTemplate Context="context">
+                        <MudTd DataLabel="Timestamp" Style="white-space: nowrap;">
+                            <div style="font-weight: 500; color: var(--text-main);">@context.Timestamp.ToString("MMM dd, yyyy")</div>
+                            <div style="color: var(--text-muted); font-size: 0.75rem;">@context.Timestamp.ToString("HH:mm:ss")</div>
+                        </MudTd>
+                        <MudTd DataLabel="Tenant">
+                            <div style="font-weight: 500; color: var(--text-main);">@context.CompanyName</div>
+                            <div style="color: var(--text-muted); font-size: 0.75rem;">
+                                @(context.CompanyId.HasValue ? $"Tenant #{context.CompanyId}" : "No tenant context")
+                            </div>
+                        </MudTd>
+                        <MudTd DataLabel="User">
+                            <div style="font-weight: 500; color: var(--text-main);">@context.UserEmail</div>
+                        </MudTd>
+                        <MudTd DataLabel="Event">
+                            <span class="platform-log-badge @GetSecurityEventBadgeClass(context.Action)">
+                                @FormatSecurityActionName(context.Action)
+                            </span>
+                        </MudTd>
+                        <MudTd DataLabel="Source" Style="color: var(--text-muted); font-size: 0.875rem;">
+                            @context.Path
+                        </MudTd>
+                        <MudTd DataLabel="IP Address" Style="color: var(--text-muted); font-size: 0.875rem;">
+                            @GetIpAddressDisplay(context.IpAddress)
+                        </MudTd>
+                        <MudTd DataLabel="Details" Style="text-align: center;">
+                            <MudTooltip Text="@context.Details" Arrow="true" Placement="Placement.Left">
+                                <MudIconButton Icon="@Icons.Material.Outlined.Info"
+                                               Size="Size.Small"
+                                               Class="shadcn-icon-btn" />
+                            </MudTooltip>
+                        </MudTd>
+                    </RowTemplate>
+                    <PagerContent>
+                        <MudTablePager />
+                    </PagerContent>
+                </MudTable>
+            </MudCard>
+        </MudTabPanel>
+    </MudTabs>
 </MudContainer>
 
 @code {
-    private List<SuperAdminAuditLogDTO> logs = new List<SuperAdminAuditLogDTO>();
+    private static readonly TextInfo TitleText = CultureInfo.InvariantCulture.TextInfo;
+
+    private List<SuperAdminAuditLogDTO> platformAdminLogs = new();
+    private List<PlatformSecurityEventDTO> securityEvents = new();
     private bool isLoading = true;
-    private string searchString = "";
-    private string actionFilter = "All";
+
+    private string adminSearchString = string.Empty;
+    private string adminActionFilter = "All";
     private string targetFilter = "All";
+
+    private string securitySearchString = string.Empty;
+    private string securityCategoryFilter = "All";
 
     protected override async Task OnInitializedAsync()
     {
@@ -233,12 +358,17 @@
         isLoading = true;
         try
         {
-            logs = await SuperAdminService.GetAuditLogsAsync();
+            var adminTask = SuperAdminService.GetAuditLogsAsync();
+            var securityTask = SuperAdminService.GetSecurityEventsAsync();
+            await Task.WhenAll(adminTask, securityTask);
+
+            platformAdminLogs = adminTask.Result;
+            securityEvents = securityTask.Result;
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Failed to load super admin audit logs.");
-            Snackbar.Add("Failed to load audit logs. Please try again.", Severity.Error);
+            Logger.LogError(ex, "Failed to load platform logs.");
+            Snackbar.Add("Failed to load platform logs. Please try again.", Severity.Error);
         }
         finally
         {
@@ -246,28 +376,72 @@
         }
     }
 
-    private string FormatActionName(string action) => action switch
+    private bool AdminLogFilter(SuperAdminAuditLogDTO element)
+    {
+        var matchesSearch = string.IsNullOrWhiteSpace(adminSearchString) ||
+            element.AdminEmail.Contains(adminSearchString, StringComparison.OrdinalIgnoreCase) ||
+            element.TargetName.Contains(adminSearchString, StringComparison.OrdinalIgnoreCase) ||
+            element.Details.Contains(adminSearchString, StringComparison.OrdinalIgnoreCase) ||
+            GetIpAddressDisplay(element.IpAddress).Contains(adminSearchString, StringComparison.OrdinalIgnoreCase);
+
+        var matchesAction = adminActionFilter == "All" || element.Action == adminActionFilter;
+        var matchesTarget = targetFilter == "All" || element.TargetType == targetFilter;
+
+        return matchesSearch && matchesAction && matchesTarget;
+    }
+
+    private bool SecurityEventFilter(PlatformSecurityEventDTO element)
+    {
+        var matchesSearch = string.IsNullOrWhiteSpace(securitySearchString) ||
+            element.CompanyName.Contains(securitySearchString, StringComparison.OrdinalIgnoreCase) ||
+            element.UserEmail.Contains(securitySearchString, StringComparison.OrdinalIgnoreCase) ||
+            element.Action.Contains(securitySearchString, StringComparison.OrdinalIgnoreCase) ||
+            element.Path.Contains(securitySearchString, StringComparison.OrdinalIgnoreCase) ||
+            element.Details.Contains(securitySearchString, StringComparison.OrdinalIgnoreCase) ||
+            GetIpAddressDisplay(element.IpAddress).Contains(securitySearchString, StringComparison.OrdinalIgnoreCase);
+
+        var matchesCategory = securityCategoryFilter == "All" ||
+            ResolveSecurityCategory(element.Action).Equals(securityCategoryFilter, StringComparison.Ordinal);
+
+        return matchesSearch && matchesCategory;
+    }
+
+    private static string FormatAdminActionName(string action) => action switch
     {
         "COMPANY_STATUS_CHANGE" => "Company Status",
         "USER_STATUS_CHANGE" => "User Status",
         _ => action
     };
 
-    private string GetActionBadgeClass(string action) => action switch
+    private static string FormatSecurityActionName(string action)
+    {
+        var value = action.StartsWith("AUTH-", StringComparison.OrdinalIgnoreCase)
+            ? action["AUTH-".Length..]
+            : action;
+
+        return string.Join(" ", value
+            .Split('-', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(part => TitleText.ToTitleCase(part.ToLowerInvariant())));
+    }
+
+    private static string GetAdminActionBadgeClass(string action) => action switch
     {
         "COMPANY_STATUS_CHANGE" => "badge-blue",
         "USER_STATUS_CHANGE" => "badge-indigo",
         _ => "badge-slate"
     };
 
-    private string GetTargetIcon(string targetType) => targetType switch
+    private static string GetSecurityEventBadgeClass(string action) => ResolveSecurityCategory(action) switch
     {
-        "Company" => Icons.Material.Outlined.Business,
-        "User" => Icons.Material.Outlined.Person,
-        _ => Icons.Material.Outlined.Info
+        "Access" => "badge-blue",
+        "Mfa" => "badge-purple",
+        "Password" => "badge-orange",
+        "Onboarding" => "badge-green",
+        "RateLimit" => "badge-red",
+        _ => "badge-slate"
     };
 
-    private string GetStatusBadgeClass(string status) => status switch
+    private static string GetStatusBadgeClass(string status) => status switch
     {
         "Active" => "badge-green",
         "Suspended" => "badge-orange",
@@ -276,16 +450,39 @@
         _ => "badge-slate"
     };
 
-    private bool FilterFunc(SuperAdminAuditLogDTO element)
+    private static string ResolveSecurityCategory(string action)
     {
-        bool matchesSearch = string.IsNullOrWhiteSpace(searchString) ||
-            element.AdminEmail.Contains(searchString, StringComparison.OrdinalIgnoreCase) ||
-            element.TargetName.Contains(searchString, StringComparison.OrdinalIgnoreCase) ||
-            element.Details.Contains(searchString, StringComparison.OrdinalIgnoreCase);
+        if (action.Contains("MFA", StringComparison.OrdinalIgnoreCase))
+        {
+            return "Mfa";
+        }
 
-        bool matchesAction = actionFilter == "All" || element.Action == actionFilter;
-        bool matchesTarget = targetFilter == "All" || element.TargetType == targetFilter;
+        if (action.Contains("PASSWORD", StringComparison.OrdinalIgnoreCase) ||
+            action.Contains("LOCKOUT", StringComparison.OrdinalIgnoreCase))
+        {
+            return "Password";
+        }
 
-        return matchesSearch && matchesAction && matchesTarget;
+        if (action.Contains("INVITE", StringComparison.OrdinalIgnoreCase) ||
+            action.Contains("CONFIRMATION", StringComparison.OrdinalIgnoreCase))
+        {
+            return "Onboarding";
+        }
+
+        if (action.Contains("RATE-LIMIT", StringComparison.OrdinalIgnoreCase))
+        {
+            return "RateLimit";
+        }
+
+        if (action.Contains("LOGIN", StringComparison.OrdinalIgnoreCase) ||
+            action.Contains("REAUTH", StringComparison.OrdinalIgnoreCase))
+        {
+            return "Access";
+        }
+
+        return "Other";
     }
+
+    private static string GetIpAddressDisplay(string? ipAddress) =>
+        string.IsNullOrWhiteSpace(ipAddress) ? "Unavailable" : ipAddress;
 }

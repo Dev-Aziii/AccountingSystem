@@ -58,6 +58,7 @@ namespace AccountingSystem.API.Services
                     Action = action,
                     EntityName = path,
                     EntityId = "N/A",
+                    IpAddress = remoteIpAddress,
                     Timestamp = DateTime.UtcNow,
                     Changes = SerializeAndTrim(metadata)
                 };

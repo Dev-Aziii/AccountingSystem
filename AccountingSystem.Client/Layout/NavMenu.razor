@@ -9,7 +9,7 @@
             <MudNavLink Href="superadmin/dashboard" Match="NavLinkMatch.All" Icon="@Icons.Material.Outlined.Security">System Overview</MudNavLink>
             <MudNavLink Href="superadmin/tenants" Match="NavLinkMatch.All" Icon="@Icons.Material.Outlined.Business">Tenant Manager</MudNavLink>
             <MudNavLink Href="superadmin/users" Match="NavLinkMatch.All" Icon="@Icons.Material.Outlined.Group">Global Users</MudNavLink>
-            <MudNavLink Href="superadmin/audit-logs" Match="NavLinkMatch.All" Icon="@Icons.Material.Outlined.History">Admin Audit Logs</MudNavLink>
+            <MudNavLink Href="superadmin/audit-logs" Match="NavLinkMatch.All" Icon="@Icons.Material.Outlined.History">Platform Logs</MudNavLink>
         </AuthorizeView>
 
         <AuthorizeView Policy="@ApplicationAuthorizationPolicies.RequireTenantOperationalAccess">
@@ -20,7 +20,7 @@
         <AuthorizeView Policy="@ApplicationAuthorizationPolicies.RequireTenantOwner">
             <div class="nav-section-label">Tenant Administration</div>
             <MudNavLink Href="admin/users" Match="NavLinkMatch.All" Icon="@Icons.Material.Outlined.People">User Management</MudNavLink>
-            <MudNavLink Href="admin/audit-logs" Match="NavLinkMatch.All" Icon="@Icons.Material.Outlined.History">Audit Logs</MudNavLink>
+            <MudNavLink Href="admin/audit-logs" Match="NavLinkMatch.All" Icon="@Icons.Material.Outlined.History">Tenant Audit Logs</MudNavLink>
             <MudNavLink Href="admin/company-settings" Match="NavLinkMatch.All" Icon="@Icons.Material.Outlined.Settings">Company Settings</MudNavLink>
         </AuthorizeView>
 

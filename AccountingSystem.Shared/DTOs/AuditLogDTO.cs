@@ -7,6 +7,7 @@
         public string Action { get; set; } = string.Empty;    // POST, PUT, DELETE
         public string EntityName { get; set; } = string.Empty; // e.g., /api/invoices
         public string EntityId { get; set; } = string.Empty;
+        public string? IpAddress { get; set; }
         public DateTime Timestamp { get; set; }
         public string Changes { get; set; } = string.Empty;   // JSON Payload
     }

@@ -53,6 +53,8 @@ namespace AccountingSystem.API.Middleware
                 companyId = parsedCompanyId;
             }
 
+            var remoteIpAddress = context.Connection.RemoteIpAddress?.ToString();
+
             await _next(context);
 
             if (context.Response.StatusCode < 200 || context.Response.StatusCode >= 300)
@@ -133,6 +135,7 @@ namespace AccountingSystem.API.Middleware
                     Action = action,
                     EntityName = context.Request.Path,
                     EntityId = "N/A",
+                    IpAddress = remoteIpAddress,
                     Timestamp = DateTime.UtcNow,
                     Changes = bodyContent.Length > 2000 ? bodyContent[..2000] : bodyContent
                 };

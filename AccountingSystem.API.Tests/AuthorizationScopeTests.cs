@@ -1,3 +1,5 @@
+using System.Net;
+using System.Reflection;
 using System.Security.Claims;
 using System.Text;
 using AccountingSystem.API.Controllers;
@@ -9,9 +11,11 @@ using AccountingSystem.API.Services.Interfaces;
 using AccountingSystem.Shared.DTOs;
 using AccountingSystem.Shared.Enums;
 using FluentAssertions;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Moq;
 
 namespace AccountingSystem.API.Tests;
@@ -470,6 +474,203 @@ public class TenantBoundaryRegressionTests
 
         await act.Should().ThrowAsync<InvalidOperationException>()
             .WithMessage("Document numbering requires a valid tenant company context.");
+    }
+}
+
+public class LogScopeAlignmentTests
+{
+    [Fact]
+    public void LogControllers_ShouldKeepExplicitScopePolicies()
+    {
+        var superAdminPolicy = typeof(SuperAdminController)
+            .GetCustomAttribute<AuthorizeAttribute>()?
+            .Policy;
+        var tenantAuditPolicy = typeof(AuditLogsController)
+            .GetCustomAttribute<AuthorizeAttribute>()?
+            .Policy;
+
+        superAdminPolicy.Should().Be(ApplicationAuthorizationPolicies.RequireSuperAdmin);
+        tenantAuditPolicy.Should().Be(ApplicationAuthorizationPolicies.RequireTenantOwner);
+    }
+
+    [Fact]
+    public async Task GetPlatformSecurityEvents_ShouldReturnOnlyAuthEventsWithTenantAndIpContext()
+    {
+        using var context = TestHelpers.CreateContext();
+
+        var tenantOwnerRole = new Role { Id = 1, Name = ApplicationRoles.TenantOwner };
+        var company = new Company { Id = 10, Name = "Contoso Books", IsActive = true, Status = "Active" };
+        var user = TestHelpers.CreateUser(tenantOwnerRole, company.Id, "owner@contoso.test", "LongPassword123!");
+
+        context.Roles.Add(tenantOwnerRole);
+        context.Companies.Add(company);
+        context.Users.Add(user);
+        await context.SaveChangesAsync();
+
+        context.AuditLogs.AddRange(
+            new AuditLog
+            {
+                CompanyId = company.Id,
+                UserId = user.Id,
+                Action = "AUTH-LOGIN-FAILURE",
+                EntityName = "/api/auth/login",
+                EntityId = "N/A",
+                IpAddress = "203.0.113.10",
+                Timestamp = DateTime.UtcNow,
+                Changes = "{\"reason\":\"InvalidPassword\"}"
+            },
+            new AuditLog
+            {
+                CompanyId = 0,
+                UserId = null,
+                Action = "AUTH-RATE-LIMIT",
+                EntityName = "/api/auth/login",
+                EntityId = "N/A",
+                IpAddress = null,
+                Timestamp = DateTime.UtcNow.AddMinutes(-1),
+                Changes = "{\"email\":\"anonymous@test.com\",\"remoteIpAddress\":\"198.51.100.20\"}"
+            },
+            new AuditLog
+            {
+                CompanyId = company.Id,
+                UserId = user.Id,
+                Action = "INVOICE-CREATE",
+                EntityName = "/api/invoices",
+                EntityId = "N/A",
+                IpAddress = "198.51.100.25",
+                Timestamp = DateTime.UtcNow.AddMinutes(-2),
+                Changes = "{}"
+            });
+        await context.SaveChangesAsync();
+
+        var controller = new SuperAdminController(
+            context,
+            Mock.Of<ILogger<SuperAdminController>>(),
+            Mock.Of<ILegacyIdentityBridgeService>())
+        {
+            ControllerContext = new ControllerContext
+            {
+                HttpContext = AuthorizationTestHelpers.CreateHttpContext(
+                    AuthorizationTestHelpers.CreatePrincipal(ApplicationRoles.SuperAdmin, userId: 9001))
+            }
+        };
+
+        var result = await controller.GetPlatformSecurityEvents();
+
+        var ok = result.Should().BeOfType<OkObjectResult>().Subject;
+        var events = ok.Value.Should().BeAssignableTo<IEnumerable<PlatformSecurityEventDTO>>().Subject.ToList();
+        events.Should().HaveCount(2);
+        events.Should().OnlyContain(log => log.Action.StartsWith("AUTH-", StringComparison.Ordinal));
+        events.Should().Contain(log =>
+            log.CompanyName == "Contoso Books" &&
+            log.UserEmail == "owner@contoso.test" &&
+            log.IpAddress == "203.0.113.10");
+        events.Should().Contain(log =>
+            log.CompanyName == "Platform / Unknown" &&
+            log.UserEmail == "anonymous@test.com" &&
+            log.IpAddress == "198.51.100.20");
+    }
+
+    [Fact]
+    public async Task GetAuditLogs_ShouldReturnTenantScopedLogsWithIpAddresses()
+    {
+        using var context = TestHelpers.CreateContext(tenantId: 10);
+
+        var tenantOwnerRole = new Role { Id = 1, Name = ApplicationRoles.TenantOwner };
+        var accountingRole = new Role { Id = 2, Name = ApplicationRoles.Accounting };
+        var activeUser = TestHelpers.CreateUser(accountingRole, 10, "accounting@tenant.test", "LongPassword123!");
+        var archivedUser = TestHelpers.CreateUser(accountingRole, 10, "archived@tenant.test", "LongPassword123!");
+        archivedUser.IsDeleted = true;
+
+        context.Roles.AddRange(tenantOwnerRole, accountingRole);
+        context.Users.AddRange(activeUser, archivedUser);
+        await context.SaveChangesAsync();
+
+        context.AuditLogs.AddRange(
+            new AuditLog
+            {
+                CompanyId = 10,
+                UserId = activeUser.Id,
+                Action = "USER-ARCHIVE",
+                EntityName = "/api/users/2",
+                EntityId = "N/A",
+                IpAddress = "192.0.2.10",
+                Timestamp = DateTime.UtcNow,
+                Changes = "{}"
+            },
+            new AuditLog
+            {
+                CompanyId = 10,
+                UserId = null,
+                Action = "AUTH-LOGIN-FAILURE",
+                EntityName = "/api/auth/login",
+                EntityId = "N/A",
+                IpAddress = null,
+                Timestamp = DateTime.UtcNow.AddMinutes(-1),
+                Changes = "{\"email\":\"failed-login@tenant.test\",\"remoteIpAddress\":\"192.0.2.11\"}"
+            });
+        await context.SaveChangesAsync();
+
+        var controller = new AuditLogsController(context);
+        var result = await controller.GetAuditLogs();
+
+        var ok = result.Should().BeOfType<OkObjectResult>().Subject;
+        var logs = ok.Value.Should().BeAssignableTo<IEnumerable<AuditLogDTO>>().Subject.ToList();
+        logs.Should().HaveCount(2);
+        logs.Should().Contain(log =>
+            log.UserEmail == "accounting@tenant.test" &&
+            log.IpAddress == "192.0.2.10");
+        logs.Should().Contain(log =>
+            log.UserEmail == "failed-login@tenant.test" &&
+            log.IpAddress == "192.0.2.11");
+    }
+
+    [Fact]
+    public async Task AuthSecurityAuditService_ShouldPersistIpAddressOnNewSecurityEvents()
+    {
+        using var context = TestHelpers.CreateContext();
+        var httpContext = new DefaultHttpContext();
+        httpContext.Connection.RemoteIpAddress = IPAddress.Parse("198.51.100.77");
+        httpContext.User = AuthorizationTestHelpers.CreatePrincipal(ApplicationRoles.TenantOwner, userId: 55, companyId: 12);
+
+        var accessor = new HttpContextAccessor { HttpContext = httpContext };
+        var service = new AuthSecurityAuditService(
+            context,
+            accessor,
+            Mock.Of<ILogger<AuthSecurityAuditService>>());
+
+        await service.WriteAsync("AUTH-LOGIN-SUCCESS");
+
+        var log = await context.AuditLogs.IgnoreQueryFilters().SingleAsync();
+        log.IpAddress.Should().Be("198.51.100.77");
+    }
+
+    [Fact]
+    public async Task UpdateCompanyStatus_ShouldWriteIpAddressToSuperAdminAuditLog()
+    {
+        using var context = TestHelpers.CreateContext();
+        var company = new Company { Id = 99, Name = "Northwind", IsActive = true, Status = "Active" };
+        context.Companies.Add(company);
+        await context.SaveChangesAsync();
+
+        var controller = new SuperAdminController(
+            context,
+            Mock.Of<ILogger<SuperAdminController>>(),
+            Mock.Of<ILegacyIdentityBridgeService>())
+        {
+            ControllerContext = new ControllerContext
+            {
+                HttpContext = AuthorizationTestHelpers.CreateHttpContext(
+                    AuthorizationTestHelpers.CreatePrincipal(ApplicationRoles.SuperAdmin, userId: 7001))
+            }
+        };
+        controller.HttpContext.Connection.RemoteIpAddress = IPAddress.Parse("203.0.113.55");
+
+        var result = await controller.UpdateCompanyStatus(company.Id, new UpdateCompanyStatusDTO { Status = "Suspended" });
+
+        result.Should().BeOfType<OkObjectResult>();
+        var auditLog = await context.SuperAdminAuditLogs.SingleAsync();
+        auditLog.IpAddress.Should().Be("203.0.113.55");
     }
 }
 

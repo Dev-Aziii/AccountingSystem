@@ -69,6 +69,9 @@ namespace AccountingSystem.API.Models
         [MaxLength(500)]
         public string Details { get; set; } = string.Empty;
 
+        [MaxLength(64)]
+        public string? IpAddress { get; set; }
+
         public DateTime Timestamp { get; set; } = DateTime.UtcNow;
     }
 }

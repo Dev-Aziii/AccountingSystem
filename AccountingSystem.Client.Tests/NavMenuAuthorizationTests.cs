@@ -35,12 +35,12 @@ public class NavMenuAuthorizationTests : BunitContext
             builder.CloseComponent();
         });
 
-        cut.WaitForAssertion(() =>
+            cut.WaitForAssertion(() =>
         {
             cut.Markup.Should().Contain("System Overview");
             cut.Markup.Should().Contain("Tenant Manager");
             cut.Markup.Should().Contain("Global Users");
-            cut.Markup.Should().Contain("Admin Audit Logs");
+            cut.Markup.Should().Contain("Platform Logs");
             cut.Markup.Should().NotContain("Dashboard");
             cut.Markup.Should().NotContain("User Management");
             cut.Markup.Should().NotContain("Bills");
@@ -64,11 +64,11 @@ public class NavMenuAuthorizationTests : BunitContext
             builder.CloseComponent();
         });
 
-        cut.WaitForAssertion(() =>
+            cut.WaitForAssertion(() =>
         {
             cut.Markup.Should().Contain("Dashboard");
             cut.Markup.Should().Contain("User Management");
-            cut.Markup.Should().Contain("Audit Logs");
+            cut.Markup.Should().Contain("Tenant Audit Logs");
             cut.Markup.Should().Contain("Company Settings");
             cut.Markup.Should().Contain("Journal Entries");
             cut.Markup.Should().Contain("Chart of Accounts");
@@ -76,6 +76,7 @@ public class NavMenuAuthorizationTests : BunitContext
             cut.Markup.Should().Contain("Invoices");
             cut.Markup.Should().Contain("Financial Statements");
             cut.Markup.Should().NotContain("System Overview");
+            cut.Markup.Should().NotContain("Platform Logs");
         });
     }
 
@@ -104,6 +105,8 @@ public class NavMenuAuthorizationTests : BunitContext
             cut.Markup.Should().Contain("Invoices");
             cut.Markup.Should().Contain("Financial Statements");
             cut.Markup.Should().NotContain("User Management");
+            cut.Markup.Should().NotContain("Tenant Audit Logs");
+            cut.Markup.Should().NotContain("Platform Logs");
             cut.Markup.Should().NotContain("System Overview");
         });
     }
@@ -129,6 +132,8 @@ public class NavMenuAuthorizationTests : BunitContext
             cut.Markup.Should().Contain("Dashboard");
             cut.Markup.Should().Contain("Financial Statements");
             cut.Markup.Should().NotContain("User Management");
+            cut.Markup.Should().NotContain("Tenant Audit Logs");
+            cut.Markup.Should().NotContain("Platform Logs");
             cut.Markup.Should().NotContain("Journal Entries");
             cut.Markup.Should().NotContain("Bills");
             cut.Markup.Should().NotContain("Invoices");

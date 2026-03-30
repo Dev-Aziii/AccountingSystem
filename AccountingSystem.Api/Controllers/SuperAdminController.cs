@@ -6,6 +6,7 @@ using AccountingSystem.Shared.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 
 namespace AccountingSystem.API.Controllers
 {
@@ -112,6 +113,7 @@ namespace AccountingSystem.API.Controllers
                     OldValue = l.OldValue,
                     NewValue = l.NewValue,
                     Details = l.Details,
+                    IpAddress = l.IpAddress,
                     Timestamp = l.Timestamp
                 })
                 .ToListAsync();
@@ -322,11 +324,62 @@ namespace AccountingSystem.API.Controllers
                     OldValue = l.OldValue,
                     NewValue = l.NewValue,
                     Details = l.Details,
+                    IpAddress = l.IpAddress,
                     Timestamp = l.Timestamp
                 })
                 .ToListAsync();
 
             return Ok(logs);
+        }
+
+        [HttpGet("security-events")]
+        public async Task<IActionResult> GetPlatformSecurityEvents()
+        {
+            var securityEventRows = await (from log in _context.AuditLogs.IgnoreQueryFilters()
+                                           where EF.Functions.Like(log.Action, "AUTH-%")
+                                           join user in _context.Users.IgnoreQueryFilters()
+                                               on log.UserId equals user.Id into userJoin
+                                           from u in userJoin.DefaultIfEmpty()
+                                           join company in _context.Companies.IgnoreQueryFilters()
+                                               on log.CompanyId equals company.Id into companyJoin
+                                           from c in companyJoin.DefaultIfEmpty()
+                                           orderby log.Timestamp descending
+                                           select new
+                                           {
+                                               log.Id,
+                                               log.CompanyId,
+                                               CompanyName = c != null ? c.Name : null,
+                                               log.UserId,
+                                               ResolvedUserEmail = u != null ? u.Email : null,
+                                               log.Action,
+                                               log.EntityName,
+                                               log.Changes,
+                                               log.IpAddress,
+                                               log.Timestamp
+                                           })
+                .Take(500)
+                .ToListAsync();
+
+            var events = securityEventRows.Select(log => new PlatformSecurityEventDTO
+            {
+                Id = log.Id,
+                CompanyId = log.CompanyId > 0 ? log.CompanyId : null,
+                CompanyName = !string.IsNullOrWhiteSpace(log.CompanyName)
+                    ? log.CompanyName
+                    : log.CompanyId > 0
+                        ? $"Company #{log.CompanyId}"
+                        : "Platform / Unknown",
+                UserEmail = log.ResolvedUserEmail
+                    ?? ExtractStringFromChanges(log.Changes, "email")
+                    ?? (log.UserId.HasValue ? $"User #{log.UserId}" : "System/Anonymous"),
+                Action = log.Action,
+                Path = log.EntityName,
+                Details = log.Changes,
+                IpAddress = ResolveIpAddress(log.IpAddress, log.Changes),
+                Timestamp = log.Timestamp
+            }).ToList();
+
+            return Ok(events);
         }
 
         private Task LogSuperAdminAction(string action, string targetType, int targetId, string targetName,
@@ -343,6 +396,7 @@ namespace AccountingSystem.API.Controllers
                 OldValue = oldValue,
                 NewValue = newValue,
                 Details = details,
+                IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString(),
                 Timestamp = DateTime.UtcNow
             };
 
@@ -360,5 +414,31 @@ namespace AccountingSystem.API.Controllers
                 user.IsActive,
                 user.IsDeleted,
                 user.Role.Name);
+
+        private static string? ResolveIpAddress(string? ipAddress, string? changes) =>
+            !string.IsNullOrWhiteSpace(ipAddress)
+                ? ipAddress
+                : ExtractStringFromChanges(changes, "remoteIpAddress");
+
+        private static string? ExtractStringFromChanges(string? changes, string propertyName)
+        {
+            if (string.IsNullOrWhiteSpace(changes))
+            {
+                return null;
+            }
+
+            try
+            {
+                using var document = JsonDocument.Parse(changes);
+                return document.RootElement.TryGetProperty(propertyName, out var property) &&
+                       property.ValueKind == JsonValueKind.String
+                    ? property.GetString()
+                    : null;
+            }
+            catch (JsonException)
+            {
+                return null;
+            }
+        }
     }
 }

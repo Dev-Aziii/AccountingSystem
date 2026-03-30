@@ -10,7 +10,7 @@
 @inject ISnackbar Snackbar
 @inject ILogger<AuditLogs> Logger
 
-<PageTitle>Audit Logs - AccSys</PageTitle>
+<PageTitle>Tenant Audit Logs - AccSys</PageTitle>
 
 <style>
     /* Shadcn-style custom badges for the action column */
@@ -57,10 +57,10 @@
             else
             {
                 <h2 style="font-size: 1.5rem; font-weight: 600; letter-spacing: -0.025em; color: var(--text-main); margin: 0;">
-                    Audit Logs
+                    Tenant Audit Logs
                 </h2>
                 <p style="color: var(--text-muted); font-size: 0.875rem; margin: 0.25rem 0 0 0;">
-                    Track all system modifications and security events.
+                    Tenant-owner visibility into user activity, security events, and business changes for your company only.
                 </p>
             }
         </div>
@@ -154,8 +154,9 @@
                                    Variant="Variant.Outlined"
                                    Margin="Margin.Dense"
                                    AnchorOrigin="Origin.BottomCenter">
-                            <MudSelectItem T="string" Value="@("LOGIN")">Login</MudSelectItem>
+                            <MudSelectItem T="string" Value="@("AUTH")">Security & Access</MudSelectItem>
                             <MudSelectItem T="string" Value="@("USER")">User Management</MudSelectItem>
+                            <MudSelectItem T="string" Value="@("COMPANY")">Company Settings</MudSelectItem>
                             <MudSelectItem T="string" Value="@("CUSTOMER")">Customer (AR)</MudSelectItem>
                             <MudSelectItem T="string" Value="@("VENDOR")">Vendor (AP)</MudSelectItem>
                             <MudSelectItem T="string" Value="@("ACCOUNT")">Accounts (GL)</MudSelectItem>
@@ -200,12 +201,13 @@
         }
 
         <MudCard Elevation="0" Outlined="true" Class="shadcn-card">
-            <MudTable Items="@FilteredLogs" Dense="true" Hover="true" Bordered="false" Striped="false"
+                <MudTable Items="@FilteredLogs" Dense="true" Hover="true" Bordered="false" Striped="false"
                       Loading="@_loading" Elevation="0" Class="shadcn-table" Breakpoint="Breakpoint.Sm">
                 <HeaderContent>
                     <MudTh><MudTableSortLabel SortBy="new Func<AuditLogDTO, object>(x => x.Timestamp)">Date & Time</MudTableSortLabel></MudTh>
                     <MudTh><MudTableSortLabel SortBy="new Func<AuditLogDTO, object>(x => x.UserEmail)">User</MudTableSortLabel></MudTh>
                     <MudTh><MudTableSortLabel SortBy="new Func<AuditLogDTO, object>(x => x.Action)">Action</MudTableSortLabel></MudTh>
+                    <MudTh><MudTableSortLabel SortBy="new Func<AuditLogDTO, object>(x => x.IpAddress ?? string.Empty)">IP Address</MudTableSortLabel></MudTh>
                     <MudTh Style="text-align:right">Details</MudTh>
                 </HeaderContent>
                 <RowTemplate>
@@ -219,6 +221,9 @@
                     </MudTd>
                     <MudTd DataLabel="Action">
                         <span class="shadcn-badge @GetActionBadgeClass(context.Action)">@context.Action</span>
+                    </MudTd>
+                    <MudTd DataLabel="IP Address" Style="color: var(--text-muted); font-size: 0.875rem;">
+                        @GetIpAddressDisplay(context.IpAddress)
                     </MudTd>
                     <MudTd DataLabel="Details" Style="text-align:right">
                         <MudIconButton Icon="@Icons.Material.Outlined.Visibility" Size="Size.Small" Class="shadcn-icon-btn" OnClick="@(async () => await ViewDetails(context))" />
@@ -293,8 +298,12 @@
         // Action type filter
         if (!string.IsNullOrWhiteSpace(selectedActionType))
         {
-            if (selectedActionType == "USER")
+            if (selectedActionType == "AUTH")
+                filtered = filtered.Where(log => log.Action.StartsWith("AUTH-", StringComparison.OrdinalIgnoreCase));
+            else if (selectedActionType == "USER")
                 filtered = filtered.Where(log => log.Action.StartsWith("USER-", StringComparison.OrdinalIgnoreCase));
+            else if (selectedActionType == "COMPANY")
+                filtered = filtered.Where(log => log.Action.StartsWith("COMPANY-", StringComparison.OrdinalIgnoreCase));
             else if (selectedActionType == "CUSTOMER")
                 filtered = filtered.Where(log => log.Action.StartsWith("CUSTOMER-", StringComparison.OrdinalIgnoreCase));
             else if (selectedActionType == "VENDOR")
@@ -323,7 +332,8 @@
             filtered = filtered.Where(log =>
                 log.UserEmail.Contains(searchString, StringComparison.OrdinalIgnoreCase) ||
                 log.Action.Contains(searchString, StringComparison.OrdinalIgnoreCase) ||
-                log.EntityName.Contains(searchString, StringComparison.OrdinalIgnoreCase));
+                log.EntityName.Contains(searchString, StringComparison.OrdinalIgnoreCase) ||
+                GetIpAddressDisplay(log.IpAddress).Contains(searchString, StringComparison.OrdinalIgnoreCase));
         }
 
         return filtered;
@@ -376,15 +386,16 @@
     {
         var parameters = new DialogParameters { ["Log"] = log };
         var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true, CloseButton = true };
-        await DialogService.ShowAsync<AuditDetailsDialog>("Audit Log Details", parameters, options);
+        await DialogService.ShowAsync<AuditDetailsDialog>("Tenant Audit Log Details", parameters, options);
     }
 
     // Returns custom CSS class instead of MudBlazor Material Colors
     private string GetActionBadgeClass(string action)
     {
-        if (action == "LOGIN") return "badge-slate";
+        if (action.StartsWith("AUTH-")) return "badge-red";
 
         if (action.StartsWith("USER-")) return "badge-purple";
+        if (action.StartsWith("COMPANY-")) return "badge-slate";
         if (action.StartsWith("CUSTOMER-")) return "badge-blue";
         if (action.StartsWith("VENDOR-")) return "badge-orange";
         if (action.StartsWith("ACCOUNT-")) return "badge-green";
@@ -401,4 +412,7 @@
             _ => "badge-slate"
         };
     }
+
+    private static string GetIpAddressDisplay(string? ipAddress) =>
+        string.IsNullOrWhiteSpace(ipAddress) ? "Unavailable" : ipAddress;
 }
