@@ -253,14 +253,14 @@
                         <div style="color: var(--text-muted); font-size: 0.875rem;">@(context.Address ?? "—")</div>
                     </MudTd>
                     <MudTd DataLabel="Registered" Style="white-space: nowrap;">
-                        <div style="color: var(--text-muted); font-size: 0.875rem;">@context.CreatedAt.ToString("MMM dd, yyyy")</div>
+                        <div style="color: var(--text-muted); font-size: 0.875rem;">@PhilippineDateTimeDisplay.FormatDate(context.CreatedAt)</div>
                     </MudTd>
                     <MudTd DataLabel="Users">
                         <span class="shadcn-badge badge-slate" style="font-size: 0.7rem;">@context.UserCount users</span>
                     </MudTd>
                     <MudTd DataLabel="Last Activity" Style="white-space: nowrap;">
                         <div style="color: var(--text-muted); font-size: 0.875rem;">
-                            @(context.LastActivityDate?.ToString("MMM dd, yyyy") ?? "No activity")
+                            @(context.LastActivityDate.HasValue ? PhilippineDateTimeDisplay.FormatDate(context.LastActivityDate.Value) : "No activity")
                         </div>
                     </MudTd>
                     <MudTd DataLabel="Status">

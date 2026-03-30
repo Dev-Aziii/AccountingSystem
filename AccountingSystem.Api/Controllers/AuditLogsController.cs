@@ -25,12 +25,20 @@ namespace AccountingSystem.API.Controllers
             var logRows = await (from log in _context.AuditLogs
                                  join user in _context.Users.IgnoreQueryFilters() on log.UserId equals user.Id into userJoin
                                  from u in userJoin.DefaultIfEmpty()
+                                 where !EF.Functions.Like(log.Action, "SUPERADMIN-%")
+                                 where !EF.Functions.Like(log.Action, "AUTH-%") ||
+                                       (
+                                           (u == null || u.Role.Name != ApplicationRoles.SuperAdmin) &&
+                                           !EF.Functions.Like(log.EntityName ?? string.Empty, "/api/superadmin/%") &&
+                                           !EF.Functions.Like(log.Changes ?? string.Empty, "%\"reason\":\"SuperAdminRole\"%")
+                                       )
                                  orderby log.Timestamp descending
                                  select new
                                  {
                                      log.Id,
                                      log.UserId,
                                      ResolvedUserEmail = u != null ? u.Email : null,
+                                     ResolvedUserRole = u != null ? u.Role.Name : null,
                                      log.Action,
                                      log.EntityName,
                                      log.EntityId,
@@ -41,7 +49,9 @@ namespace AccountingSystem.API.Controllers
                 .Take(500)
                 .ToListAsync();
 
-            var logs = logRows.Select(log => new AuditLogDTO
+            var logs = logRows
+                .Where(log => !IsPlatformOriginated(log.Action, log.ResolvedUserRole, log.EntityName, log.Changes))
+                .Select(log => new AuditLogDTO
             {
                 Id = log.Id,
                 UserEmail = log.ResolvedUserEmail
@@ -53,9 +63,29 @@ namespace AccountingSystem.API.Controllers
                 IpAddress = ResolveIpAddress(log.IpAddress, log.Changes),
                 Timestamp = log.Timestamp,
                 Changes = log.Changes
-            }).ToList();
+            })
+                .Take(500)
+                .ToList();
 
             return Ok(logs);
+        }
+
+        private static bool IsPlatformOriginated(string action, string? resolvedUserRole, string? entityName, string? changes)
+        {
+            if (action.StartsWith("SUPERADMIN-", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            if (!action.StartsWith("AUTH-", StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
+            return string.Equals(resolvedUserRole, ApplicationRoles.SuperAdmin, StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(ExtractStringFromChanges(changes, "reason"), "SuperAdminRole", StringComparison.OrdinalIgnoreCase) ||
+                   (!string.IsNullOrWhiteSpace(entityName) &&
+                    entityName.StartsWith("/api/superadmin/", StringComparison.OrdinalIgnoreCase));
         }
 
         private static string? ResolveIpAddress(string? ipAddress, string? changes) =>

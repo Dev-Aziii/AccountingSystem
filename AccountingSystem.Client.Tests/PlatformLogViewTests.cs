@@ -77,6 +77,8 @@ public class PlatformLogViewTests
             cut.Markup.Should().Contain("Platform Admin Actions");
             cut.Markup.Should().Contain("Platform Security Events");
             cut.Markup.Should().Contain("203.0.113.10");
+            cut.Markup.Should().Contain("Mar 30, 2026");
+            cut.Markup.Should().Contain("12:00 PM");
         });
 
         cut.FindAll(".mud-tab").Last().Click();
@@ -86,6 +88,7 @@ public class PlatformLogViewTests
             cut.Markup.Should().Contain("198.51.100.20");
             cut.Markup.Should().Contain("Contoso Books");
             cut.Markup.Should().Contain("Login Failure");
+            cut.Markup.Should().Contain("12:05 PM");
         });
     }
 

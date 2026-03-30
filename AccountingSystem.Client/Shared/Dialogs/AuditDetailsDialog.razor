@@ -26,7 +26,7 @@
                         <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.25rem;">Timestamp</div>
                         <div class="d-flex align-center" style="font-size: 0.875rem; font-weight: 500; color: var(--text-main);">
                             <MudIcon Icon="@Icons.Material.Outlined.AccessTime" Size="Size.Small" Class="mr-2 text-muted" />
-                            @Log.Timestamp.ToLocalTime().ToString("MMM dd, yyyy HH:mm:ss")
+                            @PhilippineDateTimeDisplay.FormatDateTime(Log.Timestamp)
                         </div>
                     </MudItem>
                     <MudItem xs="12" sm="12">

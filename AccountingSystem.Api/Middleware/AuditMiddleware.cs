@@ -19,7 +19,7 @@ namespace AccountingSystem.API.Middleware
             var path = context.Request.Path.Value?.ToLowerInvariant() ?? string.Empty;
             var shouldLog = method == "POST" || method == "PUT" || method == "DELETE";
 
-            if (!shouldLog || path.StartsWith("/api/auth/"))
+            if (!shouldLog || path.StartsWith("/api/auth/") || path.StartsWith("/api/superadmin/"))
             {
                 await _next(context);
                 return;
@@ -119,15 +119,6 @@ namespace AccountingSystem.API.Middleware
                 {
                     action = "COMPANY-UPDATE";
                 }
-                else if (path.Contains("/superadmin/companies") && path.Contains("/status"))
-                {
-                    action = "SUPERADMIN-COMPANY-STATUS";
-                }
-                else if (path.Contains("/superadmin/users") && path.Contains("/status"))
-                {
-                    action = "SUPERADMIN-USER-STATUS";
-                }
-
                 var auditLog = new AuditLog
                 {
                     UserId = userId,

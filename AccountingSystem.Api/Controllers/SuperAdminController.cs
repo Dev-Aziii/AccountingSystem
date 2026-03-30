@@ -336,7 +336,8 @@ namespace AccountingSystem.API.Controllers
         public async Task<IActionResult> GetPlatformSecurityEvents()
         {
             var securityEventRows = await (from log in _context.AuditLogs.IgnoreQueryFilters()
-                                           where EF.Functions.Like(log.Action, "AUTH-%")
+                                           where EF.Functions.Like(log.Action, "AUTH-%") &&
+                                                 log.Action != "AUTH-EMAIL-CONFIRMATION-BYPASS"
                                            join user in _context.Users.IgnoreQueryFilters()
                                                on log.UserId equals user.Id into userJoin
                                            from u in userJoin.DefaultIfEmpty()

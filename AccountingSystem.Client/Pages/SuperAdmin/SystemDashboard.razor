@@ -253,7 +253,7 @@
                     System Overview
                 </h2>
                 <p style="color: var(--text-muted); font-size: 0.875rem; margin: 0.25rem 0 0 0;">
-                    Super Administrator Dashboard &bull; @DateTime.Now.ToString("MMMM dd, yyyy")
+                    Super Administrator Dashboard &bull; @PhilippineDateTimeDisplay.ToPhilippineTime(DateTime.UtcNow).ToString("MMMM dd, yyyy")
                 </p>
             }
         </div>
@@ -544,7 +544,7 @@
                                     }
                                 </div>
                                 <div style="font-size: 0.75rem; color: var(--text-muted); white-space: nowrap;">
-                                    @log.Timestamp.ToString("MMM dd, HH:mm")
+                                    @PhilippineDateTimeDisplay.FormatDateTime(log.Timestamp)
                                 </div>
                             </div>
                         }

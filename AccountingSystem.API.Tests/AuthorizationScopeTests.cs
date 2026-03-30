@@ -499,12 +499,14 @@ public class LogScopeAlignmentTests
         using var context = TestHelpers.CreateContext();
 
         var tenantOwnerRole = new Role { Id = 1, Name = ApplicationRoles.TenantOwner };
+        var superAdminRole = new Role { Id = 2, Name = ApplicationRoles.SuperAdmin };
         var company = new Company { Id = 10, Name = "Contoso Books", IsActive = true, Status = "Active" };
         var user = TestHelpers.CreateUser(tenantOwnerRole, company.Id, "owner@contoso.test", "LongPassword123!");
+        var superAdmin = TestHelpers.CreateUser(superAdminRole, 0, "superadmin@test.com", "LongPassword123!");
 
-        context.Roles.Add(tenantOwnerRole);
+        context.Roles.AddRange(tenantOwnerRole, superAdminRole);
         context.Companies.Add(company);
-        context.Users.Add(user);
+        context.Users.AddRange(user, superAdmin);
         await context.SaveChangesAsync();
 
         context.AuditLogs.AddRange(
@@ -529,6 +531,17 @@ public class LogScopeAlignmentTests
                 IpAddress = null,
                 Timestamp = DateTime.UtcNow.AddMinutes(-1),
                 Changes = "{\"email\":\"anonymous@test.com\",\"remoteIpAddress\":\"198.51.100.20\"}"
+            },
+            new AuditLog
+            {
+                CompanyId = 0,
+                UserId = superAdmin.Id,
+                Action = "AUTH-EMAIL-CONFIRMATION-BYPASS",
+                EntityName = "/api/auth/login",
+                EntityId = "N/A",
+                IpAddress = "198.51.100.30",
+                Timestamp = DateTime.UtcNow.AddSeconds(-30),
+                Changes = "{\"reason\":\"SuperAdminRole\"}"
             },
             new AuditLog
             {
@@ -561,6 +574,7 @@ public class LogScopeAlignmentTests
         var events = ok.Value.Should().BeAssignableTo<IEnumerable<PlatformSecurityEventDTO>>().Subject.ToList();
         events.Should().HaveCount(2);
         events.Should().OnlyContain(log => log.Action.StartsWith("AUTH-", StringComparison.Ordinal));
+        events.Should().NotContain(log => log.Action == "AUTH-EMAIL-CONFIRMATION-BYPASS");
         events.Should().Contain(log =>
             log.CompanyName == "Contoso Books" &&
             log.UserEmail == "owner@contoso.test" &&
@@ -578,12 +592,14 @@ public class LogScopeAlignmentTests
 
         var tenantOwnerRole = new Role { Id = 1, Name = ApplicationRoles.TenantOwner };
         var accountingRole = new Role { Id = 2, Name = ApplicationRoles.Accounting };
+        var superAdminRole = new Role { Id = 3, Name = ApplicationRoles.SuperAdmin };
         var activeUser = TestHelpers.CreateUser(accountingRole, 10, "accounting@tenant.test", "LongPassword123!");
         var archivedUser = TestHelpers.CreateUser(accountingRole, 10, "archived@tenant.test", "LongPassword123!");
+        var superAdmin = TestHelpers.CreateUser(superAdminRole, 10, "superadmin@test.com", "LongPassword123!");
         archivedUser.IsDeleted = true;
 
-        context.Roles.AddRange(tenantOwnerRole, accountingRole);
-        context.Users.AddRange(activeUser, archivedUser);
+        context.Roles.AddRange(tenantOwnerRole, accountingRole, superAdminRole);
+        context.Users.AddRange(activeUser, archivedUser, superAdmin);
         await context.SaveChangesAsync();
 
         context.AuditLogs.AddRange(
@@ -608,6 +624,39 @@ public class LogScopeAlignmentTests
                 IpAddress = null,
                 Timestamp = DateTime.UtcNow.AddMinutes(-1),
                 Changes = "{\"email\":\"failed-login@tenant.test\",\"remoteIpAddress\":\"192.0.2.11\"}"
+            },
+            new AuditLog
+            {
+                CompanyId = 10,
+                UserId = superAdmin.Id,
+                Action = "SUPERADMIN-COMPANY-STATUS",
+                EntityName = "/api/superadmin/companies/10/status",
+                EntityId = "N/A",
+                IpAddress = "203.0.113.50",
+                Timestamp = DateTime.UtcNow.AddMinutes(-2),
+                Changes = "{}"
+            },
+            new AuditLog
+            {
+                CompanyId = 10,
+                UserId = superAdmin.Id,
+                Action = "AUTH-EMAIL-CONFIRMATION-BYPASS",
+                EntityName = "/api/auth/login",
+                EntityId = "N/A",
+                IpAddress = "203.0.113.51",
+                Timestamp = DateTime.UtcNow.AddMinutes(-3),
+                Changes = "{\"reason\":\"SuperAdminRole\"}"
+            },
+            new AuditLog
+            {
+                CompanyId = 10,
+                UserId = null,
+                Action = "AUTH-LOGIN-SUCCESS",
+                EntityName = "/api/superadmin/users/10/status",
+                EntityId = "N/A",
+                IpAddress = "203.0.113.52",
+                Timestamp = DateTime.UtcNow.AddMinutes(-4),
+                Changes = "{\"email\":\"platform@test.com\"}"
             });
         await context.SaveChangesAsync();
 
@@ -623,6 +672,9 @@ public class LogScopeAlignmentTests
         logs.Should().Contain(log =>
             log.UserEmail == "failed-login@tenant.test" &&
             log.IpAddress == "192.0.2.11");
+        logs.Should().NotContain(log => log.Action.StartsWith("SUPERADMIN-", StringComparison.Ordinal));
+        logs.Should().NotContain(log => log.Action == "AUTH-EMAIL-CONFIRMATION-BYPASS");
+        logs.Should().NotContain(log => string.Equals(log.UserEmail, "superadmin@test.com", StringComparison.OrdinalIgnoreCase));
     }
 
     [Fact]
@@ -671,6 +723,31 @@ public class LogScopeAlignmentTests
         result.Should().BeOfType<OkObjectResult>();
         var auditLog = await context.SuperAdminAuditLogs.SingleAsync();
         auditLog.IpAddress.Should().Be("203.0.113.55");
+    }
+
+    [Fact]
+    public async Task AuditMiddleware_ShouldNotWriteTenantAuditLogsForSuperAdminRoutes()
+    {
+        using var context = TestHelpers.CreateContext();
+        var nextCalled = false;
+        var middleware = new AuditMiddleware(_ =>
+        {
+            nextCalled = true;
+            return Task.CompletedTask;
+        });
+
+        var httpContext = new DefaultHttpContext();
+        httpContext.Request.Method = HttpMethods.Put;
+        httpContext.Request.Path = "/api/superadmin/companies/99/status";
+        httpContext.Request.Body = new MemoryStream(Encoding.UTF8.GetBytes("{\"status\":\"Suspended\"}"));
+        httpContext.Response.Body = new MemoryStream();
+        httpContext.Items["UserId"] = "7001";
+        httpContext.Items["CompanyId"] = "99";
+
+        await middleware.Invoke(httpContext, context);
+
+        nextCalled.Should().BeTrue();
+        (await context.AuditLogs.IgnoreQueryFilters().CountAsync()).Should().Be(0);
     }
 }
 

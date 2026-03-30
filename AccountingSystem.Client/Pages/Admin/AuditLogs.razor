@@ -212,7 +212,7 @@
                 </HeaderContent>
                 <RowTemplate>
                     <MudTd DataLabel="Date" Style="color: var(--text-muted); font-size: 0.875rem;">
-                        @context.Timestamp.ToLocalTime().ToString("MMM dd, yyyy HH:mm")
+                        @PhilippineDateTimeDisplay.FormatDateTime(context.Timestamp)
                     </MudTd>
                     <MudTd DataLabel="User">
                         <span style="font-weight: 500; font-size: 0.875rem; color: @(context.UserEmail.Contains("System") ? "var(--text-muted)" : "var(--text-main)")">
@@ -291,8 +291,8 @@
         if (dateRange?.Start != null && dateRange?.End != null)
         {
             filtered = filtered.Where(log =>
-                log.Timestamp.Date >= dateRange.Start.Value.Date &&
-                log.Timestamp.Date <= dateRange.End.Value.Date);
+                PhilippineDateTimeDisplay.ToPhilippineTime(log.Timestamp).Date >= dateRange.Start.Value.Date &&
+                PhilippineDateTimeDisplay.ToPhilippineTime(log.Timestamp).Date <= dateRange.End.Value.Date);
         }
 
         // Action type filter

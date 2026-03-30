@@ -36,6 +36,7 @@ public class AuditDetailsDialogTests : DialogTestContext
 
         dialogProvider.Markup.Should().Contain("Audit Log Details");
         dialogProvider.Markup.Should().Contain("auditor@example.com");
+        dialogProvider.Markup.Should().Contain("Jan 01, 2025 08:00 PM");
     }
 
     [Fact]
