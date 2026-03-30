@@ -194,6 +194,51 @@ public class TenantBoundaryRegressionTests
     }
 
     [Fact]
+    public async Task UsersController_RestoreUser_WhenUserIsInvited_ShouldKeepTheAccountInactive()
+    {
+        using var context = TestHelpers.CreateContext(tenantId: 10);
+        var ownerRole = new Role { Id = 1, Name = ApplicationRoles.TenantOwner };
+        var accountingRole = new Role { Id = 2, Name = ApplicationRoles.Accounting };
+        var invitedUser = new User
+        {
+            CompanyId = 10,
+            Email = "invited.restore@test.com",
+            FullName = "Invited Restore",
+            RoleId = accountingRole.Id,
+            Role = accountingRole,
+            PasswordHash = string.Empty,
+            PasswordSalt = null,
+            IsDeleted = true,
+            IsActive = false,
+            Status = ApplicationUserStatuses.Invited
+        };
+
+        context.Roles.AddRange(ownerRole, accountingRole);
+        context.Users.Add(invitedUser);
+        await context.SaveChangesAsync();
+
+        var controller = new UsersController(
+            context,
+            Mock.Of<IAuthService>(),
+            Mock.Of<ILegacyIdentityBridgeService>())
+        {
+            ControllerContext = new ControllerContext
+            {
+                HttpContext = AuthorizationTestHelpers.CreateHttpContext(
+                    AuthorizationTestHelpers.CreatePrincipal(ApplicationRoles.TenantOwner, userId: 999, companyId: 10))
+            }
+        };
+
+        var result = await controller.RestoreUser(invitedUser.Id);
+
+        result.Should().BeOfType<OkObjectResult>();
+        var reloaded = await context.Users.IgnoreQueryFilters().SingleAsync(u => u.Id == invitedUser.Id);
+        reloaded.IsDeleted.Should().BeFalse();
+        reloaded.IsActive.Should().BeFalse();
+        reloaded.Status.Should().Be(ApplicationUserStatuses.Invited);
+    }
+
+    [Fact]
     public async Task PayableService_RestoreVendorAsync_ShouldNotRestoreAnotherTenantVendor()
     {
         using var context = TestHelpers.CreateContext(tenantId: 10);

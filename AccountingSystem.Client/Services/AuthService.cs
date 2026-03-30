@@ -140,7 +140,7 @@ namespace AccountingSystem.Client.Services
             }
         }
 
-        public async Task ConfirmEmail(ConfirmEmailDTO dto)
+        public async Task<ConfirmEmailResultDTO> ConfirmEmail(ConfirmEmailDTO dto)
         {
             var response = await _api.PostAsync("api/auth/confirm-email", dto, requiresAuth: false);
             if (!response.IsSuccessStatusCode)
@@ -148,6 +148,9 @@ namespace AccountingSystem.Client.Services
                 var rawContent = await response.Content.ReadAsStringAsync();
                 throw new Exception(ApiErrorParser.Extract(rawContent, "Unable to confirm email. Please try again."));
             }
+
+            var result = await response.Content.ReadFromJsonAsync<ConfirmEmailResultDTO>();
+            return result ?? throw new Exception("Failed to deserialize email confirmation response.");
         }
 
         public async Task ResendConfirmation(ResendConfirmationDTO dto)

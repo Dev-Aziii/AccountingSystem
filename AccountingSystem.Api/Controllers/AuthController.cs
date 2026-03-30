@@ -129,8 +129,8 @@ namespace AccountingSystem.API.Controllers
         {
             try
             {
-                await _authService.ConfirmEmailAsync(dto);
-                return Ok(new { message = "Email confirmed successfully. You can sign in now." });
+                var result = await _authService.ConfirmEmailAsync(dto);
+                return Ok(result);
             }
             catch (Exception ex)
             {

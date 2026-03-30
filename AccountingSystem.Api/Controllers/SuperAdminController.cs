@@ -123,9 +123,9 @@ namespace AccountingSystem.API.Controllers
                 SuspendedCompanies = companies.Count(c => c.Status == "Suspended" || (!c.IsActive && c.Status != "Blocked")),
                 BlockedCompanies = companies.Count(c => c.Status == "Blocked"),
                 TotalUsers = users.Count,
-                ActiveUsers = users.Count(u => u.Status == "Active" && u.IsActive),
-                RestrictedUsers = users.Count(u => u.Status == "Restricted"),
-                BlockedUsers = users.Count(u => u.Status == "Blocked"),
+                ActiveUsers = users.Count(u => u.Status == ApplicationUserStatuses.Active && u.IsActive),
+                RestrictedUsers = users.Count(u => u.Status == ApplicationUserStatuses.Restricted),
+                BlockedUsers = users.Count(u => u.Status == ApplicationUserStatuses.Blocked),
                 MonthlyRegistrations = monthlyRegistrations,
                 MonthlyUserGrowth = monthlyUserGrowth,
                 RecentActions = recentActions
@@ -254,13 +254,16 @@ namespace AccountingSystem.API.Controllers
             if (user.Id == currentUserId)
                 return BadRequest("You cannot modify your own account status.");
 
-            var validStatuses = new[] { "Active", "Restricted", "Blocked" };
+            if (ApplicationUserStatuses.IsInvited(user.Status))
+                return BadRequest("Invited users must complete account setup through the invitation flow.");
+
+            var validStatuses = new[] { ApplicationUserStatuses.Active, ApplicationUserStatuses.Restricted, ApplicationUserStatuses.Blocked };
             if (!validStatuses.Contains(dto.Status))
                 return BadRequest("Invalid status. Must be: Active, Restricted, or Blocked.");
 
             var oldStatus = user.Status;
             user.Status = dto.Status;
-            user.IsActive = dto.Status == "Active";
+            user.IsActive = dto.Status == ApplicationUserStatuses.Active;
 
             await LogSuperAdminAction("USER_STATUS_CHANGE", "User", id, $"{user.FullName} ({user.Email})", oldStatus, dto.Status,
                 $"User '{user.Email}' status changed from {oldStatus} to {dto.Status}");
@@ -286,9 +289,12 @@ namespace AccountingSystem.API.Controllers
             if (user.Id == currentUserId)
                 return BadRequest("You cannot suspend your own account.");
 
+            if (ApplicationUserStatuses.IsInvited(user.Status))
+                return BadRequest("Invited users must complete account setup through the invitation flow.");
+
             var oldStatus = user.Status;
             user.IsActive = !user.IsActive;
-            user.Status = user.IsActive ? "Active" : "Blocked";
+            user.Status = user.IsActive ? ApplicationUserStatuses.Active : ApplicationUserStatuses.Blocked;
 
             await LogSuperAdminAction("USER_STATUS_CHANGE", "User", id, $"{user.FullName} ({user.Email})", oldStatus, user.Status,
                 $"User '{user.Email}' status toggled from {oldStatus} to {user.Status}");

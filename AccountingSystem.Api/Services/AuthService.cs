@@ -417,26 +417,21 @@ namespace AccountingSystem.API.Services
             };
         }
 
-        public async Task<User> RegisterAsync(RegisterDTO registerDto)
+        public async Task<User> InviteTenantUserAsync(InviteTenantUserDTO dto)
         {
-            if (!PasswordPolicy.TryValidate(registerDto.Password, out var passwordValidationMessage))
-            {
-                throw new Exception(passwordValidationMessage);
-            }
-
-            if (await EmailExistsForDifferentUserAsync(registerDto.Email, null))
+            if (await EmailExistsForDifferentUserAsync(dto.Email, null))
             {
                 throw new Exception("Email already exists in this company.");
             }
 
-            var normalizedRoleName = registerDto.RoleName.Trim();
+            var normalizedRoleName = dto.RoleName.Trim();
             var role = await _context.Roles
                 .AsNoTracking()
                 .FirstOrDefaultAsync(r => r.Name.ToLower() == normalizedRoleName.ToLower());
 
             if (role == null)
             {
-                throw new Exception($"Role '{registerDto.RoleName}' does not exist.");
+                throw new Exception($"Role '{dto.RoleName}' does not exist.");
             }
 
             if (ApplicationRoles.IsSuperAdmin(role.Name))
@@ -444,15 +439,16 @@ namespace AccountingSystem.API.Services
                 throw new Exception($"{ApplicationRoles.SuperAdmin} role cannot be assigned from this endpoint.");
             }
 
+            var fullName = ComposeFullName(dto.FirstName, dto.LastName, dto.Email);
             var user = new User
             {
-                Email = registerDto.Email,
-                FullName = registerDto.FullName,
+                Email = dto.Email,
+                FullName = fullName,
                 RoleId = role.Id,
                 PasswordHash = string.Empty,
                 PasswordSalt = null,
-                IsActive = true,
-                Status = "Active"
+                IsActive = false,
+                Status = ApplicationUserStatuses.Invited
             };
 
             ApplicationUser? identityUser;
@@ -461,15 +457,14 @@ namespace AccountingSystem.API.Services
                 _context.Users.Add(user);
                 await _context.SaveChangesAsync();
 
-                await _identityAccountService.EnsureProvisionedAsync(
-                    CreateIdentitySnapshot(user, role.Name, requireEmailConfirmation: true, emailConfirmed: false),
-                    registerDto.Password);
+                await _identityAccountService.EnsureProvisionedWithoutPasswordAsync(
+                    CreateIdentitySnapshot(user, role.Name, requireEmailConfirmation: true, emailConfirmed: false));
 
                 identityUser = await RequireIdentityUserAsync(user);
                 transaction.Complete();
             }
 
-            await TrySendEmailConfirmationAsync(identityUser, "AUTH-EMAIL-CONFIRMATION-SENT", "UserCreated");
+            await TrySendTenantInvitationAsync(identityUser, "AUTH-TENANT-USER-INVITED", "TenantUserInvited");
             return user;
         }
 
@@ -667,7 +662,7 @@ namespace AccountingSystem.API.Services
             }
         }
 
-        public async Task ConfirmEmailAsync(ConfirmEmailDTO dto)
+        public async Task<ConfirmEmailResultDTO> ConfirmEmailAsync(ConfirmEmailDTO dto)
         {
             var identityUser = await _identityAccountService.FindByEmailAsync(dto.Email);
             if (identityUser == null)
@@ -677,13 +672,18 @@ namespace AccountingSystem.API.Services
 
             if (identityUser.EmailConfirmed)
             {
+                var linkedLegacyUser = await ResolveLegacyUserAsync(dto.Email, identityUser);
+                await UpdateInvitedActivationStateAsync(identityUser, linkedLegacyUser);
+
                 await _auditService.WriteAsync(
                     "AUTH-EMAIL-CONFIRMATION",
                     userId: identityUser.LegacyUserId,
                     companyId: identityUser.CompanyId,
                     email: identityUser.Email,
                     reason: "AlreadyConfirmed");
-                return;
+
+                var reloadedIdentityUser = await RequireIdentityUserByIdAsync(identityUser.Id);
+                return await BuildConfirmEmailResultAsync(reloadedIdentityUser);
             }
 
             var decodedToken = DecodeConfirmationToken(dto.Token);
@@ -703,12 +703,18 @@ namespace AccountingSystem.API.Services
             var updateResult = await _userManager.UpdateAsync(identityUser);
             EnsureIdentitySucceeded(updateResult, "ConfirmEmail");
 
+            var legacyUser = await ResolveLegacyUserAsync(dto.Email, identityUser);
+            await UpdateInvitedActivationStateAsync(identityUser, legacyUser);
+
             await _auditService.WriteAsync(
                 "AUTH-EMAIL-CONFIRMATION",
                 userId: identityUser.LegacyUserId,
                 companyId: identityUser.CompanyId,
                 email: identityUser.Email,
                 reason: "Confirmed");
+
+            var refreshedIdentityUser = await RequireIdentityUserByIdAsync(identityUser.Id);
+            return await BuildConfirmEmailResultAsync(refreshedIdentityUser);
         }
 
         public async Task ResendConfirmationAsync(ResendConfirmationDTO dto)
@@ -762,6 +768,87 @@ namespace AccountingSystem.API.Services
             }
         }
 
+        public async Task ResendInviteAsync(int invitedUserId, int tenantId)
+        {
+            var user = await _context.Users
+                .IgnoreQueryFilters()
+                .Include(u => u.Role)
+                .FirstOrDefaultAsync(u => u.Id == invitedUserId && u.CompanyId == tenantId);
+
+            if (user == null)
+            {
+                throw new Exception("User not found.");
+            }
+
+            if (user.IsDeleted)
+            {
+                throw new Exception("Archived users cannot receive invite emails.");
+            }
+
+            if (ApplicationRoles.IsSuperAdmin(user.Role.Name))
+            {
+                throw new Exception($"{ApplicationRoles.SuperAdmin} accounts cannot be invited from this endpoint.");
+            }
+
+            if (!ApplicationUserStatuses.IsInvited(user.Status))
+            {
+                throw new Exception("Only users with pending setup can receive invite emails.");
+            }
+
+            ApplicationUser? identityUser;
+            using (var transaction = CreateTransactionScope())
+            {
+                identityUser = await ResolveIdentityUserAsync(user);
+                if (identityUser == null)
+                {
+                    await _identityAccountService.EnsureProvisionedWithoutPasswordAsync(
+                        CreateIdentitySnapshot(user, user.Role.Name, requireEmailConfirmation: true, emailConfirmed: false));
+
+                    identityUser = await RequireIdentityUserAsync(user);
+                }
+                else
+                {
+                    identityUser.Status = user.Status;
+                    identityUser.IsActive = user.IsActive;
+                    identityUser.RequireEmailConfirmation = true;
+                    identityUser.UpdatedAt = DateTime.UtcNow;
+
+                    var updateResult = await _userManager.UpdateAsync(identityUser);
+                    EnsureIdentitySucceeded(updateResult, "ResendInvite");
+                }
+
+                transaction.Complete();
+            }
+
+            await UpdateInvitedActivationStateAsync(identityUser, user);
+
+            var refreshedIdentityUser = await RequireIdentityUserByIdAsync(identityUser.Id);
+            if (!ApplicationUserStatuses.IsInvited(user.Status))
+            {
+                throw new Exception("This user has already completed account setup.");
+            }
+
+            if (!refreshedIdentityUser.EmailConfirmed)
+            {
+                await TrySendTenantInvitationAsync(
+                    refreshedIdentityUser,
+                    "AUTH-TENANT-USER-INVITE-RESENT",
+                    "TenantInviteResent");
+                return;
+            }
+
+            if (!HasUsableIdentityPassword(refreshedIdentityUser))
+            {
+                await TrySendTenantPasswordSetupAsync(
+                    refreshedIdentityUser,
+                    "AUTH-TENANT-USER-INVITE-RESENT",
+                    "TenantPasswordSetupResent");
+                return;
+            }
+
+            throw new Exception("This user has already completed account setup.");
+        }
+
         public async Task ResetPasswordAsync(ResetPasswordDTO dto)
         {
             if (!PasswordPolicy.TryValidate(dto.NewPassword, out var passwordValidationMessage))
@@ -795,9 +882,15 @@ namespace AccountingSystem.API.Services
                 var legacyUser = await ResolveLegacyUserAsync(dto.Email, identityUser);
                 if (legacyUser != null)
                 {
-                    ApplyIdentitySecurityMirror(legacyUser, await RequireIdentityUserByIdAsync(identityUser.Id));
+                    var refreshedIdentityUser = await RequireIdentityUserByIdAsync(identityUser.Id);
+                    ApplyIdentitySecurityMirror(legacyUser, refreshedIdentityUser);
                     ClearLegacyPassword(legacyUser);
-                    await _context.SaveChangesAsync();
+                    await UpdateInvitedActivationStateAsync(refreshedIdentityUser, legacyUser);
+                }
+                else
+                {
+                    var refreshedIdentityUser = await RequireIdentityUserByIdAsync(identityUser.Id);
+                    await UpdateInvitedActivationStateAsync(refreshedIdentityUser);
                 }
 
                 transaction.Complete();
@@ -1132,6 +1225,70 @@ namespace AccountingSystem.API.Services
             user.LockoutEndUtc = identityUser.LockoutEnd?.UtcDateTime;
         }
 
+        private async Task UpdateInvitedActivationStateAsync(ApplicationUser identityUser, User? legacyUser = null)
+        {
+            legacyUser ??= await ResolveLegacyUserAsync(identityUser.Email ?? string.Empty, identityUser);
+            if (legacyUser == null)
+            {
+                return;
+            }
+
+            if (!ApplicationUserStatuses.IsInvited(legacyUser.Status) &&
+                !ApplicationUserStatuses.IsInvited(identityUser.Status))
+            {
+                return;
+            }
+
+            var shouldActivate = identityUser.EmailConfirmed && HasUsableIdentityPassword(identityUser);
+            var nextStatus = shouldActivate ? ApplicationUserStatuses.Active : ApplicationUserStatuses.Invited;
+
+            legacyUser.Status = nextStatus;
+            legacyUser.IsActive = shouldActivate;
+
+            identityUser.Status = nextStatus;
+            identityUser.IsActive = shouldActivate;
+            identityUser.UpdatedAt = DateTime.UtcNow;
+
+            var updateResult = await _userManager.UpdateAsync(identityUser);
+            EnsureIdentitySucceeded(updateResult, "UpdateInvitedActivationState");
+
+            await _context.SaveChangesAsync();
+        }
+
+        private async Task<ConfirmEmailResultDTO> BuildConfirmEmailResultAsync(ApplicationUser identityUser)
+        {
+            var legacyUser = await ResolveLegacyUserAsync(identityUser.Email ?? string.Empty, identityUser);
+            if (legacyUser != null && ApplicationUserStatuses.IsInvited(legacyUser.Status))
+            {
+                if (!HasUsableIdentityPassword(identityUser))
+                {
+                    var token = await _userManager.GeneratePasswordResetTokenAsync(identityUser);
+                    var encodedToken = EncodeResetToken(token);
+
+                    return new ConfirmEmailResultDTO
+                    {
+                        Message = "Email confirmed. Continue to create your password to activate the account.",
+                        RequiresPasswordSetup = true,
+                        RedirectPath = BuildPasswordResetPath(identityUser.Email!, encodedToken, flow: "invite")
+                    };
+                }
+
+                return new ConfirmEmailResultDTO
+                {
+                    Message = "Email confirmed successfully. You can sign in now.",
+                    RequiresPasswordSetup = false,
+                    RedirectPath = "/"
+                };
+            }
+
+            return new ConfirmEmailResultDTO
+            {
+                Message = "Email confirmed successfully. You can sign in now.",
+                RequiresPasswordSetup = false,
+                RedirectPath = "/"
+            };
+        }
+
         private static string GetIdentityErrorMessage(IdentityResult result, string fallbackMessage)
         {
             return result.Errors.Select(e => e.Description).FirstOrDefault()
@@ -1149,10 +1306,21 @@ namespace AccountingSystem.API.Services
             throw new InvalidOperationException($"Identity operation '{operation}' failed: {details}");
         }
 
-        private string BuildPasswordResetLink(string email, string encodedToken)
+        private string BuildPasswordResetPath(string email, string encodedToken, string? flow = null)
+        {
+            var path = $"/reset-password?email={Uri.EscapeDataString(email)}&token={Uri.EscapeDataString(encodedToken)}";
+            if (!string.IsNullOrWhiteSpace(flow))
+            {
+                path += $"&flow={Uri.EscapeDataString(flow)}";
+            }
+
+            return path;
+        }
+
+        private string BuildPasswordResetLink(string email, string encodedToken, string? flow = null)
         {
             var clientBaseUrl = ResolveClientBaseUrl();
-            return $"{clientBaseUrl}/reset-password?email={Uri.EscapeDataString(email)}&token={Uri.EscapeDataString(encodedToken)}";
+            return $"{clientBaseUrl}{BuildPasswordResetPath(email, encodedToken, flow)}";
         }
 
         private string BuildEmailConfirmationLink(string email, string encodedToken)
@@ -1273,6 +1441,88 @@ namespace AccountingSystem.API.Services
             }
         }
 
+        private async Task<bool> TrySendTenantInvitationAsync(ApplicationUser identityUser, string auditEventName, string reason)
+        {
+            try
+            {
+                var token = await _userManager.GenerateEmailConfirmationTokenAsync(identityUser);
+                var encodedToken = EncodeToken(token);
+                var confirmationLink = BuildEmailConfirmationLink(identityUser.Email!, encodedToken);
+
+                await _accountEmailService.SendTenantInvitationAsync(
+                    identityUser.Email!,
+                    identityUser.FullName,
+                    confirmationLink);
+
+                await _auditService.WriteAsync(
+                    auditEventName,
+                    userId: identityUser.LegacyUserId,
+                    companyId: identityUser.CompanyId,
+                    email: identityUser.Email,
+                    reason: reason);
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "Failed to send tenant invitation for identity user {IdentityUserId} ({Email}).",
+                    identityUser.Id,
+                    identityUser.Email);
+
+                await _auditService.WriteAsync(
+                    "AUTH-TENANT-USER-INVITE-FAILURE",
+                    userId: identityUser.LegacyUserId,
+                    companyId: identityUser.CompanyId,
+                    email: identityUser.Email,
+                    reason: reason);
+
+                return false;
+            }
+        }
+
+        private async Task<bool> TrySendTenantPasswordSetupAsync(ApplicationUser identityUser, string auditEventName, string reason)
+        {
+            try
+            {
+                var token = await _userManager.GeneratePasswordResetTokenAsync(identityUser);
+                var encodedToken = EncodeResetToken(token);
+                var resetLink = BuildPasswordResetLink(identityUser.Email!, encodedToken, flow: "invite");
+
+                await _accountEmailService.SendTenantPasswordSetupAsync(
+                    identityUser.Email!,
+                    identityUser.FullName,
+                    resetLink);
+
+                await _auditService.WriteAsync(
+                    auditEventName,
+                    userId: identityUser.LegacyUserId,
+                    companyId: identityUser.CompanyId,
+                    email: identityUser.Email,
+                    reason: reason);
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "Failed to send tenant password setup email for identity user {IdentityUserId} ({Email}).",
+                    identityUser.Id,
+                    identityUser.Email);
+
+                await _auditService.WriteAsync(
+                    "AUTH-TENANT-USER-INVITE-FAILURE",
+                    userId: identityUser.LegacyUserId,
+                    companyId: identityUser.CompanyId,
+                    email: identityUser.Email,
+                    reason: reason);
+
+                return false;
+            }
+        }
+
         private static string EncodeToken(string token)
         {
             return WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
@@ -1368,5 +1618,14 @@ namespace AccountingSystem.API.Services
                 user.FullName ?? user.Email,
                 company.Id,
                 company.Name);
+
+        private static string ComposeFullName(string? firstName, string? lastName, string email)
+        {
+            var parts = new[] { firstName?.Trim(), lastName?.Trim() }
+                .Where(part => !string.IsNullOrWhiteSpace(part));
+
+            var fullName = string.Join(" ", parts);
+            return string.IsNullOrWhiteSpace(fullName) ? email : fullName;
+        }
     }
 }

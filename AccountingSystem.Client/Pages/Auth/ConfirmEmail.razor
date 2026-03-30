@@ -213,13 +213,21 @@
             // Give it a tiny delay just so the user sees the loading state momentarily (feels more responsive)
             await Task.Delay(500);
 
-            await AuthService.ConfirmEmail(new ConfirmEmailDTO
+            var result = await AuthService.ConfirmEmail(new ConfirmEmailDTO
             {
                 Email = Email,
                 Token = Token
             });
 
-            statusMessage = "Email confirmed successfully. You can securely sign in now.";
+            if (result.RequiresPasswordSetup && !string.IsNullOrWhiteSpace(result.RedirectPath))
+            {
+                NavManager.NavigateTo(result.RedirectPath);
+                return;
+            }
+
+            statusMessage = string.IsNullOrWhiteSpace(result.Message)
+                ? "Email confirmed successfully. You can securely sign in now."
+                : result.Message;
             statusSeverity = Severity.Success;
         }
         catch (Exception ex)

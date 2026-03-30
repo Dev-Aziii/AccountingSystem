@@ -76,6 +76,15 @@ namespace AccountingSystem.Shared.DTOs
         public string Token { get; set; } = string.Empty;
     }
 
+    public class ConfirmEmailResultDTO
+    {
+        public string Message { get; set; } = string.Empty;
+
+        public bool RequiresPasswordSetup { get; set; }
+
+        public string RedirectPath { get; set; } = string.Empty;
+    }
+
     public class ResendConfirmationDTO
     {
         [Required]
@@ -118,6 +127,22 @@ namespace AccountingSystem.Shared.DTOs
 
         [Required]
         public string RoleName { get; set; } = string.Empty;
+    }
+
+    public class InviteTenantUserDTO
+    {
+        [Required]
+        [EmailAddress]
+        public string Email { get; set; } = string.Empty;
+
+        [Required]
+        public string RoleName { get; set; } = string.Empty;
+
+        [MaxLength(50)]
+        public string FirstName { get; set; } = string.Empty;
+
+        [MaxLength(50)]
+        public string LastName { get; set; } = string.Empty;
     }
 
     public class LoginDTO

@@ -6,6 +6,7 @@
         public string? Email { get; set; }      // Nullable to avoid nullable reference type warnings
         public string? FullName { get; set; }
         public string? RoleName { get; set; }
+        public string? Status { get; set; }
         public bool IsActive { get; set; }
         public bool IsDeleted { get; set; }
     }

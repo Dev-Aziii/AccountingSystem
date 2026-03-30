@@ -26,13 +26,23 @@ namespace AccountingSystem.Client.Services
             }
         }
 
-        public async Task CreateUserAsync(RegisterDTO registerDto)
+        public async Task CreateUserAsync(InviteTenantUserDTO dto)
         {
-            var response = await _api.PostAsync("api/users", registerDto);
+            var response = await _api.PostAsync("api/users", dto);
             if (!response.IsSuccessStatusCode)
             {
                 var rawContent = await response.Content.ReadAsStringAsync();
                 throw new Exception(ApiErrorParser.Extract(rawContent, "Unable to create user. Please try again."));
+            }
+        }
+
+        public async Task ResendInviteAsync(int id)
+        {
+            var response = await _api.PostAsync<object?>($"api/users/{id}/resend-invite", null);
+            if (!response.IsSuccessStatusCode)
+            {
+                var rawContent = await response.Content.ReadAsStringAsync();
+                throw new Exception(ApiErrorParser.Extract(rawContent, "Unable to resend invite. Please try again."));
             }
         }
 

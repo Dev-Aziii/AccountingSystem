@@ -61,6 +61,52 @@ namespace AccountingSystem.API.Services
             await client.SendMailAsync(message);
         }
 
+        public async Task SendTenantInvitationAsync(string email, string fullName, string confirmationLink, CancellationToken cancellationToken = default)
+        {
+            using var message = new MailMessage
+            {
+                From = new MailAddress(_smtpSettings.FromAddress, _smtpSettings.FromName),
+                Subject = "You have been invited to AccSys",
+                IsBodyHtml = true,
+                Body = BuildTenantInvitationBody(fullName, confirmationLink)
+            };
+
+            message.To.Add(new MailAddress(email, fullName));
+
+            using var client = new SmtpClient(_smtpSettings.Host, _smtpSettings.Port)
+            {
+                EnableSsl = _smtpSettings.EnableSsl,
+                UseDefaultCredentials = false,
+                Credentials = new NetworkCredential(_smtpSettings.Username, _smtpSettings.Password)
+            };
+
+            cancellationToken.ThrowIfCancellationRequested();
+            await client.SendMailAsync(message);
+        }
+
+        public async Task SendTenantPasswordSetupAsync(string email, string fullName, string resetLink, CancellationToken cancellationToken = default)
+        {
+            using var message = new MailMessage
+            {
+                From = new MailAddress(_smtpSettings.FromAddress, _smtpSettings.FromName),
+                Subject = "Finish setting up your AccSys account",
+                IsBodyHtml = true,
+                Body = BuildTenantPasswordSetupBody(fullName, resetLink)
+            };
+
+            message.To.Add(new MailAddress(email, fullName));
+
+            using var client = new SmtpClient(_smtpSettings.Host, _smtpSettings.Port)
+            {
+                EnableSsl = _smtpSettings.EnableSsl,
+                UseDefaultCredentials = false,
+                Credentials = new NetworkCredential(_smtpSettings.Username, _smtpSettings.Password)
+            };
+
+            cancellationToken.ThrowIfCancellationRequested();
+            await client.SendMailAsync(message);
+        }
+
         private static string BuildPasswordResetBody(string fullName, string resetLink)
         {
             var safeName = WebUtility.HtmlEncode(string.IsNullOrWhiteSpace(fullName) ? "there" : fullName);
@@ -208,6 +254,158 @@ namespace AccountingSystem.API.Services
                                         </td>
                                     </tr>
 
+                                </table>
+                            </td>
+                        </tr>
+                    </table>
+                </body>
+                </html>
+                """;
+        }
+
+        private static string BuildTenantInvitationBody(string fullName, string confirmationLink)
+        {
+            var safeName = WebUtility.HtmlEncode(string.IsNullOrWhiteSpace(fullName) ? "there" : fullName);
+            var safeLink = WebUtility.HtmlEncode(confirmationLink);
+
+            return $"""
+                <!DOCTYPE html>
+                <html lang="en">
+                <head>
+                    <meta charset="UTF-8" />
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+                    <title>You have been invited to AccSys</title>
+                </head>
+                <body style="margin: 0; padding: 0; background-color: #f8fafc; font-family: Arial, 'Helvetica Neue', Helvetica, sans-serif; -webkit-font-smoothing: antialiased; color: #0f172a;">
+                    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f8fafc; padding: 40px 20px;">
+                        <tr>
+                            <td align="center">
+                                <table width="600" cellpadding="0" cellspacing="0" border="0" style="max-width: 600px; width: 100%; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
+                                    <tr>
+                                        <td align="center" style="padding: 40px 40px 20px 40px; border-bottom: 1px solid #f1f5f9;">
+                                            <img src="https://ik.imagekit.io/t1ps8g845/AccsysLogo.png" alt="AccSys Logo" height="45" style="display: block; border: 0; outline: none; text-decoration: none;" />
+                                        </td>
+                                    </tr>
+
+                                    <tr>
+                                        <td style="padding: 40px;">
+                                            <h1 style="margin: 0 0 20px 0; font-size: 24px; font-weight: bold; color: #0f172a; letter-spacing: -0.5px;">Complete your account setup</h1>
+
+                                            <p style="margin: 0 0 16px 0; font-size: 16px; line-height: 1.5; color: #334155;">Hello {safeName},</p>
+
+                                            <p style="margin: 0 0 32px 0; font-size: 16px; line-height: 1.6; color: #475569;">A tenant owner has invited you to join AccSys. Confirm your email address to start setting up your account. You will choose your own password in the next step.</p>
+
+                                            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 32px;">
+                                                <tr>
+                                                    <td align="left">
+                                                        <table cellpadding="0" cellspacing="0" border="0">
+                                                            <tr>
+                                                                <td align="center" bgcolor="#0f172a" style="border-radius: 6px;">
+                                                                    <a href="{safeLink}" target="_blank" style="display: inline-block; padding: 14px 28px; font-size: 16px; font-weight: bold; color: #ffffff; text-decoration: none; border-radius: 6px; background-color: #0f172a; border: 1px solid #0f172a;">Verify Email and Continue</a>
+                                                                </td>
+                                                            </tr>
+                                                        </table>
+                                                    </td>
+                                                </tr>
+                                            </table>
+
+                                            <p style="margin: 0 0 8px 0; font-size: 14px; color: #64748b;">If the button doesn't work, copy and paste this link into your browser:</p>
+                                            <p style="margin: 0 0 32px 0; font-size: 14px; word-break: break-all; line-height: 1.5;">
+                                                <a href="{safeLink}" target="_blank" style="color: #2563eb; text-decoration: none;">{safeLink}</a>
+                                            </p>
+
+                                            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px;">
+                                                <tr>
+                                                    <td style="padding: 16px; font-size: 13px; line-height: 1.5; color: #64748b;">
+                                                        <strong style="color: #334155;">Security Notice:</strong> Your account will remain inactive until you confirm your email and finish creating your password.
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                    </tr>
+
+                                    <tr>
+                                        <td style="background-color: #f8fafc; border-top: 1px solid #e2e8f0; padding: 24px 40px; text-align: center;">
+                                            <p style="margin: 0 0 8px 0; font-size: 14px; font-weight: bold; color: #334155;">AccSys Solutions</p>
+                                            <p style="margin: 0; font-size: 12px; color: #94a3b8;">This is an automated message. Please do not reply to this email.</p>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                    </table>
+                </body>
+                </html>
+                """;
+        }
+
+        private static string BuildTenantPasswordSetupBody(string fullName, string resetLink)
+        {
+            var safeName = WebUtility.HtmlEncode(string.IsNullOrWhiteSpace(fullName) ? "there" : fullName);
+            var safeLink = WebUtility.HtmlEncode(resetLink);
+
+            return $"""
+                <!DOCTYPE html>
+                <html lang="en">
+                <head>
+                    <meta charset="UTF-8" />
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+                    <title>Finish setting up your AccSys account</title>
+                </head>
+                <body style="margin: 0; padding: 0; background-color: #f8fafc; font-family: Arial, 'Helvetica Neue', Helvetica, sans-serif; -webkit-font-smoothing: antialiased; color: #0f172a;">
+                    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f8fafc; padding: 40px 20px;">
+                        <tr>
+                            <td align="center">
+                                <table width="600" cellpadding="0" cellspacing="0" border="0" style="max-width: 600px; width: 100%; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
+                                    <tr>
+                                        <td align="center" style="padding: 40px 40px 20px 40px; border-bottom: 1px solid #f1f5f9;">
+                                            <img src="https://ik.imagekit.io/t1ps8g845/AccsysLogo.png" alt="AccSys Logo" height="45" style="display: block; border: 0; outline: none; text-decoration: none;" />
+                                        </td>
+                                    </tr>
+
+                                    <tr>
+                                        <td style="padding: 40px;">
+                                            <h1 style="margin: 0 0 20px 0; font-size: 24px; font-weight: bold; color: #0f172a; letter-spacing: -0.5px;">Create your password</h1>
+
+                                            <p style="margin: 0 0 16px 0; font-size: 16px; line-height: 1.5; color: #334155;">Hello {safeName},</p>
+
+                                            <p style="margin: 0 0 32px 0; font-size: 16px; line-height: 1.6; color: #475569;">Your email address has been verified. Finish setting up your AccSys account by choosing a password. Once this step is complete, your account will become active.</p>
+
+                                            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 32px;">
+                                                <tr>
+                                                    <td align="left">
+                                                        <table cellpadding="0" cellspacing="0" border="0">
+                                                            <tr>
+                                                                <td align="center" bgcolor="#0f172a" style="border-radius: 6px;">
+                                                                    <a href="{safeLink}" target="_blank" style="display: inline-block; padding: 14px 28px; font-size: 16px; font-weight: bold; color: #ffffff; text-decoration: none; border-radius: 6px; background-color: #0f172a; border: 1px solid #0f172a;">Set Password</a>
+                                                                </td>
+                                                            </tr>
+                                                        </table>
+                                                    </td>
+                                                </tr>
+                                            </table>
+
+                                            <p style="margin: 0 0 8px 0; font-size: 14px; color: #64748b;">If the button doesn't work, copy and paste this link into your browser:</p>
+                                            <p style="margin: 0 0 32px 0; font-size: 14px; word-break: break-all; line-height: 1.5;">
+                                                <a href="{safeLink}" target="_blank" style="color: #2563eb; text-decoration: none;">{safeLink}</a>
+                                            </p>
+
+                                            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px;">
+                                                <tr>
+                                                    <td style="padding: 16px; font-size: 13px; line-height: 1.5; color: #64748b;">
+                                                        <strong style="color: #334155;">Security Notice:</strong> This setup link expires shortly. If you were not expecting an AccSys invitation, you can ignore this email.
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                    </tr>
+
+                                    <tr>
+                                        <td style="background-color: #f8fafc; border-top: 1px solid #e2e8f0; padding: 24px 40px; text-align: center;">
+                                            <p style="margin: 0 0 8px 0; font-size: 14px; font-weight: bold; color: #334155;">AccSys Solutions</p>
+                                            <p style="margin: 0; font-size: 12px; color: #94a3b8;">This is an automated message. Please do not reply to this email.</p>
+                                        </td>
+                                    </tr>
                                 </table>
                             </td>
                         </tr>

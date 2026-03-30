@@ -32,5 +32,27 @@ namespace AccountingSystem.API.Services
 
             return Task.CompletedTask;
         }
+
+        public Task SendTenantInvitationAsync(string email, string fullName, string confirmationLink, CancellationToken cancellationToken = default)
+        {
+            _logger.LogInformation(
+                "Development email sender: tenant invitation link for {Email} ({FullName}): {ConfirmationLink}",
+                email,
+                fullName,
+                confirmationLink);
+
+            return Task.CompletedTask;
+        }
+
+        public Task SendTenantPasswordSetupAsync(string email, string fullName, string resetLink, CancellationToken cancellationToken = default)
+        {
+            _logger.LogInformation(
+                "Development email sender: tenant password setup link for {Email} ({FullName}): {ResetLink}",
+                email,
+                fullName,
+                resetLink);
+
+            return Task.CompletedTask;
+        }
     }
 }

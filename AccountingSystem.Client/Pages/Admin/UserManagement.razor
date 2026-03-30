@@ -1,8 +1,7 @@
-﻿@page "/admin/users"
+@page "/admin/users"
+@using AccountingSystem.Client.Services
 @using AccountingSystem.Client.Shared.Dialogs
 @using AccountingSystem.Shared.DTOs
-@using AccountingSystem.Shared.Validation
-@using AccountingSystem.Client.Services
 @using Microsoft.AspNetCore.Authorization
 @using MudBlazor
 @attribute [Authorize(Policy = ApplicationAuthorizationPolicies.RequireTenantOwner)]
@@ -27,7 +26,7 @@
                     User Management
                 </h2>
                 <p style="color: var(--text-muted); font-size: 0.875rem; margin: 0.25rem 0 0 0;">
-                    Manage system access, user roles, and account permissions.
+                    Invite tenant users, review setup progress, and manage account access.
                 </p>
             }
         </div>
@@ -50,28 +49,55 @@
             else
             {
                 <MudTabs Elevation="0" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pt-4" Class="shadcn-tabs">
-                    <MudTabPanel Text="Active Users" OnClick="@(() => LoadUsers(false))">
+                    <MudTabPanel Text="Users" OnClick="@(() => LoadUsers(false))">
                         <MudCard Elevation="0" Outlined="true" Class="shadcn-card">
                             <MudTable Items="@users" Hover="true" Dense="true" Breakpoint="Breakpoint.Sm" Loading="@_loading" Elevation="0" Class="shadcn-table">
                                 <HeaderContent>
                                     <MudTh>Email</MudTh>
-                                    <MudTh>Full Name</MudTh>
+                                    <MudTh>Name</MudTh>
                                     <MudTh>Role</MudTh>
+                                    <MudTh>Status</MudTh>
                                     <MudTh Style="text-align:right">Actions</MudTh>
                                 </HeaderContent>
                                 <RowTemplate>
                                     <MudTd DataLabel="Email" Style="font-weight: 500; color: var(--text-main);">@context.Email</MudTd>
-                                    <MudTd DataLabel="Full Name" Style="color: var(--text-muted);">@context.FullName</MudTd>
+                                    <MudTd DataLabel="Name" Style="color: var(--text-muted);">
+                                        @(string.IsNullOrWhiteSpace(context.FullName) ? context.Email : context.FullName)
+                                    </MudTd>
                                     <MudTd DataLabel="Role">
                                         <MudChip T="string" Size="Size.Small" Class="@(ApplicationRoles.IsTenantOwner(context.RoleName) ? "shadcn-chip-destructive" : "shadcn-chip-default")">
                                             @ApplicationRoleDisplayNames.Get(context.RoleName)
                                         </MudChip>
                                     </MudTd>
+                                    <MudTd DataLabel="Status">
+                                        <span class="shadcn-badge @GetStatusBadgeClass(context.Status)">
+                                            @ApplicationUserStatusDisplayNames.Get(context.Status)
+                                        </span>
+                                    </MudTd>
                                     <MudTd DataLabel="Actions" Style="text-align:right">
-                                        @if (!ApplicationRoles.IsTenantOwner(context.RoleName))
-                                        {
-                                            <MudIconButton Icon="@Icons.Material.Outlined.Archive" Size="Size.Small" Class="shadcn-icon-btn text-destructive" OnClick="() => ConfirmDelete(context.Id)" />
-                                        }
+                                        <div class="d-inline-flex align-center gap-1">
+                                            @if (ApplicationUserStatuses.IsInvited(context.Status))
+                                            {
+                                                <MudTooltip Text="Resend Invite">
+                                                    <MudIconButton Icon="@Icons.Material.Outlined.ForwardToInbox"
+                                                                   Size="Size.Small"
+                                                                   Class="shadcn-icon-btn"
+                                                                   aria-label="Resend Invite"
+                                                                   OnClick="() => ConfirmResendInvite(context.Id, context.Email ?? string.Empty)" />
+                                                </MudTooltip>
+                                            }
+
+                                            @if (!ApplicationRoles.IsTenantOwner(context.RoleName))
+                                            {
+                                                <MudTooltip Text="Archive User">
+                                                    <MudIconButton Icon="@Icons.Material.Outlined.Archive"
+                                                                   Size="Size.Small"
+                                                                   Class="shadcn-icon-btn text-destructive"
+                                                                   aria-label="Archive User"
+                                                                   OnClick="() => ConfirmDelete(context.Id)" />
+                                                </MudTooltip>
+                                            }
+                                        </div>
                                     </MudTd>
                                 </RowTemplate>
                                 <PagerContent><MudTablePager /></PagerContent>
@@ -85,14 +111,24 @@
                                 <HeaderContent>
                                     <MudTh>Email</MudTh>
                                     <MudTh>Role</MudTh>
+                                    <MudTh>Status</MudTh>
                                     <MudTh Style="text-align:right">Actions</MudTh>
                                 </HeaderContent>
                                 <RowTemplate>
                                     <MudTd DataLabel="Email" Style="color: var(--text-muted); text-decoration: line-through;">@context.Email</MudTd>
                                     <MudTd DataLabel="Role">@ApplicationRoleDisplayNames.Get(context.RoleName)</MudTd>
+                                    <MudTd DataLabel="Status">
+                                        <span class="shadcn-badge @GetStatusBadgeClass(context.Status)">
+                                            @ApplicationUserStatusDisplayNames.Get(context.Status)
+                                        </span>
+                                    </MudTd>
                                     <MudTd DataLabel="Actions" Style="text-align:right">
                                         <MudTooltip Text="Restore User">
-                                            <MudIconButton Icon="@Icons.Material.Outlined.RestoreFromTrash" Size="Size.Small" Class="shadcn-icon-btn text-success" OnClick="() => ConfirmRestore(context.Id)" />
+                                            <MudIconButton Icon="@Icons.Material.Outlined.RestoreFromTrash"
+                                                           Size="Size.Small"
+                                                           Class="shadcn-icon-btn text-success"
+                                                           aria-label="Restore User"
+                                                           OnClick="() => ConfirmRestore(context.Id, context.Status)" />
                                         </MudTooltip>
                                     </MudTd>
                                 </RowTemplate>
@@ -130,8 +166,8 @@
                     <MudCard Elevation="0" Outlined="true" Class="shadcn-card">
                         <MudCardHeader>
                             <CardHeaderContent>
-                                <div style="font-size: 1rem; font-weight: 600; color: var(--text-main);">Create New User</div>
-                                <div style="font-size: 0.75rem; color: var(--text-muted);">Add a new member to the system.</div>
+                                <div style="font-size: 1rem; font-weight: 600; color: var(--text-main);">Invite New User</div>
+                                <div style="font-size: 0.75rem; color: var(--text-muted);">They will verify their email and create their own password.</div>
                             </CardHeaderContent>
                         </MudCardHeader>
                         <MudCardContent>
@@ -146,19 +182,40 @@
                             }
                             else
                             {
-                                <MudTextField Label="Email" @bind-Value="newUser.Email" For="@(() => newUser.Email)" Variant="Variant.Outlined" Margin="Margin.Dense" Class="mb-3 shadcn-input" />
-                                <MudTextField Label="Full Name" @bind-Value="newUser.FullName" For="@(() => newUser.FullName)" Variant="Variant.Outlined" Margin="Margin.Dense" Class="mb-3 shadcn-input" />
-                                <MudSelect Label="Role" @bind-Value="newUser.RoleName" For="@(() => newUser.RoleName)" Variant="Variant.Outlined" Margin="Margin.Dense" AnchorOrigin="Origin.BottomCenter" Class="mb-3 shadcn-input">
+                                <MudTextField Label="Email"
+                                              @bind-Value="newUser.Email"
+                                              For="@(() => newUser.Email)"
+                                              Variant="Variant.Outlined"
+                                              Margin="Margin.Dense"
+                                              Class="mb-3 shadcn-input" />
+                                <MudTextField Label="First Name (Optional)"
+                                              @bind-Value="newUser.FirstName"
+                                              For="@(() => newUser.FirstName)"
+                                              Variant="Variant.Outlined"
+                                              Margin="Margin.Dense"
+                                              Class="mb-3 shadcn-input" />
+                                <MudTextField Label="Last Name (Optional)"
+                                              @bind-Value="newUser.LastName"
+                                              For="@(() => newUser.LastName)"
+                                              Variant="Variant.Outlined"
+                                              Margin="Margin.Dense"
+                                              Class="mb-3 shadcn-input" />
+                                <MudSelect Label="Role"
+                                           @bind-Value="newUser.RoleName"
+                                           For="@(() => newUser.RoleName)"
+                                           Variant="Variant.Outlined"
+                                           Margin="Margin.Dense"
+                                           AnchorOrigin="Origin.BottomCenter"
+                                           Class="mb-3 shadcn-input">
                                     <MudSelectItem Value="@ApplicationRoles.TenantOwner">@ApplicationRoleDisplayNames.TenantOwner</MudSelectItem>
                                     <MudSelectItem Value="@ApplicationRoles.Accounting">@ApplicationRoleDisplayNames.Accounting</MudSelectItem>
                                     <MudSelectItem Value="@ApplicationRoles.Management">@ApplicationRoleDisplayNames.Management</MudSelectItem>
                                 </MudSelect>
-                                <MudTextField Label="Password" @bind-Value="newUser.Password" For="@(() => newUser.Password)" InputType="InputType.Password" Variant="Variant.Outlined" Margin="Margin.Dense" HelperText="@PasswordPolicy.Description" Class="mb-4 shadcn-input" />
                             }
                         </MudCardContent>
                         <MudCardActions Class="pb-4 px-4">
                             <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Class="create-btn" Size="Size.Medium" FullWidth="true" Disabled="@isSubmitting">
-                                @(isSubmitting ? "Creating..." : "Create Account")
+                                @(isSubmitting ? "Sending Invite..." : "Send Invite")
                             </MudButton>
                         </MudCardActions>
                     </MudCard>
@@ -185,9 +242,9 @@
 </style>
 
 @code {
-    private List<UserDTO> users = new List<UserDTO>();
-    private RegisterDTO newUser = new RegisterDTO();
-    private bool isSubmitting = false;
+    private List<UserDTO> users = new();
+    private InviteTenantUserDTO newUser = new();
+    private bool isSubmitting;
     private bool _loading = true;
     private bool _initialLoading = true;
 
@@ -204,17 +261,19 @@
         try
         {
             var all = await UserService.GetAllUsersAsync(archived);
-            if (archived)
-                users = all?.Where(u => u.IsDeleted).ToList() ?? new List<UserDTO>();
-            else
-                users = all?.Where(u => !u.IsDeleted).ToList() ?? new List<UserDTO>();
+            users = archived
+                ? all?.Where(u => u.IsDeleted).ToList() ?? new List<UserDTO>()
+                : all?.Where(u => !u.IsDeleted).ToList() ?? new List<UserDTO>();
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Failed to load users.");
             Snackbar.Add("Failed to load users. Please try again.", Severity.Error);
         }
-        finally { _loading = false; }
+        finally
+        {
+            _loading = false;
+        }
     }
 
     private async Task HandleCreateUser()
@@ -223,20 +282,51 @@
         try
         {
             await UserService.CreateUserAsync(newUser);
-            Snackbar.Add("User created successfully.", Severity.Success);
-            newUser = new RegisterDTO();
+            Snackbar.Add("Invitation sent successfully.", Severity.Success);
+            newUser = new InviteTenantUserDTO();
             await LoadUsers(false);
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Failed to create user.");
+            Logger.LogError(ex, "Failed to invite user.");
             Snackbar.Add(
                 string.IsNullOrWhiteSpace(ex.Message)
-                    ? "Unable to create user. Please try again."
+                    ? "Unable to send invite. Please try again."
                     : ex.Message,
                 Severity.Error);
         }
-        finally { isSubmitting = false; }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    private async Task ConfirmResendInvite(int id, string email)
+    {
+        var parameters = new DialogParameters<ShadcnConfirmDialog>
+        {
+            { x => x.ContentText, "Resend Invite?" },
+            { x => x.SubText, $"{email} will receive a fresh setup email based on their current progress." },
+            { x => x.ButtonText, "Resend Invite" },
+            { x => x.Color, Color.Primary }
+        };
+
+        var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.ExtraSmall };
+        var dialog = await DialogService.ShowAsync<ShadcnConfirmDialog>("Confirm", parameters, options);
+        var result = await dialog.Result;
+
+        if (result is null || result.Canceled) return;
+
+        try
+        {
+            await UserService.ResendInviteAsync(id);
+            Snackbar.Add("Invite sent successfully.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to resend invite for user id {UserId}.", id);
+            Snackbar.Add("Unable to resend invite. Please try again.", Severity.Error);
+        }
     }
 
     private async Task ConfirmDelete(int id)
@@ -274,12 +364,16 @@
         }
     }
 
-    private async Task ConfirmRestore(int id)
+    private async Task ConfirmRestore(int id, string? status)
     {
+        var restoreMessage = ApplicationUserStatuses.IsInvited(status)
+            ? "This user will return to pending setup and remain inactive until they finish account activation."
+            : "This will reactivate the account with their previous permissions.";
+
         var parameters = new DialogParameters<ShadcnConfirmDialog>
         {
             { x => x.ContentText, "Restore User?" },
-            { x => x.SubText, "This will reactivate the account with their previous permissions." },
+            { x => x.SubText, restoreMessage },
             { x => x.ButtonText, "Restore Account" },
             { x => x.Color, Color.Success }
         };
@@ -308,4 +402,13 @@
             StateHasChanged();
         }
     }
+
+    private static string GetStatusBadgeClass(string? status) => status switch
+    {
+        ApplicationUserStatuses.Active => "badge-green",
+        ApplicationUserStatuses.Restricted => "badge-orange",
+        ApplicationUserStatuses.Blocked => "badge-red",
+        ApplicationUserStatuses.Invited => "badge-slate",
+        _ => "badge-slate"
+    };
 }

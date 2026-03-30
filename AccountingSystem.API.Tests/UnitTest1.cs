@@ -316,7 +316,7 @@ public class AuthServiceTests
     }
 
     [Fact]
-    public async Task RegisterAsync_WhenSuccessful_ShouldCreateIdentityUserAndLeaveLegacyPasswordCleared()
+    public async Task InviteTenantUserAsync_WhenSuccessful_ShouldCreateInvitedIdentityUserWithoutPasswordAndSendInvitationEmail()
     {
         var context = TestHelpers.CreateContext(tenantId: 77);
         using var harness = TestHelpers.CreateIdentityHarness();
@@ -325,26 +325,379 @@ public class AuthServiceTests
         context.Roles.Add(new Role { Id = 2, Name = "Accounting" });
         await context.SaveChangesAsync();
 
-        var user = await service.RegisterAsync(new RegisterDTO
+        var user = await service.InviteTenantUserAsync(new InviteTenantUserDTO
         {
             Email = "new.accountant@test.com",
-            FullName = "New Accountant",
-            Password = "LongPassword123!",
+            FirstName = "New",
+            LastName = "Accountant",
             RoleName = "Accounting"
         });
 
         user.CompanyId.Should().Be(77);
         user.PasswordHash.Should().BeEmpty();
         user.PasswordSalt.Should().BeNull();
+        user.FullName.Should().Be("New Accountant");
+        user.IsActive.Should().BeFalse();
+        user.Status.Should().Be(ApplicationUserStatuses.Invited);
 
         var identityUser = await harness.IdentityContext.Users.SingleAsync(u => u.LegacyUserId == user.Id);
         identityUser.CompanyId.Should().Be(77);
         identityUser.Email.Should().Be("new.accountant@test.com");
         (await harness.UserManager.GetRolesAsync(identityUser)).Should().ContainSingle("Accounting");
-        (await harness.UserManager.CheckPasswordAsync(identityUser, "LongPassword123!")).Should().BeTrue();
+        identityUser.PasswordHash.Should().BeNullOrEmpty();
         identityUser.RequireEmailConfirmation.Should().BeTrue();
         identityUser.EmailConfirmed.Should().BeFalse();
-        harness.EmailService.SentConfirmationEmails.Should().ContainSingle();
+        identityUser.IsActive.Should().BeFalse();
+        identityUser.Status.Should().Be(ApplicationUserStatuses.Invited);
+        harness.EmailService.SentInvitationEmails.Should().ContainSingle();
+        harness.EmailService.SentInvitationEmails.Single().ConfirmationLink.Should().Contain("/confirm-email?");
+    }
+
+    [Fact]
+    public async Task InviteTenantUserAsync_WhenRoleIsSuperAdmin_ShouldRejectTheRequest()
+    {
+        var context = TestHelpers.CreateContext(tenantId: 77);
+        using var harness = TestHelpers.CreateIdentityHarness();
+        var service = TestHelpers.CreateAuthService(context, harness);
+
+        context.Roles.Add(new Role { Id = 9, Name = ApplicationRoles.SuperAdmin });
+        await context.SaveChangesAsync();
+
+        var act = async () => await service.InviteTenantUserAsync(new InviteTenantUserDTO
+        {
+            Email = "platform-admin@test.com",
+            RoleName = ApplicationRoles.SuperAdmin
+        });
+
+        await act.Should().ThrowAsync<Exception>()
+            .WithMessage($"{ApplicationRoles.SuperAdmin} role cannot be assigned from this endpoint.");
+    }
+
+    [Fact]
+    public async Task ConfirmEmailAsync_WhenInvitedUserConfirms_ShouldReturnPasswordSetupRedirectAndKeepAccountInactive()
+    {
+        var context = TestHelpers.CreateContext(tenantId: 55);
+        using var harness = TestHelpers.CreateIdentityHarness();
+        var service = TestHelpers.CreateAuthService(context, harness);
+
+        var role = new Role { Id = 2, Name = ApplicationRoles.Accounting };
+        var company = new Company { Id = 55, Name = "Invite Co", IsActive = true, Status = ApplicationUserStatuses.Active };
+        var user = new User
+        {
+            CompanyId = company.Id,
+            Email = "invited.confirm@test.com",
+            FullName = "Invited User",
+            RoleId = role.Id,
+            Role = role,
+            PasswordHash = string.Empty,
+            PasswordSalt = null,
+            IsActive = false,
+            Status = ApplicationUserStatuses.Invited
+        };
+
+        context.Roles.Add(role);
+        context.Companies.Add(company);
+        context.Users.Add(user);
+        await context.SaveChangesAsync();
+
+        await harness.AccountService.EnsureProvisionedWithoutPasswordAsync(
+            TestHelpers.CreateIdentitySnapshot(user, role.Name, requireEmailConfirmation: true, emailConfirmed: false));
+
+        var identityUser = await harness.IdentityContext.Users.SingleAsync(u => u.LegacyUserId == user.Id);
+        var rawToken = await harness.UserManager.GenerateEmailConfirmationTokenAsync(identityUser);
+        var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(rawToken));
+
+        var result = await service.ConfirmEmailAsync(new ConfirmEmailDTO
+        {
+            Email = identityUser.Email!,
+            Token = encodedToken
+        });
+
+        result.RequiresPasswordSetup.Should().BeTrue();
+        result.RedirectPath.Should().Contain("/reset-password?");
+        result.RedirectPath.Should().Contain("flow=invite");
+
+        var refreshedIdentityUser = await harness.IdentityContext.Users.SingleAsync(u => u.LegacyUserId == user.Id);
+        refreshedIdentityUser.EmailConfirmed.Should().BeTrue();
+        refreshedIdentityUser.IsActive.Should().BeFalse();
+        refreshedIdentityUser.Status.Should().Be(ApplicationUserStatuses.Invited);
+
+        var refreshedLegacyUser = await context.Users.IgnoreQueryFilters().SingleAsync(u => u.Id == user.Id);
+        refreshedLegacyUser.IsActive.Should().BeFalse();
+        refreshedLegacyUser.Status.Should().Be(ApplicationUserStatuses.Invited);
+    }
+
+    [Fact]
+    public async Task ResetPasswordAsync_WhenInvitedUserIsAlreadyConfirmed_ShouldActivateAccount()
+    {
+        var context = TestHelpers.CreateContext(tenantId: 56);
+        using var harness = TestHelpers.CreateIdentityHarness();
+        var service = TestHelpers.CreateAuthService(context, harness);
+
+        var role = new Role { Id = 3, Name = ApplicationRoles.Management };
+        var company = new Company { Id = 56, Name = "Invite Activation Co", IsActive = true, Status = ApplicationUserStatuses.Active };
+        var user = new User
+        {
+            CompanyId = company.Id,
+            Email = "setup.complete@test.com",
+            FullName = "Setup Complete",
+            RoleId = role.Id,
+            Role = role,
+            PasswordHash = string.Empty,
+            PasswordSalt = null,
+            IsActive = false,
+            Status = ApplicationUserStatuses.Invited
+        };
+
+        context.Roles.Add(role);
+        context.Companies.Add(company);
+        context.Users.Add(user);
+        await context.SaveChangesAsync();
+
+        await harness.AccountService.EnsureProvisionedWithoutPasswordAsync(
+            TestHelpers.CreateIdentitySnapshot(user, role.Name, requireEmailConfirmation: true, emailConfirmed: true));
+
+        var identityUser = await harness.IdentityContext.Users.SingleAsync(u => u.LegacyUserId == user.Id);
+        var rawToken = await harness.UserManager.GeneratePasswordResetTokenAsync(identityUser);
+        var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(rawToken));
+
+        await service.ResetPasswordAsync(new ResetPasswordDTO
+        {
+            Email = identityUser.Email!,
+            Token = encodedToken,
+            NewPassword = "BetterPassword456!",
+            ConfirmPassword = "BetterPassword456!"
+        });
+
+        var refreshedIdentityUser = await harness.IdentityContext.Users.SingleAsync(u => u.LegacyUserId == user.Id);
+        refreshedIdentityUser.IsActive.Should().BeTrue();
+        refreshedIdentityUser.Status.Should().Be(ApplicationUserStatuses.Active);
+        (await harness.UserManager.CheckPasswordAsync(refreshedIdentityUser, "BetterPassword456!")).Should().BeTrue();
+
+        var refreshedLegacyUser = await context.Users.IgnoreQueryFilters().SingleAsync(u => u.Id == user.Id);
+        refreshedLegacyUser.IsActive.Should().BeTrue();
+        refreshedLegacyUser.Status.Should().Be(ApplicationUserStatuses.Active);
+
+        var loginResponse = await service.LoginAsync(new LoginDTO
+        {
+            Email = user.Email,
+            Password = "BetterPassword456!"
+        });
+
+        loginResponse.Token.Should().NotBeNullOrWhiteSpace();
+    }
+
+    [Fact]
+    public async Task ResetPasswordAsync_WhenInvitedUserIsNotConfirmed_ShouldRemainInvitedAndInactive()
+    {
+        var context = TestHelpers.CreateContext(tenantId: 57);
+        using var harness = TestHelpers.CreateIdentityHarness();
+        var service = TestHelpers.CreateAuthService(context, harness);
+
+        var role = new Role { Id = 4, Name = ApplicationRoles.Management };
+        var company = new Company { Id = 57, Name = "Invite Pending Co", IsActive = true, Status = ApplicationUserStatuses.Active };
+        var user = new User
+        {
+            CompanyId = company.Id,
+            Email = "pending.setup@test.com",
+            FullName = "Pending Setup",
+            RoleId = role.Id,
+            Role = role,
+            PasswordHash = string.Empty,
+            PasswordSalt = null,
+            IsActive = false,
+            Status = ApplicationUserStatuses.Invited
+        };
+
+        context.Roles.Add(role);
+        context.Companies.Add(company);
+        context.Users.Add(user);
+        await context.SaveChangesAsync();
+
+        await harness.AccountService.EnsureProvisionedWithoutPasswordAsync(
+            TestHelpers.CreateIdentitySnapshot(user, role.Name, requireEmailConfirmation: true, emailConfirmed: false));
+
+        var identityUser = await harness.IdentityContext.Users.SingleAsync(u => u.LegacyUserId == user.Id);
+        var rawToken = await harness.UserManager.GeneratePasswordResetTokenAsync(identityUser);
+        var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(rawToken));
+
+        await service.ResetPasswordAsync(new ResetPasswordDTO
+        {
+            Email = identityUser.Email!,
+            Token = encodedToken,
+            NewPassword = "BetterPassword456!",
+            ConfirmPassword = "BetterPassword456!"
+        });
+
+        var refreshedIdentityUser = await harness.IdentityContext.Users.SingleAsync(u => u.LegacyUserId == user.Id);
+        refreshedIdentityUser.IsActive.Should().BeFalse();
+        refreshedIdentityUser.Status.Should().Be(ApplicationUserStatuses.Invited);
+        (await harness.UserManager.CheckPasswordAsync(refreshedIdentityUser, "BetterPassword456!")).Should().BeTrue();
+
+        var refreshedLegacyUser = await context.Users.IgnoreQueryFilters().SingleAsync(u => u.Id == user.Id);
+        refreshedLegacyUser.IsActive.Should().BeFalse();
+        refreshedLegacyUser.Status.Should().Be(ApplicationUserStatuses.Invited);
+    }
+
+    [Fact]
+    public async Task ConfirmEmailAsync_WhenInvitedUserAlreadyHasPassword_ShouldActivateAndAllowLogin()
+    {
+        var context = TestHelpers.CreateContext(tenantId: 58);
+        using var harness = TestHelpers.CreateIdentityHarness();
+        var service = TestHelpers.CreateAuthService(context, harness);
+
+        var role = new Role { Id = 2, Name = ApplicationRoles.Accounting };
+        var company = new Company { Id = 58, Name = "Invite Finalize Co", IsActive = true, Status = ApplicationUserStatuses.Active };
+        var user = new User
+        {
+            CompanyId = company.Id,
+            Email = "invite.finalize@test.com",
+            FullName = "Invite Finalize",
+            RoleId = role.Id,
+            Role = role,
+            PasswordHash = string.Empty,
+            PasswordSalt = null,
+            IsActive = false,
+            Status = ApplicationUserStatuses.Invited
+        };
+
+        context.Roles.Add(role);
+        context.Companies.Add(company);
+        context.Users.Add(user);
+        await context.SaveChangesAsync();
+
+        await harness.AccountService.EnsureProvisionedAsync(
+            TestHelpers.CreateIdentitySnapshot(user, role.Name, requireEmailConfirmation: true, emailConfirmed: false),
+            "LongPassword123!");
+
+        var identityUser = await harness.IdentityContext.Users.SingleAsync(u => u.LegacyUserId == user.Id);
+        var rawToken = await harness.UserManager.GenerateEmailConfirmationTokenAsync(identityUser);
+        var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(rawToken));
+
+        var result = await service.ConfirmEmailAsync(new ConfirmEmailDTO
+        {
+            Email = identityUser.Email!,
+            Token = encodedToken
+        });
+
+        result.RequiresPasswordSetup.Should().BeFalse();
+
+        var refreshedLegacyUser = await context.Users.IgnoreQueryFilters().SingleAsync(u => u.Id == user.Id);
+        refreshedLegacyUser.IsActive.Should().BeTrue();
+        refreshedLegacyUser.Status.Should().Be(ApplicationUserStatuses.Active);
+
+        var loginResponse = await service.LoginAsync(new LoginDTO
+        {
+            Email = user.Email,
+            Password = "LongPassword123!"
+        });
+
+        loginResponse.Token.Should().NotBeNullOrWhiteSpace();
+    }
+
+    [Fact]
+    public async Task ResendInviteAsync_WhenUserIsUnconfirmed_ShouldSendInvitationEmail()
+    {
+        var context = TestHelpers.CreateContext(tenantId: 59);
+        using var harness = TestHelpers.CreateIdentityHarness();
+        var service = TestHelpers.CreateAuthService(context, harness);
+
+        var role = new Role { Id = 2, Name = ApplicationRoles.Accounting };
+        var company = new Company { Id = 59, Name = "Invite Resend Co", IsActive = true, Status = ApplicationUserStatuses.Active };
+        var user = new User
+        {
+            CompanyId = company.Id,
+            Email = "invite.resend@test.com",
+            FullName = "Invite Resend",
+            RoleId = role.Id,
+            Role = role,
+            PasswordHash = string.Empty,
+            PasswordSalt = null,
+            IsActive = false,
+            Status = ApplicationUserStatuses.Invited
+        };
+
+        context.Roles.Add(role);
+        context.Companies.Add(company);
+        context.Users.Add(user);
+        await context.SaveChangesAsync();
+
+        await harness.AccountService.EnsureProvisionedWithoutPasswordAsync(
+            TestHelpers.CreateIdentitySnapshot(user, role.Name, requireEmailConfirmation: true, emailConfirmed: false));
+
+        await service.ResendInviteAsync(user.Id, company.Id);
+
+        harness.EmailService.SentInvitationEmails.Should().ContainSingle();
+        harness.EmailService.SentPasswordSetupEmails.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task ResendInviteAsync_WhenUserHasConfirmedEmail_ShouldSendPasswordSetupEmail()
+    {
+        var context = TestHelpers.CreateContext(tenantId: 60);
+        using var harness = TestHelpers.CreateIdentityHarness();
+        var service = TestHelpers.CreateAuthService(context, harness);
+
+        var role = new Role { Id = 4, Name = ApplicationRoles.Management };
+        var company = new Company { Id = 60, Name = "Invite Setup Resend Co", IsActive = true, Status = ApplicationUserStatuses.Active };
+        var user = new User
+        {
+            CompanyId = company.Id,
+            Email = "invite.setup.resend@test.com",
+            FullName = "Invite Setup Resend",
+            RoleId = role.Id,
+            Role = role,
+            PasswordHash = string.Empty,
+            PasswordSalt = null,
+            IsActive = false,
+            Status = ApplicationUserStatuses.Invited
+        };
+
+        context.Roles.Add(role);
+        context.Companies.Add(company);
+        context.Users.Add(user);
+        await context.SaveChangesAsync();
+
+        await harness.AccountService.EnsureProvisionedWithoutPasswordAsync(
+            TestHelpers.CreateIdentitySnapshot(user, role.Name, requireEmailConfirmation: true, emailConfirmed: true));
+
+        await service.ResendInviteAsync(user.Id, company.Id);
+
+        harness.EmailService.SentInvitationEmails.Should().BeEmpty();
+        harness.EmailService.SentPasswordSetupEmails.Should().ContainSingle();
+        harness.EmailService.SentPasswordSetupEmails.Single().ResetLink.Should().Contain("flow=invite");
+    }
+
+    [Fact]
+    public async Task ResendInviteAsync_WhenTenantDoesNotOwnTheUser_ShouldThrow()
+    {
+        var context = TestHelpers.CreateContext(tenantId: 61);
+        using var harness = TestHelpers.CreateIdentityHarness();
+        var service = TestHelpers.CreateAuthService(context, harness);
+
+        var role = new Role { Id = 2, Name = ApplicationRoles.Accounting };
+        var company = new Company { Id = 62, Name = "Foreign Invite Co", IsActive = true, Status = ApplicationUserStatuses.Active };
+        var user = new User
+        {
+            CompanyId = company.Id,
+            Email = "foreign.invite@test.com",
+            FullName = "Foreign Invite",
+            RoleId = role.Id,
+            Role = role,
+            PasswordHash = string.Empty,
+            PasswordSalt = null,
+            IsActive = false,
+            Status = ApplicationUserStatuses.Invited
+        };
+
+        context.Roles.Add(role);
+        context.Companies.Add(company);
+        context.Users.Add(user);
+        await context.SaveChangesAsync();
+
+        var act = async () => await service.ResendInviteAsync(user.Id, tenantId: 61);
+
+        await act.Should().ThrowAsync<Exception>().WithMessage("User not found.");
     }
 
     [Fact]
@@ -1639,6 +1992,8 @@ internal sealed class TestAccountEmailService : IAccountEmailService
 {
     public List<SentResetEmail> SentResetEmails { get; } = new();
     public List<SentConfirmationEmail> SentConfirmationEmails { get; } = new();
+    public List<SentInvitationEmail> SentInvitationEmails { get; } = new();
+    public List<SentPasswordSetupEmail> SentPasswordSetupEmails { get; } = new();
 
     public Task SendPasswordResetAsync(string email, string fullName, string resetLink, CancellationToken cancellationToken = default)
     {
@@ -1651,7 +2006,21 @@ internal sealed class TestAccountEmailService : IAccountEmailService
         SentConfirmationEmails.Add(new SentConfirmationEmail(email, fullName, confirmationLink));
         return Task.CompletedTask;
     }
+
+    public Task SendTenantInvitationAsync(string email, string fullName, string confirmationLink, CancellationToken cancellationToken = default)
+    {
+        SentInvitationEmails.Add(new SentInvitationEmail(email, fullName, confirmationLink));
+        return Task.CompletedTask;
+    }
+
+    public Task SendTenantPasswordSetupAsync(string email, string fullName, string resetLink, CancellationToken cancellationToken = default)
+    {
+        SentPasswordSetupEmails.Add(new SentPasswordSetupEmail(email, fullName, resetLink));
+        return Task.CompletedTask;
+    }
 }
 
 internal sealed record SentResetEmail(string Email, string FullName, string ResetLink);
 internal sealed record SentConfirmationEmail(string Email, string FullName, string ConfirmationLink);
+internal sealed record SentInvitationEmail(string Email, string FullName, string ConfirmationLink);
+internal sealed record SentPasswordSetupEmail(string Email, string FullName, string ResetLink);

@@ -46,6 +46,7 @@ namespace AccountingSystem.API.Controllers
                     Email = u.Email,
                     FullName = u.FullName,
                     RoleName = u.Role.Name,
+                    Status = u.Status,
                     IsActive = u.IsActive,
                     IsDeleted = u.IsDeleted
                 })
@@ -55,12 +56,31 @@ namespace AccountingSystem.API.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreateUser([FromBody] RegisterDTO registerDto)
+        public async Task<IActionResult> CreateUser([FromBody] InviteTenantUserDTO dto)
         {
             try
             {
-                var user = await _authService.RegisterAsync(registerDto);
-                return Ok(new { message = "User created successfully", userId = user.Id });
+                var user = await _authService.InviteTenantUserAsync(dto);
+                return Ok(new { message = "Invite sent successfully", userId = user.Id });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
+        [HttpPost("{id}/resend-invite")]
+        public async Task<IActionResult> ResendInvite(int id)
+        {
+            if (!ApplicationAuthorizationScopeEvaluator.TryGetCompanyId(User, out var tenantId))
+            {
+                return Forbid();
+            }
+
+            try
+            {
+                await _authService.ResendInviteAsync(id, tenantId);
+                return Ok(new { message = "Invite sent successfully." });
             }
             catch (Exception ex)
             {
@@ -103,7 +123,7 @@ namespace AccountingSystem.API.Controllers
             if (user == null) return NotFound("User not found");
 
             user.IsDeleted = false;
-            user.IsActive = true;
+            user.IsActive = string.Equals(user.Status, ApplicationUserStatuses.Active, StringComparison.Ordinal);
 
             await _context.SaveChangesAsync();
             await _identityBridgeService.SyncExistingUserStatusAsync(CreateIdentitySnapshot(user));

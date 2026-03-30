@@ -208,7 +208,7 @@
                         <MudIcon Icon="@Icons.Material.Outlined.CheckCircleOutline" Size="Size.Small" Style="color: #10b981;" />
                     </div>
                 </div>
-                <div class="sa-metric-value">@users.Count(u => u.Status == "Active")</div>
+                <div class="sa-metric-value">@users.Count(u => u.Status == ApplicationUserStatuses.Active)</div>
             </div>
 
             <div class="sa-metric-card">
@@ -218,7 +218,7 @@
                         <MudIcon Icon="@Icons.Material.Outlined.WarningAmber" Size="Size.Small" Style="color: #f59e0b;" />
                     </div>
                 </div>
-                <div class="sa-metric-value">@users.Count(u => u.Status == "Restricted")</div>
+                <div class="sa-metric-value">@users.Count(u => u.Status == ApplicationUserStatuses.Restricted)</div>
             </div>
 
             <div class="sa-metric-card">
@@ -228,7 +228,7 @@
                         <MudIcon Icon="@Icons.Material.Outlined.Block" Size="Size.Small" Style="color: #ef4444;" />
                     </div>
                 </div>
-                <div class="sa-metric-value">@users.Count(u => u.Status == "Blocked")</div>
+                <div class="sa-metric-value">@users.Count(u => u.Status == ApplicationUserStatuses.Blocked)</div>
             </div>
 
             <div class="sa-metric-card">
@@ -265,9 +265,10 @@
                                        Margin="Margin.Dense"
                                        Class="shadcn-input filter-dropdown">
                                 <MudSelectItem T="string" Value='@("All")'>All Statuses</MudSelectItem>
-                                <MudSelectItem T="string" Value='@("Active")'>Active</MudSelectItem>
-                                <MudSelectItem T="string" Value='@("Restricted")'>Restricted</MudSelectItem>
-                                <MudSelectItem T="string" Value='@("Blocked")'>Blocked</MudSelectItem>
+                                <MudSelectItem T="string" Value='@ApplicationUserStatuses.Active'>Active</MudSelectItem>
+                                <MudSelectItem T="string" Value='@ApplicationUserStatuses.Restricted'>Restricted</MudSelectItem>
+                                <MudSelectItem T="string" Value='@ApplicationUserStatuses.Blocked'>Blocked</MudSelectItem>
+                                <MudSelectItem T="string" Value='@ApplicationUserStatuses.Invited'>@ApplicationUserStatusDisplayNames.Invited</MudSelectItem>
                             </MudSelect>
 
                             <MudSelect T="string"
@@ -316,45 +317,55 @@
                     <MudTd DataLabel="Status">
                         @switch (context.Status)
                         {
-                            case "Active":
+                            case ApplicationUserStatuses.Active:
                                 <span class="shadcn-badge badge-green">Active</span>
                                 break;
-                            case "Restricted":
+                            case ApplicationUserStatuses.Restricted:
                                 <span class="shadcn-badge badge-orange">Restricted</span>
                                 break;
-                            case "Blocked":
+                            case ApplicationUserStatuses.Blocked:
                                 <span class="shadcn-badge badge-red">Blocked</span>
                                 break;
+                            case ApplicationUserStatuses.Invited:
+                                <span class="shadcn-badge badge-slate">@ApplicationUserStatusDisplayNames.Invited</span>
+                                break;
                             default:
-                                <span class="shadcn-badge badge-slate">@context.Status</span>
+                                <span class="shadcn-badge badge-slate">@ApplicationUserStatusDisplayNames.Get(context.Status)</span>
                                 break;
                         }
                     </MudTd>
                     <MudTd DataLabel="Actions" Style="text-align: right;">
-                        <MudMenu Icon="@Icons.Material.Outlined.MoreVert" Dense="true" AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight">
-                            @if (context.Status != "Active")
-                            {
-                                <MudMenuItem Icon="@Icons.Material.Outlined.CheckCircleOutline"
-                                             OnClick="@(() => ConfirmActivateUser(context))">
-                                    Activate
-                                </MudMenuItem>
-                            }
-                            @if (context.Status != "Restricted")
-                            {
-                                <MudMenuItem Icon="@Icons.Material.Outlined.WarningAmber"
-                                             OnClick="@(() => ConfirmRestrictUser(context))">
-                                    Restrict
-                                </MudMenuItem>
-                            }
-                            @if (context.Status != "Blocked")
-                            {
-                                <MudMenuItem Icon="@Icons.Material.Outlined.Block"
-                                             Style="color: var(--color-destructive);"
-                                             OnClick="@(() => ConfirmBlockUser(context))">
-                                    Block
-                                </MudMenuItem>
-                            }
-                        </MudMenu>
+                        @if (ApplicationUserStatuses.IsInvited(context.Status))
+                        {
+                            <span style="color: var(--text-muted); font-size: 0.8125rem;">Pending setup</span>
+                        }
+                        else
+                        {
+                            <MudMenu Icon="@Icons.Material.Outlined.MoreVert" Dense="true" AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight">
+                                @if (context.Status != ApplicationUserStatuses.Active)
+                                {
+                                    <MudMenuItem Icon="@Icons.Material.Outlined.CheckCircleOutline"
+                                                 OnClick="@(() => ConfirmActivateUser(context))">
+                                        Activate
+                                    </MudMenuItem>
+                                }
+                                @if (context.Status != ApplicationUserStatuses.Restricted)
+                                {
+                                    <MudMenuItem Icon="@Icons.Material.Outlined.WarningAmber"
+                                                 OnClick="@(() => ConfirmRestrictUser(context))">
+                                        Restrict
+                                    </MudMenuItem>
+                                }
+                                @if (context.Status != ApplicationUserStatuses.Blocked)
+                                {
+                                    <MudMenuItem Icon="@Icons.Material.Outlined.Block"
+                                                 Style="color: var(--color-destructive);"
+                                                 OnClick="@(() => ConfirmBlockUser(context))">
+                                        Block
+                                    </MudMenuItem>
+                                }
+                            </MudMenu>
+                        }
                     </MudTd>
                 </RowTemplate>
                 <PagerContent>
@@ -401,7 +412,7 @@
         {
             await SuperAdminService.UpdateUserStatusAsync(user.Id, newStatus);
             user.Status = newStatus;
-            user.IsActive = newStatus == "Active";
+            user.IsActive = newStatus == ApplicationUserStatuses.Active;
             Snackbar.Add($"'{user.Email}' is now {newStatus}.", Severity.Success);
         }
         catch (Exception ex)
