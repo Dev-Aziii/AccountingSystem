@@ -56,6 +56,48 @@ public class ApplicationAuthorizationScopeEvaluatorTests
     }
 }
 
+public class ApplicationRoleAssignmentRulesTests
+{
+    [Fact]
+    public void GetAssignableRoles_ShouldReturnExpectedRolesPerActor()
+    {
+        ApplicationRoleAssignmentRules.GetAssignableRoles(ApplicationRoles.SuperAdmin)
+            .Should()
+            .BeEquivalentTo(new[]
+            {
+                ApplicationRoles.SuperAdmin,
+                ApplicationRoles.TenantOwner,
+                ApplicationRoles.Accounting,
+                ApplicationRoles.Management
+            });
+
+        ApplicationRoleAssignmentRules.GetAssignableRoles(ApplicationRoles.TenantOwner)
+            .Should()
+            .BeEquivalentTo(new[]
+            {
+                ApplicationRoles.Accounting,
+                ApplicationRoles.Management
+            });
+
+        ApplicationRoleAssignmentRules.GetAssignableRoles(ApplicationRoles.Accounting).Should().BeEmpty();
+        ApplicationRoleAssignmentRules.GetAssignableRoles(ApplicationRoles.Management).Should().BeEmpty();
+    }
+
+    [Theory]
+    [InlineData(ApplicationRoles.SuperAdmin, ApplicationRoles.SuperAdmin, true)]
+    [InlineData(ApplicationRoles.SuperAdmin, ApplicationRoles.TenantOwner, true)]
+    [InlineData(ApplicationRoles.TenantOwner, ApplicationRoles.Accounting, true)]
+    [InlineData(ApplicationRoles.TenantOwner, ApplicationRoles.Management, true)]
+    [InlineData(ApplicationRoles.TenantOwner, ApplicationRoles.TenantOwner, false)]
+    [InlineData(ApplicationRoles.TenantOwner, ApplicationRoles.SuperAdmin, false)]
+    [InlineData(ApplicationRoles.Accounting, ApplicationRoles.Management, false)]
+    [InlineData(ApplicationRoles.Management, ApplicationRoles.Accounting, false)]
+    public void CanAssignRole_ShouldEnforceExpectedRoleMatrix(string actorRole, string targetRole, bool expected)
+    {
+        ApplicationRoleAssignmentRules.CanAssignRole(actorRole, targetRole).Should().Be(expected);
+    }
+}
+
 public class TenantAccessMiddlewareTests
 {
     [Fact]
@@ -236,6 +278,79 @@ public class TenantBoundaryRegressionTests
         reloaded.IsDeleted.Should().BeFalse();
         reloaded.IsActive.Should().BeFalse();
         reloaded.Status.Should().Be(ApplicationUserStatuses.Invited);
+    }
+
+    [Fact]
+    public async Task UsersController_DeleteUser_WhenTargetBelongsToAnotherTenant_ShouldReturnNotFound()
+    {
+        using var context = TestHelpers.CreateContext(tenantId: 10);
+        var ownerRole = new Role { Id = 1, Name = ApplicationRoles.TenantOwner };
+        var accountingRole = new Role { Id = 2, Name = ApplicationRoles.Accounting };
+        var foreignUser = TestHelpers.CreateUser(accountingRole, 20, "foreign.user@test.com", "LongPassword123!");
+
+        context.Roles.AddRange(ownerRole, accountingRole);
+        context.Users.Add(foreignUser);
+        await context.SaveChangesAsync();
+
+        var controller = new UsersController(
+            context,
+            Mock.Of<IAuthService>(),
+            Mock.Of<ILegacyIdentityBridgeService>())
+        {
+            ControllerContext = new ControllerContext
+            {
+                HttpContext = AuthorizationTestHelpers.CreateHttpContext(
+                    AuthorizationTestHelpers.CreatePrincipal(ApplicationRoles.TenantOwner, userId: 999, companyId: 10))
+            }
+        };
+
+        var result = await controller.DeleteUser(foreignUser.Id);
+
+        result.Should().BeOfType<NotFoundObjectResult>();
+        var reloaded = await context.Users.IgnoreQueryFilters().SingleAsync(u => u.Id == foreignUser.Id);
+        reloaded.IsDeleted.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task UsersController_RestoreUser_WhenTargetIsTenantOwner_ShouldRejectTheRequest()
+    {
+        using var context = TestHelpers.CreateContext(tenantId: 10);
+        var ownerRole = new Role { Id = 1, Name = ApplicationRoles.TenantOwner };
+        var peerTenantOwner = new User
+        {
+            CompanyId = 10,
+            Email = "peer.owner@test.com",
+            FullName = "Peer Owner",
+            RoleId = ownerRole.Id,
+            Role = ownerRole,
+            PasswordHash = string.Empty,
+            PasswordSalt = null,
+            IsDeleted = true,
+            IsActive = false,
+            Status = ApplicationUserStatuses.Invited
+        };
+
+        context.Roles.Add(ownerRole);
+        context.Users.Add(peerTenantOwner);
+        await context.SaveChangesAsync();
+
+        var controller = new UsersController(
+            context,
+            Mock.Of<IAuthService>(),
+            Mock.Of<ILegacyIdentityBridgeService>())
+        {
+            ControllerContext = new ControllerContext
+            {
+                HttpContext = AuthorizationTestHelpers.CreateHttpContext(
+                    AuthorizationTestHelpers.CreatePrincipal(ApplicationRoles.TenantOwner, userId: 999, companyId: 10))
+            }
+        };
+
+        var result = await controller.RestoreUser(peerTenantOwner.Id);
+
+        var badRequest = result.Should().BeOfType<BadRequestObjectResult>().Subject;
+        badRequest.Value.Should().NotBeNull();
+        badRequest.Value!.ToString().Should().Contain("Tenant owner accounts can only be managed by Super Admin.");
     }
 
     [Fact]

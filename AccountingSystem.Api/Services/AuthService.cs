@@ -419,6 +419,8 @@ namespace AccountingSystem.API.Services
 
         public async Task<User> InviteTenantUserAsync(InviteTenantUserDTO dto)
         {
+            var actorScope = RoleAssignmentValidator.RequireTenantOwnerScope(_httpContextAccessor.HttpContext?.User);
+
             if (await EmailExistsForDifferentUserAsync(dto.Email, null))
             {
                 throw new Exception("Email already exists in this company.");
@@ -434,14 +436,12 @@ namespace AccountingSystem.API.Services
                 throw new Exception($"Role '{dto.RoleName}' does not exist.");
             }
 
-            if (ApplicationRoles.IsSuperAdmin(role.Name))
-            {
-                throw new Exception($"{ApplicationRoles.SuperAdmin} role cannot be assigned from this endpoint.");
-            }
+            RoleAssignmentValidator.EnsureCanAssignRole(actorScope.ActorRole, role.Name);
 
             var fullName = ComposeFullName(dto.FirstName, dto.LastName, dto.Email);
             var user = new User
             {
+                CompanyId = actorScope.TenantId,
                 Email = dto.Email,
                 FullName = fullName,
                 RoleId = role.Id,
@@ -770,10 +770,16 @@ namespace AccountingSystem.API.Services
 
         public async Task ResendInviteAsync(int invitedUserId, int tenantId)
         {
+            var actorScope = RoleAssignmentValidator.RequireTenantOwnerScope(_httpContextAccessor.HttpContext?.User);
+            if (tenantId != actorScope.TenantId)
+            {
+                throw new InvalidOperationException("User management requires a valid tenant company context.");
+            }
+
             var user = await _context.Users
                 .IgnoreQueryFilters()
                 .Include(u => u.Role)
-                .FirstOrDefaultAsync(u => u.Id == invitedUserId && u.CompanyId == tenantId);
+                .FirstOrDefaultAsync(u => u.Id == invitedUserId && u.CompanyId == actorScope.TenantId);
 
             if (user == null)
             {
@@ -785,10 +791,7 @@ namespace AccountingSystem.API.Services
                 throw new Exception("Archived users cannot receive invite emails.");
             }
 
-            if (ApplicationRoles.IsSuperAdmin(user.Role.Name))
-            {
-                throw new Exception($"{ApplicationRoles.SuperAdmin} accounts cannot be invited from this endpoint.");
-            }
+            RoleAssignmentValidator.EnsureTenantManagedUser(user);
 
             if (!ApplicationUserStatuses.IsInvited(user.Status))
             {

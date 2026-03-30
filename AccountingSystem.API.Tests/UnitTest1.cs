@@ -320,7 +320,13 @@ public class AuthServiceTests
     {
         var context = TestHelpers.CreateContext(tenantId: 77);
         using var harness = TestHelpers.CreateIdentityHarness();
-        var service = TestHelpers.CreateAuthService(context, harness);
+        var service = TestHelpers.CreateAuthService(
+            context,
+            harness,
+            httpContextAccessor: TestHelpers.CreateHttpContextAccessor(
+                scheme: "https",
+                host: "localhost:7273",
+                user: AuthorizationTestHelpers.CreatePrincipal(ApplicationRoles.TenantOwner, userId: 700, companyId: 77)));
 
         context.Roles.Add(new Role { Id = 2, Name = "Accounting" });
         await context.SaveChangesAsync();
@@ -358,7 +364,13 @@ public class AuthServiceTests
     {
         var context = TestHelpers.CreateContext(tenantId: 77);
         using var harness = TestHelpers.CreateIdentityHarness();
-        var service = TestHelpers.CreateAuthService(context, harness);
+        var service = TestHelpers.CreateAuthService(
+            context,
+            harness,
+            httpContextAccessor: TestHelpers.CreateHttpContextAccessor(
+                scheme: "https",
+                host: "localhost:7273",
+                user: AuthorizationTestHelpers.CreatePrincipal(ApplicationRoles.TenantOwner, userId: 700, companyId: 77)));
 
         context.Roles.Add(new Role { Id = 9, Name = ApplicationRoles.SuperAdmin });
         await context.SaveChangesAsync();
@@ -370,7 +382,151 @@ public class AuthServiceTests
         });
 
         await act.Should().ThrowAsync<Exception>()
-            .WithMessage($"{ApplicationRoles.SuperAdmin} role cannot be assigned from this endpoint.");
+            .WithMessage("Role 'Super Admin' cannot be assigned by Tenant Owner.");
+    }
+
+    [Fact]
+    public async Task InviteTenantUserAsync_WhenRoleIsTenantOwner_ShouldRejectTheRequest()
+    {
+        var context = TestHelpers.CreateContext(tenantId: 77);
+        using var harness = TestHelpers.CreateIdentityHarness();
+        var service = TestHelpers.CreateAuthService(
+            context,
+            harness,
+            httpContextAccessor: TestHelpers.CreateHttpContextAccessor(
+                scheme: "https",
+                host: "localhost:7273",
+                user: AuthorizationTestHelpers.CreatePrincipal(ApplicationRoles.TenantOwner, userId: 700, companyId: 77)));
+
+        context.Roles.Add(new Role { Id = 1, Name = ApplicationRoles.TenantOwner });
+        await context.SaveChangesAsync();
+
+        var act = async () => await service.InviteTenantUserAsync(new InviteTenantUserDTO
+        {
+            Email = "peer-owner@test.com",
+            RoleName = ApplicationRoles.TenantOwner
+        });
+
+        await act.Should().ThrowAsync<Exception>()
+            .WithMessage("Role 'Tenant Owner' cannot be assigned by Tenant Owner.");
+    }
+
+    [Fact]
+    public async Task InviteTenantUserAsync_WhenRoleIsManagement_ShouldAllowTenantScopedAssignment()
+    {
+        var context = TestHelpers.CreateContext(tenantId: 77);
+        using var harness = TestHelpers.CreateIdentityHarness();
+        var service = TestHelpers.CreateAuthService(
+            context,
+            harness,
+            httpContextAccessor: TestHelpers.CreateHttpContextAccessor(
+                scheme: "https",
+                host: "localhost:7273",
+                user: AuthorizationTestHelpers.CreatePrincipal(ApplicationRoles.TenantOwner, userId: 700, companyId: 77)));
+
+        context.Roles.Add(new Role { Id = 3, Name = ApplicationRoles.Management });
+        await context.SaveChangesAsync();
+
+        var user = await service.InviteTenantUserAsync(new InviteTenantUserDTO
+        {
+            Email = "manager@test.com",
+            RoleName = ApplicationRoles.Management
+        });
+
+        user.CompanyId.Should().Be(77);
+        user.RoleId.Should().Be(3);
+
+        var identityUser = await harness.IdentityContext.Users.SingleAsync(u => u.LegacyUserId == user.Id);
+        (await harness.UserManager.GetRolesAsync(identityUser)).Should().ContainSingle(ApplicationRoles.Management);
+    }
+
+    [Fact]
+    public async Task InviteTenantUserAsync_WhenActorIsNotTenantOwner_ShouldRejectTheRequest()
+    {
+        var context = TestHelpers.CreateContext(tenantId: 77);
+        using var harness = TestHelpers.CreateIdentityHarness();
+        var service = TestHelpers.CreateAuthService(
+            context,
+            harness,
+            httpContextAccessor: TestHelpers.CreateHttpContextAccessor(
+                scheme: "https",
+                host: "localhost:7273",
+                user: AuthorizationTestHelpers.CreatePrincipal(ApplicationRoles.Accounting, userId: 700, companyId: 77)));
+
+        context.Roles.Add(new Role { Id = 2, Name = ApplicationRoles.Accounting });
+        await context.SaveChangesAsync();
+
+        var act = async () => await service.InviteTenantUserAsync(new InviteTenantUserDTO
+        {
+            Email = "unauthorized-assignment@test.com",
+            RoleName = ApplicationRoles.Accounting
+        });
+
+        await act.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("Only tenant owners can manage users from this endpoint.");
+    }
+
+    [Fact]
+    public async Task InviteTenantUserAsync_WhenActorLacksTenantContext_ShouldRejectTheRequest()
+    {
+        var context = TestHelpers.CreateContext(tenantId: 77);
+        using var harness = TestHelpers.CreateIdentityHarness();
+        var service = TestHelpers.CreateAuthService(
+            context,
+            harness,
+            httpContextAccessor: TestHelpers.CreateHttpContextAccessor(
+                scheme: "https",
+                host: "localhost:7273",
+                user: AuthorizationTestHelpers.CreatePrincipal(ApplicationRoles.TenantOwner, userId: 700)));
+
+        context.Roles.Add(new Role { Id = 2, Name = ApplicationRoles.Accounting });
+        await context.SaveChangesAsync();
+
+        var act = async () => await service.InviteTenantUserAsync(new InviteTenantUserDTO
+        {
+            Email = "missing-tenant@test.com",
+            RoleName = ApplicationRoles.Accounting
+        });
+
+        await act.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("User management requires a valid tenant company context.");
+    }
+
+    [Fact]
+    public async Task ResendInviteAsync_WhenTargetIsTenantOwner_ShouldRejectTheRequest()
+    {
+        var context = TestHelpers.CreateContext(tenantId: 77);
+        using var harness = TestHelpers.CreateIdentityHarness();
+        var service = TestHelpers.CreateAuthService(
+            context,
+            harness,
+            httpContextAccessor: TestHelpers.CreateHttpContextAccessor(
+                scheme: "https",
+                host: "localhost:7273",
+                user: AuthorizationTestHelpers.CreatePrincipal(ApplicationRoles.TenantOwner, userId: 700, companyId: 77)));
+
+        var role = new Role { Id = 1, Name = ApplicationRoles.TenantOwner };
+        var user = new User
+        {
+            CompanyId = 77,
+            Email = "tenant-owner-invite@test.com",
+            FullName = "Tenant Owner",
+            RoleId = role.Id,
+            Role = role,
+            PasswordHash = string.Empty,
+            PasswordSalt = null,
+            IsActive = false,
+            Status = ApplicationUserStatuses.Invited
+        };
+
+        context.Roles.Add(role);
+        context.Users.Add(user);
+        await context.SaveChangesAsync();
+
+        var act = async () => await service.ResendInviteAsync(user.Id, 77);
+
+        await act.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("Tenant owner accounts can only be managed by Super Admin.");
     }
 
     [Fact]
@@ -600,7 +756,13 @@ public class AuthServiceTests
     {
         var context = TestHelpers.CreateContext(tenantId: 59);
         using var harness = TestHelpers.CreateIdentityHarness();
-        var service = TestHelpers.CreateAuthService(context, harness);
+        var service = TestHelpers.CreateAuthService(
+            context,
+            harness,
+            httpContextAccessor: TestHelpers.CreateHttpContextAccessor(
+                scheme: "https",
+                host: "localhost:7273",
+                user: AuthorizationTestHelpers.CreatePrincipal(ApplicationRoles.TenantOwner, userId: 700, companyId: 59)));
 
         var role = new Role { Id = 2, Name = ApplicationRoles.Accounting };
         var company = new Company { Id = 59, Name = "Invite Resend Co", IsActive = true, Status = ApplicationUserStatuses.Active };
@@ -636,7 +798,13 @@ public class AuthServiceTests
     {
         var context = TestHelpers.CreateContext(tenantId: 60);
         using var harness = TestHelpers.CreateIdentityHarness();
-        var service = TestHelpers.CreateAuthService(context, harness);
+        var service = TestHelpers.CreateAuthService(
+            context,
+            harness,
+            httpContextAccessor: TestHelpers.CreateHttpContextAccessor(
+                scheme: "https",
+                host: "localhost:7273",
+                user: AuthorizationTestHelpers.CreatePrincipal(ApplicationRoles.TenantOwner, userId: 700, companyId: 60)));
 
         var role = new Role { Id = 4, Name = ApplicationRoles.Management };
         var company = new Company { Id = 60, Name = "Invite Setup Resend Co", IsActive = true, Status = ApplicationUserStatuses.Active };
@@ -673,7 +841,13 @@ public class AuthServiceTests
     {
         var context = TestHelpers.CreateContext(tenantId: 61);
         using var harness = TestHelpers.CreateIdentityHarness();
-        var service = TestHelpers.CreateAuthService(context, harness);
+        var service = TestHelpers.CreateAuthService(
+            context,
+            harness,
+            httpContextAccessor: TestHelpers.CreateHttpContextAccessor(
+                scheme: "https",
+                host: "localhost:7273",
+                user: AuthorizationTestHelpers.CreatePrincipal(ApplicationRoles.TenantOwner, userId: 700, companyId: 61)));
 
         var role = new Role { Id = 2, Name = ApplicationRoles.Accounting };
         var company = new Company { Id = 62, Name = "Foreign Invite Co", IsActive = true, Status = ApplicationUserStatuses.Active };
@@ -1795,11 +1969,17 @@ internal static class TestHelpers
             harness.UserManager);
     }
 
-    internal static IHttpContextAccessor CreateHttpContextAccessor(string scheme, string host, string? origin = null, string? referer = null)
+    internal static IHttpContextAccessor CreateHttpContextAccessor(
+        string scheme,
+        string host,
+        string? origin = null,
+        string? referer = null,
+        ClaimsPrincipal? user = null)
     {
         var httpContext = new DefaultHttpContext();
         httpContext.Request.Scheme = scheme;
         httpContext.Request.Host = new HostString(host);
+        httpContext.User = user ?? new ClaimsPrincipal(new ClaimsIdentity());
 
         if (!string.IsNullOrWhiteSpace(origin))
         {

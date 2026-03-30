@@ -1,5 +1,6 @@
 using AccountingSystem.API.Data;
 using AccountingSystem.API.Identity;
+using AccountingSystem.API.Security;
 using AccountingSystem.API.Services.Interfaces;
 using AccountingSystem.Shared.DTOs;
 using Microsoft.AspNetCore.Authorization;
@@ -30,7 +31,7 @@ namespace AccountingSystem.API.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAllUsers([FromQuery] bool includeArchived = false)
         {
-            if (!ApplicationAuthorizationScopeEvaluator.TryGetCompanyId(User, out var tenantId))
+            if (!RoleAssignmentValidator.TryGetTenantOwnerScope(User, out var tenantId))
             {
                 return Forbid();
             }
@@ -58,6 +59,11 @@ namespace AccountingSystem.API.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateUser([FromBody] InviteTenantUserDTO dto)
         {
+            if (!RoleAssignmentValidator.TryGetTenantOwnerScope(User, out _))
+            {
+                return Forbid();
+            }
+
             try
             {
                 var user = await _authService.InviteTenantUserAsync(dto);
@@ -72,7 +78,7 @@ namespace AccountingSystem.API.Controllers
         [HttpPost("{id}/resend-invite")]
         public async Task<IActionResult> ResendInvite(int id)
         {
-            if (!ApplicationAuthorizationScopeEvaluator.TryGetCompanyId(User, out var tenantId))
+            if (!RoleAssignmentValidator.TryGetTenantOwnerScope(User, out var tenantId))
             {
                 return Forbid();
             }
@@ -91,13 +97,24 @@ namespace AccountingSystem.API.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteUser(int id)
         {
+            if (!RoleAssignmentValidator.TryGetTenantOwnerScope(User, out var tenantId))
+            {
+                return Forbid();
+            }
+
             var user = await _context.Users
                 .Include(u => u.Role)
-                .FirstOrDefaultAsync(u => u.Id == id);
+                .FirstOrDefaultAsync(u => u.Id == id && u.CompanyId == tenantId);
             if (user == null) return NotFound("User not found");
 
-            if (ApplicationRoles.IsTenantOwner(user.Role.Name))
-                return BadRequest(new { error = "Cannot archive tenant owner account." });
+            try
+            {
+                RoleAssignmentValidator.EnsureTenantManagedUser(user);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
 
             user.IsDeleted = true;
             user.IsActive = false;
@@ -110,7 +127,7 @@ namespace AccountingSystem.API.Controllers
         [HttpPut("{id}/restore")]
         public async Task<IActionResult> RestoreUser(int id)
         {
-            if (!ApplicationAuthorizationScopeEvaluator.TryGetCompanyId(User, out var tenantId))
+            if (!RoleAssignmentValidator.TryGetTenantOwnerScope(User, out var tenantId))
             {
                 return Forbid();
             }
@@ -121,6 +138,15 @@ namespace AccountingSystem.API.Controllers
                 .FirstOrDefaultAsync(u => u.Id == id && u.CompanyId == tenantId);
 
             if (user == null) return NotFound("User not found");
+
+            try
+            {
+                RoleAssignmentValidator.EnsureTenantManagedUser(user);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
 
             user.IsDeleted = false;
             user.IsActive = string.Equals(user.Status, ApplicationUserStatuses.Active, StringComparison.Ordinal);

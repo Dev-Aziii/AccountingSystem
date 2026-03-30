@@ -130,6 +130,23 @@ public class TenantInvitationFlowClientTests
             cut.Markup.Should().NotContain("Full Name");
             cut.Markup.Should().NotContain("Create Account");
         });
+
+        cut.WaitForAssertion(() =>
+        {
+            var assignableRoles = cut.FindComponents<MudSelectItem<string>>()
+                .Select(component => component.Instance.Value)
+                .Where(value => !string.IsNullOrWhiteSpace(value))
+                .ToList();
+
+            assignableRoles.Should().BeEquivalentTo(
+                new[]
+                {
+                    ApplicationRoles.Accounting,
+                    ApplicationRoles.Management
+                });
+            assignableRoles.Should().NotContain(ApplicationRoles.TenantOwner);
+            assignableRoles.Should().NotContain(ApplicationRoles.SuperAdmin);
+        });
     }
 
     private static TestContext CreateContext()

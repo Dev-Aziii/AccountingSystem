@@ -207,9 +207,10 @@
                                            Margin="Margin.Dense"
                                            AnchorOrigin="Origin.BottomCenter"
                                            Class="mb-3 shadcn-input">
-                                    <MudSelectItem Value="@ApplicationRoles.TenantOwner">@ApplicationRoleDisplayNames.TenantOwner</MudSelectItem>
-                                    <MudSelectItem Value="@ApplicationRoles.Accounting">@ApplicationRoleDisplayNames.Accounting</MudSelectItem>
-                                    <MudSelectItem Value="@ApplicationRoles.Management">@ApplicationRoleDisplayNames.Management</MudSelectItem>
+                                    @foreach (var assignableRole in AssignableRoles)
+                                    {
+                                        <MudSelectItem Value="@assignableRole">@ApplicationRoleDisplayNames.Get(assignableRole)</MudSelectItem>
+                                    }
                                 </MudSelect>
                             }
                         </MudCardContent>
@@ -247,6 +248,7 @@
     private bool isSubmitting;
     private bool _loading = true;
     private bool _initialLoading = true;
+    private static readonly IReadOnlyList<string> AssignableRoles = ApplicationRoleAssignmentRules.GetAssignableRoles(ApplicationRoles.TenantOwner);
 
     protected override async Task OnInitializedAsync()
     {
