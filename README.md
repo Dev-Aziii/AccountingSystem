@@ -137,7 +137,21 @@ cd AccountingSystem.Api
 # Follow SECURITY_CONFIGURATION.md for local Development and production setup
 ```
 
-4. **Run the Application**
+4. **Optional: Reset the local development database**
+```powershell
+# Preferred workflow from the repo root
+.\scripts\reset-dev-db.ps1
+
+# Equivalent EF Core CLI command
+dotnet ef database drop --context AccountingDbContext --project AccountingSystem.Api/AccountingSystem.Api.csproj --startup-project AccountingSystem.Api/AccountingSystem.Api.csproj --force
+
+# Package Manager Console equivalent
+Drop-Database -Context AccountingDbContext
+```
+
+After the database is dropped, start the API. Startup will recreate the database, apply both DbContexts' migrations, and run the bootstrap-only seeder. `Update-Database` by itself does not run the seeder.
+
+5. **Run the Application**
 ```bash
 # Start the API
 cd AccountingSystem.Api
@@ -148,7 +162,7 @@ cd ../AccountingSystem.Client
 dotnet run
 ```
 
-5. **Access the Application**
+6. **Access the Application**
 - API: `https://localhost:7001`
 - Swagger UI: `https://localhost:7001/swagger`
 - Client: `https://localhost:7002`

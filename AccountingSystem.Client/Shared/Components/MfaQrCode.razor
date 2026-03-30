@@ -1,0 +1,35 @@
+@using Microsoft.AspNetCore.Components
+@using Net.Codecrete.QrCodeGenerator
+@using System.Text
+
+@if (!string.IsNullOrWhiteSpace(imageSource))
+{
+    <div class="mfa-qr-wrapper">
+        <img src="@imageSource"
+             alt="Google Authenticator QR code"
+             width="220"
+             height="220"
+             style="display:block; width:220px; height:220px;" />
+    </div>
+}
+
+@code {
+    [Parameter]
+    public string Value { get; set; } = string.Empty;
+
+    private string imageSource = string.Empty;
+
+    protected override void OnParametersSet()
+    {
+        if (string.IsNullOrWhiteSpace(Value))
+        {
+            imageSource = string.Empty;
+            return;
+        }
+
+        var qrCode = QrCode.EncodeText(Value, QrCode.Ecc.Medium);
+        var svgMarkup = qrCode.ToSvgString(4);
+        var svgBytes = Encoding.UTF8.GetBytes(svgMarkup);
+        imageSource = $"data:image/svg+xml;base64,{Convert.ToBase64String(svgBytes)}";
+    }
+}

@@ -1,5 +1,7 @@
-﻿using AccountingSystem.API.Data;
+using AccountingSystem.API.Data;
+using AccountingSystem.API.Identity;
 using AccountingSystem.API.Models;
+using AccountingSystem.API.Services.Interfaces;
 using AccountingSystem.Shared.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -14,43 +16,43 @@ namespace AccountingSystem.API.Controllers
     {
         private readonly AccountingDbContext _context;
         private readonly ILogger<SuperAdminController> _logger;
+        private readonly ILegacyIdentityBridgeService _identityBridgeService;
 
-        public SuperAdminController(AccountingDbContext context, ILogger<SuperAdminController> logger)
+        public SuperAdminController(
+            AccountingDbContext context,
+            ILogger<SuperAdminController> logger,
+            ILegacyIdentityBridgeService identityBridgeService)
         {
             _context = context;
             _logger = logger;
+            _identityBridgeService = identityBridgeService;
         }
 
         private int GetCurrentUserId() => int.Parse(User.FindFirst("UserId")?.Value ?? "0");
         private string GetCurrentUserEmail() => User.FindFirst("unique_name")?.Value ?? User.Identity?.Name ?? "Unknown";
 
-        // Helper: Get the SuperAdmin's host company ID to exclude from counts/lists
         private async Task<int> GetHostCompanyId()
         {
             var host = await _context.Companies.IgnoreQueryFilters().FirstOrDefaultAsync(c => c.Name == "SaaS Operations");
             return host?.Id ?? 0;
         }
 
-        // 1. DASHBOARD STATS
         [HttpGet("dashboard")]
         public async Task<IActionResult> GetDashboardStats()
         {
             var hostCompanyId = await GetHostCompanyId();
 
-            // Exclude SuperAdmin's host company from tenant counts
             var companies = await _context.Companies
                 .IgnoreQueryFilters()
                 .Where(c => c.Id != hostCompanyId)
                 .ToListAsync();
 
-            // Exclude SuperAdmin users from user counts
             var users = await _context.Users
                 .IgnoreQueryFilters()
                 .Include(u => u.Role)
                 .Where(u => u.Role.Name != "SuperAdmin" && !u.IsDeleted)
                 .ToListAsync();
 
-            // Monthly company registrations (last 12 months)
             var now = DateTime.UtcNow;
             var twelveMonthsAgo = now.AddMonths(-11).Date;
             twelveMonthsAgo = new DateTime(twelveMonthsAgo.Year, twelveMonthsAgo.Month, 1);
@@ -66,7 +68,6 @@ namespace AccountingSystem.API.Controllers
                 .OrderBy(m => m.Month)
                 .ToList();
 
-            // Fill missing months
             var allMonths = Enumerable.Range(0, 12).Select(i =>
             {
                 var date = twelveMonthsAgo.AddMonths(i);
@@ -77,7 +78,6 @@ namespace AccountingSystem.API.Controllers
                 monthlyRegistrations.FirstOrDefault(r => r.Month == m) ?? new MonthlyActivityDTO { Month = m, Count = 0 }
             ).ToList();
 
-            // Monthly user growth (last 12 months)
             var monthlyUserGrowth = users
                 .Where(u => u.CreatedAt >= twelveMonthsAgo)
                 .GroupBy(u => new { u.CreatedAt.Year, u.CreatedAt.Month })
@@ -134,7 +134,6 @@ namespace AccountingSystem.API.Controllers
             return Ok(stats);
         }
 
-        // 2. TENANT MANAGEMENT
         [HttpGet("companies")]
         public async Task<IActionResult> GetAllCompanies()
         {
@@ -142,7 +141,7 @@ namespace AccountingSystem.API.Controllers
 
             var companies = await _context.Companies
                 .IgnoreQueryFilters()
-                .Where(c => c.Id != hostCompanyId) // Exclude SuperAdmin's host company
+                .Where(c => c.Id != hostCompanyId)
                 .Select(c => new TenantDTO
                 {
                     Id = c.Id,
@@ -171,7 +170,6 @@ namespace AccountingSystem.API.Controllers
             var company = await _context.Companies.IgnoreQueryFilters().FirstOrDefaultAsync(c => c.Id == id);
             if (company == null) return NotFound("Company not found.");
 
-            // Prevent modifying the Host Company
             if (company.Name == "SaaS Operations")
                 return BadRequest("Cannot modify the Host Operations company.");
 
@@ -181,9 +179,8 @@ namespace AccountingSystem.API.Controllers
 
             var oldStatus = company.Status;
             company.Status = dto.Status;
-            company.IsActive = dto.Status == "Active"; // Sync IsActive with status
+            company.IsActive = dto.Status == "Active";
 
-            // Log the action
             await LogSuperAdminAction("COMPANY_STATUS_CHANGE", "Company", id, company.Name, oldStatus, dto.Status,
                 $"Company '{company.Name}' status changed from {oldStatus} to {dto.Status}");
 
@@ -192,7 +189,6 @@ namespace AccountingSystem.API.Controllers
             return Ok(new { message = $"Company '{company.Name}' is now {dto.Status}." });
         }
 
-        //not used
         [HttpPut("companies/{id}/toggle")]
         public async Task<IActionResult> ToggleCompanyStatus(int id)
         {
@@ -214,11 +210,9 @@ namespace AccountingSystem.API.Controllers
             return Ok(new { message = company.IsActive ? "Company activated." : "Company suspended." });
         }
 
-        // 3. GLOBAL USER MANAGEMENT
         [HttpGet("users")]
         public async Task<IActionResult> GetAllUsers()
         {
-            // Exclude SuperAdmin users from the list
             var users = await _context.Users
                 .IgnoreQueryFilters()
                 .Include(u => u.Role)
@@ -253,11 +247,9 @@ namespace AccountingSystem.API.Controllers
                 .FirstOrDefaultAsync(u => u.Id == id);
             if (user == null) return NotFound("User not found.");
 
-            // Prevent modifying SuperAdmin users
             if (user.Role.Name == "SuperAdmin")
                 return BadRequest("Cannot modify SuperAdmin accounts.");
 
-            // Prevent locking yourself out
             var currentUserId = GetCurrentUserId();
             if (user.Id == currentUserId)
                 return BadRequest("You cannot modify your own account status.");
@@ -268,18 +260,17 @@ namespace AccountingSystem.API.Controllers
 
             var oldStatus = user.Status;
             user.Status = dto.Status;
-            user.IsActive = dto.Status == "Active"; // Sync IsActive
+            user.IsActive = dto.Status == "Active";
 
-            // Log the action
             await LogSuperAdminAction("USER_STATUS_CHANGE", "User", id, $"{user.FullName} ({user.Email})", oldStatus, dto.Status,
                 $"User '{user.Email}' status changed from {oldStatus} to {dto.Status}");
 
             await _context.SaveChangesAsync();
+            await _identityBridgeService.SyncExistingUserStatusAsync(CreateIdentitySnapshot(user));
 
             return Ok(new { message = $"User '{user.Email}' is now {dto.Status}." });
         }
 
-        // not used
         [HttpPut("users/{id}/toggle")]
         public async Task<IActionResult> ToggleUserStatus(int id)
         {
@@ -303,11 +294,11 @@ namespace AccountingSystem.API.Controllers
                 $"User '{user.Email}' status toggled from {oldStatus} to {user.Status}");
 
             await _context.SaveChangesAsync();
+            await _identityBridgeService.SyncExistingUserStatusAsync(CreateIdentitySnapshot(user));
 
             return Ok(new { message = user.IsActive ? "User activated." : "User blocked." });
         }
 
-        // 4. SUPER ADMIN AUDIT LOGS
         [HttpGet("audit-logs")]
         public async Task<IActionResult> GetSuperAdminAuditLogs()
         {
@@ -332,7 +323,6 @@ namespace AccountingSystem.API.Controllers
             return Ok(logs);
         }
 
-        // HELPER: Log SuperAdmin Actions 
         private Task LogSuperAdminAction(string action, string targetType, int targetId, string targetName,
             string oldValue, string newValue, string details)
         {
@@ -353,5 +343,16 @@ namespace AccountingSystem.API.Controllers
             _context.SuperAdminAuditLogs.Add(log);
             return Task.CompletedTask;
         }
+
+        private static LegacyIdentityUserSnapshot CreateIdentitySnapshot(User user) =>
+            new(
+                user.Id,
+                user.CompanyId,
+                user.Email,
+                user.FullName ?? user.Email,
+                user.Status,
+                user.IsActive,
+                user.IsDeleted,
+                user.Role.Name);
     }
 }

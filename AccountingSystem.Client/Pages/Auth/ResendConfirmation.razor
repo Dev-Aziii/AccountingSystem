@@ -1,0 +1,253 @@
+@page "/resend-confirmation"
+@layout LoginLayout
+@using AccountingSystem.Client.Services
+@using AccountingSystem.Shared.DTOs
+@using Microsoft.AspNetCore.Components
+@using MudBlazor
+
+@inject AuthService AuthService
+@inject ISnackbar Snackbar
+@inject ILogger<ResendConfirmation> Logger
+
+<PageTitle>Resend Confirmation - AccSys</PageTitle>
+
+<div class="auth-page-wrapper">
+    <div class="auth-card shadcn-card">
+        
+        <div class="auth-header">
+            <div class="auth-icon-wrapper">
+                <MudIcon Icon="@Icons.Material.Outlined.MarkEmailUnread" Size="Size.Medium" Class="auth-icon" />
+            </div>
+            <h1 class="auth-title">Resend Confirmation</h1>
+            <p class="auth-subtitle">
+                Enter your email address and we'll send you a new confirmation link if your account needs it.
+            </p>
+        </div>
+
+        <EditForm Model="@model" OnValidSubmit="HandleSubmit">
+            <DataAnnotationsValidator />
+
+            <div class="form-group">
+                <label class="form-label">Email Address</label>
+                <MudTextField @bind-Value="model.Email"
+                              For="@(() => model.Email)"
+                              Placeholder="name@example.com"
+                              Variant="Variant.Outlined"
+                              Margin="Margin.Dense"
+                              DisableUnderLine="true"
+                              Class="shadcn-input-auth" />
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(statusMessage))
+            {
+                <div class="auth-alert @(statusSeverity == Severity.Success ? "alert-success" : "alert-error")">
+                    <MudIcon Icon="@(statusSeverity == Severity.Success ? Icons.Material.Outlined.CheckCircle : Icons.Material.Outlined.ErrorOutline)" Size="Size.Small" />
+                    <span>@statusMessage</span>
+                </div>
+            }
+
+            <MudButton ButtonType="ButtonType.Submit"
+                       Variant="Variant.Filled"
+                       FullWidth="true"
+                       Disabled="@isSubmitting"
+                       Class="shadcn-btn-primary mt-6">
+                @if (isSubmitting)
+                {
+                    <MudProgressCircular Class="ms-n1 me-2" Size="Size.Small" Indeterminate="true" />
+                    <span>Sending...</span>
+                }
+                else
+                {
+                    <span>Resend Confirmation Link</span>
+                }
+            </MudButton>
+        </EditForm>
+
+        <div class="auth-footer">
+            <MudLink Href="/" Class="auth-link" Underline="Underline.Hover">
+                <MudIcon Icon="@Icons.Material.Outlined.ArrowBack" Size="Size.Small" Class="mr-1" Style="font-size: 14px;" />
+                Back to sign in
+            </MudLink>
+        </div>
+
+    </div>
+</div>
+
+<style>
+    /* Auth Page Layout */
+    .auth-page-wrapper {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: var(--bg-background);
+        padding: 1rem;
+    }
+
+    .auth-card {
+        width: 100%;
+        max-width: 400px;
+        padding: 2.5rem 2rem;
+        background-color: var(--bg-surface);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-lg);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+    }
+
+    /* Header Styles */
+    .auth-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    .auth-icon-wrapper {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background-color: var(--bg-muted);
+        margin-bottom: 1rem;
+        border: 1px solid var(--border-color);
+    }
+
+    .auth-icon {
+        color: var(--text-main);
+    }
+
+    .auth-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        letter-spacing: -0.025em;
+        color: var(--text-main);
+        margin: 0 0 0.5rem 0;
+    }
+
+    .auth-subtitle {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+        margin: 0;
+        line-height: 1.5;
+    }
+
+    /* Form Styles */
+    .form-group {
+        margin-bottom: 1.25rem;
+    }
+
+    .form-label {
+        display: block;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: var(--text-main);
+        margin-bottom: 0.5rem;
+    }
+
+    /* Customizing MudBlazor input to look like Shadcn */
+    .shadcn-input-auth {
+        background-color: var(--bg-surface);
+    }
+    
+        .shadcn-input-auth .mud-input-outlined-border {
+            border-color: var(--border-color) !important;
+            border-radius: var(--radius-md) !important;
+        }
+
+        .shadcn-input-auth.mud-input-outlined:focus-within .mud-input-outlined-border {
+            border-color: var(--text-main) !important;
+            border-width: 1px !important;
+            box-shadow: 0 0 0 2px var(--bg-background), 0 0 0 4px var(--text-main) !important;
+        }
+
+    /* Alert Box */
+    .auth-alert {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.5rem;
+        padding: 0.75rem 1rem;
+        border-radius: var(--radius-md);
+        font-size: 0.875rem;
+        font-weight: 500;
+        margin-bottom: 1.5rem;
+        line-height: 1.4;
+    }
+
+    .alert-success {
+        background-color: rgba(22, 163, 74, 0.1);
+        color: #16a34a;
+        border: 1px solid rgba(22, 163, 74, 0.2);
+    }
+
+    .alert-error {
+        background-color: rgba(220, 38, 38, 0.1);
+        color: #dc2626;
+        border: 1px solid rgba(220, 38, 38, 0.2);
+    }
+
+    /* Footer Link */
+    .auth-footer {
+        margin-top: 2rem;
+        text-align: center;
+    }
+
+    .auth-link {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.875rem;
+        color: var(--text-muted) !important;
+        font-weight: 500;
+        transition: color 0.2s ease;
+    }
+
+        .auth-link:hover {
+            color: var(--text-main) !important;
+        }
+</style>
+
+@code {
+    [SupplyParameterFromQuery(Name = "email")]
+    public string? Email { get; set; }
+
+    private ResendConfirmationDTO model = new();
+    private bool isSubmitting;
+    private string? statusMessage;
+    private Severity statusSeverity = Severity.Info;
+
+    protected override void OnParametersSet()
+    {
+        if (!string.IsNullOrWhiteSpace(Email))
+        {
+            model.Email = Email;
+        }
+    }
+
+    private async Task HandleSubmit()
+    {
+        isSubmitting = true;
+        statusMessage = null;
+
+        try
+        {
+            await AuthService.ResendConfirmation(model);
+            statusMessage = "If the account exists and still needs confirmation, a new confirmation link has been sent.";
+            statusSeverity = Severity.Success;
+            
+            // Optionally keep the snackbar or remove it since we have the inline alert now
+            Snackbar.Add("Confirmation email sent.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to resend confirmation email for {Email}.", model.Email);
+            statusMessage = string.IsNullOrWhiteSpace(ex.Message)
+                ? "Unable to resend confirmation email. Please try again."
+                : ex.Message;
+            statusSeverity = Severity.Error;
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+}

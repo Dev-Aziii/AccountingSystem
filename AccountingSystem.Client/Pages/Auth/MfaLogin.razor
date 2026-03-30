@@ -1,0 +1,609 @@
+@page "/mfa-login"
+@layout LoginLayout
+@using System.Linq
+@using AccountingSystem.Shared.DTOs
+@using AccountingSystem.Client.Services
+@using Microsoft.AspNetCore.Components.Authorization
+@using MudBlazor
+
+@inject AuthService AuthService
+@inject PendingMfaLoginStateService PendingMfaLoginState
+@inject NavigationManager NavManager
+@inject AuthenticationStateProvider AuthStateProvider
+@inject ISnackbar Snackbar
+@inject ILogger<MfaLogin> Logger
+
+<PageTitle>Two-Factor Verification - AccSys</PageTitle>
+
+<div class="auth-page-wrapper">
+    <div class="auth-card shadcn-card">
+        
+        <div class="auth-header">
+            <div class="auth-icon-wrapper">
+                <MudIcon Icon="@Icons.Material.Outlined.Security" Size="Size.Medium" Class="auth-icon" />
+            </div>
+            <h1 class="auth-title">Two-Factor Verification</h1>
+            <p class="auth-subtitle">
+                @if (PendingMfaLoginState.HasPendingChallenge)
+                {
+                    <span>Enter the 6-digit code from your authenticator app for <strong>@PendingMfaLoginState.Email</strong>.</span>
+                }
+                else
+                {
+                    <span>Your verification session has expired.</span>
+                }
+            </p>
+        </div>
+
+        @if (!PendingMfaLoginState.HasPendingChallenge)
+        {
+            <div class="auth-alert alert-error mb-6">
+                <MudIcon Icon="@Icons.Material.Outlined.TimerOff" Size="Size.Small" />
+                <span>Sign in again to request a new verification challenge.</span>
+            </div>
+
+            <MudButton Variant="Variant.Filled"
+                       Class="shadcn-btn-primary"
+                       FullWidth="true"
+                       Href="/">
+                Back to Sign In
+            </MudButton>
+        }
+        else
+        {
+            <MudTabs Rounded="true" Elevation="0" Class="shadcn-tabs" PanelClass="pt-6">
+                <MudTabPanel Text="Authenticator App">
+                    <EditForm Model="@mfaLoginModel" OnSubmit="HandleAuthenticatorLogin">
+                        <DataAnnotationsValidator />
+
+                        <div class="form-group">
+                            <label class="form-label">6-Digit Code</label>
+                            <div class="otp-input-container">
+                                @for (int i = 0; i < 6; i++)
+                                {
+                                    var index = i;
+                                    <input type="text"
+                                           inputmode="numeric"
+                                           maxlength="1"
+                                           class="otp-digit-box"
+                                           value="@otpDigits[index]"
+                                           @ref="otpInputRefs[index]"
+                                           @oninput="(e) => HandleOtpInput(index, e)"
+                                           @onkeydown="(e) => HandleOtpKeyDown(index, e)"
+                                           @onfocus="() => HandleOtpFocus(index)"
+                                           @onpaste="HandleOtpPaste"
+                                           disabled="@isSubmitting" />
+                                }
+                            </div>
+                        </div>
+
+                        @if (!string.IsNullOrWhiteSpace(errorMessage))
+                        {
+                            <div class="auth-alert alert-error mb-4">
+                                <MudIcon Icon="@Icons.Material.Outlined.ErrorOutline" Size="Size.Small" />
+                                <span>@errorMessage</span>
+                            </div>
+                        }
+
+                        <div class="d-flex gap-3 mt-6">
+                            <MudButton Variant="Variant.Outlined"
+                                       Class="shadcn-btn-outline"
+                                       Href="/"
+                                       Style="flex: 1;">
+                                Cancel
+                            </MudButton>
+                            <MudButton ButtonType="ButtonType.Submit"
+                                       Variant="Variant.Filled"
+                                       Class="shadcn-btn-primary"
+                                       Disabled="@isSubmitting"
+                                       Style="flex: 2;">
+                                @if (isSubmitting)
+                                {
+                                    <MudProgressCircular Class="ms-n1 me-2" Size="Size.Small" Indeterminate="true" />
+                                    <span>Verifying...</span>
+                                }
+                                else
+                                {
+                                    <span>Verify</span>
+                                }
+                            </MudButton>
+                        </div>
+                    </EditForm>
+                </MudTabPanel>
+
+                <MudTabPanel Text="Recovery Code">
+                    <EditForm Model="@mfaLoginModel" OnSubmit="HandleRecoveryCodeLogin">
+                        <DataAnnotationsValidator />
+
+                        <div class="form-group">
+                            <label class="form-label">Recovery Code</label>
+                            <input type="text"
+                                   class="recovery-code-input"
+                                   placeholder="XXXXX-XXXXX"
+                                   value="@recoveryCodeDisplay"
+                                   @oninput="HandleRecoveryCodeInput"
+                                   maxlength="11"
+                                   disabled="@isSubmitting" />
+                            <div class="form-helper mt-1">Recovery codes are single-use only.</div>
+                        </div>
+
+                        @if (!string.IsNullOrWhiteSpace(errorMessage))
+                        {
+                            <div class="auth-alert alert-error mb-4">
+                                <MudIcon Icon="@Icons.Material.Outlined.ErrorOutline" Size="Size.Small" />
+                                <span>@errorMessage</span>
+                            </div>
+                        }
+
+                        <div class="d-flex gap-3 mt-6">
+                            <MudButton Variant="Variant.Outlined"
+                                       Class="shadcn-btn-outline"
+                                       Href="/"
+                                       Style="flex: 1;">
+                                Cancel
+                            </MudButton>
+                            <MudButton ButtonType="ButtonType.Submit"
+                                       Variant="Variant.Filled"
+                                       Class="shadcn-btn-primary"
+                                       Disabled="@isSubmitting"
+                                       Style="flex: 2;">
+                                @if (isSubmitting)
+                                {
+                                    <MudProgressCircular Class="ms-n1 me-2" Size="Size.Small" Indeterminate="true" />
+                                    <span>Verifying...</span>
+                                }
+                                else
+                                {
+                                    <span>Use Code</span>
+                                }
+                            </MudButton>
+                        </div>
+                    </EditForm>
+                </MudTabPanel>
+            </MudTabs>
+        }
+
+    </div>
+</div>
+
+<style>
+    /* Auth Page Layout */
+    .auth-page-wrapper {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: var(--bg-background);
+        padding: 1rem;
+    }
+
+    .auth-card {
+        width: 100%;
+        max-width: 420px;
+        padding: 2.5rem 2rem;
+        background-color: var(--bg-surface);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-lg);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+    }
+
+    /* Header Styles */
+    .auth-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    .auth-icon-wrapper {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background-color: var(--bg-muted);
+        margin-bottom: 1rem;
+        border: 1px solid var(--border-color);
+    }
+
+    .auth-icon {
+        color: var(--text-main);
+    }
+
+    .auth-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        letter-spacing: -0.025em;
+        color: var(--text-main);
+        margin: 0 0 0.5rem 0;
+    }
+
+    .auth-subtitle {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+        margin: 0;
+        line-height: 1.5;
+    }
+
+    /* Form Styles */
+    .form-group {
+        margin-bottom: 1.25rem;
+    }
+
+    .form-label {
+        display: block;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: var(--text-main);
+        margin-bottom: 0.5rem;
+    }
+
+    .form-helper {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        line-height: 1.4;
+    }
+
+    /* Customizing MudBlazor input to look like Shadcn */
+    .shadcn-input-auth {
+        background-color: var(--bg-surface);
+    }
+    
+    .shadcn-input-auth .mud-input-outlined-border {
+        border-color: var(--border-color) !important;
+        border-radius: var(--radius-md) !important;
+    }
+
+    .shadcn-input-auth.mud-input-outlined:focus-within .mud-input-outlined-border {
+        border-color: var(--text-main) !important;
+        border-width: 1px !important;
+        box-shadow: 0 0 0 2px var(--bg-background), 0 0 0 4px var(--text-main) !important;
+    }
+
+    /* OTP Digit Boxes */
+    .otp-input-container {
+        display: flex;
+        gap: 0.5rem;
+        justify-content: center;
+    }
+
+    .otp-digit-box {
+        width: 48px;
+        height: 56px;
+        text-align: center;
+        font-size: 1.5rem;
+        font-weight: 600;
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        background-color: var(--bg-surface);
+        color: var(--text-main);
+        outline: none;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .otp-digit-box:focus {
+        border-color: var(--text-main);
+        box-shadow: 0 0 0 2px var(--bg-background), 0 0 0 4px var(--text-main);
+    }
+
+    .otp-digit-box:disabled {
+        opacity: 0.65;
+        cursor: not-allowed;
+    }
+
+    .otp-digit-box::placeholder {
+        color: var(--text-muted);
+        opacity: 0.5;
+    }
+
+    /* Recovery Code Input */
+    .recovery-code-input {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        font-size: 1.125rem;
+        font-weight: 500;
+        letter-spacing: 0.1rem;
+        text-align: center;
+        text-transform: uppercase;
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        background-color: var(--bg-surface);
+        color: var(--text-main);
+        outline: none;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .recovery-code-input:focus {
+        border-color: var(--text-main);
+        box-shadow: 0 0 0 2px var(--bg-background), 0 0 0 4px var(--text-main);
+    }
+
+    .recovery-code-input:disabled {
+        opacity: 0.65;
+        cursor: not-allowed;
+    }
+
+    .recovery-code-input::placeholder {
+        color: var(--text-muted);
+        opacity: 0.5;
+        text-transform: uppercase;
+    }
+
+    /* Center text for the 6-digit code input */
+    .text-center-input input {
+        text-align: center !important;
+        font-size: 1.25rem !important;
+        letter-spacing: 0.25rem !important;
+        font-weight: 600 !important;
+    }
+
+    /* Alert Box */
+    .auth-alert {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.5rem;
+        padding: 0.75rem 1rem;
+        border-radius: var(--radius-md);
+        font-size: 0.875rem;
+        font-weight: 500;
+        line-height: 1.4;
+    }
+
+    .alert-error {
+        background-color: rgba(220, 38, 38, 0.1);
+        color: #dc2626;
+        border: 1px solid rgba(220, 38, 38, 0.2);
+    }
+
+    /* Buttons */
+    .shadcn-btn-primary {
+        border-radius: var(--radius-md) !important;
+        text-transform: none !important;
+        font-weight: 500 !important;
+        background-color: var(--text-main) !important;
+        color: var(--bg-surface) !important;
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+        transition: opacity 0.2s ease, transform 0.1s ease !important;
+    }
+
+    .shadcn-btn-primary:hover:not(:disabled) {
+        opacity: 0.9;
+        transform: translateY(-1px);
+    }
+
+    .shadcn-btn-primary:disabled {
+        opacity: 0.65 !important;
+    }
+
+    .shadcn-btn-outline {
+        border: 1px solid var(--border-color) !important;
+        background: var(--bg-surface) !important;
+        color: var(--text-main) !important;
+        border-radius: var(--radius-md) !important;
+        text-transform: none !important;
+        font-weight: 500 !important;
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+    }
+
+    .shadcn-btn-outline:hover {
+        background: var(--bg-muted) !important;
+    }
+
+    /* Shadcn Pill Tabs Overrides */
+    .shadcn-tabs .mud-tabs-toolbar {
+        background-color: var(--bg-muted) !important;
+        border-radius: var(--radius-md) !important;
+        padding: 4px !important;
+        min-height: 40px !important;
+    }
+
+    .shadcn-tabs .mud-tabs-toolbar .mud-tab-slider {
+        display: none !important; /* Hide the default blue underline */
+    }
+
+    .shadcn-tabs .mud-tab {
+        text-transform: none !important;
+        font-weight: 500 !important;
+        color: var(--text-muted) !important;
+        min-width: 50% !important; /* Make tabs split the container 50/50 */
+        padding: 4px 12px !important;
+        border-radius: 4px !important;
+        transition: all 0.2s ease !important;
+    }
+
+    .shadcn-tabs .mud-tab.mud-tab-active {
+        background-color: var(--bg-surface) !important;
+        color: var(--text-main) !important;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06) !important;
+        font-weight: 600 !important;
+    }
+</style>
+
+@code {
+    private readonly LoginMfaDTO mfaLoginModel = new();
+    private bool isSubmitting;
+    private string errorMessage = string.Empty;
+
+    // OTP digit boxes
+    private readonly string[] otpDigits = new string[6];
+    private readonly ElementReference[] otpInputRefs = new ElementReference[6];
+
+    // Recovery code display (with hyphen)
+    private string recoveryCodeDisplay = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        if (authState.User.Identity?.IsAuthenticated == true)
+        {
+            var role = authState.User.FindFirst("role")?.Value;
+            NavManager.NavigateTo(role == "SuperAdmin" ? "/superadmin/dashboard" : "/dashboard");
+        }
+    }
+
+    // OTP input handlers
+    private async Task HandleOtpInput(int index, ChangeEventArgs e)
+    {
+        var value = e.Value?.ToString() ?? string.Empty;
+        
+        // Only accept digits
+        if (!string.IsNullOrEmpty(value) && !char.IsDigit(value[0]))
+        {
+            otpDigits[index] = string.Empty;
+            StateHasChanged();
+            return;
+        }
+
+        otpDigits[index] = value.Length > 0 ? value[0].ToString() : string.Empty;
+        SyncOtpToModel();
+
+        // Auto-advance to next input
+        if (!string.IsNullOrEmpty(otpDigits[index]) && index < 5)
+        {
+            await otpInputRefs[index + 1].FocusAsync();
+        }
+
+        // Auto-submit when all 6 digits are entered
+        if (otpDigits.All(d => !string.IsNullOrEmpty(d)))
+        {
+            await HandleAuthenticatorLogin();
+        }
+    }
+
+    private async Task HandleOtpKeyDown(int index, KeyboardEventArgs e)
+    {
+        if (e.Key == "Backspace" && string.IsNullOrEmpty(otpDigits[index]) && index > 0)
+        {
+            // Move to previous input on backspace when current is empty
+            await otpInputRefs[index - 1].FocusAsync();
+        }
+        else if (e.Key == "ArrowLeft" && index > 0)
+        {
+            await otpInputRefs[index - 1].FocusAsync();
+        }
+        else if (e.Key == "ArrowRight" && index < 5)
+        {
+            await otpInputRefs[index + 1].FocusAsync();
+        }
+    }
+
+    private async Task HandleOtpFocus(int index)
+    {
+        // Select content when focusing (helps with replacement)
+        await Task.CompletedTask;
+    }
+
+    private async Task HandleOtpPaste(ClipboardEventArgs e)
+    {
+        // Handle paste - this will be processed via JS interop if needed
+        // For now, the browser's native paste will work with oninput
+        await Task.CompletedTask;
+    }
+
+    private void SyncOtpToModel()
+    {
+        mfaLoginModel.TwoFactorCode = string.Concat(otpDigits);
+    }
+
+    // Recovery code input handler
+    private void HandleRecoveryCodeInput(ChangeEventArgs e)
+    {
+        var input = e.Value?.ToString() ?? string.Empty;
+        
+        // Remove all non-alphanumeric characters except hyphen for display
+        var cleaned = new string(input.Where(c => char.IsLetterOrDigit(c)).ToArray());
+        
+        // Limit to 10 characters (XXXXX + XXXXX)
+        if (cleaned.Length > 10)
+        {
+            cleaned = cleaned.Substring(0, 10);
+        }
+
+        // Format with hyphen after 5 characters for display
+        if (cleaned.Length > 5)
+        {
+            recoveryCodeDisplay = cleaned.Substring(0, 5) + "-" + cleaned.Substring(5);
+        }
+        else
+        {
+            recoveryCodeDisplay = cleaned;
+        }
+
+        // Store the display value (with hyphen if present) for API - API handles normalization
+        mfaLoginModel.RecoveryCode = recoveryCodeDisplay;
+    }
+
+    private async Task HandleAuthenticatorLogin()
+    {
+        SyncOtpToModel();
+        if (string.IsNullOrWhiteSpace(mfaLoginModel.TwoFactorCode) || mfaLoginModel.TwoFactorCode.Length < 6)
+        {
+            errorMessage = "Please enter all 6 digits.";
+            return;
+        }
+        await CompleteLoginAsync(useRecoveryCode: false);
+    }
+
+    private async Task HandleRecoveryCodeLogin()
+    {
+        // Check that we have a full recovery code (10 alphanumeric + 1 hyphen = 11 chars displayed)
+        var cleanedLength = mfaLoginModel.RecoveryCode?.Count(char.IsLetterOrDigit) ?? 0;
+        if (cleanedLength < 10)
+        {
+            errorMessage = "Please enter your full recovery code.";
+            return;
+        }
+        await CompleteLoginAsync(useRecoveryCode: true);
+    }
+
+    private async Task CompleteLoginAsync(bool useRecoveryCode)
+    {
+        if (!PendingMfaLoginState.HasPendingChallenge)
+        {
+            NavManager.NavigateTo("/");
+            return;
+        }
+
+        isSubmitting = true;
+        errorMessage = string.Empty;
+
+        try
+        {
+            mfaLoginModel.ChallengeToken = PendingMfaLoginState.ChallengeToken;
+            if (useRecoveryCode)
+            {
+                mfaLoginModel.TwoFactorCode = string.Empty;
+            }
+            else
+            {
+                mfaLoginModel.RecoveryCode = string.Empty;
+            }
+
+            var result = await AuthService.CompleteMfaLogin(mfaLoginModel);
+            PendingMfaLoginState.Clear();
+            mfaLoginModel.ChallengeToken = string.Empty;
+            mfaLoginModel.TwoFactorCode = string.Empty;
+            mfaLoginModel.RecoveryCode = string.Empty;
+
+            // Clear the UI state
+            Array.Clear(otpDigits, 0, otpDigits.Length);
+            recoveryCodeDisplay = string.Empty;
+
+            Snackbar.Add("Welcome back! Verification successful.", Severity.Success);
+            
+            // Add a brief delay so the user registers the successful submission state before navigation
+            await Task.Delay(500);
+            NavManager.NavigateTo(result.Role == "SuperAdmin" ? "/superadmin/dashboard" : "/dashboard");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = string.IsNullOrWhiteSpace(ex.Message)
+                ? "Unable to verify the code. Please try again."
+                : ex.Message;
+            Logger.LogError(ex, "MFA login verification failed.");
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+}

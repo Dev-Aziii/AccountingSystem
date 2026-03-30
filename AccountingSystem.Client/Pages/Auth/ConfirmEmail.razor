@@ -1,0 +1,238 @@
+@page "/confirm-email"
+@layout LoginLayout
+@using AccountingSystem.Client.Services
+@using AccountingSystem.Shared.DTOs
+@using Microsoft.AspNetCore.Components
+@using MudBlazor
+
+@inject AuthService AuthService
+@inject NavigationManager NavManager
+@inject ILogger<ConfirmEmail> Logger
+
+<PageTitle>Confirm Email - AccSys</PageTitle>
+
+<div class="auth-page-wrapper">
+    <div class="auth-card shadcn-card">
+        
+        <div class="auth-header">
+            <div class="auth-icon-wrapper" style="@(statusSeverity == Severity.Success ? "background-color: rgba(22, 163, 74, 0.1); border-color: rgba(22, 163, 74, 0.2);" : "")">
+                <MudIcon Icon="@(statusSeverity == Severity.Success ? Icons.Material.Outlined.CheckCircleOutline : Icons.Material.Outlined.MarkEmailRead)"
+                         Size="Size.Medium"
+                         Class="auth-icon"
+                         Style="@(statusSeverity == Severity.Success ? "color: #16a34a;" : "")" />
+            </div>
+            <h1 class="auth-title">Email Confirmation</h1>
+            <p class="auth-subtitle">
+                @(confirmationAttempted ? "Verification complete." : "Please wait while we verify your secure link.")
+            </p>
+        </div>
+
+        @if (!confirmationAttempted)
+        {
+            <div class="d-flex flex-column justify-center align-center py-6">
+                <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Medium" Class="mb-4" />
+                <span style="font-size: 0.875rem; color: var(--text-muted); font-weight: 500;">Checking your confirmation link...</span>
+            </div>
+        }
+        else
+        {
+            <div class="auth-alert @(statusSeverity == Severity.Success ? "alert-success" : "alert-error")">
+                <MudIcon Icon="@(statusSeverity == Severity.Success ? Icons.Material.Outlined.CheckCircle : Icons.Material.Outlined.ErrorOutline)" Size="Size.Small" />
+                <span>@statusMessage</span>
+            </div>
+
+            <div class="d-flex flex-column gap-3 mt-6">
+                @if (statusSeverity == Severity.Success)
+                {
+                    <MudButton Href="/" Variant="Variant.Filled" Class="shadcn-btn-primary" FullWidth="true">
+                        Continue to Sign In
+                    </MudButton>
+                }
+                else
+                {
+                    <MudButton Href="@ResendHref" Variant="Variant.Filled" Class="shadcn-btn-primary" FullWidth="true">
+                        Resend Confirmation Link
+                    </MudButton>
+                    <MudButton Href="/" Variant="Variant.Outlined" Class="shadcn-btn-outline" FullWidth="true">
+                        Back to Sign In
+                    </MudButton>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+<style>
+    /* Auth Page Layout */
+    .auth-page-wrapper {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: var(--bg-background);
+        padding: 1rem;
+    }
+
+    .auth-card {
+        width: 100%;
+        max-width: 400px;
+        padding: 2.5rem 2rem;
+        background-color: var(--bg-surface);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-lg);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+    }
+
+    /* Header Styles */
+    .auth-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    .auth-icon-wrapper {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background-color: var(--bg-muted);
+        margin-bottom: 1rem;
+        border: 1px solid var(--border-color);
+        transition: all 0.3s ease;
+    }
+
+    .auth-icon {
+        color: var(--text-main);
+    }
+
+    .auth-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        letter-spacing: -0.025em;
+        color: var(--text-main);
+        margin: 0 0 0.5rem 0;
+    }
+
+    .auth-subtitle {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+        margin: 0;
+        line-height: 1.5;
+    }
+
+    /* Alert Box */
+    .auth-alert {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.5rem;
+        padding: 0.75rem 1rem;
+        border-radius: var(--radius-md);
+        font-size: 0.875rem;
+        font-weight: 500;
+        margin-bottom: 1.5rem;
+        line-height: 1.4;
+    }
+
+    .alert-success {
+        background-color: rgba(22, 163, 74, 0.1);
+        color: #16a34a;
+        border: 1px solid rgba(22, 163, 74, 0.2);
+    }
+
+    .alert-error {
+        background-color: rgba(220, 38, 38, 0.1);
+        color: #dc2626;
+        border: 1px solid rgba(220, 38, 38, 0.2);
+    }
+
+    /* Buttons */
+    .shadcn-btn-primary {
+        border-radius: var(--radius-md) !important;
+        text-transform: none !important;
+        font-weight: 500 !important;
+        background-color: var(--text-main) !important;
+        color: var(--bg-surface) !important;
+        box-shadow: none !important;
+        padding: 8px 16px !important;
+    }
+
+        .shadcn-btn-primary:hover {
+            opacity: 0.9;
+        }
+
+    .shadcn-btn-outline {
+        border: 1px solid var(--border-color) !important;
+        background: var(--bg-surface) !important;
+        color: var(--text-main) !important;
+        border-radius: var(--radius-md) !important;
+        text-transform: none !important;
+        font-weight: 500 !important;
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+        padding: 8px 16px !important;
+    }
+
+        .shadcn-btn-outline:hover {
+            background: var(--bg-muted) !important;
+        }
+</style>
+
+@code {
+    [SupplyParameterFromQuery(Name = "email")]
+    public string? Email { get; set; }
+
+    [SupplyParameterFromQuery(Name = "token")]
+    public string? Token { get; set; }
+
+    private bool confirmationAttempted;
+    private string statusMessage = "Checking your confirmation link...";
+    private Severity statusSeverity = Severity.Info;
+
+    private string ResendHref =>
+        string.IsNullOrWhiteSpace(Email)
+            ? "/resend-confirmation"
+            : $"/resend-confirmation?email={Uri.EscapeDataString(Email)}";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (confirmationAttempted)
+        {
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(Email) || string.IsNullOrWhiteSpace(Token))
+        {
+            confirmationAttempted = true;
+            statusMessage = "The email confirmation link is invalid or incomplete.";
+            statusSeverity = Severity.Error;
+            return;
+        }
+
+        try
+        {
+            // Give it a tiny delay just so the user sees the loading state momentarily (feels more responsive)
+            await Task.Delay(500);
+
+            await AuthService.ConfirmEmail(new ConfirmEmailDTO
+            {
+                Email = Email,
+                Token = Token
+            });
+
+            statusMessage = "Email confirmed successfully. You can securely sign in now.";
+            statusSeverity = Severity.Success;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to confirm email for {Email}.", Email);
+            statusMessage = string.IsNullOrWhiteSpace(ex.Message)
+                ? "The email confirmation link is invalid or has expired."
+                : ex.Message;
+            statusSeverity = Severity.Error;
+        }
+        finally
+        {
+            confirmationAttempted = true;
+        }
+    }
+}

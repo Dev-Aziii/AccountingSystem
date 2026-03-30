@@ -29,6 +29,7 @@ builder.Services.AddMudServices(config =>
 builder.Services.AddBlazoredLocalStorage();
 builder.Services.AddScoped<TokenStorageService>();
 builder.Services.AddScoped<ApiService>();
+builder.Services.AddScoped<PendingMfaLoginStateService>();
 
 // 2. Authentication Services
 builder.Services.AddAuthorizationCore();

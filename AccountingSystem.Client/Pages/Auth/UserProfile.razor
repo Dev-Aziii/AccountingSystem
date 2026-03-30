@@ -1,13 +1,10 @@
-﻿@page "/profile"
+@page "/profile"
 @using AccountingSystem.Shared.DTOs
 @using AccountingSystem.Shared.Validation
 @using AccountingSystem.Client.Services
 @using Microsoft.AspNetCore.Authorization
-@using Microsoft.AspNetCore.Components.Authorization
-@using MudBlazor
 @attribute [Authorize]
 @inject AuthService AuthService
-@inject AuthenticationStateProvider AuthStateProvider
 @inject ISnackbar Snackbar
 @inject ILogger<UserProfile> Logger
 
@@ -24,7 +21,6 @@
     </div>
 
     <MudTabs Elevation="0" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pt-4" Class="shadcn-tabs">
-
         <MudTabPanel Text="General Information" Icon="@Icons.Material.Outlined.Person">
             <EditForm Model="@profileModel" OnValidSubmit="HandleUpdateProfile">
                 <DataAnnotationsValidator />
@@ -72,7 +68,7 @@
         <MudTabPanel Text="Security" Icon="@Icons.Material.Outlined.Lock">
             <EditForm Model="@passwordModel" OnValidSubmit="HandleChangePassword">
                 <DataAnnotationsValidator />
-                <MudCard Elevation="0" Outlined="true" Class="shadcn-card">
+                <MudCard Elevation="0" Outlined="true" Class="shadcn-card mb-6">
                     <MudCardHeader>
                         <CardHeaderContent>
                             <div style="font-size: 1.125rem; font-weight: 600; color: var(--text-main);">Change Password</div>
@@ -123,46 +119,288 @@
                     </MudCardActions>
                 </MudCard>
             </EditForm>
-        </MudTabPanel>
 
+            <MudCard Elevation="0" Outlined="true" Class="shadcn-card">
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <div style="font-size: 1.125rem; font-weight: 600; color: var(--text-main);">Authenticator App MFA</div>
+                        <div style="font-size: 0.875rem; color: var(--text-muted);">Scan with Google Authenticator to add a second factor to your sign-in.</div>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    @if (isMfaLoading)
+                    {
+                        <div class="d-flex justify-center py-8">
+                            <MudProgressCircular Indeterminate="true" Color="Color.Primary" />
+                        </div>
+                    }
+                    else
+                    {
+                        <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Class="mb-4">
+                            Google Authenticator-compatible TOTP codes are the only MFA method supported in this app.
+                        </MudAlert>
+
+                        <div class="d-flex flex-wrap gap-3 align-center mb-4">
+                            <MudChip T="string"
+                                     Color="@(mfaStatus.IsTwoFactorEnabled ? Color.Success : Color.Default)"
+                                     Variant="Variant.Filled">
+                                @(mfaStatus.IsTwoFactorEnabled ? "MFA Enabled" : "MFA Not Enabled")
+                            </MudChip>
+                            <MudChip T="string" Variant="Variant.Outlined" Color="Color.Primary">
+                                Recovery codes left: @mfaStatus.RecoveryCodesLeft
+                            </MudChip>
+                        </div>
+
+                        @if (latestRecoveryCodes.Count > 0)
+                        {
+                            <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined" Class="mb-4">
+                                Save these recovery codes now. They are shown only once and each code works a single time.
+                            </MudAlert>
+
+                            <MudPaper Outlined="true" Class="pa-4 mb-4" Style="background: var(--bg-background);">
+                                <div class="recovery-grid">
+                                    @foreach (var recoveryCode in latestRecoveryCodes)
+                                    {
+                                        <div class="recovery-code">@recoveryCode</div>
+                                    }
+                                </div>
+                            </MudPaper>
+                        }
+
+                        @if (mfaSetup is not null)
+                        {
+                            <MudDivider Class="my-4" />
+                            <MudText Typo="Typo.subtitle1" Class="mb-2">Scan with Google Authenticator</MudText>
+                            <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-4">
+                                If you can’t scan the QR code, enter the manual key instead.
+                            </MudText>
+
+                            <div class="d-flex justify-center mb-4">
+                                <MfaQrCode Value="@mfaSetup.AuthenticatorUri" />
+                            </div>
+
+                            <MudTextField Label="Manual key"
+                                          Value="@mfaSetup.SharedKey"
+                                          ReadOnly="true"
+                                          Variant="Variant.Outlined"
+                                          Margin="Margin.Dense"
+                                          Class="shadcn-input mb-4" />
+
+                            <EditForm Model="@mfaVerificationModel" OnValidSubmit="HandleVerifyMfaSetup">
+                                <DataAnnotationsValidator />
+                                <MudTextField Label="6-digit code"
+                                              @bind-Value="mfaVerificationModel.Code"
+                                              For="@(() => mfaVerificationModel.Code)"
+                                              Variant="Variant.Outlined"
+                                              Margin="Margin.Dense"
+                                              Class="shadcn-input mb-4"
+                                              MaxLength="6" />
+
+                                <div class="d-flex flex-wrap gap-3 justify-end">
+                                    <MudButton Variant="Variant.Text"
+                                               Color="Color.Secondary"
+                                               Disabled="@isMfaSubmitting"
+                                               OnClick="CancelMfaSetup">
+                                        Cancel
+                                    </MudButton>
+                                    <MudButton ButtonType="ButtonType.Submit"
+                                               Variant="Variant.Filled"
+                                               Color="Color.Primary"
+                                               Disabled="@isMfaSubmitting">
+                                        @(isMfaSubmitting ? "Verifying..." : "Enable MFA")
+                                    </MudButton>
+                                </div>
+                            </EditForm>
+                        }
+                        else
+                        {
+                            <div class="d-flex flex-wrap gap-3">
+                                @if (!mfaStatus.IsTwoFactorEnabled)
+                                {
+                                    <MudButton Variant="Variant.Filled"
+                                               Color="Color.Primary"
+                                               Disabled="@isMfaSubmitting"
+                                               OnClick="HandleBeginMfaSetup">
+                                        Set Up Authenticator
+                                    </MudButton>
+                                }
+                                else
+                                {
+                                    <MudButton Variant="Variant.Filled"
+                                               Color="Color.Primary"
+                                               Disabled="@isSensitiveActionSubmitting"
+                                               OnClick="@(() => OpenSensitiveAction("regenerate"))">
+                                        Regenerate Recovery Codes
+                                    </MudButton>
+                                    <MudButton Variant="Variant.Outlined"
+                                               Color="Color.Warning"
+                                               Disabled="@isSensitiveActionSubmitting"
+                                               OnClick="@(() => OpenSensitiveAction("reset"))">
+                                        Reset Authenticator
+                                    </MudButton>
+                                    <MudButton Variant="Variant.Outlined"
+                                               Color="Color.Error"
+                                               Disabled="@isSensitiveActionSubmitting"
+                                               OnClick="@(() => OpenSensitiveAction("disable"))">
+                                        Disable MFA
+                                    </MudButton>
+                                }
+                            </div>
+                        }
+
+                        @if (!string.IsNullOrWhiteSpace(sensitiveAction))
+                        {
+                            <MudPaper Outlined="true" Class="pa-4 mt-5" Style="background: var(--bg-background);">
+                                <MudText Typo="Typo.subtitle1" Class="mb-2">@GetSensitiveActionTitle()</MudText>
+                                <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-4">
+                                    Confirm this action with exactly one method: your current password, a Google Authenticator code, or a recovery code.
+                                </MudText>
+
+                                <EditForm Model="@mfaReauthenticationModel" OnValidSubmit="HandleSensitiveActionAsync">
+                                    <DataAnnotationsValidator />
+                                    <MudGrid Spacing="3">
+                                        <MudItem xs="12" sm="4">
+                                            <MudTextField Label="Current password"
+                                                          @bind-Value="mfaReauthenticationModel.CurrentPassword"
+                                                          Variant="Variant.Outlined"
+                                                          Margin="Margin.Dense"
+                                                          InputType="InputType.Password"
+                                                          Class="shadcn-input" />
+                                        </MudItem>
+                                        <MudItem xs="12" sm="4">
+                                            <MudTextField Label="Authenticator code"
+                                                          @bind-Value="mfaReauthenticationModel.TwoFactorCode"
+                                                          Variant="Variant.Outlined"
+                                                          Margin="Margin.Dense"
+                                                          Class="shadcn-input"
+                                                          MaxLength="6" />
+                                        </MudItem>
+                                        <MudItem xs="12" sm="4">
+                                            <MudTextField Label="Recovery code"
+                                                          @bind-Value="mfaReauthenticationModel.RecoveryCode"
+                                                          Variant="Variant.Outlined"
+                                                          Margin="Margin.Dense"
+                                                          Class="shadcn-input" />
+                                        </MudItem>
+                                    </MudGrid>
+
+                                    <div class="d-flex flex-wrap gap-3 justify-end mt-4">
+                                        <MudButton Variant="Variant.Text"
+                                                   Color="Color.Secondary"
+                                                   Disabled="@isSensitiveActionSubmitting"
+                                                   OnClick="CancelSensitiveAction">
+                                            Cancel
+                                        </MudButton>
+                                        <MudButton ButtonType="ButtonType.Submit"
+                                                   Variant="Variant.Filled"
+                                                   Color="@GetSensitiveActionColor()"
+                                                   Disabled="@isSensitiveActionSubmitting">
+                                            @(isSensitiveActionSubmitting ? "Working..." : GetSensitiveActionButtonText())
+                                        </MudButton>
+                                    </div>
+                                </EditForm>
+                            </MudPaper>
+                        }
+                    }
+                </MudCardContent>
+            </MudCard>
+        </MudTabPanel>
     </MudTabs>
 </MudContainer>
 
+<style>
+    .recovery-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 0.75rem;
+    }
+
+    .recovery-code {
+        font-family: "Courier New", monospace;
+        font-size: 0.95rem;
+        font-weight: 600;
+        padding: 0.75rem;
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        background: var(--bg-surface);
+        text-align: center;
+    }
+</style>
+
 @code {
-    private UpdateProfileDTO profileModel = new UpdateProfileDTO();
-    private ChangePasswordDTO passwordModel = new ChangePasswordDTO();
-    private bool isProfileSubmitting = false;
-    private bool isPasswordSubmitting = false;
+    private const string ResetAction = "reset";
+    private const string RegenerateAction = "regenerate";
+    private const string DisableAction = "disable";
+
+    private UpdateProfileDTO profileModel = new();
+    private ChangePasswordDTO passwordModel = new();
+    private VerifyAuthenticatorSetupDTO mfaVerificationModel = new();
+    private MfaReauthenticationDTO mfaReauthenticationModel = new();
+    private MfaStatusDTO mfaStatus = new();
+    private MfaSetupDTO? mfaSetup;
+    private List<string> latestRecoveryCodes = new();
+    private bool isProfileSubmitting;
+    private bool isPasswordSubmitting;
+    private bool isMfaLoading = true;
+    private bool isMfaSubmitting;
+    private bool isSensitiveActionSubmitting;
+    private string currentEmail = string.Empty;
+    private string? sensitiveAction;
 
     protected override async Task OnInitializedAsync()
     {
-        // Pre-fill form with current user data from claims
-        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
-        var user = authState.User;
-
-        if (user.Identity != null && user.Identity.IsAuthenticated)
+        try
         {
-            // Note: In JWT logic, Name usually maps to Email, and we added a custom FullName claim
-            profileModel.Email = user.Identity.Name ?? "";
-            profileModel.FullName = user.FindFirst("FullName")?.Value ?? "";
+            var profile = await AuthService.GetCurrentProfile();
+            profileModel.Email = profile.Email;
+            profileModel.FullName = profile.FullName;
+            currentEmail = profile.Email;
+            await LoadMfaStatusAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to load current profile.");
+            Snackbar.Add("Unable to load account details. Please refresh and try again.", Severity.Error);
+        }
+    }
+
+    private async Task LoadMfaStatusAsync()
+    {
+        isMfaLoading = true;
+        try
+        {
+            mfaStatus = await AuthService.GetMfaStatus();
+        }
+        finally
+        {
+            isMfaLoading = false;
         }
     }
 
     private async Task HandleUpdateProfile()
     {
         isProfileSubmitting = true;
+        var emailChanged = !string.Equals(currentEmail, profileModel.Email, StringComparison.OrdinalIgnoreCase);
         try
         {
             await AuthService.UpdateProfile(profileModel);
-            Snackbar.Add("Profile updated successfully.", Severity.Success);
-
-            // Optional: Force logout or refresh token if email changed,
-            // but for now we just notify success.
+            var refreshedProfile = await AuthService.GetCurrentProfile();
+            profileModel.Email = refreshedProfile.Email;
+            profileModel.FullName = refreshedProfile.FullName;
+            currentEmail = refreshedProfile.Email;
+            var successMessage = emailChanged
+                ? "Profile updated successfully. Please confirm your new email address before your next sign in."
+                : "Profile updated successfully.";
+            Snackbar.Add(successMessage, Severity.Success);
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Failed to update user profile.");
-            Snackbar.Add("Unable to update profile. Please try again.", Severity.Error);
+            Snackbar.Add(
+                string.IsNullOrWhiteSpace(ex.Message)
+                    ? "Unable to update profile. Please try again."
+                    : ex.Message,
+                Severity.Error);
         }
         finally
         {
@@ -177,8 +415,6 @@
         {
             await AuthService.ChangePassword(passwordModel);
             Snackbar.Add("Password changed successfully.", Severity.Success);
-
-            // Reset form
             passwordModel = new ChangePasswordDTO();
         }
         catch (Exception ex)
@@ -195,4 +431,144 @@
             isPasswordSubmitting = false;
         }
     }
+
+    private async Task HandleBeginMfaSetup()
+    {
+        isMfaSubmitting = true;
+        try
+        {
+            latestRecoveryCodes.Clear();
+            mfaSetup = await AuthService.BeginAuthenticatorSetup();
+            mfaVerificationModel = new VerifyAuthenticatorSetupDTO();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to begin MFA setup.");
+            Snackbar.Add(
+                string.IsNullOrWhiteSpace(ex.Message)
+                    ? "Unable to start MFA setup. Please try again."
+                    : ex.Message,
+                Severity.Error);
+        }
+        finally
+        {
+            isMfaSubmitting = false;
+        }
+    }
+
+    private async Task HandleVerifyMfaSetup()
+    {
+        isMfaSubmitting = true;
+        try
+        {
+            var recoveryCodes = await AuthService.VerifyAuthenticatorSetup(mfaVerificationModel);
+            latestRecoveryCodes = recoveryCodes.RecoveryCodes;
+            mfaSetup = null;
+            mfaVerificationModel = new VerifyAuthenticatorSetupDTO();
+            await LoadMfaStatusAsync();
+            Snackbar.Add("Two-factor authentication is now enabled.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to verify MFA setup.");
+            Snackbar.Add(
+                string.IsNullOrWhiteSpace(ex.Message)
+                    ? "Unable to verify the authenticator code. Please try again."
+                    : ex.Message,
+                Severity.Error);
+        }
+        finally
+        {
+            isMfaSubmitting = false;
+        }
+    }
+
+    private void CancelMfaSetup()
+    {
+        mfaSetup = null;
+        mfaVerificationModel = new VerifyAuthenticatorSetupDTO();
+    }
+
+    private void OpenSensitiveAction(string action)
+    {
+        sensitiveAction = action;
+        mfaReauthenticationModel = new MfaReauthenticationDTO();
+    }
+
+    private void CancelSensitiveAction()
+    {
+        sensitiveAction = null;
+        mfaReauthenticationModel = new MfaReauthenticationDTO();
+    }
+
+    private async Task HandleSensitiveActionAsync()
+    {
+        if (string.IsNullOrWhiteSpace(sensitiveAction))
+        {
+            return;
+        }
+
+        isSensitiveActionSubmitting = true;
+        try
+        {
+            switch (sensitiveAction)
+            {
+                case ResetAction:
+                    latestRecoveryCodes.Clear();
+                    mfaSetup = await AuthService.ResetAuthenticator(mfaReauthenticationModel);
+                    Snackbar.Add("Authenticator reset. Scan the new QR code and verify it to re-enable MFA.", Severity.Info);
+                    break;
+                case RegenerateAction:
+                    latestRecoveryCodes = (await AuthService.RegenerateRecoveryCodes(mfaReauthenticationModel)).RecoveryCodes;
+                    Snackbar.Add("Recovery codes regenerated successfully.", Severity.Success);
+                    break;
+                case DisableAction:
+                    await AuthService.DisableMfa(mfaReauthenticationModel);
+                    latestRecoveryCodes.Clear();
+                    mfaSetup = null;
+                    Snackbar.Add("Two-factor authentication has been disabled.", Severity.Success);
+                    break;
+            }
+
+            await LoadMfaStatusAsync();
+            CancelSensitiveAction();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to execute MFA sensitive action {Action}.", sensitiveAction);
+            Snackbar.Add(
+                string.IsNullOrWhiteSpace(ex.Message)
+                    ? "Unable to complete the MFA action. Please try again."
+                    : ex.Message,
+                Severity.Error);
+        }
+        finally
+        {
+            isSensitiveActionSubmitting = false;
+        }
+    }
+
+    private string GetSensitiveActionTitle() => sensitiveAction switch
+    {
+        ResetAction => "Reset authenticator app",
+        RegenerateAction => "Regenerate recovery codes",
+        DisableAction => "Disable MFA",
+        _ => "Confirm action"
+    };
+
+    private string GetSensitiveActionButtonText() => sensitiveAction switch
+    {
+        ResetAction => "Reset Authenticator",
+        RegenerateAction => "Regenerate Codes",
+        DisableAction => "Disable MFA",
+        _ => "Confirm"
+    };
+
+    private Color GetSensitiveActionColor() => sensitiveAction switch
+    {
+        ResetAction => Color.Warning,
+        RegenerateAction => Color.Primary,
+        DisableAction => Color.Error,
+        _ => Color.Primary
+    };
 }

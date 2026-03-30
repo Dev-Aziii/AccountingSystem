@@ -596,6 +596,21 @@ cd ../AccountingSystem.Client
 dotnet run
 ```
 
+For a full local reset in a two-`DbContext` solution, use the explicit context workflow:
+
+```powershell
+# Preferred workflow from the repo root
+.\scripts\reset-dev-db.ps1
+
+# Equivalent Package Manager Console command
+Drop-Database -Context AccountingDbContext
+
+# Equivalent CLI command
+dotnet ef database drop --context AccountingDbContext --project AccountingSystem.Api/AccountingSystem.Api.csproj --startup-project AccountingSystem.Api/AccountingSystem.Api.csproj --force
+```
+
+After the database is dropped, start the API again. API startup migrates `AccountingDbContext`, then `IdentityAuthDbContext`, then runs `DataSeeder`. `Update-Database` alone does not execute the seeder.
+
 ### 9.2 Required configuration/environment
 
 API requires configuration values for:
@@ -604,6 +619,8 @@ API requires configuration values for:
 - `JwtSettings:Secret`, `Issuer`, `Audience`, `ExpiryMinutes`
 - `PayMongo:SecretKey` / `PublicKey`
 - `Recaptcha:SecretKey`, `ScoreThreshold`
+- SMTP settings and `AppUrls:ClientBaseUrl` for password-reset delivery
+- `BootstrapAdmin:*` on the first API run when the database has no super-admin yet
 
 ### 9.3 Configuration files
 
