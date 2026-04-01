@@ -171,6 +171,17 @@ dotnet run
 
 *Coming soon - Dashboard, Invoice Management, Financial Reports*
 
+## 📚 Documentation
+
+Detailed documentation is available in the `docs/` folder:
+
+| Document | Description |
+|----------|-------------|
+| [FEATURES.md](docs/FEATURES.md) | System architecture, core modules, frontend features |
+| [API.md](docs/API.md) | REST API endpoints, DTOs, request/response examples |
+| [SECURITY.md](docs/SECURITY.md) | Authentication, password policies, MFA, secrets management |
+| [RBAC.md](docs/RBAC.md) | Role definitions, access control matrix, authorization policies |
+
 ## 🎯 Project Objectives
 
 - Centralize all financial processes (AP, AR, GL) in one unified database
