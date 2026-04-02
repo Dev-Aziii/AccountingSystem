@@ -10,6 +10,9 @@ namespace AccountingSystem.API.Services.Interfaces
             string? reason = null,
             int? failedAttempts = null,
             DateTime? lockoutEndUtc = null,
-            string? policy = null);
+            string? policy = null,
+            int? lockoutDurationMinutes = null,
+            int? retryAfterSeconds = null,
+            string? disabledReason = null);
     }
 }

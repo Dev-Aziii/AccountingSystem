@@ -1,7 +1,9 @@
 using AccountingSystem.Client.Auth;
 using AccountingSystem.Shared.DTOs;
+using AccountingSystem.Shared.Security;
 using Microsoft.AspNetCore.Components.Authorization;
 using System.Net.Http.Json;
+using System.Text.Json;
 
 namespace AccountingSystem.Client.Services
 {
@@ -23,8 +25,7 @@ namespace AccountingSystem.Client.Services
             var response = await _api.PostAsync("api/auth/login", loginDto, requiresAuth: false);
             if (!response.IsSuccessStatusCode)
             {
-                var rawContent = await response.Content.ReadAsStringAsync();
-                throw new Exception(ApiErrorParser.Extract(rawContent, "Unable to sign in right now. Please try again."));
+                throw await CreateLoginFailureExceptionAsync(response, "Unable to sign in right now. Please try again.");
             }
 
             var result = await response.Content.ReadFromJsonAsync<AuthResponseDTO>();
@@ -151,6 +152,36 @@ namespace AccountingSystem.Client.Services
 
             var result = await response.Content.ReadFromJsonAsync<ConfirmEmailResultDTO>();
             return result ?? throw new Exception("Failed to deserialize email confirmation response.");
+        }
+
+        private static async Task<Exception> CreateLoginFailureExceptionAsync(HttpResponseMessage response, string fallbackMessage)
+        {
+            var rawContent = await response.Content.ReadAsStringAsync();
+
+            try
+            {
+                var result = JsonSerializer.Deserialize<AuthFailureResponseDTO>(rawContent, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+
+                if (result != null && !string.IsNullOrWhiteSpace(result.Message))
+                {
+                    return new AuthFailureClientException(
+                        result.ErrorCode,
+                        result.Message,
+                        result.LockoutEndUtc,
+                        result.RemainingSeconds,
+                        result.RetryAfterSeconds,
+                        result.Disabled);
+                }
+            }
+            catch (JsonException)
+            {
+                // Fall through to the generic parser.
+            }
+
+            return new Exception(ApiErrorParser.Extract(rawContent, fallbackMessage));
         }
 
         public async Task ResendConfirmation(ResendConfirmationDTO dto)

@@ -559,7 +559,8 @@ public class LogScopeAlignmentTests
         var controller = new SuperAdminController(
             context,
             Mock.Of<ILogger<SuperAdminController>>(),
-            Mock.Of<ILegacyIdentityBridgeService>())
+            Mock.Of<ILegacyIdentityBridgeService>(),
+            Mock.Of<ILoginSecurityService>())
         {
             ControllerContext = new ControllerContext
             {
@@ -708,7 +709,8 @@ public class LogScopeAlignmentTests
         var controller = new SuperAdminController(
             context,
             Mock.Of<ILogger<SuperAdminController>>(),
-            Mock.Of<ILegacyIdentityBridgeService>())
+            Mock.Of<ILegacyIdentityBridgeService>(),
+            Mock.Of<ILoginSecurityService>())
         {
             ControllerContext = new ControllerContext
             {

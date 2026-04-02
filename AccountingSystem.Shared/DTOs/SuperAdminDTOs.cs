@@ -51,6 +51,8 @@ namespace AccountingSystem.Shared.DTOs
         public string Status { get; set; } = "Active";
         public DateTime CreatedAt { get; set; }
         public DateTime? LastLoginDate { get; set; }
+        public DateTime? LockoutEndUtc { get; set; }
+        public string? DisabledReason { get; set; }
     }
 
     public class UpdateCompanyStatusDTO

@@ -16,9 +16,6 @@ namespace AccountingSystem.API.Services
 {
     public class AuthService : IAuthService
     {
-        private const int DefaultMaxFailedAccessAttempts = 5;
-        private const int DefaultLockoutMinutes = 15;
-
         private readonly AccountingDbContext _context;
         private readonly IdentityAuthDbContext _identityContext;
         private readonly IConfiguration _configuration;
@@ -28,6 +25,7 @@ namespace AccountingSystem.API.Services
         private readonly ILegacyPasswordService _legacyPasswordService;
         private readonly IAuthTokenFactory _authTokenFactory;
         private readonly IIdentityAccountService _identityAccountService;
+        private readonly ILoginSecurityService _loginSecurityService;
         private readonly IMfaService _mfaService;
         private readonly ILoginChallengeTokenService _loginChallengeTokenService;
         private readonly IAccountEmailService _accountEmailService;
@@ -47,6 +45,7 @@ namespace AccountingSystem.API.Services
             ILegacyPasswordService legacyPasswordService,
             IAuthTokenFactory authTokenFactory,
             IIdentityAccountService identityAccountService,
+            ILoginSecurityService loginSecurityService,
             IMfaService mfaService,
             ILoginChallengeTokenService loginChallengeTokenService,
             IAccountEmailService accountEmailService,
@@ -63,6 +62,7 @@ namespace AccountingSystem.API.Services
             _legacyPasswordService = legacyPasswordService;
             _authTokenFactory = authTokenFactory;
             _identityAccountService = identityAccountService;
+            _loginSecurityService = loginSecurityService;
             _mfaService = mfaService;
             _loginChallengeTokenService = loginChallengeTokenService;
             _accountEmailService = accountEmailService;
@@ -247,11 +247,9 @@ namespace AccountingSystem.API.Services
                     throw new Exception(GetIdentityErrorMessage(changePasswordResult, "Unable to change password. Please try again."));
                 }
 
-                await ResetIdentityLockoutAsync(identityUser);
-                var refreshedIdentityUser = await RequireIdentityUserAsync(user);
-                ApplyIdentitySecurityMirror(user, refreshedIdentityUser);
                 ClearLegacyPassword(user);
                 await _context.SaveChangesAsync();
+                await _loginSecurityService.ResetAfterSuccessfulLoginAsync(user, identityUser);
 
                 transaction.Complete();
             }
@@ -496,16 +494,7 @@ namespace AccountingSystem.API.Services
                 identityUser = await _identityAccountService.FindByLegacyUserIdAsync(user.Id);
             }
 
-            if (user.Status == "Blocked")
-            {
-                await _auditService.WriteAsync(
-                    "AUTH-LOGIN-FAILURE",
-                    userId: user.Id,
-                    companyId: user.CompanyId,
-                    email: user.Email,
-                    reason: "UserBlocked");
-                throw new AuthFailureException("UserBlocked");
-            }
+            await _loginSecurityService.EnsureLoginAllowedAsync(user, identityUser, loginDto.Email);
 
             if (!user.IsActive)
             {
@@ -558,7 +547,7 @@ namespace AccountingSystem.API.Services
                 };
             }
 
-            return await CreateAuthenticatedResponseAsync(user, company, "AUTH-LOGIN-SUCCESS", user.Role.Name);
+            return await CreateAuthenticatedResponseAsync(user, company, identityUser, "AUTH-LOGIN-SUCCESS", user.Role.Name);
         }
 
         public async Task<AuthResponseDTO> CompleteMfaLoginAsync(LoginMfaDTO dto)
@@ -602,6 +591,7 @@ namespace AccountingSystem.API.Services
             return await CreateAuthenticatedResponseAsync(
                 user,
                 company,
+                identityUser,
                 "AUTH-MFA-LOGIN-SUCCESS",
                 verificationResult.UsedRecoveryCode ? "RecoveryCode" : "AuthenticatorCode");
         }
@@ -879,14 +869,10 @@ namespace AccountingSystem.API.Services
                         reason: resetResult.Errors.FirstOrDefault()?.Code ?? "ResetPasswordFailed");
                     throw new Exception("The password reset request is invalid or has expired.");
                 }
-
-                await ResetIdentityLockoutAsync(identityUser);
-
                 var legacyUser = await ResolveLegacyUserAsync(dto.Email, identityUser);
                 if (legacyUser != null)
                 {
                     var refreshedIdentityUser = await RequireIdentityUserByIdAsync(identityUser.Id);
-                    ApplyIdentitySecurityMirror(legacyUser, refreshedIdentityUser);
                     ClearLegacyPassword(legacyUser);
                     await UpdateInvitedActivationStateAsync(refreshedIdentityUser, legacyUser);
                 }
@@ -978,9 +964,10 @@ namespace AccountingSystem.API.Services
             }
         }
 
-        private async Task<AuthResponseDTO> CreateAuthenticatedResponseAsync(User user, Company company, string auditEventName, string reason)
+        private async Task<AuthResponseDTO> CreateAuthenticatedResponseAsync(User user, Company company, ApplicationUser? identityUser, string auditEventName, string reason)
         {
             var tokenResult = _authTokenFactory.Create(CreateTokenContext(user, company));
+            await _loginSecurityService.ResetAfterSuccessfulLoginAsync(user, identityUser);
 
             await _auditService.WriteAsync(
                 auditEventName,
@@ -1002,85 +989,18 @@ namespace AccountingSystem.API.Services
 
         private async Task ValidateIdentityPasswordAsync(ApplicationUser identityUser, User legacyUser, string password)
         {
-            if (await _userManager.IsLockedOutAsync(identityUser))
-            {
-                var lockedUser = await RequireIdentityUserByIdAsync(identityUser.Id);
-                ApplyIdentitySecurityMirror(legacyUser, lockedUser);
-                await _context.SaveChangesAsync();
-
-                await _auditService.WriteAsync(
-                    "AUTH-LOCKOUT-BLOCKED",
-                    userId: legacyUser.Id,
-                    companyId: legacyUser.CompanyId,
-                    email: legacyUser.Email,
-                    reason: "IdentityLockoutActive",
-                    failedAttempts: lockedUser.AccessFailedCount,
-                    lockoutEndUtc: lockedUser.LockoutEnd?.UtcDateTime);
-                throw new AuthFailureException("LockoutActive");
-            }
-
             var passwordMatches = await _userManager.CheckPasswordAsync(identityUser, password);
             if (!passwordMatches)
             {
-                await _userManager.AccessFailedAsync(identityUser);
-                var failedUser = await RequireIdentityUserByIdAsync(identityUser.Id);
-                ApplyIdentitySecurityMirror(legacyUser, failedUser);
-                await _context.SaveChangesAsync();
-
-                await _auditService.WriteAsync(
-                    "AUTH-LOGIN-FAILURE",
-                    userId: legacyUser.Id,
-                    companyId: legacyUser.CompanyId,
-                    email: legacyUser.Email,
-                    reason: "InvalidPassword",
-                    failedAttempts: failedUser.AccessFailedCount,
-                    lockoutEndUtc: failedUser.LockoutEnd?.UtcDateTime);
-
-                if (failedUser.LockoutEnd.HasValue && failedUser.LockoutEnd.Value > DateTimeOffset.UtcNow)
-                {
-                    await _auditService.WriteAsync(
-                        "AUTH-LOCKOUT-APPLIED",
-                        userId: legacyUser.Id,
-                        companyId: legacyUser.CompanyId,
-                        email: legacyUser.Email,
-                        reason: "MaxFailedAttemptsExceeded",
-                        failedAttempts: failedUser.AccessFailedCount,
-                        lockoutEndUtc: failedUser.LockoutEnd?.UtcDateTime);
-                }
-
-                throw new AuthFailureException("InvalidPassword");
+                await _loginSecurityService.RecordInvalidPasswordAttemptAsync(legacyUser, identityUser);
             }
 
-            await ResetIdentityLockoutAsync(identityUser);
-            var refreshedUser = await RequireIdentityUserByIdAsync(identityUser.Id);
-            ApplyIdentitySecurityMirror(legacyUser, refreshedUser);
             ClearLegacyPassword(legacyUser);
             await _context.SaveChangesAsync();
         }
 
         private async Task ValidateLegacyPasswordFallbackAsync(User user, string password)
         {
-            var now = DateTime.UtcNow;
-            if (user.LockoutEndUtc.HasValue)
-            {
-                if (user.LockoutEndUtc.Value > now)
-                {
-                    await _auditService.WriteAsync(
-                        "AUTH-LOCKOUT-BLOCKED",
-                        userId: user.Id,
-                        companyId: user.CompanyId,
-                        email: user.Email,
-                        reason: "LockoutActive",
-                        failedAttempts: user.AccessFailedCount,
-                        lockoutEndUtc: user.LockoutEndUtc);
-                    throw new AuthFailureException("LockoutActive");
-                }
-
-                user.AccessFailedCount = 0;
-                user.LockoutEndUtc = null;
-                await _context.SaveChangesAsync();
-            }
-
             if (!TryVerifyLegacyPassword(password, user, out var passwordMatches))
             {
                 _logger.LogWarning("Password data is corrupted for legacy user {UserId}.", user.Id);
@@ -1095,46 +1015,13 @@ namespace AccountingSystem.API.Services
 
             if (!passwordMatches)
             {
-                user.AccessFailedCount++;
-
-                if (user.AccessFailedCount >= GetMaxFailedAccessAttempts())
-                {
-                    user.LockoutEndUtc = now.Add(GetLockoutDuration());
-                }
-
-                await _context.SaveChangesAsync();
-                await _auditService.WriteAsync(
-                    "AUTH-LOGIN-FAILURE",
-                    userId: user.Id,
-                    companyId: user.CompanyId,
-                    email: user.Email,
-                    reason: "InvalidPassword",
-                    failedAttempts: user.AccessFailedCount,
-                    lockoutEndUtc: user.LockoutEndUtc);
-
-                if (user.LockoutEndUtc.HasValue)
-                {
-                    await _auditService.WriteAsync(
-                        "AUTH-LOCKOUT-APPLIED",
-                        userId: user.Id,
-                        companyId: user.CompanyId,
-                        email: user.Email,
-                        reason: "MaxFailedAttemptsExceeded",
-                        failedAttempts: user.AccessFailedCount,
-                        lockoutEndUtc: user.LockoutEndUtc);
-                }
-
-                throw new AuthFailureException("InvalidPassword");
+                await _loginSecurityService.RecordInvalidPasswordAttemptAsync(user, null);
             }
 
             using var transaction = CreateTransactionScope();
 
             await _identityAccountService.EnsureProvisionedAsync(CreateProvisioningSnapshot(user, user.Role.Name), password);
             var identityUser = await RequireIdentityUserAsync(user);
-            await ResetIdentityLockoutAsync(identityUser);
-
-            var refreshedIdentityUser = await RequireIdentityUserByIdAsync(identityUser.Id);
-            ApplyIdentitySecurityMirror(user, refreshedIdentityUser);
             ClearLegacyPassword(user);
             await _context.SaveChangesAsync();
 
@@ -1205,12 +1092,6 @@ namespace AccountingSystem.API.Services
             return _legacyPasswordService.TryVerify(password, user.PasswordHash, user.PasswordSalt, out passwordMatches);
         }
 
-        private async Task ResetIdentityLockoutAsync(ApplicationUser identityUser)
-        {
-            await _userManager.ResetAccessFailedCountAsync(identityUser);
-            await _userManager.SetLockoutEndDateAsync(identityUser, null);
-        }
-
         private static bool HasUsableIdentityPassword(ApplicationUser? identityUser)
         {
             return !string.IsNullOrWhiteSpace(identityUser?.PasswordHash);
@@ -1220,12 +1101,6 @@ namespace AccountingSystem.API.Services
         {
             user.PasswordHash = string.Empty;
             user.PasswordSalt = null;
-        }
-
-        private static void ApplyIdentitySecurityMirror(User user, ApplicationUser identityUser)
-        {
-            user.AccessFailedCount = identityUser.AccessFailedCount;
-            user.LockoutEndUtc = identityUser.LockoutEnd?.UtcDateTime;
         }
 
         private async Task UpdateInvitedActivationStateAsync(ApplicationUser identityUser, User? legacyUser = null)
@@ -1549,19 +1424,6 @@ namespace AccountingSystem.API.Services
             {
                 throw new Exception(invalidMessage);
             }
-        }
-
-        private int GetMaxFailedAccessAttempts()
-        {
-            var configuredValue = _configuration.GetValue<int?>("AuthSecurity:Lockout:MaxFailedAccessAttempts");
-            return configuredValue is > 0 ? configuredValue.Value : DefaultMaxFailedAccessAttempts;
-        }
-
-        private TimeSpan GetLockoutDuration()
-        {
-            var configuredMinutes = _configuration.GetValue<int?>("AuthSecurity:Lockout:LockoutMinutes");
-            var minutes = configuredMinutes is > 0 ? configuredMinutes.Value : DefaultLockoutMinutes;
-            return TimeSpan.FromMinutes(minutes);
         }
 
         private static TransactionScope CreateTransactionScope()

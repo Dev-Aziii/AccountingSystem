@@ -14,6 +14,7 @@ using AccountingSystem.API.Security;
 using AccountingSystem.API.Services;
 using AccountingSystem.API.Services.Interfaces;
 using AccountingSystem.Shared.DTOs;
+using AccountingSystem.Shared.Security;
 using AccountingSystem.Shared.Validation;
 using FluentAssertions;
 using Microsoft.AspNetCore.Hosting;
@@ -278,8 +279,13 @@ public class AuthServiceTests
                 ["JwtSettings:Audience"] = "audience",
                 ["JwtSettings:ExpiryMinutes"] = "60",
                 ["JwtSettings:ClockSkewSeconds"] = "60",
+                ["AuthSecurity:Lockout:AttemptWindowMinutes"] = "15",
                 ["AuthSecurity:Lockout:MaxFailedAccessAttempts"] = "5",
-                ["AuthSecurity:Lockout:LockoutMinutes"] = "15",
+                ["AuthSecurity:Lockout:FirstLockoutMinutes"] = "5",
+                ["AuthSecurity:Lockout:SecondLockoutMinutes"] = "15",
+                ["AuthSecurity:Lockout:SubsequentLockoutMinutes"] = "30",
+                ["AuthSecurity:Lockout:DisableAfterLockoutEvents"] = "5",
+                ["AuthSecurity:Lockout:DisableWindowHours"] = "24",
                 ["IdentityTokens:PasswordResetTokenLifespanMinutes"] = "120",
                 ["IdentityTokens:EmailConfirmationTokenLifespanMinutes"] = "1440",
                 ["AppUrls:ClientBaseUrl"] = "https://localhost:5173"
@@ -980,7 +986,9 @@ public class AuthServiceTests
         });
 
         var unauthorized = response.Should().BeOfType<UnauthorizedObjectResult>().Subject;
-        TestHelpers.GetAnonymousStringValue(unauthorized.Value, "error").Should().Be("Invalid email or password. Please try again later.");
+        var payload = unauthorized.Value.Should().BeAssignableTo<AuthFailureResponseDTO>().Subject;
+        payload.ErrorCode.Should().Be(AuthFailureErrorCodes.InvalidCredentials);
+        payload.Message.Should().Be("Invalid email or password. Please try again later.");
     }
 
     [Fact]
@@ -1012,7 +1020,9 @@ public class AuthServiceTests
         });
 
         var unauthorized = response.Should().BeOfType<UnauthorizedObjectResult>().Subject;
-        TestHelpers.GetAnonymousStringValue(unauthorized.Value, "error").Should().Be("Invalid email or password. Please try again later.");
+        var payload = unauthorized.Value.Should().BeAssignableTo<AuthFailureResponseDTO>().Subject;
+        payload.ErrorCode.Should().Be(AuthFailureErrorCodes.InvalidCredentials);
+        payload.Message.Should().Be("Invalid email or password. Please try again later.");
     }
 
     [Fact]
@@ -1211,8 +1221,13 @@ public class AuthServiceTests
                 ["JwtSettings:Audience"] = "audience",
                 ["JwtSettings:ExpiryMinutes"] = "60",
                 ["JwtSettings:ClockSkewSeconds"] = "60",
+                ["AuthSecurity:Lockout:AttemptWindowMinutes"] = "15",
                 ["AuthSecurity:Lockout:MaxFailedAccessAttempts"] = "5",
-                ["AuthSecurity:Lockout:LockoutMinutes"] = "15",
+                ["AuthSecurity:Lockout:FirstLockoutMinutes"] = "5",
+                ["AuthSecurity:Lockout:SecondLockoutMinutes"] = "15",
+                ["AuthSecurity:Lockout:SubsequentLockoutMinutes"] = "30",
+                ["AuthSecurity:Lockout:DisableAfterLockoutEvents"] = "5",
+                ["AuthSecurity:Lockout:DisableWindowHours"] = "24",
                 ["IdentityTokens:PasswordResetTokenLifespanMinutes"] = "120",
                 ["IdentityTokens:EmailConfirmationTokenLifespanMinutes"] = "1440",
                 ["AppUrls:ClientBaseUrl"] = "https://localhost:5173"
@@ -1765,8 +1780,9 @@ public class AuthControllerTests
         });
 
         var unauthorized = response.Should().BeOfType<UnauthorizedObjectResult>().Subject;
-        TestHelpers.GetAnonymousStringValue(unauthorized.Value, "error")
-            .Should().Be("Invalid email or password. Please try again later.");
+        var payload = unauthorized.Value.Should().BeAssignableTo<AuthFailureResponseDTO>().Subject;
+        payload.ErrorCode.Should().Be(AuthFailureErrorCodes.InvalidCredentials);
+        payload.Message.Should().Be("Invalid email or password. Please try again later.");
     }
 
     [Fact]
@@ -1857,8 +1873,13 @@ internal static class TestHelpers
                 ["JwtSettings:Audience"] = "audience",
                 ["JwtSettings:ExpiryMinutes"] = "60",
                 ["JwtSettings:ClockSkewSeconds"] = clockSkewSeconds.ToString(),
+                ["AuthSecurity:Lockout:AttemptWindowMinutes"] = "15",
                 ["AuthSecurity:Lockout:MaxFailedAccessAttempts"] = "5",
-                ["AuthSecurity:Lockout:LockoutMinutes"] = "15",
+                ["AuthSecurity:Lockout:FirstLockoutMinutes"] = "5",
+                ["AuthSecurity:Lockout:SecondLockoutMinutes"] = "15",
+                ["AuthSecurity:Lockout:SubsequentLockoutMinutes"] = "30",
+                ["AuthSecurity:Lockout:DisableAfterLockoutEvents"] = "5",
+                ["AuthSecurity:Lockout:DisableWindowHours"] = "24",
                 ["IdentityTokens:PasswordResetTokenLifespanMinutes"] = "120",
                 ["IdentityTokens:EmailConfirmationTokenLifespanMinutes"] = "1440",
                 ["Mfa:AuthenticatorIssuer"] = "AccountingSystem",
@@ -1918,13 +1939,15 @@ internal static class TestHelpers
         Mock<ICaptchaService>? captcha = null,
         Mock<IAuthSecurityAuditService>? auditService = null,
         IHttpContextAccessor? httpContextAccessor = null,
-        IWebHostEnvironment? environment = null)
+        IWebHostEnvironment? environment = null,
+        TimeProvider? timeProvider = null)
     {
         configuration ??= CreateConfiguration();
         captcha ??= new Mock<ICaptchaService>();
         captcha.Setup(x => x.VerifyTokenAsync(It.IsAny<string>())).ReturnsAsync(true);
         httpContextAccessor ??= new HttpContextAccessor();
         environment ??= Mock.Of<IWebHostEnvironment>(x => x.EnvironmentName == Environments.Development);
+        timeProvider ??= TimeProvider.System;
 
         auditService ??= new Mock<IAuthSecurityAuditService>();
         auditService.Setup(x => x.WriteAsync(
@@ -1935,6 +1958,9 @@ internal static class TestHelpers
                 It.IsAny<string?>(),
                 It.IsAny<int?>(),
                 It.IsAny<DateTime?>(),
+                It.IsAny<string?>(),
+                It.IsAny<int?>(),
+                It.IsAny<int?>(),
                 It.IsAny<string?>()))
             .Returns(Task.CompletedTask);
 
@@ -1944,6 +1970,22 @@ internal static class TestHelpers
             LoginChallengeLifespanMinutes = 5
         });
         var loginChallengeTokenService = new LoginChallengeTokenService(configuration, mfaSettings);
+        var loginSecurityService = new LoginSecurityService(
+            context,
+            harness.IdentityContext,
+            auditService.Object,
+            Microsoft.Extensions.Options.Options.Create(new LoginAttemptPolicyOptions
+            {
+                AttemptWindowMinutes = 15,
+                MaxFailedAccessAttempts = 5,
+                FirstLockoutMinutes = 5,
+                SecondLockoutMinutes = 15,
+                SubsequentLockoutMinutes = 30,
+                DisableAfterLockoutEvents = 5,
+                DisableWindowHours = 24
+            }),
+            timeProvider,
+            Mock.Of<ILogger<LoginSecurityService>>());
         var mfaService = new MfaService(
             harness.UserManager,
             harness.AccountService,
@@ -1963,6 +2005,7 @@ internal static class TestHelpers
             new LegacyPasswordService(),
             new JwtAuthTokenFactory(configuration),
             harness.AccountService,
+            loginSecurityService,
             mfaService,
             loginChallengeTokenService,
             harness.EmailService,
@@ -2121,7 +2164,7 @@ internal sealed class IdentityTestHarness : IDisposable
                 options.Password.RequiredUniqueChars = 1;
 
                 options.Lockout.MaxFailedAccessAttempts = 5;
-                options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
+                options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(30);
                 options.Lockout.AllowedForNewUsers = true;
 
                 options.User.RequireUniqueEmail = true;
@@ -2204,3 +2247,25 @@ internal sealed record SentResetEmail(string Email, string FullName, string Rese
 internal sealed record SentConfirmationEmail(string Email, string FullName, string ConfirmationLink);
 internal sealed record SentInvitationEmail(string Email, string FullName, string ConfirmationLink);
 internal sealed record SentPasswordSetupEmail(string Email, string FullName, string ResetLink);
+
+internal sealed class MutableTimeProvider : TimeProvider
+{
+    private DateTimeOffset _utcNow;
+
+    public MutableTimeProvider(DateTimeOffset utcNow)
+    {
+        _utcNow = utcNow;
+    }
+
+    public override DateTimeOffset GetUtcNow() => _utcNow;
+
+    public void Advance(TimeSpan duration)
+    {
+        _utcNow = _utcNow.Add(duration);
+    }
+
+    public void SetUtcNow(DateTimeOffset utcNow)
+    {
+        _utcNow = utcNow;
+    }
+}

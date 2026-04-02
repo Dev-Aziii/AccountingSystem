@@ -26,8 +26,13 @@ namespace AccountingSystem.API.Configuration
             CheckRequiredValue(configuration["JwtSettings:Audience"], "JwtSettings:Audience", missingKeys);
             CheckRequiredValue(configuration["JwtSettings:ExpiryMinutes"], "JwtSettings:ExpiryMinutes", missingKeys);
             CheckRequiredValue(configuration["JwtSettings:ClockSkewSeconds"], "JwtSettings:ClockSkewSeconds", missingKeys);
+            CheckRequiredValue(configuration["AuthSecurity:Lockout:AttemptWindowMinutes"], "AuthSecurity:Lockout:AttemptWindowMinutes", missingKeys);
             CheckRequiredValue(configuration["AuthSecurity:Lockout:MaxFailedAccessAttempts"], "AuthSecurity:Lockout:MaxFailedAccessAttempts", missingKeys);
-            CheckRequiredValue(configuration["AuthSecurity:Lockout:LockoutMinutes"], "AuthSecurity:Lockout:LockoutMinutes", missingKeys);
+            CheckRequiredValue(configuration["AuthSecurity:Lockout:FirstLockoutMinutes"], "AuthSecurity:Lockout:FirstLockoutMinutes", missingKeys);
+            CheckRequiredValue(configuration["AuthSecurity:Lockout:SecondLockoutMinutes"], "AuthSecurity:Lockout:SecondLockoutMinutes", missingKeys);
+            CheckRequiredValue(configuration["AuthSecurity:Lockout:SubsequentLockoutMinutes"], "AuthSecurity:Lockout:SubsequentLockoutMinutes", missingKeys);
+            CheckRequiredValue(configuration["AuthSecurity:Lockout:DisableAfterLockoutEvents"], "AuthSecurity:Lockout:DisableAfterLockoutEvents", missingKeys);
+            CheckRequiredValue(configuration["AuthSecurity:Lockout:DisableWindowHours"], "AuthSecurity:Lockout:DisableWindowHours", missingKeys);
             CheckRequiredValue(configuration["AuthSecurity:RateLimiting:Login:PermitLimit"], "AuthSecurity:RateLimiting:Login:PermitLimit", missingKeys);
             CheckRequiredValue(configuration["AuthSecurity:RateLimiting:Login:WindowSeconds"], "AuthSecurity:RateLimiting:Login:WindowSeconds", missingKeys);
             CheckRequiredValue(configuration["AuthSecurity:RateLimiting:RegisterCompany:PermitLimit"], "AuthSecurity:RateLimiting:RegisterCompany:PermitLimit", missingKeys);
@@ -65,8 +70,13 @@ namespace AccountingSystem.API.Configuration
 
             CheckPositiveInteger(configuration["JwtSettings:ExpiryMinutes"], "JwtSettings:ExpiryMinutes", invalidKeys);
             CheckNonNegativeInteger(configuration["JwtSettings:ClockSkewSeconds"], "JwtSettings:ClockSkewSeconds", invalidKeys);
+            CheckPositiveInteger(configuration["AuthSecurity:Lockout:AttemptWindowMinutes"], "AuthSecurity:Lockout:AttemptWindowMinutes", invalidKeys);
             CheckPositiveInteger(configuration["AuthSecurity:Lockout:MaxFailedAccessAttempts"], "AuthSecurity:Lockout:MaxFailedAccessAttempts", invalidKeys);
-            CheckPositiveInteger(configuration["AuthSecurity:Lockout:LockoutMinutes"], "AuthSecurity:Lockout:LockoutMinutes", invalidKeys);
+            CheckPositiveInteger(configuration["AuthSecurity:Lockout:FirstLockoutMinutes"], "AuthSecurity:Lockout:FirstLockoutMinutes", invalidKeys);
+            CheckPositiveInteger(configuration["AuthSecurity:Lockout:SecondLockoutMinutes"], "AuthSecurity:Lockout:SecondLockoutMinutes", invalidKeys);
+            CheckPositiveInteger(configuration["AuthSecurity:Lockout:SubsequentLockoutMinutes"], "AuthSecurity:Lockout:SubsequentLockoutMinutes", invalidKeys);
+            CheckPositiveInteger(configuration["AuthSecurity:Lockout:DisableAfterLockoutEvents"], "AuthSecurity:Lockout:DisableAfterLockoutEvents", invalidKeys);
+            CheckPositiveInteger(configuration["AuthSecurity:Lockout:DisableWindowHours"], "AuthSecurity:Lockout:DisableWindowHours", invalidKeys);
             CheckPositiveInteger(configuration["AuthSecurity:RateLimiting:Login:PermitLimit"], "AuthSecurity:RateLimiting:Login:PermitLimit", invalidKeys);
             CheckPositiveInteger(configuration["AuthSecurity:RateLimiting:Login:WindowSeconds"], "AuthSecurity:RateLimiting:Login:WindowSeconds", invalidKeys);
             CheckPositiveInteger(configuration["AuthSecurity:RateLimiting:RegisterCompany:PermitLimit"], "AuthSecurity:RateLimiting:RegisterCompany:PermitLimit", invalidKeys);

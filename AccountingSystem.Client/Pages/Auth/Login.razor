@@ -11,6 +11,7 @@
 @inject AuthenticationStateProvider AuthStateProvider
 @inject ISnackbar Snackbar
 @inject ILogger<Login> Logger
+@implements IAsyncDisposable
 
 <PageTitle>AccSys - Sign In</PageTitle>
 
@@ -107,7 +108,15 @@
                     {
                         <div class="auth-alert alert-error mb-5">
                             <MudIcon Icon="@Icons.Material.Outlined.ErrorOutline" Size="Size.Small" />
-                            <span>@errorMessage</span>
+                            <div class="d-flex flex-column">
+                                <span>@errorMessage</span>
+                                @if (isTemporaryLockoutActive)
+                                {
+                                    <span style="font-size: 0.8125rem; margin-top: 0.125rem;">
+                                        Try again in @lockoutCountdownDisplay.
+                                    </span>
+                                }
+                            </div>
                         </div>
                     }
 
@@ -115,7 +124,7 @@
                                Variant="Variant.Filled"
                                Class="shadcn-btn-primary"
                                FullWidth="true"
-                               Disabled="@isLoading"
+                               Disabled="@isSubmissionDisabled"
                                Size="Size.Large">
                         @if (isLoading)
                         {
@@ -502,11 +511,25 @@
     private bool logoLoaded = false;
     private string errorMessage = "";
     private bool rememberMe = false;
+    private DateTime? lockoutEndUtc;
+    private int remainingLockoutSeconds;
+    private CancellationTokenSource? lockoutCountdownCts;
 
     // Password visibility state
     private bool isShowPassword = false;
     private InputType passwordInputType = InputType.Password;
     private string passwordInputIcon = Icons.Material.Outlined.VisibilityOff;
+
+    private bool isTemporaryLockoutActive => remainingLockoutSeconds > 0;
+    private bool isSubmissionDisabled => isLoading || isTemporaryLockoutActive;
+    private string lockoutCountdownDisplay
+    {
+        get
+        {
+            var remaining = TimeSpan.FromSeconds(Math.Max(0, remainingLockoutSeconds));
+            return $"{remaining.Minutes:D2}:{remaining.Seconds:D2}";
+        }
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -539,8 +562,13 @@
 
     private async Task HandleLogin()
     {
+        if (isTemporaryLockoutActive)
+        {
+            return;
+        }
+
         isLoading = true;
-        errorMessage = ""; 
+        errorMessage = "";
         try
         {
             var result = await AuthService.Login(loginModel);
@@ -561,8 +589,14 @@
             await Task.Delay(500);
             NavManager.NavigateTo(result.Role == ApplicationRoles.SuperAdmin ? "/superadmin/dashboard" : "/dashboard");
         }
+        catch (AuthFailureClientException ex)
+        {
+            await ApplyAuthFailureAsync(ex);
+            Logger.LogWarning(ex, "Login failed with auth failure code {ErrorCode}.", ex.ErrorCode);
+        }
         catch (Exception ex)
         {
+            await ClearLockoutCountdownAsync();
             errorMessage = string.IsNullOrWhiteSpace(ex.Message)
                 ? "Invalid email or password. Please try again."
                 : ex.Message;
@@ -572,5 +606,128 @@
         {
             isLoading = false;
         }
+    }
+
+    private async Task ApplyAuthFailureAsync(AuthFailureClientException ex)
+    {
+        switch (ex.ErrorCode)
+        {
+            case AuthFailureErrorCodes.TemporaryLockout:
+                errorMessage = string.IsNullOrWhiteSpace(ex.Message)
+                    ? "Too many failed sign-in attempts."
+                    : ex.Message;
+                await StartLockoutCountdownAsync(ex.LockoutEndUtc, ex.RemainingSeconds);
+                return;
+
+            case AuthFailureErrorCodes.AccountDisabled:
+                await ClearLockoutCountdownAsync();
+                errorMessage = string.IsNullOrWhiteSpace(ex.Message)
+                    ? "This account has been disabled. Contact your administrator to regain access."
+                    : ex.Message;
+                return;
+
+            case AuthFailureErrorCodes.TooManyRequests:
+                await ClearLockoutCountdownAsync();
+                errorMessage = ex.RetryAfterSeconds is > 0
+                    ? $"{ex.Message} Retry in {Math.Max(1, ex.RetryAfterSeconds.Value)} second(s)."
+                    : ex.Message;
+                return;
+
+            default:
+                await ClearLockoutCountdownAsync();
+                errorMessage = string.IsNullOrWhiteSpace(ex.Message)
+                    ? "Invalid email or password. Please try again."
+                    : ex.Message;
+                return;
+        }
+    }
+
+    private async Task StartLockoutCountdownAsync(DateTime? serverLockoutEndUtc, int? serverRemainingSeconds)
+    {
+        await ClearLockoutCountdownAsync();
+
+        var resolvedLockoutEndUtc = ResolveLockoutEndUtc(serverLockoutEndUtc, serverRemainingSeconds);
+        if (!resolvedLockoutEndUtc.HasValue)
+        {
+            remainingLockoutSeconds = 0;
+            return;
+        }
+
+        lockoutEndUtc = resolvedLockoutEndUtc.Value;
+        remainingLockoutSeconds = CalculateRemainingSeconds(lockoutEndUtc.Value);
+        if (remainingLockoutSeconds <= 0)
+        {
+            await ClearLockoutCountdownAsync();
+            return;
+        }
+
+        lockoutCountdownCts = new CancellationTokenSource();
+        _ = RunLockoutCountdownAsync(lockoutEndUtc.Value, lockoutCountdownCts.Token);
+    }
+
+    private async Task RunLockoutCountdownAsync(DateTime endUtc, CancellationToken cancellationToken)
+    {
+        try
+        {
+            using var timer = new PeriodicTimer(TimeSpan.FromSeconds(1));
+            while (await timer.WaitForNextTickAsync(cancellationToken))
+            {
+                remainingLockoutSeconds = CalculateRemainingSeconds(endUtc);
+                if (remainingLockoutSeconds <= 0)
+                {
+                    await InvokeAsync(async () =>
+                    {
+                        await ClearLockoutCountdownAsync();
+                        errorMessage = string.Empty;
+                        StateHasChanged();
+                    });
+                    break;
+                }
+
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // The component or lockout state changed before the timer completed.
+        }
+    }
+
+    private async Task ClearLockoutCountdownAsync()
+    {
+        if (lockoutCountdownCts != null)
+        {
+            await lockoutCountdownCts.CancelAsync();
+            lockoutCountdownCts.Dispose();
+            lockoutCountdownCts = null;
+        }
+
+        lockoutEndUtc = null;
+        remainingLockoutSeconds = 0;
+    }
+
+    private static DateTime? ResolveLockoutEndUtc(DateTime? serverLockoutEndUtc, int? serverRemainingSeconds)
+    {
+        if (serverLockoutEndUtc.HasValue)
+        {
+            return serverLockoutEndUtc.Value.Kind == DateTimeKind.Utc
+                ? serverLockoutEndUtc.Value
+                : DateTime.SpecifyKind(serverLockoutEndUtc.Value, DateTimeKind.Utc);
+        }
+
+        if (serverRemainingSeconds is > 0)
+        {
+            return DateTime.UtcNow.AddSeconds(serverRemainingSeconds.Value);
+        }
+
+        return null;
+    }
+
+    private static int CalculateRemainingSeconds(DateTime endUtc) =>
+        Math.Max(0, (int)Math.Ceiling((endUtc - DateTime.UtcNow).TotalSeconds));
+
+    public async ValueTask DisposeAsync()
+    {
+        await ClearLockoutCountdownAsync();
     }
 }

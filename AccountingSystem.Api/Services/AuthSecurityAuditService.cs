@@ -29,7 +29,10 @@ namespace AccountingSystem.API.Services
             string? reason = null,
             int? failedAttempts = null,
             DateTime? lockoutEndUtc = null,
-            string? policy = null)
+            string? policy = null,
+            int? lockoutDurationMinutes = null,
+            int? retryAfterSeconds = null,
+            string? disabledReason = null)
         {
             try
             {
@@ -48,7 +51,10 @@ namespace AccountingSystem.API.Services
                     reason,
                     failedAttempts,
                     lockoutEndUtc,
-                    policy
+                    policy,
+                    lockoutDurationMinutes,
+                    retryAfterSeconds,
+                    disabledReason
                 };
 
                 var auditLog = new AuditLog

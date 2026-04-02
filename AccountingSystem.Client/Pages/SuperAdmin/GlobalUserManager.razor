@@ -315,24 +315,40 @@
                         <div style="color: var(--text-muted); font-size: 0.875rem;">@PhilippineDateTimeDisplay.FormatDate(context.CreatedAt)</div>
                     </MudTd>
                     <MudTd DataLabel="Status">
-                        @switch (context.Status)
-                        {
-                            case ApplicationUserStatuses.Active:
-                                <span class="shadcn-badge badge-green">Active</span>
-                                break;
-                            case ApplicationUserStatuses.Restricted:
-                                <span class="shadcn-badge badge-orange">Restricted</span>
-                                break;
-                            case ApplicationUserStatuses.Blocked:
-                                <span class="shadcn-badge badge-red">Blocked</span>
-                                break;
-                            case ApplicationUserStatuses.Invited:
-                                <span class="shadcn-badge badge-slate">@ApplicationUserStatusDisplayNames.Invited</span>
-                                break;
-                            default:
-                                <span class="shadcn-badge badge-slate">@ApplicationUserStatusDisplayNames.Get(context.Status)</span>
-                                break;
-                        }
+                        <div class="d-flex flex-column">
+                            @switch (context.Status)
+                            {
+                                case ApplicationUserStatuses.Active:
+                                    <span class="shadcn-badge badge-green">Active</span>
+                                    break;
+                                case ApplicationUserStatuses.Restricted:
+                                    <span class="shadcn-badge badge-orange">Restricted</span>
+                                    break;
+                                case ApplicationUserStatuses.Blocked:
+                                    <span class="shadcn-badge badge-red">Blocked</span>
+                                    break;
+                                case ApplicationUserStatuses.Invited:
+                                    <span class="shadcn-badge badge-slate">@ApplicationUserStatusDisplayNames.Invited</span>
+                                    break;
+                                default:
+                                    <span class="shadcn-badge badge-slate">@ApplicationUserStatusDisplayNames.Get(context.Status)</span>
+                                    break;
+                            }
+
+                            @if (!string.IsNullOrWhiteSpace(context.DisabledReason))
+                            {
+                                <span style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">
+                                    @ApplicationUserDisableReasonDisplayNames.Get(context.DisabledReason)
+                                </span>
+                            }
+
+                            @if (IsTemporarilyLocked(context))
+                            {
+                                <span style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">
+                                    Locked until @PhilippineDateTimeDisplay.FormatDateTime(context.LockoutEndUtc!.Value)
+                                </span>
+                            }
+                        </div>
                     </MudTd>
                     <MudTd DataLabel="Actions" Style="text-align: right;">
                         @if (ApplicationUserStatuses.IsInvited(context.Status))
@@ -463,6 +479,9 @@
         "Management" => "badge-slate",
         _            => "badge-slate"
     };
+
+    private static bool IsTemporarilyLocked(GlobalUserDTO user) =>
+        user.LockoutEndUtc.HasValue && user.LockoutEndUtc.Value > DateTime.UtcNow;
 
     private async Task<bool> ShowConfirmDialog(string content, string subText, string buttonText, Color color)
     {

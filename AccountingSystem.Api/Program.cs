@@ -4,6 +4,8 @@ using AccountingSystem.API.Identity;
 using AccountingSystem.API.Middleware;
 using AccountingSystem.API.Services;
 using AccountingSystem.API.Services.Interfaces;
+using AccountingSystem.Shared.DTOs;
+using AccountingSystem.Shared.Security;
 using DotNetEnv;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Components.WebAssembly.Server;
@@ -45,6 +47,8 @@ builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("Smtp"
 builder.Services.Configure<AppUrlSettings>(builder.Configuration.GetSection("AppUrls"));
 builder.Services.Configure<BootstrapAdminSettings>(builder.Configuration.GetSection("BootstrapAdmin"));
 builder.Services.Configure<MfaSettings>(builder.Configuration.GetSection("Mfa"));
+builder.Services.Configure<LoginAttemptPolicyOptions>(builder.Configuration.GetSection("AuthSecurity:Lockout"));
+builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.Configure<PasswordResetTokenProviderOptions>(options =>
 {
     options.TokenLifespan = TimeSpan.FromMinutes(GetConfiguredPositiveInt("IdentityTokens:PasswordResetTokenLifespanMinutes", 120));
@@ -66,7 +70,7 @@ var identityBuilder = builder.Services.AddIdentityCore<ApplicationUser>(options 
     options.Password.RequiredUniqueChars = 1;
 
     options.Lockout.MaxFailedAccessAttempts = GetConfiguredPositiveInt("AuthSecurity:Lockout:MaxFailedAccessAttempts", 5);
-    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(GetConfiguredPositiveInt("AuthSecurity:Lockout:LockoutMinutes", 15));
+    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(GetConfiguredPositiveInt("AuthSecurity:Lockout:SubsequentLockoutMinutes", 30));
     options.Lockout.AllowedForNewUsers = true;
 
     options.User.RequireUniqueEmail = true;
@@ -85,6 +89,7 @@ identityBuilder.AddPasswordValidator<SharedPasswordIdentityValidator>();
 
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IAuthSecurityAuditService, AuthSecurityAuditService>();
+builder.Services.AddScoped<ILoginSecurityService, LoginSecurityService>();
 builder.Services.AddScoped<ILegacyPasswordService, LegacyPasswordService>();
 builder.Services.AddScoped<IAuthTokenFactory, JwtAuthTokenFactory>();
 builder.Services.AddScoped<IIdentityAccountService, IdentityAccountService>();
@@ -130,10 +135,12 @@ builder.Services.AddRateLimiter(options =>
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
     options.OnRejected = async (context, cancellationToken) =>
     {
+        int? retryAfterSeconds = null;
         if (context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter))
         {
+            retryAfterSeconds = (int)Math.Ceiling(retryAfter.TotalSeconds);
             context.HttpContext.Response.Headers.RetryAfter =
-                Math.Ceiling(retryAfter.TotalSeconds).ToString(CultureInfo.InvariantCulture);
+                retryAfterSeconds.Value.ToString(CultureInfo.InvariantCulture);
         }
 
         var auditService = context.HttpContext.RequestServices.GetRequiredService<IAuthSecurityAuditService>();
@@ -143,13 +150,19 @@ builder.Services.AddRateLimiter(options =>
             companyId: TryParseClaim(context.HttpContext.User, "CompanyId"),
             email: context.HttpContext.User.Identity?.Name,
             reason: context.HttpContext.Request.Path.Value,
-            policy: context.HttpContext.GetEndpoint()?.Metadata.GetMetadata<EnableRateLimitingAttribute>()?.PolicyName);
+            policy: context.HttpContext.GetEndpoint()?.Metadata.GetMetadata<EnableRateLimitingAttribute>()?.PolicyName,
+            retryAfterSeconds: retryAfterSeconds);
 
         if (!context.HttpContext.Response.HasStarted)
         {
             context.HttpContext.Response.ContentType = "application/json";
             await context.HttpContext.Response.WriteAsJsonAsync(
-                new { error = "Too many requests. Please wait before retrying." },
+                new AuthFailureResponseDTO
+                {
+                    ErrorCode = AuthFailureErrorCodes.TooManyRequests,
+                    Message = "Too many requests. Please wait before retrying.",
+                    RetryAfterSeconds = retryAfterSeconds
+                },
                 cancellationToken: cancellationToken);
         }
     };

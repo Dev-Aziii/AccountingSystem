@@ -1,4 +1,5 @@
 using AccountingSystem.Shared.Validation;
+using AccountingSystem.Shared.Security;
 using System.ComponentModel.DataAnnotations;
 
 namespace AccountingSystem.Shared.DTOs
@@ -83,6 +84,21 @@ namespace AccountingSystem.Shared.DTOs
         public bool RequiresPasswordSetup { get; set; }
 
         public string RedirectPath { get; set; } = string.Empty;
+    }
+
+    public class AuthFailureResponseDTO
+    {
+        public string ErrorCode { get; set; } = AuthFailureErrorCodes.InvalidCredentials;
+
+        public string Message { get; set; } = string.Empty;
+
+        public DateTime? LockoutEndUtc { get; set; }
+
+        public int? RemainingSeconds { get; set; }
+
+        public int? RetryAfterSeconds { get; set; }
+
+        public bool Disabled { get; set; }
     }
 
     public class ResendConfirmationDTO

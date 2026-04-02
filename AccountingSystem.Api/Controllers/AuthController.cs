@@ -2,6 +2,7 @@ using AccountingSystem.API.Configuration;
 using AccountingSystem.API.Security;
 using AccountingSystem.API.Services.Interfaces;
 using AccountingSystem.Shared.DTOs;
+using AccountingSystem.Shared.Security;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -33,14 +34,18 @@ namespace AccountingSystem.API.Controllers
             {
                 if (ex.StatusCode == StatusCodes.Status401Unauthorized)
                 {
-                    return Unauthorized(new { error = ex.PublicMessage });
+                    return Unauthorized(ex.ToResponseDto());
                 }
 
-                return StatusCode(ex.StatusCode, new { error = ex.PublicMessage });
+                return StatusCode(ex.StatusCode, ex.ToResponseDto());
             }
             catch (Exception)
             {
-                return Unauthorized(new { error = AuthFailureException.DefaultPublicMessage });
+                return Unauthorized(new AuthFailureResponseDTO
+                {
+                    ErrorCode = AuthFailureErrorCodes.InvalidCredentials,
+                    Message = AuthFailureException.DefaultPublicMessage
+                });
             }
         }
 
@@ -57,10 +62,10 @@ namespace AccountingSystem.API.Controllers
             {
                 if (ex.StatusCode == StatusCodes.Status401Unauthorized)
                 {
-                    return Unauthorized(new { error = ex.PublicMessage });
+                    return Unauthorized(ex.ToResponseDto());
                 }
 
-                return StatusCode(ex.StatusCode, new { error = ex.PublicMessage });
+                return StatusCode(ex.StatusCode, ex.ToResponseDto());
             }
             catch (Exception ex)
             {

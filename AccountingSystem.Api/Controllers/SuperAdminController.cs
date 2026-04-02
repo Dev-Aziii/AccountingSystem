@@ -3,6 +3,7 @@ using AccountingSystem.API.Identity;
 using AccountingSystem.API.Models;
 using AccountingSystem.API.Services.Interfaces;
 using AccountingSystem.Shared.DTOs;
+using AccountingSystem.Shared.Security;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -18,15 +19,18 @@ namespace AccountingSystem.API.Controllers
         private readonly AccountingDbContext _context;
         private readonly ILogger<SuperAdminController> _logger;
         private readonly ILegacyIdentityBridgeService _identityBridgeService;
+        private readonly ILoginSecurityService _loginSecurityService;
 
         public SuperAdminController(
             AccountingDbContext context,
             ILogger<SuperAdminController> logger,
-            ILegacyIdentityBridgeService identityBridgeService)
+            ILegacyIdentityBridgeService identityBridgeService,
+            ILoginSecurityService loginSecurityService)
         {
             _context = context;
             _logger = logger;
             _identityBridgeService = identityBridgeService;
+            _loginSecurityService = loginSecurityService;
         }
 
         private int GetCurrentUserId() => int.Parse(User.FindFirst("UserId")?.Value ?? "0");
@@ -219,20 +223,32 @@ namespace AccountingSystem.API.Controllers
                 .IgnoreQueryFilters()
                 .Include(u => u.Role)
                 .Where(u => u.Role.Name != ApplicationRoles.SuperAdmin && !u.IsDeleted)
+                .GroupJoin(
+                    _context.UserLoginSecurityStates,
+                    user => user.Id,
+                    state => state.UserId,
+                    (user, states) => new { user, state = states.FirstOrDefault() })
                 .Join(_context.Companies.IgnoreQueryFilters(),
-                    user => user.CompanyId,
+                    item => item.user.CompanyId,
                     company => company.Id,
-                    (user, company) => new GlobalUserDTO
+                    (item, company) => new GlobalUserDTO
                     {
-                        Id = user.Id,
-                        FullName = user.FullName,
-                        Email = user.Email,
-                        Role = user.Role.Name,
+                        Id = item.user.Id,
+                        FullName = item.user.FullName,
+                        Email = item.user.Email,
+                        Role = item.user.Role.Name,
                         CompanyName = company.Name,
                         CompanyId = company.Id,
-                        IsActive = user.IsActive,
-                        Status = user.Status,
-                        CreatedAt = user.CreatedAt
+                        IsActive = item.user.IsActive,
+                        Status = item.user.Status,
+                        CreatedAt = item.user.CreatedAt,
+                        LastLoginDate = item.state != null ? item.state.LastSuccessfulLoginAtUtc : null,
+                        LockoutEndUtc = item.user.LockoutEndUtc,
+                        DisabledReason = item.state != null
+                            ? item.state.DisabledReason
+                            : item.user.Status == ApplicationUserStatuses.Blocked
+                                ? ApplicationUserDisableReasons.AdminDisabled
+                                : null
                     })
                 .OrderBy(u => u.CompanyName)
                 .ThenBy(u => u.FullName)
@@ -269,6 +285,7 @@ namespace AccountingSystem.API.Controllers
 
             await LogSuperAdminAction("USER_STATUS_CHANGE", "User", id, $"{user.FullName} ({user.Email})", oldStatus, dto.Status,
                 $"User '{user.Email}' status changed from {oldStatus} to {dto.Status}");
+            await _loginSecurityService.HandleAdminStatusChangeAsync(user, oldStatus, dto.Status);
 
             await _context.SaveChangesAsync();
             await _identityBridgeService.SyncExistingUserStatusAsync(CreateIdentitySnapshot(user));
@@ -300,6 +317,7 @@ namespace AccountingSystem.API.Controllers
 
             await LogSuperAdminAction("USER_STATUS_CHANGE", "User", id, $"{user.FullName} ({user.Email})", oldStatus, user.Status,
                 $"User '{user.Email}' status toggled from {oldStatus} to {user.Status}");
+            await _loginSecurityService.HandleAdminStatusChangeAsync(user, oldStatus, user.Status);
 
             await _context.SaveChangesAsync();
             await _identityBridgeService.SyncExistingUserStatusAsync(CreateIdentitySnapshot(user));

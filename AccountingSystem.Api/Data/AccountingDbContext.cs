@@ -29,6 +29,9 @@ namespace AccountingSystem.API.Data
         public DbSet<DocumentSequence> DocumentSequences { get; set; }
         public DbSet<AuditLog> AuditLogs { get; set; }
         public DbSet<SuperAdminAuditLog> SuperAdminAuditLogs { get; set; }
+        public DbSet<UserLoginSecurityState> UserLoginSecurityStates { get; set; }
+        public DbSet<UserFailedLoginAttempt> UserFailedLoginAttempts { get; set; }
+        public DbSet<UserLockoutEvent> UserLockoutEvents { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -77,11 +80,32 @@ namespace AccountingSystem.API.Data
             modelBuilder.Entity<FiscalYearClose>().HasIndex(f => new { f.CompanyId, f.FiscalYear }).IsUnique();
             modelBuilder.Entity<JournalEntry>().HasIndex(j => new { j.CompanyId, j.Date });
             modelBuilder.Entity<DocumentSequence>().HasIndex(d => new { d.CompanyId, d.DocumentType }).IsUnique();
+            modelBuilder.Entity<UserLoginSecurityState>().HasIndex(s => s.UserId).IsUnique();
+            modelBuilder.Entity<UserFailedLoginAttempt>().HasIndex(a => new { a.UserId, a.OccurredAtUtc });
+            modelBuilder.Entity<UserLockoutEvent>().HasIndex(e => new { e.UserId, e.OccurredAtUtc });
             modelBuilder.Entity<FiscalYearClose>()
                 .HasOne(f => f.ClosingJournalEntry)
                 .WithMany()
                 .HasForeignKey(f => f.ClosingJournalEntryId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<UserLoginSecurityState>()
+                .HasOne<User>()
+                .WithOne()
+                .HasForeignKey<UserLoginSecurityState>(s => s.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<UserFailedLoginAttempt>()
+                .HasOne<User>()
+                .WithMany()
+                .HasForeignKey(a => a.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<UserLockoutEvent>()
+                .HasOne<User>()
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             // ---  ROLES ---
             modelBuilder.Entity<Role>().HasData(
