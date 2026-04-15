@@ -202,6 +202,3 @@ For issues, questions, or contributions, please open an issue in the GitHub repo
 
 ---
 
-<p align="center">
-  <i>Built with ❤️ for modern financial management</i>
-</p>
